@@ -1,20 +1,29 @@
-import { defineCollection } from 'astro:content';
+import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
-import { z } from 'astro/zod';
 
-const blog = defineCollection({
-	// Load Markdown and MDX files in the `src/content/blog/` directory.
-	loader: glob({ base: './src/content/blog', pattern: '**/*.{md,mdx}' }),
-	// Type-check frontmatter using a schema
-	schema: ({ image }) =>
-		z.object({
-			title: z.string(),
-			description: z.string(),
-			// Transform string to Date object
-			pubDate: z.coerce.date(),
-			updatedDate: z.coerce.date().optional(),
-			heroImage: z.optional(image()),
-		}),
+const logs = defineCollection({
+	loader: glob({ base: './src/content/logs', pattern: '**/*.{md,mdx}' }),
+	schema: z.object({
+		logNumber: z.string(), // e.g. "001"
+		title: z.string(),
+		pubDate: z.coerce.date(),
+		problem: z.string().optional(),
+		createdTool: z.string().optional(),
+		result: z.string().optional(),
+		categories: z.array(z.string()).optional(),
+	}),
 });
 
-export const collections = { blog };
+const tools = defineCollection({
+	loader: glob({ base: './src/content/tools', pattern: '**/*.{md,mdx}' }),
+	schema: z.object({
+		title: z.string(),
+		description: z.string(),
+		icon: z.string(), // Material Symbol name, e.g. "description"
+		isFree: z.boolean().default(true),
+		categories: z.array(z.string()).optional(),
+		order: z.number().default(0), // For sorting tools
+	}),
+});
+
+export const collections = { logs, tools };

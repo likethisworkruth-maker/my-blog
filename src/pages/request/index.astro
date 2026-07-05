@@ -1,159 +1,93 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+import Layout from '../../layouts/Layout.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 ---
 
-<!doctype html>
-<html lang="ja">
-	<head>
-		<BaseHead title={`リクエスト | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
-		<style>
-			.page-header {
-				padding: 1rem 1.5rem;
-				text-align: center;
-			}
-			.page-title {
-				font-size: 1.2rem;
-				font-weight: 700;
-				margin-bottom: 0.5rem;
-			}
-			
-			.form-container {
-				padding: 0 1.5rem 1rem;
-			}
-			
-			.intro-text {
-				font-size: 1.05rem;
-				font-weight: 700;
-				color: var(--text-heading);
-				margin-bottom: 0.5rem;
-			}
-			.intro-desc {
-				font-size: 0.85rem;
-				color: var(--text-muted);
-				line-height: 1.6;
-				margin-bottom: 1.5rem;
-			}
-			
-			.form-group {
-				margin-bottom: 1.5rem;
-			}
-			.form-label {
-				display: block;
-				font-size: 0.9rem;
-				font-weight: 600;
-				color: var(--text-heading);
-				margin-bottom: 0.5rem;
-			}
-			.form-control {
-				width: 100%;
-				padding: 0.75rem 1rem;
-				border: 1px solid var(--border-light);
-				border-radius: var(--radius-sm);
-				font-size: 0.9rem;
-				font-family: inherit;
-				background-color: var(--bg-card);
-				color: var(--text-main);
-				box-sizing: border-box;
-			}
-			.form-control::placeholder {
-				color: #9CA3AF;
-			}
-			.form-control:focus {
-				outline: none;
-				border-color: var(--accent-mint);
-				box-shadow: 0 0 0 2px var(--bg-mint-light);
-			}
-			textarea.form-control {
-				resize: vertical;
-				min-height: 100px;
-			}
-			
-			.chips-grid {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 0.5rem;
-			}
-			
-			.warning-card {
-				background-color: #FFF9E6; /* 薄いイエロー背景 */
-				border: 1px solid #FDE68A;
-				display: flex;
-				align-items: flex-start;
-				gap: 1rem;
-				margin-top: 2rem;
-			}
-			.warning-icon {
-				color: #D97706; /* オレンジ系 */
-				font-size: 1.5rem;
-			}
-			.warning-content h4 {
-				font-size: 0.9rem;
-				color: #92400E;
-				margin-bottom: 0.25rem;
-			}
-			.warning-content p {
-				font-size: 0.8rem;
-				color: #92400E;
-				margin: 0;
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<div class="page-header">
-				<h2 class="page-title">リクエスト</h2>
+<Layout title={`リクエスト | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+	<div class="px-6 py-8 lg:py-16 max-w-5xl mx-auto">
+		
+		<!-- Hero Section -->
+		<div class="flex flex-col lg:flex-row gap-12 items-center mb-12 lg:mb-16">
+			<div class="flex-1">
+				<span class="inline-block bg-mint-50 text-mint-500 font-bold text-sm px-3 py-1 rounded-full mb-4">リクエスト</span>
+				<h1 class="text-[1.5rem] lg:text-[2.25rem] font-bold leading-tight mb-4 text-navy-900">
+					あなたの困りごとや<br/>アイデアを集めています。
+				</h1>
+				<p class="text-[0.9rem] lg:text-base text-gray-500 leading-relaxed max-w-lg">
+					個別の育児相談にお答えする場ではありません。<br/>
+					家庭での『困りごと』や『こうだったら助かる！』というアイデアを集めて、今後の実験やツールづくりのヒントにしていきます。
+				</p>
 			</div>
+			<!-- Right Illustration Placeholder -->
+			<div class="hidden lg:flex w-72 h-56 bg-mint-50/50 rounded-2xl items-center justify-center shrink-0 border border-mint-100">
+				<span class="material-symbols-outlined text-mint-200 text-6xl">coffee</span>
+			</div>
+		</div>
+		
+		<!-- Form Card -->
+		<div class="bg-white border border-gray-200 rounded-3xl p-6 lg:p-12 shadow-sm mb-12">
+			<h2 class="text-[1.25rem] font-bold text-navy-900 mb-8 border-b border-gray-100 pb-4">リクエストを送る</h2>
 			
-			<div class="form-container">
-				<h3 class="intro-text">困りごとやアイデアを集めています</h3>
-				<p class="intro-desc">「こんな道具がほしい」「ここが不便」など、<br/>あなたの声が次の実験のきっかけになります。</p>
+			<div class="flex flex-col gap-8 mb-8">
+				<!-- Mockup Fields -->
+				<div>
+					<label class="block text-[0.95rem] font-bold text-navy-900 mb-2">どんなことで困っていますか？</label>
+					<textarea class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 focus:outline-none focus:border-mint-500 min-h-[100px]" placeholder="例：夜中の授乳で寝不足がつらい、夫婦で予定が共有しづらい など"></textarea>
+				</div>
 				
-				<form action="#" method="POST" onsubmit="event.preventDefault();">
-					<div class="form-group">
-						<label class="form-label" for="problem">どんなことで困っていますか？</label>
-						<textarea id="problem" class="form-control" placeholder="できるだけ具体的に教えてください"></textarea>
-					</div>
-					
-					<div class="form-group">
-						<label class="form-label">カテゴリ（複数選択できます）</label>
-						<div class="chips-grid">
-							<button type="button" class="chip">育児記録</button>
-							<button type="button" class="chip">夫婦共有</button>
-							<button type="button" class="chip">予定・健診</button>
-							<button type="button" class="chip">外出準備</button>
-							<button type="button" class="chip">離乳食</button>
-							<button type="button" class="chip">保育園準備</button>
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label class="form-label" for="current_method">今使っている方法（任意）</label>
-						<input type="text" id="current_method" class="form-control" placeholder="例）メモ帳に書いている、アプリを使っている など" />
-					</div>
-					
-					<div class="form-group">
-						<label class="form-label" for="comment">ひとこと（任意）</label>
-						<input type="text" id="comment" class="form-control" placeholder="ご自由にどうぞ" />
-					</div>
-					
-					<button type="submit" class="btn-primary mt-4">
-						リクエストを送る <span class="material-symbols-outlined" style="font-size: 1.25rem;">send</span>
-					</button>
-				</form>
-				
-				<div class="card warning-card">
-					<span class="material-symbols-outlined warning-icon">shield</span>
-					<div class="warning-content">
-						<h4>個別相談には回答しません</h4>
-						<p>医療・発達の相談は専門家へご相談ください。</p>
+				<div>
+					<label class="block text-[0.95rem] font-bold text-navy-900 mb-2">カテゴリ</label>
+					<div class="flex flex-wrap gap-2">
+						<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 text-[0.85rem] font-medium hover:bg-gray-50 flex items-center gap-1"><span class="material-symbols-outlined text-[1rem] text-mint-500">menu_book</span>育児記録</button>
+						<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 text-[0.85rem] font-medium hover:bg-gray-50 flex items-center gap-1"><span class="material-symbols-outlined text-[1rem] text-mint-500">group</span>夫婦共有</button>
+						<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 text-[0.85rem] font-medium hover:bg-gray-50 flex items-center gap-1"><span class="material-symbols-outlined text-[1rem] text-mint-500">calendar_today</span>予定・健診</button>
+						<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 text-[0.85rem] font-medium hover:bg-gray-50 flex items-center gap-1"><span class="material-symbols-outlined text-[1rem] text-mint-500">shopping_bag</span>外出準備</button>
+						<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 text-[0.85rem] font-medium hover:bg-gray-50 flex items-center gap-1"><span class="material-symbols-outlined text-[1rem] text-mint-500">restaurant</span>離乳食</button>
+						<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 text-[0.85rem] font-medium hover:bg-gray-50 flex items-center gap-1"><span class="material-symbols-outlined text-[1rem] text-mint-500">home_work</span>保育園準備</button>
 					</div>
 				</div>
+				
+				<div>
+					<label class="block text-[0.95rem] font-bold text-navy-900 mb-2">いま使っている方法 <span class="text-gray-400 font-normal text-[0.8rem] ml-1">(任意)</span></label>
+					<input type="text" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 focus:outline-none focus:border-mint-500" placeholder="例：メモアプリに書いている、紙のノートを使っている など" />
+				</div>
+				
+				<div>
+					<label class="block text-[0.95rem] font-bold text-navy-900 mb-2">ひとこと <span class="text-gray-400 font-normal text-[0.8rem] ml-1">(任意)</span></label>
+					<input type="text" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 focus:outline-none focus:border-mint-500" placeholder="その他、感じていることがあれば自由にどうぞ" />
+				</div>
 			</div>
-		</main>
-		<Footer />
-	</body>
-</html>
+			
+			<div class="bg-gray-50 rounded-xl p-8 text-center mb-8">
+				<p class="text-[0.9rem] text-gray-600 mb-4">現在、リクエスト機能は準備中です。noteで受け付けています。</p>
+				<a href="https://note.com/alert_weasel3202/n/neb8d7e0c7356" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 w-full lg:w-auto min-w-[300px] bg-mint-500 hover:bg-mint-600 text-white py-4 px-8 rounded-full font-bold transition-colors">
+					noteでリクエストを送る <span class="material-symbols-outlined text-[1.1rem]">open_in_new</span>
+				</a>
+			</div>
+			
+			<div class="flex items-center justify-center gap-2 text-[0.8rem] text-gray-500">
+				<span class="material-symbols-outlined text-[1.1rem] text-mint-500">lock</span>
+				送信いただいた内容は、一般公開されることはありません。運営者が確認し、今後の実験やツールづくりの参考にします。
+			</div>
+		</div>
+		
+		<!-- Notice Cards -->
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			<div class="bg-orange-50 border border-orange-100 rounded-2xl p-6 flex items-start gap-4">
+				<span class="material-symbols-outlined text-orange-400 text-2xl shrink-0">shield</span>
+				<div>
+					<h4 class="text-[0.9rem] text-orange-900 font-bold mb-1">個別相談には回答しません</h4>
+					<p class="text-[0.8rem] text-orange-800 m-0 leading-relaxed">いただいた内容に個別でお返事することはできません。あらかじめご了承ください。</p>
+				</div>
+			</div>
+			<div class="bg-orange-50 border border-orange-100 rounded-2xl p-6 flex items-start gap-4">
+				<span class="material-symbols-outlined text-orange-400 text-2xl shrink-0">shield</span>
+				<div>
+					<h4 class="text-[0.9rem] text-orange-900 font-bold mb-1">医療・発達の相談は専門家へ</h4>
+					<p class="text-[0.8rem] text-orange-800 m-0 leading-relaxed">体調や発達に関するご心配は、医療機関や専門家にご相談ください。</p>
+				</div>
+			</div>
+		</div>
+		
+	</div>
+</Layout>

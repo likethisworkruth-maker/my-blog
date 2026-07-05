@@ -1,251 +1,140 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+
+const logs = await getCollection('logs');
+logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
+const recentLogs = logs.slice(0, 3); // Changed to 3 rows as requested
+
+const tools = await getCollection('tools');
+tools.sort((a, b) => a.data.order - b.data.order);
+const firstTools = tools.slice(0, 4);
 ---
 
-<!doctype html>
-<html lang="ja">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			.hero {
-				padding: 2rem 1.5rem 1rem;
-			}
-			.hero-title {
-				font-size: 1.75rem;
-				line-height: 1.4;
-				font-weight: 700;
-				margin-bottom: 1rem;
-				color: var(--text-heading);
-			}
-			.hero-desc {
-				font-size: 0.85rem;
-				color: var(--text-muted);
-				margin-bottom: 2rem;
-				line-height: 1.6;
-			}
-			.hero-buttons {
-				display: flex;
-				gap: 1rem;
-			}
-			
-			/* 今週の実験 */
-			.section-container {
-				padding: 1.5rem;
-			}
-			.section-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin-bottom: 1rem;
-			}
-			.section-title {
-				font-size: 1.1rem;
-				font-weight: 700;
-			}
-			.link-see-all {
-				font-size: 0.8rem;
-				color: var(--accent-mint);
-				display: flex;
-				align-items: center;
-				gap: 0.25rem;
-			}
-			
-			.exp-row {
-				display: flex;
-				gap: 1rem;
-				margin-bottom: 1rem;
-				align-items: flex-start;
-			}
-			.exp-row:last-child {
-				margin-bottom: 0;
-			}
-			.exp-icon {
-				color: var(--text-muted);
-				font-size: 1.25rem;
-				margin-top: 0.1rem;
-			}
-			.exp-label {
-				font-size: 0.8rem;
-				color: var(--text-muted);
-				width: 4rem;
-				flex-shrink: 0;
-			}
-			.exp-value {
-				font-size: 0.85rem;
-				font-weight: 500;
-				color: var(--text-heading);
-			}
-			
-			/* 無料ツールグリッド */
-			.tools-grid {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 1rem;
-			}
-			.tool-item {
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				text-align: center;
-				gap: 0.5rem;
-			}
-			.tool-icon-circle {
-				width: 56px;
-				height: 56px;
-				border-radius: 50%;
-				background-color: var(--bg-mint-light);
-				color: var(--accent-mint);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
-			.tool-icon-circle .material-symbols-outlined {
-				font-size: 1.75rem;
-			}
-			.tool-name {
-				font-size: 0.8rem;
-				font-weight: 600;
-				line-height: 1.3;
-			}
-			
-			/* 新着実験ログ */
-			.log-list {
-				display: flex;
-				flex-direction: column;
-			}
-			.log-item {
-				padding: 1rem 0;
-				border-bottom: 1px solid var(--border-light);
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-			}
-			.log-item:last-child {
-				border-bottom: none;
-			}
-			.log-content {
-				display: flex;
-				flex-direction: column;
-				gap: 0.25rem;
-			}
-			.log-num {
-				font-size: 0.65rem;
-				color: var(--text-muted);
-				font-weight: 600;
-			}
-			.log-title {
-				font-size: 0.9rem;
-				font-weight: 600;
-				line-height: 1.4;
-			}
-			.log-date {
-				font-size: 0.75rem;
-				color: var(--text-muted);
-			}
-			.log-arrow {
-				color: var(--text-muted);
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<section class="hero">
-				<h2 class="hero-title">育児の正解は語れない。<br/>だから、困ったことを<br/>小さな道具にして<br/>試してみる。</h2>
-				<p class="hero-desc">0歳育児の困りごとを、週5時間だけでテンプレ・メモ・小さなWebツールにして試す実験ログ。</p>
-				<div class="hero-buttons">
-					<a href="/logs" class="btn-primary">
-						実験ログを見る <span class="material-symbols-outlined" style="font-size: 1.1rem">chevron_right</span>
-					</a>
-					<a href="/tools" class="btn-outline">
-						無料ツールを見る <span class="material-symbols-outlined" style="font-size: 1.1rem">chevron_right</span>
-					</a>
+<Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+	
+	<!-- Hero Section -->
+	<section class="px-6 pt-8 pb-12 lg:pt-20 lg:pb-24 lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center">
+		<div>
+			<span class="hidden lg:inline-block bg-mint-50 text-mint-500 font-bold text-sm px-3 py-1 rounded-full mb-6">実験室</span>
+			<h2 class="text-[1.75rem] lg:text-[2.5rem] leading-tight font-bold mb-6 text-navy-900">
+				育児の正解は語れない。<br/>だから、困ったことを<br/>小さな道具にして試してみる。
+			</h2>
+			<p class="text-[0.85rem] lg:text-base text-gray-500 mb-8 leading-relaxed max-w-lg">
+				子どもはまだ0歳。初めての育児で困ったことを、週5時間だけ使ってテンプレ・メモ・小さなWebツールにしてみる実験ログです。
+			</p>
+			<div class="flex flex-col sm:flex-row gap-4">
+				<a href="/logs" class="inline-flex items-center justify-center gap-2 bg-mint-500 hover:bg-mint-600 text-white py-3 px-8 rounded-full text-sm font-semibold transition-colors">
+					実験ログを見る <span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+				</a>
+				<a href="/tools" class="inline-flex items-center justify-center gap-2 bg-white text-mint-500 border border-mint-500 hover:bg-mint-50 py-3 px-8 rounded-full text-sm font-semibold transition-colors">
+					無料ツールを見る <span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+				</a>
+			</div>
+		</div>
+		
+		<!-- Hero Illustration (Hidden on small mobile, visible on tablet/PC) -->
+		<div class="hidden sm:flex justify-center mt-12 lg:mt-0 relative">
+			<!-- Minimal mockup of illustration -->
+			<div class="absolute -z-10 w-64 h-64 bg-mint-50 rounded-full blur-3xl opacity-50"></div>
+			<div class="relative bg-white border border-gray-200 shadow-sm rounded-xl p-6 rotate-[-2deg] max-w-sm">
+				<div class="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+					<span class="material-symbols-outlined text-gray-400">edit_note</span>
+					<span class="font-bold text-gray-700">実験メモ</span>
 				</div>
-			</section>
+				<ul class="space-y-3 text-sm text-gray-500">
+					<li class="flex gap-2"><span class="material-symbols-outlined text-mint-500">check_box</span>夜間対応メモ作成</li>
+					<li class="flex gap-2"><span class="material-symbols-outlined text-gray-300">check_box_outline_blank</span>予防接種リスト</li>
+					<li class="flex gap-2"><span class="material-symbols-outlined text-gray-300">check_box_outline_blank</span>離乳食ストック</li>
+				</ul>
+			</div>
+		</div>
+	</section>
 
-			<section class="section-container">
-				<h3 class="section-title">今週の実験</h3>
-				<div class="card mt-2">
-					<div class="exp-row">
-						<span class="material-symbols-outlined exp-icon">description</span>
-						<span class="exp-label">困りごと</span>
-						<span class="exp-value">夜中のミルク対応を忘れてしまう</span>
+	<!-- 今週の実験 -->
+	<section class="px-6 py-6 lg:py-10">
+		<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold mb-4 lg:mb-6 text-navy-900">今週の実験</h3>
+		<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8">
+			{recentLogs.length > 0 && (
+				<div class="flex flex-col lg:flex-row gap-6 lg:gap-12">
+					<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
+						<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">help_outline</span>
+						<div>
+							<span class="block text-[0.8rem] text-gray-500 mb-1">困りごと</span>
+							<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.problem || '夜中のミルク対応を忘れてしまう'}</span>
+						</div>
 					</div>
-					<div class="exp-row">
-						<span class="material-symbols-outlined exp-icon">edit</span>
-						<span class="exp-label">作ったもの</span>
-						<span class="exp-value">夜間対応メモ</span>
+					<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
+						<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">edit</span>
+						<div>
+							<span class="block text-[0.8rem] text-gray-500 mb-1">作ったもの</span>
+							<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.createdTool || '夜間対応メモ'}</span>
+						</div>
 					</div>
-					<div class="exp-row">
-						<span class="material-symbols-outlined exp-icon">check_circle</span>
-						<span class="exp-label">結果</span>
-						<span class="exp-value">メモを見て思い出せる回数が増えた</span>
+					<div class="flex-1 flex gap-4 items-start">
+						<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">check_circle</span>
+						<div>
+							<span class="block text-[0.8rem] text-gray-500 mb-1">結果</span>
+							<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.result || 'メモを見て思い出せる回数が増えた'}</span>
+						</div>
 					</div>
 				</div>
-			</section>
+			)}
+		</div>
+	</section>
 
-			<section class="section-container">
-				<div class="section-header">
-					<h3 class="section-title">無料で使える小さな道具</h3>
-					<a href="/tools" class="link-see-all">すべて見る <span class="material-symbols-outlined" style="font-size: 1rem">chevron_right</span></a>
-				</div>
-				<div class="tools-grid mt-2">
-					<a href="/tools/1" class="tool-item">
-						<div class="tool-icon-circle">
-							<span class="material-symbols-outlined">baby_changing_station</span>
-						</div>
-						<span class="tool-name">授乳・ミルク・<br/>睡眠メモ</span>
-					</a>
-					<a href="/tools/2" class="tool-item">
-						<div class="tool-icon-circle">
-							<span class="material-symbols-outlined">description</span>
-						</div>
-						<span class="tool-name">夜間対応<br/>メモ</span>
-					</a>
-					<a href="/tools/3" class="tool-item">
-						<div class="tool-icon-circle">
-							<span class="material-symbols-outlined">group</span>
-						</div>
-						<span class="tool-name">夫婦共有<br/>ログ</span>
-					</a>
-					<a href="/tools/4" class="tool-item">
-						<div class="tool-icon-circle">
-							<span class="material-symbols-outlined">medical_services</span>
-						</div>
-						<span class="tool-name">予防接種<br/>チェック表</span>
-					</a>
-				</div>
-			</section>
+	<!-- 無料で使える小さな道具 -->
+	<section class="px-6 py-6 lg:py-10">
+		<div class="flex justify-between items-center mb-4 lg:mb-6">
+			<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">無料で使える小さな道具</h3>
+		</div>
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+			{firstTools.map((tool) => (
+				<a href={`/tools/${tool.id}/`} class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow group relative">
+					<div class="w-14 h-14 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+						<span class="material-symbols-outlined text-[1.75rem]">{tool.data.icon}</span>
+					</div>
+					<h4 class="text-[0.95rem] font-bold mb-2 text-navy-900">{tool.data.title}</h4>
+					<p class="text-[0.8rem] text-gray-500 leading-relaxed mb-4" set:html={tool.data.description.replace('。', '。<br/>')} />
+					<div class="mt-auto flex justify-end">
+						<span class="bg-mint-50 text-mint-500 font-bold text-[0.65rem] px-2 py-0.5 rounded">無料</span>
+					</div>
+				</a>
+			))}
+		</div>
+	</section>
 
-			<section class="section-container">
-				<div class="section-header">
-					<h3 class="section-title">新着実験ログ</h3>
-					<a href="/logs" class="link-see-all">すべて見る <span class="material-symbols-outlined" style="font-size: 1rem">chevron_right</span></a>
-				</div>
-				<div class="log-list mt-2">
-					<a href="/logs/1" class="log-item">
-						<div class="log-content">
-							<span class="log-num">#001</span>
-							<span class="log-title">夜中のミルク対応、朝になると記憶があいまい</span>
-							<span class="log-date">2024/05/12</span>
-						</div>
-						<span class="material-symbols-outlined log-arrow">chevron_right</span>
-					</a>
-					<a href="/logs/2" class="log-item">
-						<div class="log-content">
-							<span class="log-num">#002</span>
-							<span class="log-title">予防接種の予定が頭に入らない問題</span>
-							<span class="log-date">2024/05/10</span>
-						</div>
-						<span class="material-symbols-outlined log-arrow">chevron_right</span>
-					</a>
-				</div>
-			</section>
+	<!-- 新着実験ログ -->
+	<section class="px-6 py-6 lg:py-10">
+		<div class="flex justify-between items-center mb-4 lg:mb-6">
+			<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">新着実験ログ</h3>
+		</div>
+		<div class="flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+			{recentLogs.map((log, index) => (
+				<a href={`/logs/${log.id}/`} class={`flex justify-between items-center p-4 lg:p-6 hover:bg-gray-50 transition-colors ${index !== recentLogs.length - 1 ? 'border-b border-gray-100' : ''}`}>
+					<div class="flex items-center gap-4 lg:gap-8">
+						<span class="text-[0.75rem] text-mint-500 font-bold px-2 py-1 bg-mint-50 rounded w-12 text-center shrink-0">#{log.data.logNumber}</span>
+						<span class="text-[0.95rem] lg:text-base font-bold text-navy-900">{log.data.title}</span>
+					</div>
+					<div class="flex items-center gap-6">
+						<span class="hidden sm:inline-block text-[0.85rem] text-gray-400">{log.data.pubDate.toLocaleDateString('ja-JP')}</span>
+						<span class="material-symbols-outlined text-gray-400">arrow_forward</span>
+					</div>
+				</a>
+			))}
+		</div>
+	</section>
 
-		</main>
-		<Footer />
-	</body>
-</html>
+	<!-- 免責カード -->
+	<section class="px-6 py-10 lg:py-16">
+		<div class="bg-orange-50 border border-orange-100 rounded-2xl p-6 flex gap-4 items-start">
+			<span class="material-symbols-outlined text-orange-400 text-2xl shrink-0">shield</span>
+			<div>
+				<p class="text-sm font-bold text-orange-900 mb-1">このサイトは育児ノウハウ・医療・発達アドバイスを提供するものではありません。</p>
+				<p class="text-xs text-orange-800">うちの家庭で試した記録を共有しています。</p>
+			</div>
+		</div>
+	</section>
+
+</Layout>

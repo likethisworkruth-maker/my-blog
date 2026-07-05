@@ -1,171 +1,73 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+
+const tools = await getCollection('tools');
+tools.sort((a, b) => a.data.order - b.data.order);
 ---
 
-<!doctype html>
-<html lang="ja">
-	<head>
-		<BaseHead title={`無料ツール | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
-		<style>
-			.page-header {
-				padding: 1rem 1.5rem;
-				text-align: center;
-			}
-			.page-title {
-				font-size: 1.2rem;
-				font-weight: 700;
-				margin-bottom: 0.5rem;
-			}
-			.page-desc {
-				font-size: 0.85rem;
-				color: var(--text-muted);
-			}
-			
-			.chips-container {
-				display: flex;
-				gap: 0.5rem;
-				overflow-x: auto;
-				padding: 0 1.5rem 1rem;
-			}
-			.chips-container::-webkit-scrollbar {
-				display: none;
-			}
-			
-			.tool-list-container {
-				padding: 0 1.5rem 1rem;
-				display: flex;
-				flex-direction: column;
-				gap: 1rem;
-			}
-			
-			.tool-card {
-				display: flex;
-				align-items: center;
-				gap: 1rem;
-				color: inherit;
-				text-decoration: none;
-				position: relative;
-				padding: 1.25rem 1rem;
-				transition: background-color 0.2s;
-			}
-			.tool-card:hover {
-				background-color: var(--bg-section);
-			}
-			
-			.tool-icon-circle {
-				width: 48px;
-				height: 48px;
-				border-radius: 50%;
-				background-color: var(--bg-mint-light);
-				color: var(--accent-mint);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				flex-shrink: 0;
-			}
-			.tool-icon-circle .material-symbols-outlined {
-				font-size: 1.5rem;
-			}
-			
-			.tool-info {
-				flex-grow: 1;
-				padding-right: 1.5rem; /* for arrow and badge */
-			}
-			.tool-title {
-				font-size: 1rem;
-				font-weight: 600;
-				color: var(--text-heading);
-				margin-bottom: 0.25rem;
-			}
-			.tool-desc {
-				font-size: 0.8rem;
-				color: var(--text-muted);
-				line-height: 1.4;
-			}
-			
-			.tool-badge {
-				position: absolute;
-				top: 1.25rem;
-				right: 1rem;
-			}
-			
-			.arrow-right {
-				position: absolute;
-				right: 1rem;
-				bottom: 1.25rem;
-				color: var(--text-muted);
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<div class="page-header">
-				<h2 class="page-title">無料ツール</h2>
-				<p class="page-desc">すぐに使える、シンプルでやさしい道具を集めました。</p>
+<Layout title={`無料ツール | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+	
+	<div class="px-6 py-8 lg:py-12">
+		<!-- Header -->
+		<div class="mb-8">
+			<div class="text-[0.85rem] text-gray-400 mb-4 hidden lg:block">ホーム &gt; <span class="text-mint-500 font-bold">無料ツール</span></div>
+			<h2 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-2">無料ツール</h2>
+			<p class="text-[0.85rem] lg:text-base text-gray-500">うちで試した小さなメモ・テンプレ・Webツール</p>
+		</div>
+		
+		<!-- Hero Card -->
+		<div class="bg-orange-50/50 rounded-2xl border border-orange-100 p-8 lg:p-12 mb-8 flex flex-col lg:flex-row items-center gap-8">
+			<div class="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left gap-4">
+				<div class="w-16 h-16 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center shrink-0">
+					<span class="material-symbols-outlined text-[2rem]">build</span>
+				</div>
+				<div>
+					<h3 class="text-[1.25rem] lg:text-[1.5rem] font-bold text-navy-900 mb-2">無料ツール一覧</h3>
+					<p class="text-[0.9rem] lg:text-base text-gray-600 leading-relaxed max-w-sm">育児や夫婦の協力体制づくりに役立つツールを、すべて無料で使えます。</p>
+				</div>
 			</div>
-			
-			<div class="chips-container">
-				<button class="chip active">すべて</button>
-				<button class="chip">メモ</button>
-				<button class="chip">テンプレ</button>
-				<button class="chip">Webツール</button>
-				<button class="chip">0歳育児</button>
+			<!-- Right Illustration Placeholder -->
+			<div class="hidden lg:flex w-64 h-48 bg-white border border-gray-100 shadow-sm rounded-xl items-center justify-center rotate-3">
+				<span class="material-symbols-outlined text-gray-300 text-6xl">checklist</span>
 			</div>
-			
-			<div class="tool-list-container">
-				<a href="/tools/1" class="card tool-card">
-					<div class="tool-icon-circle">
-						<span class="material-symbols-outlined">description</span>
+		</div>
+		
+		<!-- Filters -->
+		<div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide mb-8">
+			<button class="px-5 py-2 rounded-full border border-mint-500 bg-mint-50 text-mint-500 text-sm font-bold whitespace-nowrap shrink-0">すべて</button>
+			<button class="px-5 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">メモ</button>
+			<button class="px-5 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">テンプレ</button>
+			<button class="px-5 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">Webツール</button>
+			<button class="px-5 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">0歳育児</button>
+		</div>
+		
+		<!-- Tool Grid -->
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+			{tools.map((tool) => (
+				<a href={`/tools/${tool.id}/`} class="flex flex-col sm:flex-row items-center gap-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8 hover:shadow-md transition-shadow relative group">
+					<div class="w-20 h-20 rounded-full bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 border border-orange-100">
+						<span class="material-symbols-outlined text-4xl">{tool.data.icon}</span>
 					</div>
-					<div class="tool-info">
-						<h3 class="tool-title">夜間対応メモ</h3>
-						<p class="tool-desc">夜中の対応をサッと記録。<br/>朝に振り返りやすくなります。</p>
+					<div class="flex-grow pr-12 text-center sm:text-left">
+						<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold mb-2 text-navy-900">{tool.data.title}</h3>
+						<p class="text-[0.85rem] lg:text-sm text-gray-500 leading-relaxed" set:html={tool.data.description.replace('。', '。<br/>')} />
 					</div>
-					<span class="badge tool-badge">無料</span>
-					<span class="material-symbols-outlined arrow-right">chevron_right</span>
+					{tool.data.isFree && <span class="absolute top-6 right-6 bg-mint-50 text-mint-500 font-bold text-[0.7rem] px-3 py-1 rounded-full">無料</span>}
+					<span class="material-symbols-outlined absolute right-6 bottom-1/2 translate-y-1/2 text-gray-300 group-hover:text-mint-500 transition-colors hidden sm:block">arrow_forward_ios</span>
 				</a>
+			))}
+		</div>
+	</div>
+</Layout>
 
-				<a href="/tools/2" class="card tool-card">
-					<div class="tool-icon-circle">
-						<span class="material-symbols-outlined">group</span>
-					</div>
-					<div class="tool-info">
-						<h3 class="tool-title">夫婦共有ログ</h3>
-						<p class="tool-desc">夫婦で育児の状況やタスクを共有。<br/>すれ違いを減らします。</p>
-					</div>
-					<span class="badge tool-badge">無料</span>
-					<span class="material-symbols-outlined arrow-right">chevron_right</span>
-				</a>
-
-				<a href="/tools/3" class="card tool-card">
-					<div class="tool-icon-circle">
-						<span class="material-symbols-outlined">medical_services</span>
-					</div>
-					<div class="tool-info">
-						<h3 class="tool-title">病院持ち物メモ</h3>
-						<p class="tool-desc">受診や健診の持ち物チェックリスト。<br/>忘れ物を防げます。</p>
-					</div>
-					<span class="badge tool-badge">無料</span>
-					<span class="material-symbols-outlined arrow-right">chevron_right</span>
-				</a>
-
-				<a href="/tools/4" class="card tool-card">
-					<div class="tool-icon-circle">
-						<span class="material-symbols-outlined">soup_kitchen</span>
-					</div>
-					<div class="tool-info">
-						<h3 class="tool-title">離乳食ストック管理表</h3>
-						<p class="tool-desc">食材のストックと消費期限を管理。<br/>ムダなく、安心して使えます。</p>
-					</div>
-					<span class="badge tool-badge">無料</span>
-					<span class="material-symbols-outlined arrow-right">chevron_right</span>
-				</a>
-			</div>
-		</main>
-		<Footer />
-	</body>
-</html>
+<style>
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;
+	}
+	.scrollbar-hide {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+</style>
