@@ -1,0 +1,192 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+---
+
+<!doctype html>
+<html lang="ja">
+	<head>
+		<BaseHead title={`実験ログ | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<style>
+			.page-header {
+				padding: 1rem 1.5rem;
+				text-align: center;
+			}
+			.page-title {
+				font-size: 1.2rem;
+				font-weight: 700;
+			}
+			
+			.chips-container {
+				display: flex;
+				gap: 0.5rem;
+				overflow-x: auto;
+				padding: 0 1.5rem 1rem;
+			}
+			.chips-container::-webkit-scrollbar {
+				display: none;
+			}
+			
+			.log-list-container {
+				padding: 0 1.5rem 1rem;
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+			}
+			
+			.log-card {
+				display: block;
+				color: inherit;
+				text-decoration: none;
+				position: relative;
+			}
+			.log-card:hover {
+				background-color: var(--bg-section);
+			}
+			
+			.log-header {
+				display: flex;
+				gap: 0.5rem;
+				align-items: flex-start;
+				margin-bottom: 1rem;
+			}
+			.log-badge {
+				background-color: var(--bg-mint-light);
+				color: var(--accent-mint);
+				font-weight: 700;
+				font-size: 0.75rem;
+				padding: 0.1rem 0.4rem;
+				border-radius: 4px;
+				flex-shrink: 0;
+			}
+			.log-title {
+				font-size: 0.95rem;
+				font-weight: 600;
+				line-height: 1.4;
+				color: var(--text-heading);
+			}
+			
+			.log-meta-row {
+				display: flex;
+				align-items: flex-start;
+				gap: 0.5rem;
+				margin-bottom: 0.5rem;
+				font-size: 0.8rem;
+			}
+			.log-meta-row:last-child {
+				margin-bottom: 0;
+			}
+			.log-meta-icon {
+				color: var(--text-muted);
+				font-size: 1.1rem;
+				margin-top: 0.1rem;
+			}
+			.log-meta-label {
+				color: var(--text-muted);
+				min-width: 4rem;
+			}
+			.log-meta-value {
+				color: var(--text-heading);
+				font-weight: 500;
+			}
+			
+			.arrow-right {
+				position: absolute;
+				right: 1rem;
+				top: 50%;
+				transform: translateY(-50%);
+				color: var(--text-muted);
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="page-header">
+				<h2 class="page-title">実験ログ</h2>
+			</div>
+			
+			<div class="chips-container">
+				<button class="chip active">すべて</button>
+				<button class="chip">育児記録</button>
+				<button class="chip">夫婦共有</button>
+				<button class="chip">予定・健診</button>
+				<button class="chip">離乳食</button>
+			</div>
+			
+			<div class="log-list-container">
+				<a href="/logs/1" class="card log-card">
+					<div class="log-header">
+						<span class="log-badge">#001</span>
+						<h3 class="log-title">夜中のミルク対応、<br/>朝になると記憶があいまい</h3>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">edit</span>
+						<span class="log-meta-label">作ったもの</span>
+						<span class="log-meta-value">夜間対応メモ</span>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">check_circle</span>
+						<span class="log-meta-label">結果</span>
+						<span class="log-meta-value">メモを見て思い出せる回数が増えた</span>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">calendar_today</span>
+						<span class="log-meta-label">日付</span>
+						<span class="log-meta-value">2024/05/12</span>
+					</div>
+					<span class="material-symbols-outlined arrow-right">chevron_right</span>
+				</a>
+
+				<a href="/logs/2" class="card log-card">
+					<div class="log-header">
+						<span class="log-badge">#002</span>
+						<h3 class="log-title">予防接種の予定が<br/>頭に入らない問題</h3>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">edit</span>
+						<span class="log-meta-label">作ったもの</span>
+						<span class="log-meta-value">予防接種チェック表</span>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">check_circle</span>
+						<span class="log-meta-label">結果</span>
+						<span class="log-meta-value">予定の抜け漏れがなくなった</span>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">calendar_today</span>
+						<span class="log-meta-label">日付</span>
+						<span class="log-meta-value">2024/05/10</span>
+					</div>
+					<span class="material-symbols-outlined arrow-right">chevron_right</span>
+				</a>
+
+				<a href="/logs/3" class="card log-card">
+					<div class="log-header">
+						<span class="log-badge">#003</span>
+						<h3 class="log-title">授乳・ミルクの量や間隔を<br/>振り返るのが大変</h3>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">edit</span>
+						<span class="log-meta-label">作ったもの</span>
+						<span class="log-meta-value">授乳・ミルク・睡眠メモ</span>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">check_circle</span>
+						<span class="log-meta-label">結果</span>
+						<span class="log-meta-value">1日の流れを把握しやすくなった</span>
+					</div>
+					<div class="log-meta-row">
+						<span class="material-symbols-outlined log-meta-icon">calendar_today</span>
+						<span class="log-meta-label">日付</span>
+						<span class="log-meta-value">2024/05/08</span>
+					</div>
+					<span class="material-symbols-outlined arrow-right">chevron_right</span>
+				</a>
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>

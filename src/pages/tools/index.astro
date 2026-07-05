@@ -1,0 +1,171 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+---
+
+<!doctype html>
+<html lang="ja">
+	<head>
+		<BaseHead title={`無料ツール | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<style>
+			.page-header {
+				padding: 1rem 1.5rem;
+				text-align: center;
+			}
+			.page-title {
+				font-size: 1.2rem;
+				font-weight: 700;
+				margin-bottom: 0.5rem;
+			}
+			.page-desc {
+				font-size: 0.85rem;
+				color: var(--text-muted);
+			}
+			
+			.chips-container {
+				display: flex;
+				gap: 0.5rem;
+				overflow-x: auto;
+				padding: 0 1.5rem 1rem;
+			}
+			.chips-container::-webkit-scrollbar {
+				display: none;
+			}
+			
+			.tool-list-container {
+				padding: 0 1.5rem 1rem;
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+			}
+			
+			.tool-card {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+				color: inherit;
+				text-decoration: none;
+				position: relative;
+				padding: 1.25rem 1rem;
+				transition: background-color 0.2s;
+			}
+			.tool-card:hover {
+				background-color: var(--bg-section);
+			}
+			
+			.tool-icon-circle {
+				width: 48px;
+				height: 48px;
+				border-radius: 50%;
+				background-color: var(--bg-mint-light);
+				color: var(--accent-mint);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+			}
+			.tool-icon-circle .material-symbols-outlined {
+				font-size: 1.5rem;
+			}
+			
+			.tool-info {
+				flex-grow: 1;
+				padding-right: 1.5rem; /* for arrow and badge */
+			}
+			.tool-title {
+				font-size: 1rem;
+				font-weight: 600;
+				color: var(--text-heading);
+				margin-bottom: 0.25rem;
+			}
+			.tool-desc {
+				font-size: 0.8rem;
+				color: var(--text-muted);
+				line-height: 1.4;
+			}
+			
+			.tool-badge {
+				position: absolute;
+				top: 1.25rem;
+				right: 1rem;
+			}
+			
+			.arrow-right {
+				position: absolute;
+				right: 1rem;
+				bottom: 1.25rem;
+				color: var(--text-muted);
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="page-header">
+				<h2 class="page-title">無料ツール</h2>
+				<p class="page-desc">すぐに使える、シンプルでやさしい道具を集めました。</p>
+			</div>
+			
+			<div class="chips-container">
+				<button class="chip active">すべて</button>
+				<button class="chip">メモ</button>
+				<button class="chip">テンプレ</button>
+				<button class="chip">Webツール</button>
+				<button class="chip">0歳育児</button>
+			</div>
+			
+			<div class="tool-list-container">
+				<a href="/tools/1" class="card tool-card">
+					<div class="tool-icon-circle">
+						<span class="material-symbols-outlined">description</span>
+					</div>
+					<div class="tool-info">
+						<h3 class="tool-title">夜間対応メモ</h3>
+						<p class="tool-desc">夜中の対応をサッと記録。<br/>朝に振り返りやすくなります。</p>
+					</div>
+					<span class="badge tool-badge">無料</span>
+					<span class="material-symbols-outlined arrow-right">chevron_right</span>
+				</a>
+
+				<a href="/tools/2" class="card tool-card">
+					<div class="tool-icon-circle">
+						<span class="material-symbols-outlined">group</span>
+					</div>
+					<div class="tool-info">
+						<h3 class="tool-title">夫婦共有ログ</h3>
+						<p class="tool-desc">夫婦で育児の状況やタスクを共有。<br/>すれ違いを減らします。</p>
+					</div>
+					<span class="badge tool-badge">無料</span>
+					<span class="material-symbols-outlined arrow-right">chevron_right</span>
+				</a>
+
+				<a href="/tools/3" class="card tool-card">
+					<div class="tool-icon-circle">
+						<span class="material-symbols-outlined">medical_services</span>
+					</div>
+					<div class="tool-info">
+						<h3 class="tool-title">病院持ち物メモ</h3>
+						<p class="tool-desc">受診や健診の持ち物チェックリスト。<br/>忘れ物を防げます。</p>
+					</div>
+					<span class="badge tool-badge">無料</span>
+					<span class="material-symbols-outlined arrow-right">chevron_right</span>
+				</a>
+
+				<a href="/tools/4" class="card tool-card">
+					<div class="tool-icon-circle">
+						<span class="material-symbols-outlined">soup_kitchen</span>
+					</div>
+					<div class="tool-info">
+						<h3 class="tool-title">離乳食ストック管理表</h3>
+						<p class="tool-desc">食材のストックと消費期限を管理。<br/>ムダなく、安心して使えます。</p>
+					</div>
+					<span class="badge tool-badge">無料</span>
+					<span class="material-symbols-outlined arrow-right">chevron_right</span>
+				</a>
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>

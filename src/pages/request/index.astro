@@ -1,0 +1,159 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+---
+
+<!doctype html>
+<html lang="ja">
+	<head>
+		<BaseHead title={`リクエスト | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<style>
+			.page-header {
+				padding: 1rem 1.5rem;
+				text-align: center;
+			}
+			.page-title {
+				font-size: 1.2rem;
+				font-weight: 700;
+				margin-bottom: 0.5rem;
+			}
+			
+			.form-container {
+				padding: 0 1.5rem 1rem;
+			}
+			
+			.intro-text {
+				font-size: 1.05rem;
+				font-weight: 700;
+				color: var(--text-heading);
+				margin-bottom: 0.5rem;
+			}
+			.intro-desc {
+				font-size: 0.85rem;
+				color: var(--text-muted);
+				line-height: 1.6;
+				margin-bottom: 1.5rem;
+			}
+			
+			.form-group {
+				margin-bottom: 1.5rem;
+			}
+			.form-label {
+				display: block;
+				font-size: 0.9rem;
+				font-weight: 600;
+				color: var(--text-heading);
+				margin-bottom: 0.5rem;
+			}
+			.form-control {
+				width: 100%;
+				padding: 0.75rem 1rem;
+				border: 1px solid var(--border-light);
+				border-radius: var(--radius-sm);
+				font-size: 0.9rem;
+				font-family: inherit;
+				background-color: var(--bg-card);
+				color: var(--text-main);
+				box-sizing: border-box;
+			}
+			.form-control::placeholder {
+				color: #9CA3AF;
+			}
+			.form-control:focus {
+				outline: none;
+				border-color: var(--accent-mint);
+				box-shadow: 0 0 0 2px var(--bg-mint-light);
+			}
+			textarea.form-control {
+				resize: vertical;
+				min-height: 100px;
+			}
+			
+			.chips-grid {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+			}
+			
+			.warning-card {
+				background-color: #FFF9E6; /* 薄いイエロー背景 */
+				border: 1px solid #FDE68A;
+				display: flex;
+				align-items: flex-start;
+				gap: 1rem;
+				margin-top: 2rem;
+			}
+			.warning-icon {
+				color: #D97706; /* オレンジ系 */
+				font-size: 1.5rem;
+			}
+			.warning-content h4 {
+				font-size: 0.9rem;
+				color: #92400E;
+				margin-bottom: 0.25rem;
+			}
+			.warning-content p {
+				font-size: 0.8rem;
+				color: #92400E;
+				margin: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="page-header">
+				<h2 class="page-title">リクエスト</h2>
+			</div>
+			
+			<div class="form-container">
+				<h3 class="intro-text">困りごとやアイデアを集めています</h3>
+				<p class="intro-desc">「こんな道具がほしい」「ここが不便」など、<br/>あなたの声が次の実験のきっかけになります。</p>
+				
+				<form action="#" method="POST" onsubmit="event.preventDefault();">
+					<div class="form-group">
+						<label class="form-label" for="problem">どんなことで困っていますか？</label>
+						<textarea id="problem" class="form-control" placeholder="できるだけ具体的に教えてください"></textarea>
+					</div>
+					
+					<div class="form-group">
+						<label class="form-label">カテゴリ（複数選択できます）</label>
+						<div class="chips-grid">
+							<button type="button" class="chip">育児記録</button>
+							<button type="button" class="chip">夫婦共有</button>
+							<button type="button" class="chip">予定・健診</button>
+							<button type="button" class="chip">外出準備</button>
+							<button type="button" class="chip">離乳食</button>
+							<button type="button" class="chip">保育園準備</button>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="form-label" for="current_method">今使っている方法（任意）</label>
+						<input type="text" id="current_method" class="form-control" placeholder="例）メモ帳に書いている、アプリを使っている など" />
+					</div>
+					
+					<div class="form-group">
+						<label class="form-label" for="comment">ひとこと（任意）</label>
+						<input type="text" id="comment" class="form-control" placeholder="ご自由にどうぞ" />
+					</div>
+					
+					<button type="submit" class="btn-primary mt-4">
+						リクエストを送る <span class="material-symbols-outlined" style="font-size: 1.25rem;">send</span>
+					</button>
+				</form>
+				
+				<div class="card warning-card">
+					<span class="material-symbols-outlined warning-icon">shield</span>
+					<div class="warning-content">
+						<h4>個別相談には回答しません</h4>
+						<p>医療・発達の相談は専門家へご相談ください。</p>
+					</div>
+				</div>
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>
