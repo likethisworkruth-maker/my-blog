@@ -44,9 +44,14 @@ const firstTools = tools.slice(0, 4);
 					<span class="font-bold text-gray-700">実験メモ</span>
 				</div>
 				<ul class="space-y-3 text-sm text-gray-500">
-					<li class="flex gap-2"><span class="material-symbols-outlined text-mint-500">check_box</span>夜間対応メモ作成</li>
-					<li class="flex gap-2"><span class="material-symbols-outlined text-gray-300">check_box_outline_blank</span>予防接種リスト</li>
-					<li class="flex gap-2"><span class="material-symbols-outlined text-gray-300">check_box_outline_blank</span>離乳食ストック</li>
+					{firstTools.slice(0, 3).map((tool, index) => (
+						<li class="flex gap-2">
+							<span class={`material-symbols-outlined ${index === 0 ? 'text-mint-500' : 'text-gray-300'}`}>
+								{index === 0 ? 'check_box' : 'check_box_outline_blank'}
+							</span>
+							{tool.data.title}
+						</li>
+					))}
 				</ul>
 			</div>
 		</div>
@@ -58,27 +63,42 @@ const firstTools = tools.slice(0, 4);
 		<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8">
 			{recentLogs.length > 0 && (
 				<div class="flex flex-col lg:flex-row gap-6 lg:gap-12">
-					<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
-						<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">help_outline</span>
-						<div>
-							<span class="block text-[0.8rem] text-gray-500 mb-1">困りごと</span>
-							<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.problem || '夜中のミルク対応を忘れてしまう'}</span>
+					{recentLogs[0].data.problem && (
+						<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
+							<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">help_outline</span>
+							<div>
+								<span class="block text-[0.8rem] text-gray-500 mb-1">困りごと</span>
+								<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.problem}</span>
+							</div>
 						</div>
-					</div>
-					<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
-						<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">edit</span>
-						<div>
-							<span class="block text-[0.8rem] text-gray-500 mb-1">作ったもの</span>
-							<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.createdTool || '夜間対応メモ'}</span>
+					)}
+					{recentLogs[0].data.createdTool && (
+						<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
+							<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">edit</span>
+							<div>
+								<span class="block text-[0.8rem] text-gray-500 mb-1">作ったもの</span>
+								<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.createdTool}</span>
+							</div>
 						</div>
-					</div>
-					<div class="flex-1 flex gap-4 items-start">
-						<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">check_circle</span>
-						<div>
-							<span class="block text-[0.8rem] text-gray-500 mb-1">結果</span>
-							<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.result || 'メモを見て思い出せる回数が増えた'}</span>
+					)}
+					{recentLogs[0].data.result && (
+						<div class="flex-1 flex gap-4 items-start">
+							<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">check_circle</span>
+							<div>
+								<span class="block text-[0.8rem] text-gray-500 mb-1">結果</span>
+								<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.result}</span>
+							</div>
 						</div>
-					</div>
+					)}
+					{!recentLogs[0].data.problem && !recentLogs[0].data.createdTool && !recentLogs[0].data.result && (
+						<div class="flex-1 flex gap-4 items-start">
+							<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">article</span>
+							<div>
+								<span class="block text-[0.8rem] text-gray-500 mb-1">最新の記録</span>
+								<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.title}</span>
+							</div>
+						</div>
+					)}
 				</div>
 			)}
 		</div>

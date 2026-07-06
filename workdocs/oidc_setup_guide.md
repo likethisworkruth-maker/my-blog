@@ -81,3 +81,41 @@ GitHub Actionsが一時的に被るための「権限の帽子（ロール）」
 ---
 以上でOIDCの設定は完了です！
 この状態でGitHubにPush（またはGitHubのActionsタブから手動再実行）すると、アクセスキーを使わずに安全にS3へデプロイが行われます。
+
+---
+
+## ステップ 5：サブディレクトリ対策（CloudFront Functionsの設定）
+Astroのような静的サイトジェネレーター（SSG）では、`/logs/` にアクセスした際、実際にはS3の `logs/index.html` を読み込む必要があります。しかし、CloudFront + S3 (OAC) の構成では自動で `index.html` が補完されないため、403/404エラーとなり、結果的にトップページへフォールバックしてしまいます。
+これを防ぐため、CloudFront側でURLを自動補完する関数を設定します。
+
+1. [CloudFront Functionsコンソール](https://console.aws.amazon.com/cloudfront/v3/home?#/functions) を開く
+2. 「関数を作成」をクリック
+3. 関数名に `AppendIndexHtml` と入力し、作成をクリック
+4. 「関数コード」タブのエディタに以下のコードを貼り付け、変更を保存します：
+
+```javascript
+function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+    
+    // 末尾が / で終わる場合は index.html を付与
+    if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+    } 
+    // 拡張子が含まれていない場合は /index.html を付与
+    else if (!uri.includes('.')) {
+        request.uri += '/index.html';
+    }
+    
+    return request;
+}
+```
+
+5. 「発行 (Publish)」タブを開き、「関数を発行」ボタンをクリックします。
+6. 発行後、同じ画面下部の「関連付けを追加 (Add association)」をクリックします。
+7. 以下のように設定して関連付けます：
+   - ディストリビューション: ご自身のCloudFrontディストリビューションを選択
+   - イベントタイプ: **Viewer Request**
+   - キャッシュビヘイビア: `Default (*)`
+8. 「関連付けを追加」をクリックし、CloudFrontのデプロイが完了（数分かかります）すれば設定完了です！
+これにより、`/logs/` や `/tools/` がそれぞれの正しいHTMLを返すようになります。

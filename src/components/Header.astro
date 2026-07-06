@@ -13,10 +13,6 @@ const currentPath = pathname.slice(1);
 			{SITE_TITLE}
 		</a>
 
-		<!-- Mobile Search Icon (hidden on PC) -->
-		<button class="lg:hidden p-2 text-gray-500 hover:text-navy-900 transition-colors ml-auto" aria-label="Search" onclick="window.dispatchEvent(new Event('open-search'))">
-			<span class="material-symbols-outlined">search</span>
-		</button>
 
 		<!-- PC Navigation -->
 		<nav class="hidden lg:flex items-center gap-8">
@@ -34,9 +30,5 @@ const currentPath = pathname.slice(1);
 			</a>
 		</nav>
 
-		<!-- Search Icon (PC Only) -->
-		<button class="hidden lg:flex p-2 text-gray-500 hover:text-navy-900 transition-colors ml-4" aria-label="Search" onclick="window.dispatchEvent(new Event('open-search'))">
-			<span class="material-symbols-outlined">search</span>
-		</button>
 	</div>
 </header>

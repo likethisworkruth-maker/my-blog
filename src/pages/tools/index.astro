@@ -5,6 +5,9 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 
 const tools = await getCollection('tools');
 tools.sort((a, b) => a.data.order - b.data.order);
+
+const uniqueCategories = [...new Set(tools.flatMap(tool => tool.data.categories || []))];
+const displayCategories = uniqueCategories.length > 0 ? ['すべて', ...uniqueCategories] : ['すべて', 'メモ', 'テンプレ', 'Webツール', '0歳育児'];
 ---
 
 <Layout title={`無料ツール | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
@@ -35,18 +38,22 @@ tools.sort((a, b) => a.data.order - b.data.order);
 		</div>
 		
 		<!-- Filters -->
-		<div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide mb-8">
-			<button class="px-5 py-2 rounded-full border border-mint-500 bg-mint-50 text-mint-500 text-sm font-bold whitespace-nowrap shrink-0">すべて</button>
-			<button class="px-5 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">メモ</button>
-			<button class="px-5 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">テンプレ</button>
-			<button class="px-5 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">Webツール</button>
-			<button class="px-5 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">0歳育児</button>
+		<!-- Filters -->
+		<div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide mb-8" id="category-filters">
+			{displayCategories.map((category, index) => (
+				<button 
+					class={`category-btn px-5 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors ${index === 0 ? 'border-mint-500 bg-mint-50 text-mint-500 font-bold' : 'border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50'}`}
+					data-category={category}
+				>
+					{category}
+				</button>
+			))}
 		</div>
 		
 		<!-- Tool Grid -->
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
 			{tools.map((tool) => (
-				<a href={`/tools/${tool.id}/`} class="flex flex-col sm:flex-row items-center gap-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8 hover:shadow-md transition-shadow relative group">
+				<a href={`/tools/${tool.id}/`} class="tool-card flex flex-col sm:flex-row items-center gap-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8 hover:shadow-md transition-shadow relative group" data-categories={(tool.data.categories || []).join(',')}>
 					<div class="w-20 h-20 rounded-full bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 border border-orange-100">
 						<span class="material-symbols-outlined text-4xl">{tool.data.icon}</span>
 					</div>
@@ -60,7 +67,43 @@ tools.sort((a, b) => a.data.order - b.data.order);
 			))}
 		</div>
 	</div>
+	</div>
 </Layout>
+
+<script>
+	const buttons = document.querySelectorAll('.category-btn');
+	const cards = document.querySelectorAll('.tool-card');
+
+	buttons.forEach(button => {
+		button.addEventListener('click', () => {
+			const category = button.getAttribute('data-category');
+			
+			// Update button styles
+			buttons.forEach(btn => {
+				btn.classList.remove('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
+				btn.classList.add('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
+			});
+			button.classList.remove('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
+			button.classList.add('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
+
+			// Filter cards
+			cards.forEach(card => {
+				const cardElement = card as HTMLElement;
+				if (category === 'すべて') {
+					cardElement.style.display = 'flex';
+				} else {
+					const categoriesAttr = cardElement.getAttribute('data-categories') || '';
+					const cardCategories = categoriesAttr.split(',');
+					if (cardCategories.includes(category)) {
+						cardElement.style.display = 'flex';
+					} else {
+						cardElement.style.display = 'none';
+					}
+				}
+			});
+		});
+	});
+</script>
 
 <style>
 	.scrollbar-hide::-webkit-scrollbar {

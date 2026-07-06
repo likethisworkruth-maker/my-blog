@@ -11,6 +11,7 @@ const logs = defineCollection({
 		createdTool: z.string().optional(),
 		result: z.string().optional(),
 		categories: z.array(z.string()).optional(),
+		coverImage: z.string().optional(),
 	}),
 });
 

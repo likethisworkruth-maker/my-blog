@@ -5,6 +5,9 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 
 const logs = await getCollection('logs');
 logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
+
+const uniqueCategories = [...new Set(logs.flatMap(log => log.data.categories || []))];
+const displayCategories = uniqueCategories.length > 0 ? ['すべて', ...uniqueCategories] : ['すべて', '育児記録', '夫婦共有', '予定・健診', '離乳食'];
 ---
 
 <Layout title={`実験ログ | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
@@ -12,20 +15,27 @@ logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
 	<div class="px-6 py-8 lg:py-12">
 		<h2 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-6">実験ログ</h2>
 		
-		<div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide mb-8">
-			<button class="px-4 py-2 rounded-full border border-mint-500 bg-mint-50 text-mint-500 text-sm font-bold whitespace-nowrap shrink-0">すべて</button>
-			<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">育児記録</button>
-			<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">夫婦共有</button>
-			<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">予定・健診</button>
-			<button class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-500 text-sm font-medium whitespace-nowrap shrink-0 hover:bg-gray-50 transition-colors">離乳食</button>
+		<div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide mb-8" id="category-filters">
+			{displayCategories.map((category, index) => (
+				<button 
+					class={`category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors ${index === 0 ? 'border-mint-500 bg-mint-50 text-mint-500 font-bold' : 'border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50'}`}
+					data-category={category}
+				>
+					{category}
+				</button>
+			))}
 		</div>
 		
 		<div class="flex flex-col gap-6">
 			{logs.map((log) => (
-				<a href={`/logs/${log.id}/`} class="flex flex-col sm:flex-row bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow group overflow-hidden">
-					<!-- Thumbnail Placeholder (for both Mobile and PC) -->
-					<div class="w-full sm:w-64 h-48 sm:h-auto bg-gray-100 shrink-0 relative flex items-center justify-center border-b sm:border-b-0 sm:border-r border-gray-100">
-						<span class="material-symbols-outlined text-gray-300 text-5xl">image</span>
+				<a href={`/logs/${log.id}/`} class="log-card flex flex-col sm:flex-row bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow group overflow-hidden" data-categories={(log.data.categories || []).join(',')}>
+					<!-- Thumbnail -->
+					<div class="w-full sm:w-64 h-48 sm:h-auto bg-gray-100 shrink-0 relative flex items-center justify-center border-b sm:border-b-0 sm:border-r border-gray-100 overflow-hidden">
+						{log.data.coverImage ? (
+							<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover" />
+						) : (
+							<span class="material-symbols-outlined text-gray-300 text-5xl">image</span>
+						)}
 					</div>
 					
 					<div class="flex-grow p-6 lg:p-8 flex flex-col justify-center relative">
@@ -61,7 +71,43 @@ logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
 			))}
 		</div>
 	</div>
+	</div>
 </Layout>
+
+<script>
+	const buttons = document.querySelectorAll('.category-btn');
+	const cards = document.querySelectorAll('.log-card');
+
+	buttons.forEach(button => {
+		button.addEventListener('click', () => {
+			const category = button.getAttribute('data-category');
+			
+			// Update button styles
+			buttons.forEach(btn => {
+				btn.classList.remove('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
+				btn.classList.add('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
+			});
+			button.classList.remove('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
+			button.classList.add('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
+
+			// Filter cards
+			cards.forEach(card => {
+				const cardElement = card as HTMLElement;
+				if (category === 'すべて') {
+					cardElement.style.display = 'flex';
+				} else {
+					const categoriesAttr = cardElement.getAttribute('data-categories') || '';
+					const cardCategories = categoriesAttr.split(',');
+					if (cardCategories.includes(category)) {
+						cardElement.style.display = 'flex';
+					} else {
+						cardElement.style.display = 'none';
+					}
+				}
+			});
+		});
+	});
+</script>
 
 <style>
 	.scrollbar-hide::-webkit-scrollbar {
