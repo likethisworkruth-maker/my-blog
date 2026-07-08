@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import LikeButton from '../../components/LikeButton.astro';
+import Comments from '../../components/Comments.astro';
 import { SITE_TITLE } from '../../consts';
 import { UI } from '../../i18n/ja';
 
@@ -42,7 +43,7 @@ const { Content } = await render(log);
 				
 				<!-- Like Button (Compact) -->
 				<div class="mt-4 flex items-center">
-					<LikeButton slug={`log-${log.id}`} variant="compact" />
+					<LikeButton slug={`logs/${log.id}`} variant="compact" />
 				</div>
 			</div>
 			
@@ -53,10 +54,10 @@ const { Content } = await render(log);
 
 			<!-- Action Bar (Bottom of Content) -->
 			<div class="flex items-center justify-start gap-3 my-12 pt-8 border-t border-gray-100">
-				<LikeButton slug={`log-${log.id}`} />
+				<LikeButton slug={`logs/${log.id}`} />
 				<button 
 					class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95 ml-2" 
-					onclick="alert('コメント機能は準備中です！')"
+					onclick="document.getElementById('comments').scrollIntoView({behavior: 'smooth'})"
 				>
 					<span class="material-symbols-outlined text-[1.5rem] font-light">chat_bubble</span>
 				</button>
@@ -67,6 +68,8 @@ const { Content } = await render(log);
 					<span class="material-symbols-outlined text-[1.5rem] font-light">ios_share</span>
 				</button>
 			</div>
+
+			<Comments slug={`logs/${log.id}`} />
 
 		</div>
 		

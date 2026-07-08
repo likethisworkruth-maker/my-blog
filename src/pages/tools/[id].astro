@@ -1,299 +1,137 @@
 ---
-import {
-	getCollection,
-	render,
-} from "astro:content";
+import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import LikeButton from "../../components/LikeButton.astro";
+import Comments from "../../components/Comments.astro";
 import { SITE_TITLE } from "../../consts";
 import { UI } from "../../i18n/ja";
 
 export async function getStaticPaths() {
-	const tools =
-		await getCollection(
-			"tools",
-		);
-	return tools.map(
-		(
-			tool,
-		) => ({
-			params: {
-				id: tool.id,
-			},
-			props: {
-				tool,
-			},
-		}),
-	);
+	const tools = await getCollection("tools");
+	return tools.map((tool) => ({
+		params: { id: tool.id },
+		props: { tool },
+	}));
 }
 
-const {
-	tool,
-} =
-	Astro.props;
-const {
-	Content,
-} =
-	await render(
-		tool,
-	);
+const { tool } = Astro.props;
+const { Content } = await render(tool);
 ---
 
 <Layout
 	title={`${tool.data.title} | ${SITE_TITLE}`}
-	description={tool
-		.data
-		.description}
+	description={tool.data.description}
 >
-	<div
-		class="px-6 py-8 lg:py-12 max-w-5xl mx-auto"
-	>
-		<!-- Breadcrumb / Back Link -->
-		<a
-			href="/tools"
-			class="inline-flex items-center gap-2 text-mint-500 hover:text-mint-600 font-bold text-sm mb-8 lg:mb-12 transition-colors"
-		>
-			<span
-				class="material-symbols-outlined text-[1.1rem]"
-				>arrow_back</span
-			>
-			{
-				UI
-					.tools
-					.pageTitle
-			}に戻る
-		</a>
+	<!-- Top Image Area (Full width on mobile, rounded on PC) -->
+	<div class="w-full max-w-5xl mx-auto lg:mt-8 lg:px-6">
+		<div class="w-full aspect-video lg:rounded-2xl bg-mint-50 flex items-center justify-center overflow-hidden border-b lg:border border-gray-200">
+			{tool.data.coverImage ? (
+				<img src={tool.data.coverImage} alt={tool.data.title} class="w-full h-full object-cover" />
+			) : (
+				<span class="material-symbols-outlined text-mint-200 text-5xl">image</span>
+			)}
+		</div>
+	</div>
 
-		<!-- Hero Section -->
-		<div
-			class="flex flex-col lg:flex-row gap-12 items-center mb-16"
-		>
-			<div
-				class="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left"
-			>
-				<div
-					class="flex flex-col lg:flex-row items-center gap-6 mb-6"
-				>
-					<div
-						class="w-24 h-24 lg:w-32 lg:h-32 rounded-[2rem] bg-orange-50 border border-orange-100 text-orange-400 flex items-center justify-center shrink-0"
-					>
-						<span
-							class="material-symbols-outlined text-[4rem]"
-							>{
-								tool
-									.data
-									.icon
-							}</span
-						>
-					</div>
-					<div
-					>
-						{
-							tool
-								.data
-								.isFree && (
-								<span class="inline-block bg-white border border-mint-500 text-mint-500 font-bold text-[0.75rem] px-3 py-1 rounded-full mb-3">
-									{
-										UI
-											.common
-											.freeBadge
-									}
-								</span>
-							)
-						}
-						<h1
-							class="text-[1.75rem] lg:text-[2.5rem] font-bold leading-tight text-navy-900 mb-4"
-						>
-							{
-								tool
-									.data
-									.title
-							}
-						</h1>
-						
-						<!-- Like Button (Compact) -->
-						<div class="flex items-center lg:justify-start justify-center">
-							<LikeButton slug={`tool-${tool.id}`} variant="compact" />
-						</div>
-					</div>
+	<div class="px-6 py-6 lg:py-8 max-w-5xl mx-auto">
+		
+		<div class="bg-white rounded-2xl border-none lg:border lg:border-gray-200 shadow-none lg:p-10 mb-8">
+			<!-- Header inside card -->
+			<div class="pb-8 border-b border-gray-100 mb-8">
+				<div class="flex items-center gap-2 text-gray-400 font-bold text-[0.85rem] mb-3">
+					{tool.data.categories && tool.data.categories.join(', ')}
+					{tool.data.childAgeMonths !== undefined && (tool.data.categories ? ` • 生後${tool.data.childAgeMonths}ヶ月` : `生後${tool.data.childAgeMonths}ヶ月`)}
 				</div>
-				<p
-					class="text-gray-600 text-[0.95rem] lg:text-[1.1rem] leading-relaxed mb-8 max-w-xl"
-				>
-					{
-						tool
-							.data
-							.description
-					}
+				<h1 class="text-[1.5rem] lg:text-[2rem] font-bold leading-tight mb-2 text-navy-900">{tool.data.title}</h1>
+				<p class="text-gray-600 text-[0.95rem] lg:text-[1.1rem] leading-relaxed mt-4 mb-6">
+					{tool.data.description}
 				</p>
-				<div
-					class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
-				>
-					<button
-						class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3.5 px-10 rounded-full transition-colors flex items-center justify-center gap-2"
-					>
-						{
-							UI
-								.tools
-								.btnTry
-						}
-						<span
-							class="material-symbols-outlined text-[1.1rem]"
-							>chevron_right</span
+				
+				<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+					{tool.data.actionUrl ? (
+						<a
+							href={tool.data.actionUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
 						>
-					</button>
+							{tool.data.actionText || UI.tools.btnTry}
+							<span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+						</a>
+					) : (
+						<button
+							class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
+						>
+							{tool.data.actionText || UI.tools.btnTry}
+							<span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+						</button>
+					)}
 					<a
 						href="/logs"
-						class="bg-white border border-mint-500 hover:bg-mint-50 text-mint-500 font-bold py-3.5 px-8 rounded-full transition-colors flex items-center justify-center gap-2"
+						class="bg-white border border-mint-500 hover:bg-mint-50 text-mint-500 font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2"
 					>
-						<span
-							class="material-symbols-outlined text-[1.1rem]"
-							>menu_book</span
-						>
-						{
-							UI
-								.tools
-								.btnReadLog
-						}
+						<span class="material-symbols-outlined text-[1.1rem]">menu_book</span>
+						{UI.tools.btnReadLog}
 					</a>
 				</div>
 			</div>
-
-			<!-- Hero Illustration Placeholder -->
-			<div
-				class="hidden lg:flex w-full max-w-md h-72 bg-mint-50/30 rounded-3xl items-center justify-center relative"
-			>
-				<div
-					class="absolute inset-0 bg-white rounded-xl m-8 border border-gray-100 flex flex-col items-center justify-center gap-4 rotate-2"
-				>
-					<span
-						class="material-symbols-outlined text-gray-300 text-6xl"
-						>checklist</span
-					>
-					<div
-						class="w-32 h-2 bg-gray-100 rounded-full"
-					>
-					</div>
-					<div
-						class="w-24 h-2 bg-gray-100 rounded-full"
-					>
-					</div>
-				</div>
+			
+			<!-- Content Area -->
+			<div class="content-area">
+				<Content />
 			</div>
-		</div>
 
-		<!-- Content Section -->
-		<div class="content-area">
-			<Content />
-		</div>
+			<!-- Action Bar (Bottom of Content) -->
+			<div class="flex items-center justify-start gap-3 my-12 pt-8 border-t border-gray-100">
+				<LikeButton slug={`tools/${tool.id}`} />
+				<button 
+					class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95 ml-2" 
+					onclick="document.getElementById('comments').scrollIntoView({behavior: 'smooth'})"
+				>
+					<span class="material-symbols-outlined text-[1.5rem] font-light">chat_bubble</span>
+				</button>
+				<button 
+					class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95" 
+					onclick="if(window.openShareModal) window.openShareModal()"
+				>
+					<span class="material-symbols-outlined text-[1.5rem] font-light">ios_share</span>
+				</button>
+			</div>
 
-		<!-- Action Bar (Bottom of Content) -->
-		<div class="flex items-center justify-start gap-3 my-12 pt-8 border-t border-gray-100">
-			<LikeButton slug={`tool-${tool.id}`} />
-			<button 
-				class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95 ml-2" 
-				onclick="alert('コメント機能は準備中です！')"
-			>
-				<span class="material-symbols-outlined text-[1.5rem] font-light">chat_bubble</span>
-			</button>
-			<button 
-				class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95" 
-				onclick="if(window.openShareModal) window.openShareModal()"
-			>
-				<span class="material-symbols-outlined text-[1.5rem] font-light">ios_share</span>
-			</button>
+			<Comments slug={`tools/${tool.id}`} />
+
 		</div>
 	</div>
 </Layout>
 
-<style
->
-	/* Markdown Content Styles - Customized for Tools */
-	.content-area
-		:global(
-			> div
-		),
-	.content-area
-		:global(
-			> section
-		) {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1.5rem;
-	}
-	@media (min-width: 1024px) {
-		.content-area
-			:global(
-				> div
-			),
-		.content-area
-			:global(
-				> section
-			) {
-			grid-template-columns: repeat(
-				3,
-				1fr
-			);
-			gap: 2rem;
-		}
-	}
-	.content-area
-		:global(
-			h3
-		) {
-		font-size: 1.1rem;
-		font-weight: 700;
-		margin: 2rem
-			0
-			1rem;
-		color: var(
-			--color-navy-900
-		);
+<style>
+	/* Standard Markdown Content Styles */
+	.content-area {
 		display: flex;
-		align-items: center;
-		gap: 0.5rem;
+		flex-direction: column;
 	}
-	.content-area
-		:global(
-			p
-		) {
-		margin-bottom: 1rem;
+	
+	.content-area :global(> h3) {
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--color-mint-500);
+		margin: 2.5rem 0 1rem;
+		padding-bottom: 0.5rem;
+		border-bottom: 2px solid var(--color-mint-50);
+	}
+
+	.content-area :global(> p), .content-area :global(> ul) {
+		margin-bottom: 1.5rem;
 		line-height: 1.8;
-		color: var(
-			--color-gray-600
-		);
-		font-size: 0.95rem;
+		color: var(--color-gray-700);
 	}
-	.content-area
-		:global(
-			ul
-		) {
-		list-style: none;
-		padding: 0;
-		margin-bottom: 1rem;
-	}
-	.content-area
-		:global(
-			li
-		) {
-		position: relative;
-		padding-left: 1.5rem;
-		margin-bottom: 0.5rem;
-		color: var(
-			--color-gray-600
-		);
-		font-size: 0.95rem;
-	}
-	.content-area
-		:global(
-			li::before
-		) {
-		content: "•";
-		color: var(
-			--color-mint-500
-		);
-		position: absolute;
-		left: 0.5rem;
-		font-weight: bold;
+
+	.content-area :global(blockquote) {
+		border-left: 4px solid var(--color-mint-200);
+		background-color: var(--color-mint-50);
+		padding: 1rem 1.5rem;
+		margin: 1.5rem 0;
+		border-radius: 0 8px 8px 0;
+		color: var(--color-gray-700);
 	}
 </style>

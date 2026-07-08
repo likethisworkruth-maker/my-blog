@@ -26,6 +26,9 @@ const tools = defineCollection({
 		categories: z.array(z.string()).optional(),
 		childAgeMonths: z.number().optional(),
 		order: z.number().default(0), // For sorting tools
+		actionText: z.string().optional(),
+		actionUrl: z.string().optional(),
+		coverImage: z.string().optional(),
 	}),
 });
 

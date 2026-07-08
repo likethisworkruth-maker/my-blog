@@ -113,7 +113,7 @@ const disabledAttr = slug ? {} : { disabled: true };
 			};
 
 			// Check local storage for liked status
-			const hasLiked = localStorage.getItem(`liked_${slug}`);
+			const hasLiked = localStorage.getItem(`liked:${encodeURIComponent(slug)}`);
 			if (hasLiked) {
 				setAllLikedUI(true);
 			}
@@ -127,12 +127,12 @@ const disabledAttr = slug ? {} : { disabled: true };
 			try {
 				const { data, error } = await supabase
 					.from('likes')
-					.select('count')
+					.select('like_count')
 					.eq('slug', slug)
 					.single();
 					
 				if (data) {
-					updateAllCountText(data.count.toString());
+					updateAllCountText(data.like_count.toString());
 				} else {
 					updateAllCountText('0');
 				}
@@ -141,10 +141,12 @@ const disabledAttr = slug ? {} : { disabled: true };
 				updateAllCountText('0');
 			}
 
+			const storageKey = `liked:${encodeURIComponent(slug)}`;
+
 			// Handle click on ANY of the buttons for this slug
 			btns.forEach(btn => {
 				btn.addEventListener('click', async () => {
-					if (btn.hasAttribute('data-loading') || localStorage.getItem(`liked_${slug}`)) {
+					if (btn.hasAttribute('data-loading') || localStorage.getItem(storageKey)) {
 						return;
 					}
 					
@@ -163,17 +165,20 @@ const disabledAttr = slug ? {} : { disabled: true };
 						btn.classList.remove('scale-110');
 					}, 150);
 					
-					localStorage.setItem(`liked_${slug}`, 'true');
+					localStorage.setItem(storageKey, 'true');
 
 					if (supabase) {
 						try {
-							const { error } = await supabase.rpc('increment_likes', { slug_text: slug });
+							const { data, error } = await supabase.rpc('increment_likes', { slug_text: slug });
 							if (error) throw error;
+							if (data !== null) {
+								updateAllCountText(data.toString()); // Update with actual DB count
+							}
 						} catch (err) {
 							console.error('Error updating likes:', err);
 							updateAllCountText(currentCount.toString());
 							setAllLikedUI(false);
-							localStorage.removeItem(`liked_${slug}`);
+							localStorage.removeItem(storageKey);
 						}
 					}
 					
