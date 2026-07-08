@@ -4,14 +4,18 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import ShareModal from "../components/ShareModal.astro";
 
+import type { ImageMetadata } from 'astro';
+
 interface Props {
 	title: string;
 	description: string;
+	image?: string | ImageMetadata;
 }
 
 const {
 	title,
 	description,
+	image,
 } =
 	Astro.props;
 ---
@@ -25,6 +29,7 @@ const {
 		<BaseHead
 			title={title}
 			description={description}
+			image={image}
 		/>
 	</head>
 	<body

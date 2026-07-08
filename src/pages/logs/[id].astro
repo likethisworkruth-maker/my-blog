@@ -18,7 +18,7 @@ const { log } = Astro.props;
 const { Content } = await render(log);
 ---
 
-<Layout title={`${log.data.title} | ${SITE_TITLE}`} description={log.data.problem || ''}>
+<Layout title={`${log.data.title} | ${SITE_TITLE}`} description={log.data.problem || ''} image={log.data.coverImage}>
 	<!-- Top Image Area (Full width on mobile, rounded on PC) -->
 	<div class="w-full max-w-5xl mx-auto lg:mt-8 lg:px-6">
 		<div class="w-full aspect-video lg:rounded-2xl bg-gray-100 flex items-center justify-center overflow-hidden border-b lg:border border-gray-200">
