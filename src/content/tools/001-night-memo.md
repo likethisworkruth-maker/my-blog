@@ -4,6 +4,7 @@ description: "夜中の対応をサッと記録。朝に振り返りやすくな
 icon: "description"
 isFree: true
 categories: ["メモ", "0歳育児"]
+childAgeMonths: 1
 order: 1
 ---
 

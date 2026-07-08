@@ -1,119 +1,277 @@
 ---
-import { getCollection, render } from 'astro:content';
-import Layout from '../../layouts/Layout.astro';
-import { SITE_TITLE } from '../../consts';
+import {
+	getCollection,
+	render,
+} from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import { SITE_TITLE } from "../../consts";
+import { UI } from "../../i18n/ja";
 
 export async function getStaticPaths() {
-	const tools = await getCollection('tools');
-	return tools.map((tool) => ({
-		params: { id: tool.id },
-		props: { tool },
-	}));
+	const tools =
+		await getCollection(
+			"tools",
+		);
+	return tools.map(
+		(
+			tool,
+		) => ({
+			params: {
+				id: tool.id,
+			},
+			props: {
+				tool,
+			},
+		}),
+	);
 }
 
-const { tool } = Astro.props;
-const { Content } = await render(tool);
+const {
+	tool,
+} =
+	Astro.props;
+const {
+	Content,
+} =
+	await render(
+		tool,
+	);
 ---
 
-<Layout title={`${tool.data.title} | ${SITE_TITLE}`} description={tool.data.description}>
-	<div class="px-6 py-8 lg:py-12 max-w-5xl mx-auto">
+<Layout
+	title={`${tool.data.title} | ${SITE_TITLE}`}
+	description={tool
+		.data
+		.description}
+>
+	<div
+		class="px-6 py-8 lg:py-12 max-w-5xl mx-auto"
+	>
 		<!-- Breadcrumb / Back Link -->
-		<a href="/tools" class="inline-flex items-center gap-2 text-mint-500 hover:text-mint-600 font-bold text-sm mb-8 lg:mb-12 transition-colors">
-			<span class="material-symbols-outlined text-[1.1rem]">arrow_back</span>
-			無料ツール一覧に戻る
+		<a
+			href="/tools"
+			class="inline-flex items-center gap-2 text-mint-500 hover:text-mint-600 font-bold text-sm mb-8 lg:mb-12 transition-colors"
+		>
+			<span
+				class="material-symbols-outlined text-[1.1rem]"
+				>arrow_back</span
+			>
+			{
+				UI
+					.tools
+					.pageTitle
+			}に戻る
 		</a>
-		
+
 		<!-- Hero Section -->
-		<div class="flex flex-col lg:flex-row gap-12 items-center mb-16">
-			<div class="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left">
-				<div class="flex flex-col lg:flex-row items-center gap-6 mb-6">
-					<div class="w-24 h-24 lg:w-32 lg:h-32 rounded-[2rem] bg-orange-50 border border-orange-100 text-orange-400 flex items-center justify-center shrink-0 shadow-sm">
-						<span class="material-symbols-outlined text-[4rem]">{tool.data.icon}</span>
+		<div
+			class="flex flex-col lg:flex-row gap-12 items-center mb-16"
+		>
+			<div
+				class="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left"
+			>
+				<div
+					class="flex flex-col lg:flex-row items-center gap-6 mb-6"
+				>
+					<div
+						class="w-24 h-24 lg:w-32 lg:h-32 rounded-[2rem] bg-orange-50 border border-orange-100 text-orange-400 flex items-center justify-center shrink-0 shadow-sm"
+					>
+						<span
+							class="material-symbols-outlined text-[4rem]"
+							>{
+								tool
+									.data
+									.icon
+							}</span
+						>
 					</div>
-					<div>
-						{tool.data.isFree && <span class="inline-block bg-white border border-mint-500 text-mint-500 font-bold text-[0.75rem] px-3 py-1 rounded-full mb-3">無料</span>}
-						<h1 class="text-[1.75rem] lg:text-[2.5rem] font-bold leading-tight text-navy-900">{tool.data.title}</h1>
+					<div
+					>
+						{
+							tool
+								.data
+								.isFree && (
+								<span class="inline-block bg-white border border-mint-500 text-mint-500 font-bold text-[0.75rem] px-3 py-1 rounded-full mb-3">
+									{
+										UI
+											.common
+											.freeBadge
+									}
+								</span>
+							)
+						}
+						<h1
+							class="text-[1.75rem] lg:text-[2.5rem] font-bold leading-tight text-navy-900"
+						>
+							{
+								tool
+									.data
+									.title
+							}
+						</h1>
 					</div>
 				</div>
-				<p class="text-gray-600 text-[0.95rem] lg:text-[1.1rem] leading-relaxed mb-8 max-w-xl">
-					{tool.data.description}
+				<p
+					class="text-gray-600 text-[0.95rem] lg:text-[1.1rem] leading-relaxed mb-8 max-w-xl"
+				>
+					{
+						tool
+							.data
+							.description
+					}
 				</p>
-				<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-					<button class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3.5 px-10 rounded-full transition-colors flex items-center justify-center gap-2">
-						使ってみる <span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+				<div
+					class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
+				>
+					<button
+						class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3.5 px-10 rounded-full transition-colors flex items-center justify-center gap-2"
+					>
+						{
+							UI
+								.tools
+								.btnTry
+						}
+						<span
+							class="material-symbols-outlined text-[1.1rem]"
+							>chevron_right</span
+						>
 					</button>
-					<a href="/logs" class="bg-white border border-mint-500 hover:bg-mint-50 text-mint-500 font-bold py-3.5 px-8 rounded-full transition-colors flex items-center justify-center gap-2">
-						<span class="material-symbols-outlined text-[1.1rem]">menu_book</span> 実験ログを読む
+					<a
+						href="/logs"
+						class="bg-white border border-mint-500 hover:bg-mint-50 text-mint-500 font-bold py-3.5 px-8 rounded-full transition-colors flex items-center justify-center gap-2"
+					>
+						<span
+							class="material-symbols-outlined text-[1.1rem]"
+							>menu_book</span
+						>
+						{
+							UI
+								.tools
+								.btnReadLog
+						}
 					</a>
 				</div>
 			</div>
-			
+
 			<!-- Hero Illustration Placeholder -->
-			<div class="hidden lg:flex w-full max-w-md h-72 bg-mint-50/30 rounded-3xl items-center justify-center relative">
-				<div class="absolute inset-0 bg-white shadow-sm rounded-xl m-8 border border-gray-100 flex flex-col items-center justify-center gap-4 rotate-2">
-					<span class="material-symbols-outlined text-gray-300 text-6xl">checklist</span>
-					<div class="w-32 h-2 bg-gray-100 rounded-full"></div>
-					<div class="w-24 h-2 bg-gray-100 rounded-full"></div>
+			<div
+				class="hidden lg:flex w-full max-w-md h-72 bg-mint-50/30 rounded-3xl items-center justify-center relative"
+			>
+				<div
+					class="absolute inset-0 bg-white shadow-sm rounded-xl m-8 border border-gray-100 flex flex-col items-center justify-center gap-4 rotate-2"
+				>
+					<span
+						class="material-symbols-outlined text-gray-300 text-6xl"
+						>checklist</span
+					>
+					<div
+						class="w-32 h-2 bg-gray-100 rounded-full"
+					>
+					</div>
+					<div
+						class="w-24 h-2 bg-gray-100 rounded-full"
+					>
+					</div>
 				</div>
 			</div>
 		</div>
-		
+
 		<!-- Content Section -->
-		<div class="content-area">
-			<Content />
-		</div>
-		
-		<!-- Disclaimer -->
-		<div class="mt-16 bg-orange-50 border border-orange-100 rounded-xl p-6 flex gap-4 items-center justify-center text-center">
-			<span class="material-symbols-outlined text-gray-400 text-2xl shrink-0">shield</span>
-			<p class="text-[0.85rem] font-bold text-gray-700 m-0">専門的な判断は医師・自治体・公式情報をご確認ください。</p>
+		<div
+			class="content-area"
+		>
+			<Content
+			/>
 		</div>
 	</div>
 </Layout>
 
-<style>
+<style
+>
 	/* Markdown Content Styles - Customized for Tools */
-	.content-area :global(> div), .content-area :global(> section) {
+	.content-area
+		:global(
+			> div
+		),
+	.content-area
+		:global(
+			> section
+		) {
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: 1.5rem;
 	}
 	@media (min-width: 1024px) {
-		.content-area :global(> div), .content-area :global(> section) {
-			grid-template-columns: repeat(3, 1fr);
+		.content-area
+			:global(
+				> div
+			),
+		.content-area
+			:global(
+				> section
+			) {
+			grid-template-columns: repeat(
+				3,
+				1fr
+			);
 			gap: 2rem;
 		}
 	}
-	.content-area :global(h3) {
+	.content-area
+		:global(
+			h3
+		) {
 		font-size: 1.1rem;
 		font-weight: 700;
-		margin: 2rem 0 1rem;
-		color: var(--color-navy-900);
+		margin: 2rem
+			0
+			1rem;
+		color: var(
+			--color-navy-900
+		);
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
 	}
-	.content-area :global(p) {
+	.content-area
+		:global(
+			p
+		) {
 		margin-bottom: 1rem;
 		line-height: 1.8;
-		color: var(--color-gray-600);
+		color: var(
+			--color-gray-600
+		);
 		font-size: 0.95rem;
 	}
-	.content-area :global(ul) {
+	.content-area
+		:global(
+			ul
+		) {
 		list-style: none;
 		padding: 0;
 		margin-bottom: 1rem;
 	}
-	.content-area :global(li) {
+	.content-area
+		:global(
+			li
+		) {
 		position: relative;
 		padding-left: 1.5rem;
 		margin-bottom: 0.5rem;
-		color: var(--color-gray-600);
+		color: var(
+			--color-gray-600
+		);
 		font-size: 0.95rem;
 	}
-	.content-area :global(li::before) {
+	.content-area
+		:global(
+			li::before
+		) {
 		content: "•";
-		color: var(--color-mint-500);
+		color: var(
+			--color-mint-500
+		);
 		position: absolute;
 		left: 0.5rem;
 		font-weight: bold;

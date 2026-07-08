@@ -10,7 +10,7 @@ export async function GET() {
       title: log.data.title,
       description: `${log.data.problem || ''} ${log.data.result || ''} ${log.data.createdTool || ''}`,
       url: `/logs/${log.id}/`,
-      type: '実験ログ',
+      type: '困りごと記録',
       icon: 'menu_book',
     })),
     ...tools.map((tool) => ({
@@ -18,7 +18,7 @@ export async function GET() {
       title: tool.data.title,
       description: tool.data.description,
       url: `/tools/${tool.id}/`,
-      type: '無料ツール',
+      type: 'おすすめアプリ',
       icon: tool.data.icon || 'build',
     })),
   ];

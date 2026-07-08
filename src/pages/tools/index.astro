@@ -1,111 +1,576 @@
 ---
-import { getCollection } from 'astro:content';
-import Layout from '../../layouts/Layout.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import {
+	SITE_TITLE,
+	SITE_DESCRIPTION,
+} from "../../consts";
+import { UI } from "../../i18n/ja";
 
-const tools = await getCollection('tools');
-tools.sort((a, b) => a.data.order - b.data.order);
+const tools =
+	await getCollection(
+		"tools",
+	);
+tools.sort(
+	(
+		a,
+		b,
+	) =>
+		a
+			.data
+			.order -
+		b
+			.data
+			.order,
+);
 
-const uniqueCategories = [...new Set(tools.flatMap(tool => tool.data.categories || []))];
-const displayCategories = uniqueCategories.length > 0 ? ['すべて', ...uniqueCategories] : ['すべて', 'メモ', 'テンプレ', 'Webツール', '0歳育児'];
+const uniqueCategories =
+	[
+		...new Set(
+			tools.flatMap(
+				(
+					tool,
+				) =>
+					tool
+						.data
+						.categories ||
+					[],
+			),
+		),
+	];
+const displayCategories =
+	uniqueCategories.length >
+	0
+		? [
+				"すべて",
+				...uniqueCategories,
+			]
+		: [
+				"すべて",
+				"メモ",
+				"テンプレ",
+				"アプリ",
+				"0歳育児",
+			];
+
+const uniqueAges =
+	[
+		...new Set(
+			tools
+				.map(
+					(
+						tool,
+					) =>
+						tool
+							.data
+							.childAgeMonths,
+				)
+				.filter(
+					(
+						age,
+					) =>
+						age !==
+						undefined,
+				),
+		),
+	].sort(
+		(
+			a,
+			b,
+		) =>
+			a! -
+			b!,
+	);
 ---
 
-<Layout title={`無料ツール | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
-	
-	<div class="px-6 py-8 lg:py-12">
-		<!-- Header -->
-		<div class="mb-8">
-			<div class="text-[0.85rem] text-gray-400 mb-4 hidden lg:block">ホーム &gt; <span class="text-mint-500 font-bold">無料ツール</span></div>
-			<h2 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-2">無料ツール</h2>
-			<p class="text-[0.85rem] lg:text-base text-gray-500">うちで試した小さなメモ・テンプレ・Webツール</p>
-		</div>
-		
-		<!-- Hero Card -->
-		<div class="bg-orange-50/50 rounded-2xl border border-orange-100 p-8 lg:p-12 mb-8 flex flex-col lg:flex-row items-center gap-8">
-			<div class="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left gap-4">
-				<div class="w-16 h-16 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center shrink-0">
-					<span class="material-symbols-outlined text-[2rem]">build</span>
-				</div>
-				<div>
-					<h3 class="text-[1.25rem] lg:text-[1.5rem] font-bold text-navy-900 mb-2">無料ツール一覧</h3>
-					<p class="text-[0.9rem] lg:text-base text-gray-600 leading-relaxed max-w-sm">育児や夫婦の協力体制づくりに役立つツールを、すべて無料で使えます。</p>
-				</div>
+<Layout
+	title={`${UI.tools.pageTitle} | ${SITE_TITLE}`}
+	description={SITE_DESCRIPTION}
+>
+	<div
+		class="px-6 py-8 lg:py-12"
+	>
+		<h2
+			class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-6"
+		>
+			{
+				UI
+					.tools
+					.pageTitle
+			}
+		</h2>
+
+		<div
+			class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between"
+		>
+			<!-- Categories -->
+			<div
+				class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto"
+				id="category-filters"
+			>
+				{
+					displayCategories.map(
+						(
+							category,
+							index,
+						) => (
+							<button
+								class={`category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors ${index === 0 ? "border-mint-500 bg-mint-50 text-mint-500 font-bold" : "border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50"}`}
+								data-category={
+									category
+								}
+							>
+								{
+									category
+								}
+							</button>
+						),
+					)
+				}
 			</div>
-			<!-- Right Illustration Placeholder -->
-			<div class="hidden lg:flex w-64 h-48 bg-white border border-gray-100 shadow-sm rounded-xl items-center justify-center rotate-3">
-				<span class="material-symbols-outlined text-gray-300 text-6xl">checklist</span>
-			</div>
-		</div>
-		
-		<!-- Filters -->
-		<!-- Filters -->
-		<div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide mb-8" id="category-filters">
-			{displayCategories.map((category, index) => (
-				<button 
-					class={`category-btn px-5 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors ${index === 0 ? 'border-mint-500 bg-mint-50 text-mint-500 font-bold' : 'border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50'}`}
-					data-category={category}
+
+			<!-- Age & Sort -->
+			<div
+				class="flex gap-3 w-full lg:w-auto shrink-0"
+			>
+				<select
+					id="age-filter"
+					class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500"
 				>
-					{category}
-				</button>
-			))}
+					<option
+						value="all"
+						>すべての対象</option
+					>
+					{
+						uniqueAges.map(
+							(
+								age,
+							) => (
+								<option
+									value={age.toString()}
+								>
+									生後
+									{
+										age
+									}
+									ヶ月向け
+								</option>
+							),
+						)
+					}
+					<option
+						value="none"
+						>月齢未指定</option
+					>
+				</select>
+
+				<select
+					id="sort-order"
+					class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500"
+				>
+					<option
+						value="recommended"
+						>おすすめ順</option
+					>
+					<option
+						value="age-asc"
+						>月齢が低い順</option
+					>
+					<option
+						value="age-desc"
+						>月齢が高い順</option
+					>
+				</select>
+			</div>
 		</div>
-		
+
 		<!-- Tool Grid -->
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-			{tools.map((tool) => (
-				<a href={`/tools/${tool.id}/`} class="tool-card flex flex-col sm:flex-row items-center gap-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8 hover:shadow-md transition-shadow relative group" data-categories={(tool.data.categories || []).join(',')}>
-					<div class="w-20 h-20 rounded-full bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 border border-orange-100">
-						<span class="material-symbols-outlined text-4xl">{tool.data.icon}</span>
-					</div>
-					<div class="flex-grow pr-12 text-center sm:text-left">
-						<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold mb-2 text-navy-900">{tool.data.title}</h3>
-						<p class="text-[0.85rem] lg:text-sm text-gray-500 leading-relaxed" set:html={tool.data.description.replace('。', '。<br/>')} />
-					</div>
-					{tool.data.isFree && <span class="absolute top-6 right-6 bg-mint-50 text-mint-500 font-bold text-[0.7rem] px-3 py-1 rounded-full">無料</span>}
-					<span class="material-symbols-outlined absolute right-6 bottom-1/2 translate-y-1/2 text-gray-300 group-hover:text-mint-500 transition-colors hidden sm:block">arrow_forward_ios</span>
-				</a>
-			))}
+		<div
+			class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6"
+			id="tools-container"
+		>
+			{
+				tools.map(
+					(
+						tool,
+					) => (
+						<a
+							href={`/tools/${tool.id}/`}
+							class="tool-card flex flex-col sm:flex-row items-center gap-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8 hover:shadow-md transition-shadow relative group"
+							data-categories={(
+								tool
+									.data
+									.categories ||
+								[]
+							).join(
+								",",
+							)}
+							data-age={
+								tool
+									.data
+									.childAgeMonths ??
+								"none"
+							}
+							data-order={
+								tool
+									.data
+									.order
+							}
+						>
+							<div class="w-20 h-20 rounded-full bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 border border-orange-100">
+								<span class="material-symbols-outlined text-4xl">
+									{
+										tool
+											.data
+											.icon
+									}
+								</span>
+							</div>
+							<div class="flex-grow pr-12 text-center sm:text-left">
+								<div class="flex items-center justify-center sm:justify-start gap-2 mb-2">
+									<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">
+										{
+											tool
+												.data
+												.title
+										}
+									</h3>
+									{tool
+										.data
+										.childAgeMonths !==
+										undefined && (
+										<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[0.7rem] font-bold shrink-0">
+											生後
+											{
+												tool
+													.data
+													.childAgeMonths
+											}
+											ヶ月
+										</span>
+									)}
+								</div>
+								<p
+									class="text-[0.85rem] lg:text-sm text-gray-500 leading-relaxed"
+									set:html={tool.data.description.replace(
+										"。",
+										"。<br/>",
+									)}
+								/>
+							</div>
+							{tool
+								.data
+								.isFree && (
+								<span class="absolute top-6 right-6 bg-mint-50 text-mint-500 font-bold text-[0.7rem] px-3 py-1 rounded-full">
+									{
+										UI
+											.common
+											.freeBadge
+									}
+								</span>
+							)}
+							<span class="material-symbols-outlined absolute right-6 bottom-1/2 translate-y-1/2 text-gray-300 group-hover:text-mint-500 transition-colors hidden sm:block">
+								arrow_forward_ios
+							</span>
+						</a>
+					),
+				)
+			}
 		</div>
-	</div>
 	</div>
 </Layout>
 
-<script>
-	const buttons = document.querySelectorAll('.category-btn');
-	const cards = document.querySelectorAll('.tool-card');
+<script
+>
+	const categoryButtons =
+		document.querySelectorAll(
+			".category-btn",
+		);
+	const ageFilter =
+		document.getElementById(
+			"age-filter",
+		) as HTMLSelectElement;
+	const sortOrder =
+		document.getElementById(
+			"sort-order",
+		) as HTMLSelectElement;
+	const toolsContainer =
+		document.getElementById(
+			"tools-container",
+		);
+	const cards =
+		Array.from(
+			document.querySelectorAll(
+				".tool-card",
+			),
+		) as HTMLElement[];
 
-	buttons.forEach(button => {
-		button.addEventListener('click', () => {
-			const category = button.getAttribute('data-category');
-			
-			// Update button styles
-			buttons.forEach(btn => {
-				btn.classList.remove('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
-				btn.classList.add('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
-			});
-			button.classList.remove('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
-			button.classList.add('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
+	let currentCategory =
+		"すべて";
+	let currentAge =
+		"all";
+	let currentSort =
+		"recommended";
 
-			// Filter cards
-			cards.forEach(card => {
-				const cardElement = card as HTMLElement;
-				if (category === 'すべて') {
-					cardElement.style.display = 'flex';
+	function updateView() {
+		// Filter
+		cards.forEach(
+			(
+				card,
+			) => {
+				const categoryMatch =
+					currentCategory ===
+						"すべて" ||
+					(
+						card.getAttribute(
+							"data-categories",
+						) ||
+						""
+					)
+						.split(
+							",",
+						)
+						.includes(
+							currentCategory,
+						);
+				const ageMatch =
+					currentAge ===
+						"all" ||
+					card.getAttribute(
+						"data-age",
+					) ===
+						currentAge;
+
+				if (
+					categoryMatch &&
+					ageMatch
+				) {
+					card.style.display =
+						"flex";
 				} else {
-					const categoriesAttr = cardElement.getAttribute('data-categories') || '';
-					const cardCategories = categoriesAttr.split(',');
-					if (cardCategories.includes(category)) {
-						cardElement.style.display = 'flex';
+					card.style.display =
+						"none";
+				}
+			},
+		);
+
+		// Sort
+		const visibleCards =
+			cards.filter(
+				(
+					card,
+				) =>
+					card
+						.style
+						.display !==
+					"none",
+			);
+		const hiddenCards =
+			cards.filter(
+				(
+					card,
+				) =>
+					card
+						.style
+						.display ===
+					"none",
+			);
+
+		visibleCards.sort(
+			(
+				a,
+				b,
+			) => {
+				if (
+					currentSort ===
+					"recommended"
+				) {
+					const numA =
+						parseInt(
+							a.getAttribute(
+								"data-order",
+							) ||
+								"0",
+							10,
+						);
+					const numB =
+						parseInt(
+							b.getAttribute(
+								"data-order",
+							) ||
+								"0",
+							10,
+						);
+					return (
+						numA -
+						numB
+					);
+				} else {
+					const ageA =
+						a.getAttribute(
+							"data-age",
+						);
+					const ageB =
+						b.getAttribute(
+							"data-age",
+						);
+					const valA =
+						ageA ===
+						"none"
+							? Infinity
+							: parseInt(
+									ageA ||
+										"0",
+									10,
+								);
+					const valB =
+						ageB ===
+						"none"
+							? Infinity
+							: parseInt(
+									ageB ||
+										"0",
+									10,
+								);
+
+					if (
+						currentSort ===
+						"age-asc"
+					) {
+						return (
+							valA -
+							valB
+						);
 					} else {
-						cardElement.style.display = 'none';
+						// age-desc
+						if (
+							valA ===
+								Infinity &&
+							valB !==
+								Infinity
+						)
+							return 1;
+						if (
+							valB ===
+								Infinity &&
+							valA !==
+								Infinity
+						)
+							return -1;
+						return (
+							valB -
+							valA
+						);
 					}
 				}
-			});
-		});
-	});
+			},
+		);
+
+		// Re-append to DOM in order
+		if (
+			toolsContainer
+		) {
+			visibleCards.forEach(
+				(
+					card,
+				) =>
+					toolsContainer.appendChild(
+						card,
+					),
+			);
+			hiddenCards.forEach(
+				(
+					card,
+				) =>
+					toolsContainer.appendChild(
+						card,
+					),
+			);
+		}
+	}
+
+	categoryButtons.forEach(
+		(
+			button,
+		) => {
+			button.addEventListener(
+				"click",
+				() => {
+					currentCategory =
+						button.getAttribute(
+							"data-category",
+						) ||
+						"すべて";
+
+					// Update button styles
+					categoryButtons.forEach(
+						(
+							btn,
+						) => {
+							btn.classList.remove(
+								"border-mint-500",
+								"bg-mint-50",
+								"text-mint-500",
+								"font-bold",
+							);
+							btn.classList.add(
+								"border-gray-200",
+								"bg-white",
+								"text-gray-500",
+								"font-medium",
+							);
+						},
+					);
+					button.classList.remove(
+						"border-gray-200",
+						"bg-white",
+						"text-gray-500",
+						"font-medium",
+					);
+					button.classList.add(
+						"border-mint-500",
+						"bg-mint-50",
+						"text-mint-500",
+						"font-bold",
+					);
+
+					updateView();
+				},
+			);
+		},
+	);
+
+	ageFilter?.addEventListener(
+		"change",
+		(
+			e,
+		) => {
+			currentAge =
+				(
+					e.target as HTMLSelectElement
+				)
+					.value;
+			updateView();
+		},
+	);
+
+	sortOrder?.addEventListener(
+		"change",
+		(
+			e,
+		) => {
+			currentSort =
+				(
+					e.target as HTMLSelectElement
+				)
+					.value;
+			updateView();
+		},
+	);
 </script>
 
-<style>
+<style
+>
 	.scrollbar-hide::-webkit-scrollbar {
 		display: none;
 	}

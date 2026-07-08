@@ -1,34 +1,74 @@
 ---
-import { SITE_TITLE } from '../consts';
+import { SITE_TITLE } from "../consts";
+import { UI } from "../i18n/ja";
 
-const pathname = new URL(Astro.request.url).pathname;
-const currentPath = pathname.slice(1);
+const pathname =
+	new URL(
+		Astro
+			.request
+			.url,
+	)
+		.pathname;
+const currentPath =
+	pathname.slice(
+		1,
+	);
 ---
 
-<header class="sticky top-0 z-50 w-full bg-white border-b border-gray-100 lg:border-none">
-	<div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+<header
+	class="sticky top-0 z-50 w-full bg-white border-b border-gray-100 lg:border-none"
+>
+	<div
+		class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4"
+	>
 		<!-- Logo -->
-		<a href="/" class="flex items-center gap-2 text-navy-900 font-bold text-[1.1rem]">
-			<span class="material-symbols-outlined text-mint-500">edit</span>
-			{SITE_TITLE}
+		<a
+			href="/"
+			class="flex items-center gap-2 text-navy-900 font-bold text-[1.1rem]"
+		>
+			<span
+				class="material-symbols-outlined text-mint-500"
+				>edit</span
+			>
+			{
+				SITE_TITLE
+			}
 		</a>
 
-
 		<!-- PC Navigation -->
-		<nav class="hidden lg:flex items-center gap-8">
-			<a href="/" class={`font-bold transition-colors pb-1 border-b-2 ${currentPath === '' ? 'text-mint-500 border-mint-500' : 'text-gray-600 border-transparent hover:text-navy-900'}`}>
-				ホーム
+		<nav
+			class="hidden lg:flex items-center gap-8"
+		>
+			<a
+				href="/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath === "" ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{
+					UI
+						.headerNav
+						.home
+				}
 			</a>
-			<a href="/logs" class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith('logs') ? 'text-mint-500 border-mint-500' : 'text-gray-600 border-transparent hover:text-navy-900'}`}>
-				実験ログ
+			<a
+				href="/logs"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("logs") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{
+					UI
+						.headerNav
+						.logs
+				}
 			</a>
-			<a href="/tools" class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith('tools') ? 'text-mint-500 border-mint-500' : 'text-gray-600 border-transparent hover:text-navy-900'}`}>
-				無料ツール
-			</a>
-			<a href="/request" class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith('request') ? 'text-mint-500 border-mint-500' : 'text-gray-600 border-transparent hover:text-navy-900'}`}>
-				リクエスト
+			<a
+				href="/tools"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("tools") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{
+					UI
+						.headerNav
+						.tools
+				}
 			</a>
 		</nav>
-
 	</div>
 </header>

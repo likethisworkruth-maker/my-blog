@@ -6,6 +6,7 @@ problem: "夜中のミルク対応を忘れてしまう"
 createdTool: "夜間対応メモ"
 result: "メモを見て思い出せる回数が増えた"
 categories: ["育児記録"]
+childAgeMonths: 1
 ---
 
 ### なぜ困ったか

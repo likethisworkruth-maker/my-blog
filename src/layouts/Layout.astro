@@ -1,28 +1,47 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
 
 interface Props {
 	title: string;
 	description: string;
 }
 
-const { title, description } = Astro.props;
+const {
+	title,
+	description,
+} =
+	Astro.props;
 ---
 
 <!doctype html>
-<html lang="ja">
-	<head>
-		<BaseHead title={title} description={description} />
+<html
+	lang="ja"
+>
+	<head
+	>
+		<BaseHead
+			title={title}
+			description={description}
+		/>
 	</head>
-	<body class="bg-gray-50 lg:bg-white text-gray-700 antialiased font-sans">
-		<div class="w-full bg-white min-h-screen relative flex flex-col mx-auto">
-			<Header />
-			<main class="flex-grow w-full max-w-6xl mx-auto pb-24 lg:pb-12">
-				<slot />
+	<body
+		class="bg-gray-50 lg:bg-white text-gray-700 antialiased font-sans"
+	>
+		<div
+			class="w-full bg-white min-h-screen relative flex flex-col mx-auto"
+		>
+			<Header
+			/>
+			<main
+				class="flex-grow w-full max-w-6xl mx-auto pb-24 lg:pb-12"
+			>
+				<slot
+				/>
 			</main>
-			<Footer />
+			<Footer
+			/>
 		</div>
 	</body>
 </html>

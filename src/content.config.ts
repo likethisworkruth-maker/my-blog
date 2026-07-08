@@ -11,6 +11,7 @@ const logs = defineCollection({
 		createdTool: z.string().optional(),
 		result: z.string().optional(),
 		categories: z.array(z.string()).optional(),
+		childAgeMonths: z.number().optional(),
 		coverImage: z.string().optional(),
 	}),
 });
@@ -23,6 +24,7 @@ const tools = defineCollection({
 		icon: z.string(), // Material Symbol name, e.g. "description"
 		isFree: z.boolean().default(true),
 		categories: z.array(z.string()).optional(),
+		childAgeMonths: z.number().optional(),
 		order: z.number().default(0), // For sorting tools
 	}),
 });

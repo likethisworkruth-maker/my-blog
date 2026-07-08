@@ -1,160 +1,370 @@
 ---
-import { getCollection } from 'astro:content';
-import Layout from '../layouts/Layout.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { getCollection } from "astro:content";
+import Layout from "../layouts/Layout.astro";
+import {
+	SITE_TITLE,
+	SITE_DESCRIPTION,
+} from "../consts";
+import { UI } from "../i18n/ja";
 
-const logs = await getCollection('logs');
-logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
-const recentLogs = logs.slice(0, 3); // Changed to 3 rows as requested
+const logs =
+	await getCollection(
+		"logs",
+	);
+logs.sort(
+	(
+		a,
+		b,
+	) =>
+		b.data.logNumber.localeCompare(
+			a
+				.data
+				.logNumber,
+		),
+);
+const recentLogs =
+	logs.slice(
+		0,
+		3,
+	); // Changed to 3 rows as requested
 
-const tools = await getCollection('tools');
-tools.sort((a, b) => a.data.order - b.data.order);
-const firstTools = tools.slice(0, 4);
+const tools =
+	await getCollection(
+		"tools",
+	);
+tools.sort(
+	(
+		a,
+		b,
+	) =>
+		a
+			.data
+			.order -
+		b
+			.data
+			.order,
+);
+const firstTools =
+	tools.slice(
+		0,
+		4,
+	);
 ---
 
-<Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
-	
+<Layout
+	title={SITE_TITLE}
+	description={SITE_DESCRIPTION}
+>
 	<!-- Hero Section -->
-	<section class="px-6 pt-8 pb-12 lg:pt-20 lg:pb-24 lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center">
-		<div>
-			<span class="hidden lg:inline-block bg-mint-50 text-mint-500 font-bold text-sm px-3 py-1 rounded-full mb-6">実験室</span>
-			<h2 class="text-[1.75rem] lg:text-[2.5rem] leading-tight font-bold mb-6 text-navy-900">
-				育児の正解は語れない。<br/>だから、困ったことを<br/>小さな道具にして試してみる。
-			</h2>
-			<p class="text-[0.85rem] lg:text-base text-gray-500 mb-8 leading-relaxed max-w-lg">
-				子どもはまだ0歳。初めての育児で困ったことを、週5時間だけ使ってテンプレ・メモ・小さなWebツールにしてみる実験ログです。
-			</p>
-			<div class="flex flex-col sm:flex-row gap-4">
-				<a href="/logs" class="inline-flex items-center justify-center gap-2 bg-mint-500 hover:bg-mint-600 text-white py-3 px-8 rounded-full text-sm font-semibold transition-colors">
-					実験ログを見る <span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+	<section
+		class="px-6 pt-12 pb-16 lg:pt-24 lg:pb-28 sm:bg-[url('/hero-bg.png')] bg-cover bg-right bg-no-repeat relative"
+	>
+		<!-- Semi-transparent overlay to ensure text readability if needed -->
+		<div
+			class="absolute inset-0 bg-white/40 sm:bg-transparent"
+		>
+		</div>
+
+		<div
+			class="relative z-10 max-w-2xl"
+		>
+			<h2
+				class="text-[1.75rem] lg:text-[2.5rem] leading-tight font-bold mb-6 text-navy-900 drop-shadow-none sm:drop-shadow-sm"
+				set:html={UI
+					.home
+					.heroTitle}
+			/>
+			<p
+				class="text-[0.85rem] lg:text-base text-gray-700 mb-8 leading-relaxed max-w-lg font-medium drop-shadow-none sm:drop-shadow-sm"
+				set:html={UI
+					.home
+					.heroDesc}
+			/>
+			<div
+				class="flex flex-col sm:flex-row gap-4"
+			>
+				<a
+					href="/logs"
+					class="inline-flex items-center justify-center gap-2 bg-mint-500 hover:bg-mint-600 text-white py-3 px-8 rounded-full text-sm font-semibold transition-colors shadow-sm"
+				>
+					{
+						UI
+							.home
+							.btnLogs
+					}
+					<span
+						class="material-symbols-outlined text-[1.1rem]"
+						>chevron_right</span
+					>
 				</a>
-				<a href="/tools" class="inline-flex items-center justify-center gap-2 bg-white text-mint-500 border border-mint-500 hover:bg-mint-50 py-3 px-8 rounded-full text-sm font-semibold transition-colors">
-					無料ツールを見る <span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+				<a
+					href="/tools"
+					class="inline-flex items-center justify-center gap-2 bg-white text-mint-500 border border-mint-500 hover:bg-mint-50 py-3 px-8 rounded-full text-sm font-semibold transition-colors shadow-sm"
+				>
+					{
+						UI
+							.home
+							.btnTools
+					}
+					<span
+						class="material-symbols-outlined text-[1.1rem]"
+						>chevron_right</span
+					>
 				</a>
 			</div>
 		</div>
-		
-		<!-- Hero Illustration (Hidden on small mobile, visible on tablet/PC) -->
-		<div class="hidden sm:flex justify-center mt-12 lg:mt-0 relative">
-			<!-- Minimal mockup of illustration -->
-			<div class="absolute -z-10 w-64 h-64 bg-mint-50 rounded-full blur-3xl opacity-50"></div>
-			<div class="relative bg-white border border-gray-200 shadow-sm rounded-xl p-6 rotate-[-2deg] max-w-sm">
-				<div class="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
-					<span class="material-symbols-outlined text-gray-400">edit_note</span>
-					<span class="font-bold text-gray-700">実験メモ</span>
-				</div>
-				<ul class="space-y-3 text-sm text-gray-500">
-					{firstTools.slice(0, 3).map((tool, index) => (
-						<li class="flex gap-2">
-							<span class={`material-symbols-outlined ${index === 0 ? 'text-mint-500' : 'text-gray-300'}`}>
-								{index === 0 ? 'check_box' : 'check_box_outline_blank'}
-							</span>
-							{tool.data.title}
-						</li>
-					))}
-				</ul>
-			</div>
+	</section>
+
+	<!-- 今週の工夫 -->
+	<section
+		class="px-6 py-6 lg:py-10"
+	>
+		<h3
+			class="text-[1.1rem] lg:text-[1.25rem] font-bold mb-4 lg:mb-6 text-navy-900"
+		>
+			{
+				UI
+					.home
+					.recentLogTitle
+			}
+		</h3>
+		<div
+			class="flex flex-col gap-4 lg:gap-6"
+		>
+			{
+				recentLogs
+					.slice(
+						0,
+						3,
+					)
+					.map(
+						(
+							log,
+						) => (
+							<a
+								href={`/logs/${log.id}/`}
+								class="block bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8 hover:shadow-md transition-shadow group relative"
+							>
+								<div class="flex flex-col lg:flex-row gap-6 lg:gap-12">
+									{log
+										.data
+										.problem && (
+										<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
+											<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl group-hover:text-mint-500 transition-colors">
+												help_outline
+											</span>
+											<div>
+												<span class="block text-[0.8rem] text-gray-500 mb-1">
+													{
+														UI
+															.common
+															.problemBadge
+													}
+												</span>
+												<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">
+													{
+														log
+															.data
+															.problem
+													}
+												</span>
+											</div>
+										</div>
+									)}
+									{log
+										.data
+										.createdTool && (
+										<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
+											<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl group-hover:text-mint-500 transition-colors">
+												edit
+											</span>
+											<div>
+												<span class="block text-[0.8rem] text-gray-500 mb-1">
+													{
+														UI
+															.common
+															.createdToolBadge
+													}
+												</span>
+												<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">
+													{
+														log
+															.data
+															.createdTool
+													}
+												</span>
+											</div>
+										</div>
+									)}
+									{log
+										.data
+										.result && (
+										<div class="flex-1 flex gap-4 items-start">
+											<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl group-hover:text-mint-500 transition-colors">
+												check_circle
+											</span>
+											<div>
+												<span class="block text-[0.8rem] text-gray-500 mb-1">
+													{
+														UI
+															.common
+															.resultBadge
+													}
+												</span>
+												<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">
+													{
+														log
+															.data
+															.result
+													}
+												</span>
+											</div>
+										</div>
+									)}
+									{!log
+										.data
+										.problem &&
+										!log
+											.data
+											.createdTool &&
+										!log
+											.data
+											.result && (
+											<div class="flex-1 flex gap-4 items-start">
+												<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl group-hover:text-mint-500 transition-colors">
+													article
+												</span>
+												<div>
+													<span class="block text-[0.8rem] text-gray-500 mb-1">
+														最新の記録
+													</span>
+													<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">
+														{
+															log
+																.data
+																.title
+														}
+													</span>
+												</div>
+											</div>
+										)}
+								</div>
+								<div class="absolute top-6 right-6 lg:top-8 lg:right-8 opacity-0 group-hover:opacity-100 transition-opacity">
+									<span class="material-symbols-outlined text-mint-500">
+										arrow_forward
+									</span>
+								</div>
+							</a>
+						),
+					)
+			}
 		</div>
 	</section>
 
-	<!-- 今週の実験 -->
-	<section class="px-6 py-6 lg:py-10">
-		<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold mb-4 lg:mb-6 text-navy-900">今週の実験</h3>
-		<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8">
-			{recentLogs.length > 0 && (
-				<div class="flex flex-col lg:flex-row gap-6 lg:gap-12">
-					{recentLogs[0].data.problem && (
-						<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
-							<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">help_outline</span>
-							<div>
-								<span class="block text-[0.8rem] text-gray-500 mb-1">困りごと</span>
-								<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.problem}</span>
-							</div>
-						</div>
-					)}
-					{recentLogs[0].data.createdTool && (
-						<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
-							<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">edit</span>
-							<div>
-								<span class="block text-[0.8rem] text-gray-500 mb-1">作ったもの</span>
-								<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.createdTool}</span>
-							</div>
-						</div>
-					)}
-					{recentLogs[0].data.result && (
-						<div class="flex-1 flex gap-4 items-start">
-							<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">check_circle</span>
-							<div>
-								<span class="block text-[0.8rem] text-gray-500 mb-1">結果</span>
-								<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.result}</span>
-							</div>
-						</div>
-					)}
-					{!recentLogs[0].data.problem && !recentLogs[0].data.createdTool && !recentLogs[0].data.result && (
-						<div class="flex-1 flex gap-4 items-start">
-							<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl">article</span>
-							<div>
-								<span class="block text-[0.8rem] text-gray-500 mb-1">最新の記録</span>
-								<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">{recentLogs[0].data.title}</span>
-							</div>
-						</div>
-					)}
-				</div>
-			)}
+	<!-- 役に立ったツール -->
+	<section
+		class="px-6 py-6 lg:py-10"
+	>
+		<div
+			class="flex justify-between items-center mb-4 lg:mb-6"
+		>
+			<h3
+				class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900"
+			>
+				{
+					UI
+						.home
+						.toolsTitle
+				}
+			</h3>
 		</div>
-	</section>
-
-	<!-- 無料で使える小さな道具 -->
-	<section class="px-6 py-6 lg:py-10">
-		<div class="flex justify-between items-center mb-4 lg:mb-6">
-			<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">無料で使える小さな道具</h3>
-		</div>
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-			{firstTools.map((tool) => (
-				<a href={`/tools/${tool.id}/`} class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow group relative">
-					<div class="w-14 h-14 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-						<span class="material-symbols-outlined text-[1.75rem]">{tool.data.icon}</span>
-					</div>
-					<h4 class="text-[0.95rem] font-bold mb-2 text-navy-900">{tool.data.title}</h4>
-					<p class="text-[0.8rem] text-gray-500 leading-relaxed mb-4" set:html={tool.data.description.replace('。', '。<br/>')} />
-					<div class="mt-auto flex justify-end">
-						<span class="bg-mint-50 text-mint-500 font-bold text-[0.65rem] px-2 py-0.5 rounded">無料</span>
-					</div>
-				</a>
-			))}
-		</div>
-	</section>
-
-	<!-- 新着実験ログ -->
-	<section class="px-6 py-6 lg:py-10">
-		<div class="flex justify-between items-center mb-4 lg:mb-6">
-			<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">新着実験ログ</h3>
-		</div>
-		<div class="flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-			{recentLogs.map((log, index) => (
-				<a href={`/logs/${log.id}/`} class={`flex justify-between items-center p-4 lg:p-6 hover:bg-gray-50 transition-colors ${index !== recentLogs.length - 1 ? 'border-b border-gray-100' : ''}`}>
-					<div class="flex items-center gap-4 lg:gap-8">
-						<span class="text-[0.75rem] text-mint-500 font-bold px-2 py-1 bg-mint-50 rounded w-12 text-center shrink-0">#{log.data.logNumber}</span>
-						<span class="text-[0.95rem] lg:text-base font-bold text-navy-900">{log.data.title}</span>
-					</div>
-					<div class="flex items-center gap-6">
-						<span class="hidden sm:inline-block text-[0.85rem] text-gray-400">{log.data.pubDate.toLocaleDateString('ja-JP')}</span>
-						<span class="material-symbols-outlined text-gray-400">arrow_forward</span>
-					</div>
-				</a>
-			))}
+		<div
+			class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
+		>
+			{
+				firstTools.map(
+					(
+						tool,
+					) => (
+						<a
+							href={`/tools/${tool.id}/`}
+							class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow group relative"
+						>
+							<div class="w-14 h-14 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+								<span class="material-symbols-outlined text-[1.75rem]">
+									{
+										tool
+											.data
+											.icon
+									}
+								</span>
+							</div>
+							<h4 class="text-[0.95rem] font-bold mb-2 text-navy-900">
+								{
+									tool
+										.data
+										.title
+								}
+							</h4>
+							<p
+								class="text-[0.8rem] text-gray-500 leading-relaxed mb-4"
+								set:html={tool.data.description.replace(
+									"。",
+									"。<br/>",
+								)}
+							/>
+							<div class="mt-auto flex justify-end">
+								{tool
+									.data
+									.isFree && (
+									<span class="bg-mint-50 text-mint-500 font-bold text-[0.65rem] px-2 py-0.5 rounded">
+										{
+											UI
+												.common
+												.freeBadge
+										}
+									</span>
+								)}
+							</div>
+						</a>
+					),
+				)
+			}
 		</div>
 	</section>
 
 	<!-- 免責カード -->
-	<section class="px-6 py-10 lg:py-16">
-		<div class="bg-orange-50 border border-orange-100 rounded-2xl p-6 flex gap-4 items-start">
-			<span class="material-symbols-outlined text-orange-400 text-2xl shrink-0">shield</span>
-			<div>
-				<p class="text-sm font-bold text-orange-900 mb-1">このサイトは育児ノウハウ・医療・発達アドバイスを提供するものではありません。</p>
-				<p class="text-xs text-orange-800">うちの家庭で試した記録を共有しています。</p>
+	<section
+		class="px-6 py-10 lg:py-16"
+	>
+		<div
+			class="bg-orange-50 border border-orange-100 rounded-2xl p-6 flex gap-4 items-start"
+		>
+			<span
+				class="material-symbols-outlined text-orange-400 text-2xl shrink-0"
+				>shield</span
+			>
+			<div
+			>
+				<p
+					class="text-sm font-bold text-orange-900 mb-1"
+				>
+					{
+						UI
+							.disclaimer
+							.homeCardTitle
+					}
+				</p>
+				<p
+					class="text-xs text-orange-800"
+				>
+					{
+						UI
+							.disclaimer
+							.homeCardDesc
+					}
+				</p>
 			</div>
 		</div>
 	</section>
-
 </Layout>

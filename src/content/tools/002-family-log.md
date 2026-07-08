@@ -4,6 +4,7 @@ description: "夫婦で育児の状況やタスクを共有。すれ違いを減
 icon: "group"
 isFree: true
 categories: ["テンプレ", "0歳育児"]
+childAgeMonths: 2
 order: 2
 ---
 

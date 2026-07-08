@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "postbuild": "node scripts/postbuild.js",
     "preview": "astro preview",
     "astro": "astro"
   },
