@@ -1,0 +1,190 @@
+---
+interface Props {
+	slug: string | null;
+	variant?: 'large' | 'compact' | 'footer';
+}
+
+const { slug, variant = 'large' } = Astro.props;
+
+// Disabled state for pages without a slug
+const disabledAttr = slug ? {} : { disabled: true };
+---
+
+{variant === 'large' && (
+	<button
+		data-slug={slug}
+		class="like-btn group relative flex items-center gap-2 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
+		{...disabledAttr}
+	>
+		<div class="w-12 h-12 rounded-full border border-gray-300 group-hover:border-pink-300 group-[.liked]:border-pink-400 flex items-center justify-center relative bg-white transition-colors">
+			<span class="material-symbols-outlined icon-empty text-gray-400 group-hover:text-pink-400 transition-colors text-[1.4rem]">favorite</span>
+			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 m-auto h-[1.4rem] w-[1.4rem] opacity-0 transition-opacity text-[1.4rem] leading-none" style="font-variation-settings: 'FILL' 1;">favorite</span>
+		</div>
+		<span class="like-count font-bold text-gray-500 group-hover:text-pink-500 group-[.liked]:text-pink-500 transition-colors text-lg">...</span>
+	</button>
+)}
+
+{variant === 'compact' && (
+	<button
+		data-slug={slug}
+		class="like-btn group relative flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
+		{...disabledAttr}
+	>
+		<div class="relative flex items-center justify-center">
+			<span class="material-symbols-outlined icon-empty text-gray-400 group-hover:text-pink-400 transition-colors text-[1.2rem]">favorite</span>
+			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-[1.2rem]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+		</div>
+		<span class="like-count font-bold text-gray-500 group-hover:text-pink-500 transition-colors text-[0.9rem]">...</span>
+	</button>
+)}
+
+{variant === 'footer' && (
+	<button
+		data-slug={slug}
+		class="like-btn group relative flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium text-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+		{...disabledAttr}
+	>
+		<div class="relative flex items-center justify-center">
+			<span class="material-symbols-outlined icon-empty text-2xl group-hover:text-pink-400 transition-colors">favorite</span>
+			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-2xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
+		</div>
+		<span class="like-count-footer">いいね (<span class="like-count">...</span>)</span>
+	</button>
+)}
+
+<script>
+	import { createClient } from '@supabase/supabase-js';
+
+	// Initialize Supabase client
+	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+	
+	let supabase;
+	if (supabaseUrl && supabaseAnonKey) {
+		supabase = createClient(supabaseUrl, supabaseAnonKey);
+	}
+
+	// Initialize like buttons (support View Transitions if Astro uses it)
+	const initLikes = () => {
+		// Group buttons by slug
+		const buttonsBySlug: Record<string, Element[]> = {};
+		document.querySelectorAll('.like-btn').forEach((btn) => {
+			if (btn.hasAttribute('data-initialized')) return;
+			btn.setAttribute('data-initialized', 'true');
+			
+			const slug = btn.getAttribute('data-slug');
+			if (!slug) return;
+			
+			if (!buttonsBySlug[slug]) buttonsBySlug[slug] = [];
+			buttonsBySlug[slug].push(btn);
+		});
+
+		Object.entries(buttonsBySlug).forEach(async ([slug, btns]) => {
+			const updateAllCountText = (text: string) => {
+				btns.forEach(b => {
+					const countSpan = b.querySelector('.like-count');
+					if (countSpan) countSpan.textContent = text;
+				});
+			};
+
+			const setAllLikedUI = (isLiked: boolean) => {
+				btns.forEach(b => {
+					const countSpan = b.querySelector('.like-count');
+					const iconEmpty = b.querySelector('.icon-empty');
+					const iconFilled = b.querySelector('.icon-filled');
+					
+					if (isLiked) {
+						if (b.classList.contains('bg-white')) {
+							b.classList.add('liked', 'border-pink-200', 'bg-pink-50');
+						}
+						b.classList.add('text-pink-500');
+						iconEmpty?.classList.add('opacity-0');
+						iconFilled?.classList.remove('opacity-0');
+						countSpan?.classList.remove('text-gray-400', 'text-gray-500');
+						countSpan?.classList.add('text-pink-500');
+					} else {
+						b.classList.remove('liked', 'border-pink-200', 'bg-pink-50', 'text-pink-500');
+						iconEmpty?.classList.remove('opacity-0');
+						iconFilled?.classList.add('opacity-0');
+						countSpan?.classList.remove('text-pink-500');
+						// Note: restoring the exact gray color is tricky, but Astro component re-render handles it
+					}
+				});
+			};
+
+			// Check local storage for liked status
+			const hasLiked = localStorage.getItem(`liked_${slug}`);
+			if (hasLiked) {
+				setAllLikedUI(true);
+			}
+			
+			if (!supabase) {
+				updateAllCountText('0');
+				return;
+			}
+
+			// Fetch initial count
+			try {
+				const { data, error } = await supabase
+					.from('likes')
+					.select('count')
+					.eq('slug', slug)
+					.single();
+					
+				if (data) {
+					updateAllCountText(data.count.toString());
+				} else {
+					updateAllCountText('0');
+				}
+			} catch (err) {
+				console.error('Error fetching likes:', err);
+				updateAllCountText('0');
+			}
+
+			// Handle click on ANY of the buttons for this slug
+			btns.forEach(btn => {
+				btn.addEventListener('click', async () => {
+					if (btn.hasAttribute('data-loading') || localStorage.getItem(`liked_${slug}`)) {
+						return;
+					}
+					
+					// Set loading on all
+					btns.forEach(b => b.setAttribute('data-loading', 'true'));
+					
+					// Optimistic UI update
+					const currentCount = parseInt(btn.querySelector('.like-count')?.textContent || '0');
+					updateAllCountText((currentCount + 1).toString());
+					
+					setAllLikedUI(true);
+					
+					// Pop animation class only on clicked button
+					btn.classList.add('scale-110');
+					setTimeout(() => {
+						btn.classList.remove('scale-110');
+					}, 150);
+					
+					localStorage.setItem(`liked_${slug}`, 'true');
+
+					if (supabase) {
+						try {
+							const { error } = await supabase.rpc('increment_likes', { slug_text: slug });
+							if (error) throw error;
+						} catch (err) {
+							console.error('Error updating likes:', err);
+							updateAllCountText(currentCount.toString());
+							setAllLikedUI(false);
+							localStorage.removeItem(`liked_${slug}`);
+						}
+					}
+					
+					btns.forEach(b => b.removeAttribute('data-loading'));
+				});
+			});
+		});
+	};
+
+	// Run on DOM loaded
+	document.addEventListener('DOMContentLoaded', initLikes);
+	// Support for Astro View Transitions if enabled
+	document.addEventListener('astro:page-load', initLikes);
+</script>

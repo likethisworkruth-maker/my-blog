@@ -49,55 +49,56 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 			</div>
 		</div>
 		
-		<div class="flex flex-col gap-6" id="logs-container">
+		<div class="flex flex-col gap-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6" id="logs-container">
 			{logs.map((log) => (
-				<a href={`/logs/${log.id}/`} class="log-card flex flex-col sm:flex-row bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow group overflow-hidden" 
+				<a href={`/logs/${log.id}/`} class="log-card flex flex-col bg-white border-b border-gray-100 md:border md:border-gray-200 md:rounded-2xl transition-colors hover:bg-gray-50 group overflow-hidden" 
                    data-categories={(log.data.categories || []).join(',')}
                    data-age={log.data.childAgeMonths ?? 'none'}
                    data-lognumber={log.data.logNumber}
                 >
-					<!-- Thumbnail -->
-					<div class="w-full sm:w-64 h-48 sm:h-auto bg-gray-100 shrink-0 relative flex items-center justify-center border-b sm:border-b-0 sm:border-r border-gray-100 overflow-hidden">
-						{log.data.coverImage ? (
-							<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover" />
-						) : (
-							<span class="material-symbols-outlined text-gray-300 text-5xl">image</span>
-						)}
-					</div>
-					
-					<div class="flex-grow p-6 lg:p-8 flex flex-col justify-center relative">
-						<div class="mb-2 flex items-center gap-2">
-							<span class="text-[0.8rem] font-bold text-navy-900">#{log.data.logNumber}</span>
-							{log.data.childAgeMonths !== undefined && (
-								<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[0.7rem] font-bold shrink-0">
-									生後{log.data.childAgeMonths}ヶ月
-								</span>
+					<!-- Top section: Mobile flex-row-reverse, PC flex-col -->
+					<div class="flex flex-row-reverse sm:flex-col">
+						<!-- Thumbnail -->
+						<div class="w-[120px] sm:w-full h-auto aspect-video bg-gray-100 shrink-0 relative flex items-center justify-center border-l sm:border-l-0 sm:border-b border-gray-100 overflow-hidden">
+							{log.data.coverImage ? (
+								<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover" />
+							) : (
+								<span class="material-symbols-outlined text-gray-300 text-4xl sm:text-5xl">image</span>
 							)}
 						</div>
-						<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold leading-snug text-navy-900 mb-4">{log.data.title}</h3>
 						
-						<div class="flex flex-col gap-2">
+						<!-- Title & Tags -->
+						<div class="flex-grow p-3 sm:p-5 sm:pb-0 flex flex-col justify-center">
+							<div class="mb-1.5 flex items-center gap-1.5 flex-wrap">
+								<span class="text-[0.75rem] font-bold text-gray-500">{log.data.pubDate.toLocaleDateString('ja-JP')}</span>
+								{log.data.childAgeMonths !== undefined && (
+									<span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[0.65rem] font-bold shrink-0">
+										生後{log.data.childAgeMonths}ヶ月
+									</span>
+								)}
+							</div>
+							<h3 class="text-[0.95rem] sm:text-[1.1rem] lg:text-[1.15rem] font-bold leading-snug text-navy-900 m-0">{log.data.title}</h3>
+						</div>
+					</div>
+
+					<!-- Bottom Info -->
+					<div class="p-3 pt-1.5 sm:p-5 sm:pt-4 flex flex-col gap-1.5 relative flex-grow">
+						<div class="flex flex-col gap-1.5">
 							{log.data.createdTool && (
-								<div class="flex items-center gap-2 text-[0.85rem]">
-									<span class="bg-mint-50 text-mint-500 px-2 py-0.5 rounded text-[0.7rem] font-bold shrink-0">{UI.common.createdToolBadge}</span>
-									<span class="text-gray-600">{log.data.createdTool}</span>
+								<div class="flex items-center gap-2 text-[0.8rem]">
+									<span class="bg-mint-50 text-mint-500 px-1.5 py-0.5 rounded text-[0.65rem] font-bold shrink-0">{UI.common.createdToolBadge}</span>
+									<span class="text-gray-600 leading-tight">{log.data.createdTool}</span>
 								</div>
 							)}
 							{log.data.result && (
-								<div class="flex items-center gap-2 text-[0.85rem]">
-									<span class="bg-mint-50 text-mint-500 px-2 py-0.5 rounded text-[0.7rem] font-bold shrink-0">{UI.common.resultBadge}</span>
-									<span class="text-gray-600">{log.data.result}</span>
+								<div class="flex items-center gap-2 text-[0.8rem]">
+									<span class="bg-mint-50 text-mint-500 px-1.5 py-0.5 rounded text-[0.65rem] font-bold shrink-0">{UI.common.resultBadge}</span>
+									<span class="text-gray-600 leading-tight">{log.data.result}</span>
 								</div>
 							)}
 						</div>
 						
-						<div class="mt-4 flex items-center gap-2 text-[0.85rem] text-gray-400">
-							<span class="material-symbols-outlined text-[1rem]">calendar_today</span>
-							<span>{log.data.pubDate.toLocaleDateString('ja-JP')}</span>
-						</div>
-						
-						<!-- Arrow Icon right aligned on PC -->
-						<span class="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 text-gray-300 group-hover:text-mint-500 transition-colors hidden sm:block">arrow_forward_ios</span>
+
 					</div>
 				</a>
 			))}

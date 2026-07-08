@@ -4,6 +4,7 @@ import {
 	render,
 } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
+import LikeButton from "../../components/LikeButton.astro";
 import { SITE_TITLE } from "../../consts";
 import { UI } from "../../i18n/ja";
 
@@ -74,7 +75,7 @@ const {
 					class="flex flex-col lg:flex-row items-center gap-6 mb-6"
 				>
 					<div
-						class="w-24 h-24 lg:w-32 lg:h-32 rounded-[2rem] bg-orange-50 border border-orange-100 text-orange-400 flex items-center justify-center shrink-0 shadow-sm"
+						class="w-24 h-24 lg:w-32 lg:h-32 rounded-[2rem] bg-orange-50 border border-orange-100 text-orange-400 flex items-center justify-center shrink-0"
 					>
 						<span
 							class="material-symbols-outlined text-[4rem]"
@@ -101,7 +102,7 @@ const {
 							)
 						}
 						<h1
-							class="text-[1.75rem] lg:text-[2.5rem] font-bold leading-tight text-navy-900"
+							class="text-[1.75rem] lg:text-[2.5rem] font-bold leading-tight text-navy-900 mb-4"
 						>
 							{
 								tool
@@ -109,6 +110,11 @@ const {
 									.title
 							}
 						</h1>
+						
+						<!-- Like Button (Compact) -->
+						<div class="flex items-center lg:justify-start justify-center">
+							<LikeButton slug={`tool-${tool.id}`} variant="compact" />
+						</div>
 					</div>
 				</div>
 				<p
@@ -158,7 +164,7 @@ const {
 				class="hidden lg:flex w-full max-w-md h-72 bg-mint-50/30 rounded-3xl items-center justify-center relative"
 			>
 				<div
-					class="absolute inset-0 bg-white shadow-sm rounded-xl m-8 border border-gray-100 flex flex-col items-center justify-center gap-4 rotate-2"
+					class="absolute inset-0 bg-white rounded-xl m-8 border border-gray-100 flex flex-col items-center justify-center gap-4 rotate-2"
 				>
 					<span
 						class="material-symbols-outlined text-gray-300 text-6xl"
@@ -177,11 +183,25 @@ const {
 		</div>
 
 		<!-- Content Section -->
-		<div
-			class="content-area"
-		>
-			<Content
-			/>
+		<div class="content-area">
+			<Content />
+		</div>
+
+		<!-- Action Bar (Bottom of Content) -->
+		<div class="flex items-center justify-start gap-3 my-12 pt-8 border-t border-gray-100">
+			<LikeButton slug={`tool-${tool.id}`} />
+			<button 
+				class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95 ml-2" 
+				onclick="alert('コメント機能は準備中です！')"
+			>
+				<span class="material-symbols-outlined text-[1.5rem] font-light">chat_bubble</span>
+			</button>
+			<button 
+				class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95" 
+				onclick="if(window.openShareModal) window.openShareModal()"
+			>
+				<span class="material-symbols-outlined text-[1.5rem] font-light">ios_share</span>
+			</button>
 		</div>
 	</div>
 </Layout>

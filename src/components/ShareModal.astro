@@ -1,0 +1,105 @@
+---
+---
+
+<div id="share-modal" class="fixed inset-0 -z-10 opacity-0 flex items-end justify-center pointer-events-none sm:items-center transition-opacity duration-300">
+    <!-- Backdrop -->
+    <div id="share-backdrop" class="absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 pointer-events-none cursor-pointer"></div>
+    
+    <!-- Modal Content -->
+    <div id="share-content" class="bg-white w-full sm:w-[500px] sm:rounded-2xl rounded-t-3xl transform translate-y-full sm:translate-y-4 sm:scale-95 opacity-0 transition-all duration-300 pointer-events-none pb-[env(safe-area-inset-bottom)]">
+        <div class="px-6 pt-6 pb-2">
+            <h3 class="font-bold text-gray-700 text-[0.85rem]">共有</h3>
+        </div>
+        
+        <div class="px-2 sm:px-6 flex justify-between items-start w-full max-w-full pb-6">
+            <!-- Copy Link -->
+            <button onclick="navigator.clipboard.writeText(location.href); alert('リンクをコピーしました'); window.closeShareModal();" class="flex flex-col items-center gap-1.5 flex-1 group">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 group-hover:bg-gray-300 transition-colors">
+                    <span class="material-symbols-outlined text-[1.2rem] sm:text-[1.5rem] font-light">link</span>
+                </div>
+                <span class="text-[0.6rem] sm:text-[0.65rem] text-gray-500 font-medium whitespace-nowrap scale-90 sm:scale-100">リンクをコピー</span>
+            </button>
+            
+            <!-- X (Twitter) -->
+            <a href="#" onclick="this.href=`https://twitter.com/intent/tweet?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(document.title)}`; setTimeout(window.closeShareModal, 100);" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-1.5 flex-1 group">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black flex items-center justify-center group-hover:bg-gray-800 transition-colors shadow-sm">
+                    <img src="/images/icons/logo-white.png" alt="X" class="w-[50%] h-[50%] object-contain" />
+                </div>
+                <span class="text-[0.6rem] sm:text-[0.65rem] text-gray-500 font-medium whitespace-nowrap scale-90 sm:scale-100">X</span>
+            </a>
+            
+            <!-- LINE -->
+            <a href="#" onclick="this.href=`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(location.href)}`; setTimeout(window.closeShareModal, 100);" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-1.5 flex-1 group">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity">
+                    <img src="/images/icons/LINE_APP_Android.png" alt="LINE" class="w-full h-full object-contain" />
+                </div>
+                <span class="text-[0.6rem] sm:text-[0.65rem] text-gray-500 font-medium whitespace-nowrap scale-90 sm:scale-100">LINE</span>
+            </a>
+            
+            <!-- Facebook -->
+            <a href="#" onclick="this.href=`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}`; setTimeout(window.closeShareModal, 100);" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-1.5 flex-1 group">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center group-hover:opacity-80 transition-opacity">
+                    <img src="/images/icons/Facebook_Logo_Primary.png" alt="Facebook" class="w-full h-full object-contain" />
+                </div>
+                <span class="text-[0.6rem] sm:text-[0.65rem] text-gray-500 font-medium whitespace-nowrap scale-90 sm:scale-100">Facebook</span>
+            </a>
+
+            <!-- Threads -->
+            <a href="#" onclick="this.href=`https://www.threads.net/intent/post?text=${encodeURIComponent(document.title + ' ' + location.href)}`; setTimeout(window.closeShareModal, 100);" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-1.5 flex-1 group">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black flex items-center justify-center group-hover:bg-gray-800 transition-colors shadow-sm">
+                    <img src="/images/icons/threads-logo-white.png" alt="Threads" class="w-[60%] h-[60%] object-contain" />
+                </div>
+                <span class="text-[0.6rem] sm:text-[0.65rem] text-gray-500 font-medium whitespace-nowrap scale-90 sm:scale-100">Threads</span>
+            </a>
+        </div>
+        
+        <div class="border-t border-gray-100 text-center">
+            <button id="share-cancel" class="font-bold text-gray-600 text-[0.95rem] py-5 w-full hover:bg-gray-50 transition-colors rounded-b-2xl sm:rounded-b-2xl rounded-b-none">キャンセル</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const setupShareModal = () => {
+        const modal = document.getElementById('share-modal');
+        const backdrop = document.getElementById('share-backdrop');
+        const content = document.getElementById('share-content');
+        const cancelBtn = document.getElementById('share-cancel');
+
+        if (!modal || !backdrop || !content) return;
+
+        // Attach globally so inline onclick can use it
+        (window as any).openShareModal = () => {
+            modal.classList.remove('-z-10', 'opacity-0', 'pointer-events-none');
+            modal.classList.add('z-[200]', 'opacity-100', 'pointer-events-auto');
+            // Trigger reflow
+            void modal.offsetWidth;
+            
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100', 'pointer-events-auto');
+            
+            content.classList.remove('translate-y-full', 'sm:translate-y-4', 'sm:scale-95', 'opacity-0', 'pointer-events-none');
+            content.classList.add('translate-y-0', 'sm:translate-y-0', 'sm:scale-100', 'opacity-100', 'pointer-events-auto');
+        };
+
+        (window as any).closeShareModal = () => {
+            backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            
+            content.classList.remove('translate-y-0', 'sm:translate-y-0', 'sm:scale-100', 'opacity-100', 'pointer-events-auto');
+            content.classList.add('translate-y-full', 'sm:translate-y-4', 'sm:scale-95', 'opacity-0', 'pointer-events-none');
+            
+            setTimeout(() => {
+                modal.classList.remove('z-[200]', 'opacity-100', 'pointer-events-auto');
+                modal.classList.add('-z-10', 'opacity-0', 'pointer-events-none');
+            }, 300);
+        };
+
+        backdrop.addEventListener('click', (window as any).closeShareModal);
+        cancelBtn?.addEventListener('click', (window as any).closeShareModal);
+    };
+
+    // Initialize on DOM load and Astro page load
+    document.addEventListener('DOMContentLoaded', setupShareModal);
+    document.addEventListener('astro:page-load', setupShareModal);
+</script>

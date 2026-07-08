@@ -55,13 +55,12 @@ const firstTools =
 	title={SITE_TITLE}
 	description={SITE_DESCRIPTION}
 >
-	<!-- Hero Section -->
 	<section
-		class="px-6 pt-12 pb-16 lg:pt-24 lg:pb-28 sm:bg-[url('/hero-bg.png')] bg-cover bg-right bg-no-repeat relative"
+		class="px-6 pt-12 pb-16 lg:pt-24 lg:pb-28 bg-[url('/hero-bg.png')] bg-cover bg-right bg-no-repeat relative"
 	>
-		<!-- Semi-transparent overlay to ensure text readability if needed -->
+		<!-- Gradient overlay: Solid white at top for title readability, fading to transparent for image visibility -->
 		<div
-			class="absolute inset-0 bg-white/40 sm:bg-transparent"
+			class="absolute inset-0 bg-gradient-to-b from-white via-white/80 to-white/30 backdrop-blur-[2px] sm:bg-none sm:bg-transparent sm:backdrop-blur-none"
 		>
 		</div>
 
@@ -69,13 +68,13 @@ const firstTools =
 			class="relative z-10 max-w-2xl"
 		>
 			<h2
-				class="text-[1.75rem] lg:text-[2.5rem] leading-tight font-bold mb-6 text-navy-900 drop-shadow-none sm:drop-shadow-sm"
+				class="text-[1.75rem] lg:text-[2.5rem] leading-tight font-bold mb-6 text-navy-900"
 				set:html={UI
 					.home
 					.heroTitle}
 			/>
 			<p
-				class="text-[0.85rem] lg:text-base text-gray-700 mb-8 leading-relaxed max-w-lg font-medium drop-shadow-none sm:drop-shadow-sm"
+				class="text-[0.85rem] lg:text-base text-gray-700 mb-8 leading-relaxed max-w-lg font-medium"
 				set:html={UI
 					.home
 					.heroDesc}
@@ -85,7 +84,7 @@ const firstTools =
 			>
 				<a
 					href="/logs"
-					class="inline-flex items-center justify-center gap-2 bg-mint-500 hover:bg-mint-600 text-white py-3 px-8 rounded-full text-sm font-semibold transition-colors shadow-sm"
+					class="inline-flex items-center justify-center gap-2 bg-mint-500 hover:bg-mint-600 text-white py-3 px-8 rounded-full text-sm font-semibold transition-colors"
 				>
 					{
 						UI
@@ -99,7 +98,7 @@ const firstTools =
 				</a>
 				<a
 					href="/tools"
-					class="inline-flex items-center justify-center gap-2 bg-white text-mint-500 border border-mint-500 hover:bg-mint-50 py-3 px-8 rounded-full text-sm font-semibold transition-colors shadow-sm"
+					class="inline-flex items-center justify-center gap-2 bg-white text-mint-500 border border-mint-500 hover:bg-mint-50 py-3 px-8 rounded-full text-sm font-semibold transition-colors"
 				>
 					{
 						UI
@@ -143,7 +142,7 @@ const firstTools =
 						) => (
 							<a
 								href={`/logs/${log.id}/`}
-								class="block bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8 hover:shadow-md transition-shadow group relative"
+								class="block bg-white rounded-2xl border border-gray-200 p-6 lg:p-8 hover:bg-gray-50 transition-colors group relative"
 							>
 								<div class="flex flex-col lg:flex-row gap-6 lg:gap-12">
 									{log
@@ -288,7 +287,7 @@ const firstTools =
 					) => (
 						<a
 							href={`/tools/${tool.id}/`}
-							class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow group relative"
+							class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:bg-gray-50 transition-colors group relative"
 						>
 							<div class="w-14 h-14 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
 								<span class="material-symbols-outlined text-[1.75rem]">
@@ -314,17 +313,6 @@ const firstTools =
 								)}
 							/>
 							<div class="mt-auto flex justify-end">
-								{tool
-									.data
-									.isFree && (
-									<span class="bg-mint-50 text-mint-500 font-bold text-[0.65rem] px-2 py-0.5 rounded">
-										{
-											UI
-												.common
-												.freeBadge
-										}
-									</span>
-								)}
 							</div>
 						</a>
 					),
