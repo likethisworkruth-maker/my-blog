@@ -106,8 +106,21 @@ const uniqueAges =
 				class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide w-full"
 				id="category-filters"
 			>
+				<button
+					class="category-btn px-4 py-1.5 rounded-full border text-[0.85rem] whitespace-nowrap shrink-0 transition-colors border-mint-500 bg-mint-50 text-mint-500 font-bold"
+					data-category="すべて"
+				>
+					すべて
+				</button>
+				<button
+					class="category-btn px-4 py-1.5 rounded-full border text-[0.85rem] whitespace-nowrap shrink-0 transition-colors border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50 flex items-center gap-1"
+					data-category="liked"
+				>
+					<span class="material-symbols-outlined text-[1rem]">favorite</span>
+					お気に入り
+				</button>
 				{
-					displayCategories.map(
+					displayCategories.slice(1).map(
 						(
 							category,
 							index,
@@ -213,13 +226,14 @@ const uniqueAges =
 									.data
 									.order
 							}
+							data-id={post.id}
 						>
 							<!-- Header Removed -->
 
 							<!-- Main Image -->
 							<div class="w-full bg-gray-50 flex items-center justify-center cursor-pointer border-y border-gray-100" onclick={`if(window.openModal) window.openModal('${post.id}')`}>
 								{post.data.coverImage ? (
-									<img src={post.data.coverImage} alt={post.data.title} class="w-full h-auto object-cover max-h-[60vh]" />
+									<img src={post.data.coverImage} alt={post.data.title} class="w-full h-auto object-contain max-h-[85vh] bg-gray-50" />
 								) : (
 									<div class="w-full h-64 flex items-center justify-center">
 										<span class="material-symbols-outlined text-gray-300 text-5xl">image</span>
@@ -272,19 +286,28 @@ const uniqueAges =
 </Layout>
 
 <script>
-	// Modal Logic
-	const modal = document.getElementById('post-modal') as HTMLDialogElement;
-	const closeBtn = document.getElementById('close-modal');
-	const wrapper = document.getElementById('modal-content-wrapper');
-	const loadingSpinner = document.getElementById('loading-spinner');
+	document.addEventListener('astro:page-load', () => {
+		// Modal Logic
+		const modal = document.getElementById('post-modal') as HTMLDialogElement;
+		const closeBtn = document.getElementById('close-modal');
+		const wrapper = document.getElementById('modal-content-wrapper');
+		const loadingSpinner = document.getElementById('loading-spinner');
+
+		if (!modal) return;
+
+		let isModalOpenByClick = false;
 
 	function closeModal() {
 		if (modal && modal.open) {
 			modal.close();
-			// Revert URL
-			if (window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
-				history.pushState(null, '', '/knowhow');
+			// If we opened it via click (pushState), go back in history to clean it up
+			if (isModalOpenByClick && window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
+				history.back();
+			} else if (window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
+                // If it was direct load or something else, replace state
+				history.replaceState(null, '', '/knowhow');
 			}
+            isModalOpenByClick = false;
 		}
 	}
 
@@ -300,13 +323,20 @@ const uniqueAges =
 		});
 	}
 
-	// Handle browser back button
+	// Handle browser back/forward buttons
 	window.addEventListener('popstate', () => {
 		if (window.location.pathname === '/knowhow' || window.location.pathname === '/knowhow/') {
 			if (modal && modal.open) {
+                isModalOpenByClick = false;
 				modal.close();
 			}
-		}
+		} else if (window.location.pathname.startsWith('/knowhow/')) {
+            const id = window.location.pathname.split('/').filter(Boolean).pop();
+            if (id && (!modal || !modal.open)) {
+                // User navigated forward to a post, open the modal
+                window.openModal(id, true);
+            }
+        }
 	});
 
 	declare global {
@@ -598,7 +628,17 @@ const uniqueAges =
 			const descText = (card.querySelector('.line-clamp-2')?.textContent || '').toLowerCase();
 			const searchMatch = !searchQuery || titleText.includes(searchQuery) || descText.includes(searchQuery);
 
-			const categoryMatch = currentCategory === "すべて" || (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
+			let categoryMatch = false;
+			if (currentCategory === "すべて") {
+				categoryMatch = true;
+			} else if (currentCategory === "liked") {
+				const id = card.getAttribute("data-id");
+				const isLiked = !!localStorage.getItem(`liked:${encodeURIComponent('knowhow/' + id)}`);
+				categoryMatch = isLiked;
+			} else {
+				categoryMatch = (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
+			}
+
 			const ageMatch = currentAge === "all" || card.getAttribute("data-age") === currentAge;
 
 			if (categoryMatch && ageMatch && searchMatch) {
@@ -662,14 +702,15 @@ const uniqueAges =
 		updateView();
 	});
 
-	sortOrder?.addEventListener("change", (e) => {
-		currentSort = (e.target as HTMLSelectElement).value;
-		updateView();
-	});
+		sortOrder?.addEventListener("change", (e) => {
+			currentSort = (e.target as HTMLSelectElement).value;
+			updateView();
+		});
 
-	searchInput?.addEventListener("input", (e) => {
-		searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
-		updateView();
+		searchInput?.addEventListener("input", (e) => {
+			searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+			updateView();
+		});
 	});
 </script>
 

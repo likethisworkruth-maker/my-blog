@@ -106,8 +106,21 @@ const uniqueAges =
 				class="flex gap-2 sm:gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto"
 				id="category-filters"
 			>
+				<button
+					class="category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors border-mint-500 bg-mint-50 text-mint-500 font-bold"
+					data-category="すべて"
+				>
+					すべて
+				</button>
+				<button
+					class="category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50 flex items-center gap-1"
+					data-category="liked"
+				>
+					<span class="material-symbols-outlined text-[1rem]">favorite</span>
+					お気に入り
+				</button>
 				{
-					displayCategories.map(
+					displayCategories.slice(1).map(
 						(
 							category,
 							index,
@@ -200,6 +213,7 @@ const uniqueAges =
 							).join(",")}
 							data-age={app.data.childAgeMonths ?? "none"}
 							data-order={app.data.order}
+							data-id={app.id}
 						>
 							<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-[1.25rem] sm:rounded-3xl bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 shadow-sm border border-gray-50">
 								<span class="material-symbols-outlined text-3xl sm:text-4xl">
@@ -279,21 +293,17 @@ const uniqueAges =
 				const categoryText = (card.querySelector('.text-mint-600')?.textContent || '').toLowerCase();
 				const searchMatch = !searchQuery || titleText.includes(searchQuery) || categoryText.includes(searchQuery);
 
-				const categoryMatch =
-					currentCategory ===
-						"すべて" ||
-					(
-						card.getAttribute(
-							"data-categories",
-						) ||
-						""
-					)
-						.split(
-							",",
-						)
-						.includes(
-							currentCategory,
-						);
+				let categoryMatch = false;
+				if (currentCategory === "すべて") {
+					categoryMatch = true;
+				} else if (currentCategory === "liked") {
+					const id = card.getAttribute("data-id");
+					const isLiked = !!localStorage.getItem(`liked:${encodeURIComponent('apps/' + id)}`);
+					categoryMatch = isLiked;
+				} else {
+					categoryMatch = (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
+				}
+
 				const ageMatch =
 					currentAge ===
 						"all" ||

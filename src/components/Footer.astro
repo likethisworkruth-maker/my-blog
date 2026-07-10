@@ -92,6 +92,22 @@ const today =
 				}</span
 			>
 		</a>
+		<a
+			href="/logs"
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("logs") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+		>
+			<span
+				class={`material-symbols-outlined text-2xl ${currentPath.startsWith("logs") ? "material-symbols-filled" : ""}`}
+				>auto_stories</span
+			>
+			<span
+				>{
+					UI
+						.footerNav
+						.logs
+				}</span
+			>
+		</a>
 	</div>
 </footer>
 

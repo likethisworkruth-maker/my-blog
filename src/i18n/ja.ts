@@ -4,12 +4,14 @@ export const UI = {
 		knowhow: "ノウハウ",
 		apps: "アプリ",
 		items: "アイテム",
+		logs: "育児ログ",
 	},
 	footerNav: {
 		home: "ホーム",
 		knowhow: "ノウハウ",
 		apps: "アプリ",
 		items: "アイテム",
+		logs: "育児ログ",
 	},
 	home: {
 		heroTitle: "育児の正解なんてわからないけど、<br/>つまずいた小さな困りごとを、<br/>週5時間のスキマ時間でひとつずつラクにしていく記録。",

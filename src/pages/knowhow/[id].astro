@@ -27,6 +27,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 	title={`${knowhow.data.title} | ${SITE_TITLE}`}
 	description={knowhow.data.description}
 	image={knowhow.data.coverImage}
+    fullScreen={true}
 >
 	<div class="relative w-full h-[100dvh] bg-gray-200 flex items-center justify-center overflow-hidden" 
          id="knowhow-modal-container" 
@@ -34,7 +35,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
          data-next={nextUrl}>
 		
 		<!-- PC Back Button -->
-		<button onclick="if(window.closeModal) { window.closeModal(); } else { window.location.href='/knowhow'; }" class="hidden lg:flex absolute top-6 left-6 z-50 text-gray-800 hover:bg-gray-300 transition-colors bg-white w-12 h-12 rounded-full items-center justify-center cursor-pointer outline-none shadow-sm">
+		<button onclick="if(this.closest('dialog') && window.closeModal) { window.closeModal(); } else if (window.astroNavigate) { window.astroNavigate('/knowhow'); } else { window.location.href='/knowhow'; }" class="hidden lg:flex absolute top-6 left-6 z-50 text-gray-800 hover:bg-gray-300 transition-colors bg-white w-12 h-12 rounded-full items-center justify-center cursor-pointer outline-none shadow-sm">
 			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
 		</button>
 
@@ -45,7 +46,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                 <!-- Main Media Area -->
                 <div class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl">
                     <!-- Mobile Back Button -->
-                    <button onclick="if(window.closeModal) { window.closeModal(); } else { window.location.href='/knowhow'; }" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors bg-black/30 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer outline-none border border-white/10 shadow-lg backdrop-blur-sm">
+                    <button onclick="if(this.closest('dialog') && window.closeModal) { window.closeModal(); } else if (window.astroNavigate) { window.astroNavigate('/knowhow'); } else { window.location.href='/knowhow'; }" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors bg-black/30 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer outline-none border border-white/10 shadow-lg backdrop-blur-sm">
                         <span class="material-symbols-outlined">arrow_back_ios_new</span>
                     </button>
                     
@@ -53,7 +54,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                         <img 
                             src={knowhow.data.coverImage} 
                             alt={knowhow.data.title} 
-                            class="w-full h-full object-cover sm:object-contain pointer-events-none"
+                            class="w-full h-full object-contain pointer-events-none"
                         />
                     ) : (
                         <div class="w-full h-full flex items-center justify-center">
@@ -115,9 +116,12 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 </Layout>
 
 <script>
+    import { navigate } from 'astro:transitions/client';
+
 	// Global toggle function
 	declare global {
 		interface Window {
+            astroNavigate?: (url: string) => void;
 			toggleCommentsPanel: () => void;
 			toggleDescPanel: () => void;
             toggleInfoPanel: () => void;
@@ -126,6 +130,8 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
             closeModal?: () => void;
 		}
 	}
+
+    window.astroNavigate = navigate;
 
 	function initReels() {
 		const container = document.getElementById('knowhow-modal-container');
@@ -264,7 +270,11 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
             const url = container.getAttribute(`data-${direction}`);
             if (url) {
                 isNavigating = true;
-                window.location.href = url;
+                // AstroのView Transitions用にスクロール方向を記録
+                document.documentElement.dataset.scrollDirection = direction;
+                
+                // navigate() を使用してSPA遷移
+                navigate(url);
             }
         };
 
@@ -344,14 +354,47 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 	}
 
 	document.addEventListener('DOMContentLoaded', initReels);
-	document.addEventListener('astro:page-load', initReels);
+	document.addEventListener('astro:page-load', () => {
+        // Reset navigation state and direction after transition completes
+        document.documentElement.removeAttribute('data-scroll-direction');
+        initReels();
+    });
 </script>
 
-<style>
-	:global(body) { overscroll-behavior-y: none; }
-	:global(header), :global(footer) { display: none !important; }
-	:global(main) { padding: 0 !important; margin: 0 !important; max-width: none !important; height: 100dvh; }
-	#caption-content :global(h3), .content-area :global(h3) { font-weight: bold; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.2rem; }
-	#caption-content :global(p), .content-area :global(p) { margin-bottom: 0.5rem; }
-	#caption-content :global(a), .content-area :global(a) { color: #60a5fa; text-decoration: underline; }
+<style is:global>
+	#caption-content h3, .content-area h3 { font-weight: bold; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.2rem; }
+	#caption-content p, .content-area p { margin-bottom: 0.5rem; }
+	#caption-content a, .content-area a { color: #60a5fa; text-decoration: underline; }
+
+    /* Custom Vertical Slide Transitions for Reels */
+    html[data-scroll-direction="next"]::view-transition-old(root) {
+        animation: slideUpOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+    html[data-scroll-direction="next"]::view-transition-new(root) {
+        animation: slideUpIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    html[data-scroll-direction="prev"]::view-transition-old(root) {
+        animation: slideDownOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+    html[data-scroll-direction="prev"]::view-transition-new(root) {
+        animation: slideDownIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes slideUpOut {
+        from { transform: translateY(0); }
+        to { transform: translateY(-100%); }
+    }
+    @keyframes slideUpIn {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    @keyframes slideDownOut {
+        from { transform: translateY(0); }
+        to { transform: translateY(100%); }
+    }
+    @keyframes slideDownIn {
+        from { transform: translateY(-100%); }
+        to { transform: translateY(0); }
+    }
 </style>

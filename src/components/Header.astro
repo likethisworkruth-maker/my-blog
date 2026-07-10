@@ -80,6 +80,16 @@ const currentPath =
 						.items
 				}
 			</a>
+			<a
+				href="/logs"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("logs") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{
+					UI
+						.headerNav
+						.logs
+				}
+			</a>
 		</nav>
 	</div>
 </header>
