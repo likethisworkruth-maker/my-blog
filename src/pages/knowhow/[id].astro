@@ -89,10 +89,10 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                 id="info-panel" 
                 class="fixed lg:relative bottom-0 left-0 w-full h-[65dvh] lg:h-full lg:w-0 bg-[#262626] z-50 lg:z-10 transform translate-y-full lg:translate-y-0 transition-all duration-300 ease-out flex flex-col shadow-2xl lg:shadow-xl rounded-t-3xl lg:rounded-xl overflow-hidden opacity-100 lg:opacity-0 lg:ml-0"
             >
-                <div class="flex items-center justify-between px-4 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
-                    <div class="flex-grow flex items-center justify-center gap-8">
-                        <button id="tab-btn-desc" class="py-3 font-bold text-white border-b-2 border-white px-2 tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
-                        <button id="tab-btn-comments" class="py-3 font-bold text-gray-400 border-b-2 border-transparent px-2 tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">コメント</button>
+                <div class="flex items-center justify-between pl-4 pr-14 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
+					<div class="flex-grow flex items-stretch justify-center w-full">
+						<button id="tab-btn-desc" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
+						<button id="tab-btn-comments" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">コメント</button>
                     </div>
                     <button class="absolute right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
                         <span class="material-symbols-outlined font-light">close</span>
@@ -131,7 +131,18 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 		}
 	}
 
-    window.astroNavigate = navigate;
+	window.astroNavigate = navigate;
+
+	// Astro replaces the document during client navigation. Carry the wheel/swipe
+	// direction into the incoming document so both transition snapshots use the
+	// same vertical animation instead of falling back to an instant swap.
+	document.addEventListener('astro:before-swap', (event) => {
+		const direction = document.documentElement.dataset.scrollDirection;
+		const transitionEvent = event as Event & { newDocument: Document };
+		if (direction && transitionEvent.newDocument) {
+			transitionEvent.newDocument.documentElement.dataset.scrollDirection = direction;
+		}
+	});
 
 	function initReels() {
 		const container = document.getElementById('knowhow-modal-container');
@@ -342,8 +353,10 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 
 	document.addEventListener('DOMContentLoaded', initReels);
 	document.addEventListener('astro:page-load', () => {
-        // Reset navigation state and direction after transition completes
-        document.documentElement.removeAttribute('data-scroll-direction');
+		// Keep the direction through the view-transition snapshot, then clean it up.
+		setTimeout(() => {
+			document.documentElement.removeAttribute('data-scroll-direction');
+		}, 500);
         initReels();
     });
 </script>
@@ -360,23 +373,23 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 	}
 
 	::view-transition-group(knowhow-media) {
-		animation-duration: 0.38s;
+		animation-duration: 0.45s;
 		animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 		overflow: hidden;
 	}
 
     html[data-scroll-direction="next"]::view-transition-old(knowhow-media) {
-        animation: slideUpOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+        animation: slideUpOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
     html[data-scroll-direction="next"]::view-transition-new(knowhow-media) {
-        animation: slideUpIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+        animation: slideUpIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
 
     html[data-scroll-direction="prev"]::view-transition-old(knowhow-media) {
-        animation: slideDownOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+        animation: slideDownOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
     html[data-scroll-direction="prev"]::view-transition-new(knowhow-media) {
-        animation: slideDownIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+        animation: slideDownIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
 
     @keyframes slideUpOut {

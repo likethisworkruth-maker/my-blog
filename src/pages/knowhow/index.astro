@@ -1,5 +1,5 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ActionBar from "../../components/ActionBar.astro";
 import Comments from "../../components/Comments.astro";
@@ -24,6 +24,13 @@ knowhow.sort(
 		b
 			.data
 			.order,
+);
+
+const knowhowWithContent = await Promise.all(
+	knowhow.map(async (post) => ({
+		post,
+		Content: (await render(post)).Content,
+	})),
 );
 
 const uniqueCategories =
@@ -201,9 +208,9 @@ const uniqueAges =
 			id="knowhow-container"
 		>
 			{
-				knowhow.map(
+				knowhowWithContent.map(
 					(
-						post,
+						{ post, Content },
 					) => (
 						<article 
 							class="knowhow-card bg-white rounded-xl lg:border border-gray-200 lg:shadow-sm overflow-hidden"
@@ -252,8 +259,11 @@ const uniqueAges =
 									<span class="font-bold mr-1">{SITE_TITLE}</span>
 									<span>{post.data.title}</span>
 								</p>
-								<p class="text-[0.85rem] text-gray-600 mt-1 line-clamp-2 leading-relaxed" set:text={post.data.description}></p>
-								<button class="text-gray-400 text-[0.85rem] mt-1.5 hover:text-gray-600" onclick={`if(window.openModal) window.openModal('${post.id}')`}>
+								<p class="knowhow-summary text-[0.85rem] text-gray-600 mt-1 line-clamp-2 leading-relaxed" set:text={post.data.description}></p>
+								<div class="knowhow-inline-content hidden mt-4 pt-4 border-t border-gray-100 text-[0.9rem] text-gray-700 leading-relaxed">
+									<Content />
+								</div>
+								<button class="knowhow-expand-button text-gray-400 text-[0.85rem] mt-1.5 hover:text-gray-600" type="button" aria-expanded="false">
 									続きを読む...
 								</button>
 							</div>
@@ -290,12 +300,20 @@ const uniqueAges =
 		const loadingSpinner = document.getElementById('loading-spinner');
 
 		if (!modal) return;
+		if (modal.dataset.knowhowModalInitialized) return;
+		modal.dataset.knowhowModalInitialized = 'true';
+		const unlockPageScroll = () => {
+			document.documentElement.classList.remove('overflow-hidden');
+			document.body.classList.remove('overflow-hidden');
+		};
+		modal.addEventListener('close', unlockPageScroll);
 
 		let isModalOpenByClick = false;
 
 	function closeModal() {
 		if (modal && modal.open) {
 			modal.close();
+			unlockPageScroll();
 			// If we opened it via click (pushState), go back in history to clean it up
 			if (isModalOpenByClick && window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
 				history.back();
@@ -306,6 +324,7 @@ const uniqueAges =
             isModalOpenByClick = false;
 		}
 	}
+	window.closeModal = closeModal;
 
 
 	if (modal) {
@@ -467,6 +486,7 @@ const uniqueAges =
 		
 		isNavigating = true;
 		currentPostId = id;
+		wrapper.dataset.currentPostId = id;
 		
 		// Update URL
 		history.pushState({ id }, '', `/knowhow/${id}/`);
@@ -474,6 +494,8 @@ const uniqueAges =
 		if (!modal.open) {
 			modal.showModal();
 		}
+		document.documentElement.classList.add('overflow-hidden');
+		document.body.classList.add('overflow-hidden');
 		wrapper.innerHTML = '';
 		wrapper.appendChild(loadingSpinner);
 		loadingSpinner.style.display = 'flex';
@@ -512,27 +534,22 @@ const uniqueAges =
 	let endY = 0;
 	
 	const navigateToRelative = (direction: 1 | -1) => {
-		if (isNavigating || !currentPostId) return;
+		const activePostId = wrapper?.dataset.currentPostId || currentPostId;
+		if (isNavigating || !activePostId) return;
 		
 		// Find currently visible cards in the DOM to determine the order
 		const visibleCards = Array.from(document.querySelectorAll(".knowhow-card")).filter(card => (card as HTMLElement).style.display !== "none");
 		if (visibleCards.length === 0) return;
 
 		// Find index of current post
-		const currentIndex = visibleCards.findIndex(card => {
-			// Find the click handler string to extract ID
-			const html = card.innerHTML;
-			return html.includes(`openModal('${currentPostId}')`);
-		});
+		const currentIndex = visibleCards.findIndex(card => card.getAttribute('data-id') === activePostId);
 
 		if (currentIndex !== -1) {
 			const targetIndex = currentIndex + direction;
 			if (targetIndex >= 0 && targetIndex < visibleCards.length) {
 				const targetCard = visibleCards[targetIndex];
-				const match = targetCard.innerHTML.match(/openModal\('([^']+)'\)/);
-				if (match && match[1]) {
-					window.openModal(match[1]);
-				}
+				const targetId = targetCard.getAttribute('data-id');
+				if (targetId) window.openModal(targetId);
 			}
 		}
 	};
@@ -597,6 +614,23 @@ const uniqueAges =
 	let currentAge = "all";
 	let currentSort = "recommended";
 	let searchQuery = "";
+
+	knowhowContainer?.addEventListener('click', (event) => {
+		const target = event.target as HTMLElement;
+		const button = target.closest('.knowhow-expand-button') as HTMLButtonElement | null;
+		if (!button) return;
+
+		const card = button.closest('.knowhow-card');
+		const summary = card?.querySelector('.knowhow-summary');
+		const content = card?.querySelector('.knowhow-inline-content');
+		if (!summary || !content) return;
+
+		const willExpand = content.classList.contains('hidden');
+		content.classList.toggle('hidden', !willExpand);
+		summary.classList.toggle('line-clamp-2', !willExpand);
+		button.setAttribute('aria-expanded', String(willExpand));
+		button.textContent = willExpand ? '閉じる' : '続きを読む...';
+	});
 
 	function updateView() {
 		// Filter
@@ -692,6 +726,24 @@ const uniqueAges =
 </script>
 
 <style>
+	.knowhow-inline-content :global(h3) {
+		font-size: 1rem;
+		font-weight: 700;
+		margin: 1.25rem 0 0.35rem;
+		color: #172554;
+	}
+	.knowhow-inline-content :global(h3:first-child) {
+		margin-top: 0;
+	}
+	.knowhow-inline-content :global(p) {
+		margin-bottom: 0.75rem;
+	}
+	.knowhow-inline-content :global(ol),
+	.knowhow-inline-content :global(ul) {
+		margin: 0.5rem 0 0.75rem 1.25rem;
+	}
+	.knowhow-inline-content :global(ol) { list-style: decimal; }
+	.knowhow-inline-content :global(ul) { list-style: disc; }
 	.scrollbar-hide::-webkit-scrollbar {
 		display: none;
 	}

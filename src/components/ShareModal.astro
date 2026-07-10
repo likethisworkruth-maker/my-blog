@@ -1,7 +1,7 @@
 ---
 ---
 
-<div id="share-modal" class="fixed inset-0 -z-10 opacity-0 flex items-end justify-center pointer-events-none sm:items-center transition-opacity duration-300">
+<dialog id="share-modal" class="fixed inset-0 w-full h-full max-w-none max-h-none m-0 p-0 border-none bg-transparent opacity-0 items-end justify-center pointer-events-none sm:items-center transition-opacity duration-300">
     <!-- Backdrop -->
     <div id="share-backdrop" class="absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 pointer-events-none cursor-pointer"></div>
     
@@ -57,11 +57,11 @@
             <button id="share-cancel" class="font-bold text-gray-600 text-[0.95rem] py-5 w-full hover:bg-gray-50 transition-colors rounded-b-2xl sm:rounded-b-2xl rounded-b-none">キャンセル</button>
         </div>
     </div>
-</div>
+</dialog>
 
 <script>
     const setupShareModal = () => {
-        const modal = document.getElementById('share-modal');
+        const modal = document.getElementById('share-modal') as HTMLDialogElement | null;
         const backdrop = document.getElementById('share-backdrop');
         const content = document.getElementById('share-content');
         const cancelBtn = document.getElementById('share-cancel');
@@ -70,8 +70,14 @@
 
         // Attach globally so inline onclick can use it
         (window as any).openShareModal = () => {
-            modal.classList.remove('-z-10', 'opacity-0', 'pointer-events-none');
-            modal.classList.add('z-[200]', 'opacity-100', 'pointer-events-auto');
+            const modal = document.getElementById('share-modal') as HTMLDialogElement | null;
+			const backdrop = document.getElementById('share-backdrop');
+			const content = document.getElementById('share-content');
+			if (!modal || !backdrop || !content) return;
+
+			if (!modal.open) modal.showModal();
+			modal.classList.remove('opacity-0', 'pointer-events-none');
+			modal.classList.add('flex', 'opacity-100', 'pointer-events-auto');
             // Trigger reflow
             void modal.offsetWidth;
             
@@ -83,6 +89,11 @@
         };
 
         (window as any).closeShareModal = () => {
+            const modal = document.getElementById('share-modal') as HTMLDialogElement | null;
+			const backdrop = document.getElementById('share-backdrop');
+			const content = document.getElementById('share-content');
+			if (!modal || !backdrop || !content) return;
+
             backdrop.classList.remove('opacity-100', 'pointer-events-auto');
             backdrop.classList.add('opacity-0', 'pointer-events-none');
             
@@ -90,8 +101,9 @@
             content.classList.add('translate-y-full', 'sm:translate-y-4', 'sm:scale-95', 'opacity-0', 'pointer-events-none');
             
             setTimeout(() => {
-                modal.classList.remove('z-[200]', 'opacity-100', 'pointer-events-auto');
-                modal.classList.add('-z-10', 'opacity-0', 'pointer-events-none');
+				modal.classList.remove('flex', 'opacity-100', 'pointer-events-auto');
+				modal.classList.add('opacity-0', 'pointer-events-none');
+				if (modal.open) modal.close();
             }, 300);
         };
 
@@ -114,3 +126,9 @@
     document.addEventListener('DOMContentLoaded', setupShareModal);
     document.addEventListener('astro:page-load', setupShareModal);
 </script>
+
+<style>
+	#share-modal::backdrop {
+		background: transparent;
+	}
+</style>
