@@ -1,0 +1,357 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import ActionBar from "../../components/ActionBar.astro";
+import Comments from "../../components/Comments.astro";
+import { SITE_TITLE } from "../../consts";
+
+export async function getStaticPaths() {
+	const knowhow = await getCollection("knowhow");
+	return knowhow.map((item, index) => ({
+		params: { id: item.id },
+		props: { 
+            knowhow: item,
+            prev: knowhow[index - 1] || null,
+            next: knowhow[index + 1] || null
+        },
+	}));
+}
+
+const { knowhow, prev, next } = Astro.props;
+const { Content } = await render(knowhow);
+const prevUrl = prev ? `/knowhow/${prev.id}/` : '';
+const nextUrl = next ? `/knowhow/${next.id}/` : '';
+---
+
+<Layout
+	title={`${knowhow.data.title} | ${SITE_TITLE}`}
+	description={knowhow.data.description}
+	image={knowhow.data.coverImage}
+>
+	<div class="relative w-full h-[100dvh] bg-gray-200 flex items-center justify-center overflow-hidden" 
+         id="knowhow-modal-container" 
+         data-prev={prevUrl} 
+         data-next={nextUrl}>
+		
+		<!-- PC Back Button -->
+		<button onclick="if(window.closeModal) { window.closeModal(); } else { window.location.href='/knowhow'; }" class="hidden lg:flex absolute top-6 left-6 z-50 text-gray-800 hover:bg-gray-300 transition-colors bg-white w-12 h-12 rounded-full items-center justify-center cursor-pointer outline-none shadow-sm">
+			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
+		</button>
+
+		<div class="flex flex-row items-stretch justify-center h-[100dvh] lg:h-[85dvh] lg:max-h-[900px] w-full max-w-[1200px] mx-auto lg:py-6 relative transition-all duration-300" id="main-content-wrapper">
+
+            <!-- Media + ActionBar Container -->
+            <div class="flex flex-row items-end h-full shrink-0 relative transition-all duration-300 w-full lg:w-auto justify-center">
+                <!-- Main Media Area -->
+                <div class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl">
+                    <!-- Mobile Back Button -->
+                    <button onclick="if(window.closeModal) { window.closeModal(); } else { window.location.href='/knowhow'; }" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors bg-black/30 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer outline-none border border-white/10 shadow-lg backdrop-blur-sm">
+                        <span class="material-symbols-outlined">arrow_back_ios_new</span>
+                    </button>
+                    
+                    {knowhow.data.coverImage ? (
+                        <img 
+                            src={knowhow.data.coverImage} 
+                            alt={knowhow.data.title} 
+                            class="w-full h-full object-cover sm:object-contain pointer-events-none"
+                        />
+                    ) : (
+                        <div class="w-full h-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-gray-700 text-5xl">image</span>
+                        </div>
+                    )}
+
+                    <!-- Floating Caption (Bottom Left) -->
+                    <div class="absolute bottom-0 left-0 w-full p-4 lg:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none pb-8 lg:pb-6 z-10">
+                        <div class="pointer-events-auto cursor-pointer" onclick="if(window.toggleDescPanel) window.toggleDescPanel()">
+                            <h1 class="text-white font-bold text-lg mb-2 drop-shadow-md leading-snug pr-16">{knowhow.data.title}</h1>
+                            <div class="text-white/90 text-sm drop-shadow-md prose prose-invert prose-sm max-w-none pr-16 line-clamp-2" id="caption-content">
+                                <Content />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Action Bar (Mobile only) -->
+                    <div class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
+                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" />
+                    </div>
+                </div>
+
+                <!-- Floating Action Bar (PC only) -->
+                <div class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
+                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" />
+                </div>
+            </div>
+
+            <!-- Unified Info Panel -->
+            <div 
+                id="info-panel" 
+                class="fixed lg:relative bottom-0 left-0 w-full h-[65dvh] lg:h-full lg:w-0 bg-white z-50 lg:z-10 transform translate-y-full lg:translate-y-0 transition-all duration-300 ease-out flex flex-col shadow-2xl lg:shadow-xl rounded-t-3xl lg:rounded-xl overflow-hidden opacity-100 lg:opacity-0 lg:ml-0"
+            >
+                <div class="flex items-center justify-between px-4 py-0 border-b border-gray-200 shrink-0 bg-white min-w-[320px]">
+                    <div class="flex-grow flex items-center justify-center gap-8">
+                        <button id="tab-btn-desc" class="py-3 font-bold text-navy-900 border-b-2 border-navy-900 px-2 tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
+                        <button id="tab-btn-comments" class="py-3 font-bold text-gray-400 border-b-2 border-transparent px-2 tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">コメント</button>
+                    </div>
+                    <button class="absolute right-4 text-gray-500 hover:text-gray-700" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
+                        <span class="material-symbols-outlined font-light">close</span>
+                    </button>
+                </div>
+
+                <!-- Description Content -->
+                <div id="tab-content-desc" class="flex-grow overflow-y-auto p-4 sm:p-6 content-area bg-white text-gray-800 overscroll-contain min-w-[320px]">
+                    <h1 class="text-[1.25rem] font-bold text-navy-900 leading-snug mb-4">{knowhow.data.title}</h1>
+                    <p class="text-[0.95rem] text-gray-600 mb-6 leading-relaxed whitespace-pre-wrap">{knowhow.data.description}</p>
+                    <Content />
+                </div>
+
+                <!-- Comments Content -->
+                <div id="tab-content-comments" class="flex-grow overflow-hidden hidden bg-[#262626] flex-col min-w-[320px]">
+                    <Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
+                </div>
+            </div>
+		</div>
+	</div>
+</Layout>
+
+<script>
+	// Global toggle function
+	declare global {
+		interface Window {
+			toggleCommentsPanel: () => void;
+			toggleDescPanel: () => void;
+            toggleInfoPanel: () => void;
+            toggleTab: (tab: 'desc' | 'comments') => void;
+            switchTab: (tab: 'desc' | 'comments') => void;
+            closeModal?: () => void;
+		}
+	}
+
+	function initReels() {
+		const container = document.getElementById('knowhow-modal-container');
+		if (!container || container.dataset.reelsInitialized) return;
+		container.dataset.reelsInitialized = 'true';
+
+        // We bind functions to window dynamically so they fetch the latest DOM elements
+        const isMobile = () => window.innerWidth < 1024;
+        
+        const setUrlTab = (tab: string | null) => {
+            const url = new URL(window.location.href);
+            if (tab) url.searchParams.set('tab', tab);
+            else url.searchParams.delete('tab');
+            history.replaceState(null, '', url.toString());
+        };
+
+        window.switchTab = (tab: 'desc' | 'comments') => {
+            const tabBtnDesc = document.getElementById('tab-btn-desc');
+            const tabBtnComments = document.getElementById('tab-btn-comments');
+            const tabContentDesc = document.getElementById('tab-content-desc');
+            const tabContentComments = document.getElementById('tab-content-comments');
+
+            if (tab === 'desc') {
+                tabBtnDesc?.classList.replace('text-gray-400', 'text-navy-900');
+                tabBtnDesc?.classList.replace('border-transparent', 'border-navy-900');
+                tabBtnComments?.classList.replace('text-navy-900', 'text-gray-400');
+                tabBtnComments?.classList.replace('border-navy-900', 'border-transparent');
+                tabContentDesc?.classList.remove('hidden');
+                tabContentComments?.classList.add('hidden');
+                tabContentComments?.classList.remove('flex');
+            } else {
+                tabBtnComments?.classList.replace('text-gray-400', 'text-navy-900');
+                tabBtnComments?.classList.replace('border-transparent', 'border-navy-900');
+                tabBtnDesc?.classList.replace('text-navy-900', 'text-gray-400');
+                tabBtnDesc?.classList.replace('border-navy-900', 'border-transparent');
+                tabContentComments?.classList.remove('hidden');
+                tabContentComments?.classList.add('flex');
+                tabContentDesc?.classList.add('hidden');
+                
+                const form = tabContentComments?.querySelector('input[type="text"]') as HTMLInputElement;
+                if (form) form.focus();
+            }
+        };
+
+        window.toggleInfoPanel = () => {
+            const infoPanel = document.getElementById('info-panel');
+            if (!infoPanel) return;
+            const mobile = isMobile();
+            
+            if (mobile) {
+                infoPanel.classList.toggle('translate-y-full');
+            } else {
+                // PC: Toggle width and opacity
+                if (infoPanel.classList.contains('lg:w-0')) {
+                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                } else {
+                    infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+            }
+
+            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+            if (isOpened) {
+                const tabContentDesc = document.getElementById('tab-content-desc');
+                const activeTab = tabContentDesc?.classList.contains('hidden') ? 'comments' : 'desc';
+                setUrlTab(activeTab);
+            } else {
+                setUrlTab(null);
+            }
+        };
+
+        window.toggleTab = (tab: 'desc' | 'comments') => {
+            const infoPanel = document.getElementById('info-panel');
+            if (!infoPanel) return;
+            const mobile = isMobile();
+            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+            
+            const tabContentDesc = document.getElementById('tab-content-desc');
+            const activeTab = tabContentDesc?.classList.contains('hidden') ? 'comments' : 'desc';
+
+            if (isOpened && activeTab === tab) {
+                // Close if clicking the same tab
+                window.toggleInfoPanel();
+            } else if (isOpened) {
+                // Switch if already open
+                window.switchTab(tab);
+                setUrlTab(tab);
+            } else {
+                // Open and switch
+                window.switchTab(tab);
+                if (mobile) {
+                    infoPanel.classList.remove('translate-y-full');
+                } else {
+                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+                setUrlTab(tab);
+            }
+        };
+
+        // Backward compatibility for existing buttons
+		window.toggleCommentsPanel = () => window.toggleTab('comments');
+		window.toggleDescPanel = () => window.toggleTab('desc');
+
+		// Close panel if clicked outside
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+			if (container && container.contains(target) && 
+				(!infoPanel || !infoPanel.contains(target)) && 
+				!target.closest('button[onclick*="toggleCommentsPanel"]') &&
+				!target.closest('button[onclick*="toggleDescPanel"]') &&
+                !target.closest('button[onclick*="toggleTab"]') &&
+                !target.closest('div[onclick*="toggleDescPanel"]') &&
+				!target.closest('.like-btn')
+			) {
+				if (infoPanel) {
+					if (isMobile()) infoPanel.classList.add('translate-y-full');
+					else {
+                        infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                        infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                    }
+				}
+				setUrlTab(null);
+			}
+		});
+
+        // Navigation logic for standalone page (wheel/swipe)
+        let isNavigating = false;
+        const navigateTo = (direction: 'next' | 'prev') => {
+            if (isNavigating) return;
+            // Only navigate if we're not inside index.astro's modal
+            if (document.getElementById('post-modal')) return;
+
+            const url = container.getAttribute(`data-${direction}`);
+            if (url) {
+                isNavigating = true;
+                window.location.href = url;
+            }
+        };
+
+        let wheelDelta = 0;
+        let wheelTimeout: NodeJS.Timeout | null = null;
+        const handleScrollEvent = (deltaY: number, target: HTMLElement) => {
+            const infoPanel = document.getElementById('info-panel');
+            if (infoPanel && infoPanel.contains(target)) return false;
+            
+            wheelDelta += deltaY;
+            if (wheelDelta > 80) { 
+                navigateTo('next'); 
+                wheelDelta = 0;
+                return true; 
+            } else if (wheelDelta < -80) { 
+                navigateTo('prev'); 
+                wheelDelta = 0;
+                return true; 
+            }
+            return false;
+        };
+
+        container.addEventListener('wheel', (e) => {
+            const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+            // If scrolling inside panel, ignore
+            if (infoPanel && infoPanel.contains(target)) return;
+
+            if (wheelTimeout) clearTimeout(wheelTimeout);
+            
+            const navigated = handleScrollEvent(e.deltaY, target);
+            if (navigated) {
+                // Add a small delay before accepting new wheel events to avoid double skips
+                wheelDelta = 0;
+            } else {
+                // Reset accumulator after 300ms of inactivity
+                wheelTimeout = setTimeout(() => { wheelDelta = 0; }, 300);
+            }
+        }, { passive: true });
+
+        // Touch swipe
+        let touchStartY = 0;
+        let touchEndY = 0;
+        container.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            touchEndY = e.touches[0].clientY;
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+            if (infoPanel && infoPanel.contains(target)) return;
+            
+            const distance = touchStartY - touchEndY;
+            if (distance > 50) navigateTo('next');
+            else if (distance < -50) navigateTo('prev');
+        });
+
+		// Check initial URL
+		const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+		if (tab === 'comments' || tab === 'desc') {
+            const infoPanel = document.getElementById('info-panel');
+            if (infoPanel) {
+                window.switchTab(tab as 'comments' | 'desc');
+                if (isMobile()) {
+                    infoPanel.classList.remove('translate-y-full');
+                } else {
+                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+            }
+		}
+	}
+
+	document.addEventListener('DOMContentLoaded', initReels);
+	document.addEventListener('astro:page-load', initReels);
+</script>
+
+<style>
+	:global(body) { overscroll-behavior-y: none; }
+	:global(header), :global(footer) { display: none !important; }
+	:global(main) { padding: 0 !important; margin: 0 !important; max-width: none !important; height: 100dvh; }
+	#caption-content :global(h3), .content-area :global(h3) { font-weight: bold; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.2rem; }
+	#caption-content :global(p), .content-area :global(p) { margin-bottom: 0.5rem; }
+	#caption-content :global(a), .content-area :global(a) { color: #60a5fa; text-decoration: underline; }
+</style>

@@ -16,8 +16,8 @@ const logs = defineCollection({
 	}),
 });
 
-const tools = defineCollection({
-	loader: glob({ base: './src/content/tools', pattern: '**/*.{md,mdx}' }),
+const knowhow = defineCollection({
+	loader: glob({ base: './src/content/knowhow', pattern: '**/*.{md,mdx}' }),
 	schema: z.object({
 		title: z.string(),
 		description: z.string(),
@@ -32,4 +32,36 @@ const tools = defineCollection({
 	}),
 });
 
-export const collections = { logs, tools };
+const apps = defineCollection({
+	loader: glob({ base: './src/content/apps', pattern: '**/*.{md,mdx}' }),
+	schema: z.object({
+		title: z.string(),
+		description: z.string(),
+		icon: z.string(), // Material Symbol name, e.g. "description"
+		isFree: z.boolean().default(true),
+		categories: z.array(z.string()).optional(),
+		childAgeMonths: z.number().optional(),
+		order: z.number().default(0), // For sorting tools
+		actionText: z.string().optional(),
+		actionUrl: z.string().optional(),
+		coverImage: z.string().optional(),
+	}),
+});
+
+const items = defineCollection({
+	loader: glob({ base: './src/content/items', pattern: '**/*.{md,mdx}' }),
+	schema: z.object({
+		title: z.string(),
+		description: z.string(),
+		icon: z.string(), // Material Symbol name, e.g. "description"
+		isFree: z.boolean().default(false),
+		categories: z.array(z.string()).optional(),
+		childAgeMonths: z.number().optional(),
+		order: z.number().default(0), // For sorting tools
+		actionText: z.string().optional(),
+		actionUrl: z.string().optional(),
+		coverImage: z.string().optional(),
+	}),
+});
+
+export const collections = { logs, knowhow, apps, items };

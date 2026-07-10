@@ -1,58 +1,70 @@
 ---
 interface Props {
 	slug: string;
+	variant?: 'default' | 'modal' | 'reels';
 }
 
-const { slug } = Astro.props;
+const { slug, variant = 'default' } = Astro.props;
+
+const wrapperClass = variant === 'modal'
+	? 'flex flex-col h-full overflow-hidden'
+	: variant === 'reels'
+	? 'flex flex-col h-full overflow-hidden bg-[#262626] text-white w-full'
+	: 'mt-16 pt-8 border-t border-gray-100';
+
+const listClass = (variant === 'modal' || variant === 'reels')
+	? 'flex-grow overflow-y-auto p-4 sm:p-6 space-y-4 scrollbar-hide'
+	: 'space-y-4 mb-8';
+
+const formClass = variant === 'modal'
+	? 'shrink-0 p-4 sm:p-6 bg-white border-t border-gray-100'
+	: variant === 'reels'
+	? 'shrink-0 p-4 sm:p-6 bg-[#262626] border-t border-gray-800'
+	: 'bg-gray-50 rounded-2xl p-4 sm:p-6';
 ---
 
-<div id="comments" class="mt-16 pt-8 border-t border-gray-100" data-slug={slug}>
-	<h3 class="text-xl font-bold text-navy-900 mb-6 flex items-center gap-2">
-		<span class="material-symbols-outlined text-gray-400">chat_bubble</span>
-		コメント
-	</h3>
+<div id="comments" class={wrapperClass} data-slug={slug} data-variant={variant}>
+	{variant === 'default' && (
+		<h3 class="text-xl font-bold text-navy-900 mb-6 flex items-center gap-2">
+			コメント
+		</h3>
+	)}
 
 	<!-- Comments List -->
-	<div id="comments-list" class="space-y-4 mb-8">
+	<div id="comments-list" class={listClass}>
 		<!-- Comments will be injected here -->
-		<div class="text-center text-gray-400 text-sm py-4" id="comments-loading">
-			読み込み中...
+		<div class={`text-center text-sm py-8 ${variant === 'reels' ? 'text-gray-400' : 'text-gray-400'}`} id="comments-empty">
+			コメントはまだありません。
 		</div>
 	</div>
 
 	<!-- Comment Form -->
-	<form id="comment-form" class="bg-gray-50 rounded-2xl p-4 sm:p-6">
-		<h4 class="text-sm font-bold text-gray-700 mb-4">コメントを投稿する</h4>
-		<div class="mb-4">
-			<label for="comment-author" class="block text-xs font-medium text-gray-500 mb-1">お名前 (任意)</label>
-			<input 
-				type="text" 
-				id="comment-author" 
-				name="author" 
-				value="匿名ままさん"
-				placeholder="名無しさん"
-				class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-navy-900 focus:ring-1 focus:ring-navy-900 transition-colors bg-white text-sm"
-			/>
+	<form id="comment-form" class={formClass}>
+		{variant === 'default' && (
+			<h4 class="text-sm font-bold text-gray-700 mb-4">コメントを投稿する</h4>
+		)}
+		<div class="flex items-center gap-3">
+			<div class="w-8 h-8 rounded-full bg-gray-200 shrink-0 flex items-center justify-center overflow-hidden">
+				<span class="material-symbols-outlined text-gray-500 text-[1.2rem]">person</span>
+			</div>
+			<div class={`flex-grow flex items-center rounded-full border ${variant === 'reels' ? 'border-gray-700 bg-black/30' : 'border-gray-200 bg-white'} px-4 py-2`}>
+				<input 
+					type="text" 
+					name="content"
+					placeholder="コメントを追加..."
+					class={`w-full bg-transparent focus:outline-none text-sm ${variant === 'reels' ? 'text-white placeholder-gray-500' : 'text-gray-800'}`}
+					required
+				/>
+				<button 
+					type="submit" 
+					id="comment-submit"
+					class={`ml-2 font-bold text-sm disabled:opacity-50 transition-colors ${variant === 'reels' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-500 hover:text-blue-600'}`}
+				>
+					送信
+				</button>
+			</div>
 		</div>
-		<div class="mb-4">
-			<label for="comment-content" class="block text-xs font-medium text-gray-500 mb-1">コメント本文</label>
-			<textarea 
-				id="comment-content" 
-				name="content" 
-				rows="3"
-				required
-				placeholder="記事の感想など..."
-				class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-navy-900 focus:ring-1 focus:ring-navy-900 transition-colors bg-white text-sm resize-y"
-			></textarea>
-		</div>
-		<button 
-			type="submit" 
-			id="comment-submit"
-			class="w-full sm:w-auto px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white font-bold rounded-full transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-		>
-			<span class="material-symbols-outlined text-[1.2rem]">send</span>
-			送信する
-		</button>
+		<input type="hidden" name="author" value="匿名ままさん" />
 	</form>
 </div>
 
@@ -81,33 +93,43 @@ const { slug } = Astro.props;
 			.replace(/'/g, "&#039;");
 	};
 
+	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+	
+	let supabase: ReturnType<typeof createClient> | null = null;
+	if (supabaseUrl && supabaseAnonKey) {
+		if (!(window as any).__supabaseClient) {
+			(window as any).__supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+		}
+		supabase = (window as any).__supabaseClient;
+	}
+
 	const initComments = async () => {
 		const section = document.getElementById('comments');
 		if (!section || section.hasAttribute('data-initialized')) return;
 		section.setAttribute('data-initialized', 'true');
 
 		const slug = section.getAttribute('data-slug');
+		const variant = section.getAttribute('data-variant');
 		if (!slug) return;
 
-		const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-		const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-		
-		if (!supabaseUrl || !supabaseAnonKey) {
-			const loadingEl = document.getElementById('comments-loading');
-			if (loadingEl) loadingEl.remove();
+		if (!supabase) {
+			// Supabase is not configured, leave empty message
 			return;
 		}
-
-		const supabase = createClient(supabaseUrl, supabaseAnonKey);
 		const commentsList = document.getElementById('comments-list');
 		const form = document.getElementById('comment-form') as HTMLFormElement;
 		const submitBtn = document.getElementById('comment-submit') as HTMLButtonElement;
-		const loadingEl = document.getElementById('comments-loading');
+		const emptyEl = document.getElementById('comments-empty');
 
 		// Render single comment
 		const renderComment = (comment: any, isPending = false) => {
 			const div = document.createElement('div');
-			div.className = `bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm relative ${isPending ? 'opacity-60' : ''}`;
+			const isReels = variant === 'reels';
+			
+			div.className = isReels 
+				? `bg-transparent p-2 relative flex gap-3 ${isPending ? 'opacity-60' : ''}`
+				: `bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm relative ${isPending ? 'opacity-60' : ''}`;
 			
 			// Simple fallback for empty names
 			const authorName = comment.author_name?.trim() ? comment.author_name : '名無しさん';
@@ -116,24 +138,46 @@ const { slug } = Astro.props;
 			const contentHtml = escapeHtml(comment.content).replace(/\n/g, '<br/>');
 
 			const pendingBadge = isPending 
-				? `<div class="absolute top-4 right-4 bg-gray-100 text-gray-500 text-[0.65rem] px-2 py-1 rounded-full font-bold">認証待機中</div>`
+				? `<div class="absolute top-4 right-4 bg-gray-100 text-gray-500 text-[0.65rem] px-2 py-1 rounded-full font-bold">待機中</div>`
 				: '';
 
-			div.innerHTML = `
-				${pendingBadge}
-				<div class="flex justify-between items-start mb-2">
-					<div class="font-bold text-gray-700 text-[0.8rem] sm:text-sm flex items-center gap-2">
-						<div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-							<span class="material-symbols-outlined text-[1rem]">person</span>
-						</div>
-						${escapeHtml(authorName)}
+			if (isReels) {
+				div.innerHTML = `
+					${pendingBadge}
+					<div class="w-8 h-8 rounded-full bg-gray-800 shrink-0 flex items-center justify-center text-gray-400 overflow-hidden mt-1">
+						<span class="material-symbols-outlined text-[1.2rem]">person</span>
 					</div>
-					<div class="text-[0.65rem] text-gray-400">${isPending ? '送信完了' : formatDate(comment.created_at)}</div>
-				</div>
-				<div class="text-[0.85rem] sm:text-sm text-gray-600 leading-relaxed sm:pl-8">
-					${contentHtml}
-				</div>
-			`;
+					<div class="flex-grow">
+						<div class="flex items-baseline gap-2 mb-1">
+							<span class="font-bold text-white text-[0.85rem]">${escapeHtml(authorName)}</span>
+							<span class="text-[0.7rem] text-gray-500">${isPending ? '送信完了' : formatDate(comment.created_at)}</span>
+						</div>
+						<div class="text-[0.85rem] text-gray-200 leading-relaxed">
+							${contentHtml}
+						</div>
+						<div class="mt-2 text-[0.75rem] text-gray-500 font-medium">返信</div>
+					</div>
+					<button class="shrink-0 pt-2 px-2 text-gray-500 hover:text-white transition-colors">
+						<span class="material-symbols-outlined text-[1rem] font-light">favorite</span>
+					</button>
+				`;
+			} else {
+				div.innerHTML = `
+					${pendingBadge}
+					<div class="flex justify-between items-start mb-2">
+						<div class="font-bold text-gray-700 text-[0.8rem] sm:text-sm flex items-center gap-2">
+							<div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+								<span class="material-symbols-outlined text-[1rem]">person</span>
+							</div>
+							${escapeHtml(authorName)}
+						</div>
+						<div class="text-[0.65rem] text-gray-400">${isPending ? '送信完了' : formatDate(comment.created_at)}</div>
+					</div>
+					<div class="text-[0.85rem] sm:text-sm text-gray-600 leading-relaxed sm:pl-8">
+						${contentHtml}
+					</div>
+				`;
+			}
 			return div;
 		};
 
@@ -147,22 +191,14 @@ const { slug } = Astro.props;
 
 			if (error) throw error;
 
-			if (commentsList && loadingEl) {
-				loadingEl.remove(); // Remove loading text
-				
-				if (comments.length === 0) {
-					const emptyEl = document.createElement('div');
-					emptyEl.id = 'comments-empty';
-					emptyEl.className = 'text-center text-gray-400 text-sm py-8';
-					emptyEl.textContent = 'まだコメントはありません。一番乗りでコメントしてみましょう！';
-					commentsList.appendChild(emptyEl);
-				} else {
+			if (commentsList) {
+				if (comments.length > 0) {
+					if (emptyEl) emptyEl.remove(); // Remove empty text
 					comments.forEach(c => commentsList.appendChild(renderComment(c)));
 				}
 			}
 		} catch (err) {
 			console.error('Error fetching comments:', err);
-			if (loadingEl) loadingEl.remove();
 		}
 
 		// Handle form submission
@@ -180,8 +216,8 @@ const { slug } = Astro.props;
 
 				// Disable form
 				submitBtn.disabled = true;
-				const originalText = submitBtn.innerHTML;
-				submitBtn.innerHTML = '<span class="material-symbols-outlined text-[1.2rem] animate-spin">refresh</span> 送信中...';
+				const originalText = submitBtn.innerText;
+				submitBtn.innerText = '...';
 
 				try {
 					const { error } = await supabase
@@ -208,6 +244,8 @@ const { slug } = Astro.props;
 					const newEl = renderComment(pendingComment, true);
 					if (commentsList) {
 						commentsList.insertBefore(newEl, commentsList.firstChild);
+						// Scroll to top of list
+						commentsList.scrollTop = 0;
 					}
 					
 				} catch (err) {
@@ -226,3 +264,13 @@ const { slug } = Astro.props;
 	document.addEventListener('DOMContentLoaded', initComments);
 	document.addEventListener('astro:page-load', initComments);
 </script>
+
+<style>
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;
+	}
+	.scrollbar-hide {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+</style>

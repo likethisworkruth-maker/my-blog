@@ -7,11 +7,11 @@ import {
 } from "../../consts";
 import { UI } from "../../i18n/ja";
 
-const tools =
+const items =
 	await getCollection(
-		"tools",
+		"items",
 	);
-tools.sort(
+items.sort(
 	(
 		a,
 		b,
@@ -27,11 +27,11 @@ tools.sort(
 const uniqueCategories =
 	[
 		...new Set(
-			tools.flatMap(
+			items.flatMap(
 				(
-					tool,
+					item,
 				) =>
-					tool
+					item
 						.data
 						.categories ||
 					[],
@@ -56,12 +56,12 @@ const displayCategories =
 const uniqueAges =
 	[
 		...new Set(
-			tools
+			items
 				.map(
 					(
-						tool,
+						item,
 					) =>
-						tool
+						item
 							.data
 							.childAgeMonths,
 				)
@@ -84,28 +84,26 @@ const uniqueAges =
 ---
 
 <Layout
-	title={`${UI.tools.pageTitle} | ${SITE_TITLE}`}
+	title={`${UI.items.pageTitle} | ${SITE_TITLE}`}
 	description={SITE_DESCRIPTION}
 >
-	<div
-		class="px-6 py-8 lg:py-12"
-	>
-		<h2
-			class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-6"
-		>
-			{
-				UI
-					.tools
-					.pageTitle
-			}
+	<div class="px-6 py-8 lg:py-12">
+		<h2 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-6">
+			{UI.items.pageTitle}
 		</h2>
+
+		<!-- Search Bar -->
+		<div class="relative mb-6">
+			<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+			<input type="text" id="item-search" placeholder="アイテムを検索" class="w-full bg-white border border-gray-200 rounded-full py-3 sm:py-4 pl-12 pr-4 text-[0.95rem] focus:outline-none focus:border-mint-500 shadow-sm transition-colors" />
+		</div>
 
 		<div
 			class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between"
 		>
 			<!-- Categories -->
 			<div
-				class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto"
+				class="flex gap-2 sm:gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto"
 				id="category-filters"
 			>
 				{
@@ -184,84 +182,46 @@ const uniqueAges =
 			</div>
 		</div>
 
-		<!-- Tool Grid -->
+		<!-- Item Grid -->
 		<div
 			class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6"
-			id="tools-container"
+			id="items-container"
 		>
 			{
-				tools.map(
+				items.map(
 					(
-						tool,
+						item,
 					) => (
 						<a
-							href={`/tools/${tool.id}/`}
-							class="tool-card flex flex-col sm:flex-row items-center gap-6 bg-white rounded-2xl border border-gray-200 p-6 lg:p-8 hover:bg-gray-50 transition-colors relative group"
+							href={`/items/${item.id}/`}
+							class="item-card flex flex-row items-center gap-4 bg-white p-4 lg:p-6 rounded-2xl hover:bg-gray-50 transition-colors border border-gray-100 shadow-sm"
 							data-categories={(
-								tool
-									.data
-									.categories ||
-								[]
-							).join(
-								",",
-							)}
-							data-age={
-								tool
-									.data
-									.childAgeMonths ??
-								"none"
-							}
-							data-order={
-								tool
-									.data
-									.order
-							}
+								item.data.categories || []
+							).join(",")}
+							data-age={item.data.childAgeMonths ?? "none"}
+							data-order={item.data.order}
 						>
-							<div class="w-20 h-20 rounded-full bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 border border-orange-100">
-								<span class="material-symbols-outlined text-4xl">
-									{
-										tool
-											.data
-											.icon
-									}
+							<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-[1.25rem] sm:rounded-3xl bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 shadow-sm border border-gray-50">
+								<span class="material-symbols-outlined text-3xl sm:text-4xl">
+									{item.data.icon}
 								</span>
 							</div>
-							<div class="flex-grow pr-12 text-center sm:text-left">
-								<div class="flex items-center justify-center sm:justify-start gap-2 mb-2">
-									<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">
-										{
-											tool
-												.data
-												.title
-										}
-									</h3>
-									{tool
-										.data
-										.childAgeMonths !==
-										undefined && (
-										<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[0.7rem] font-bold shrink-0">
-											生後
-											{
-												tool
-													.data
-													.childAgeMonths
-											}
-											ヶ月
+							
+							<div class="flex-grow min-w-0 pr-2">
+								<h3 class="text-[1rem] sm:text-[1.1rem] font-bold text-navy-900 truncate">
+									{item.data.title}
+								</h3>
+								<p class="text-[0.8rem] sm:text-[0.85rem] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+									{item.data.description}
+								</p>
+								{item.data.childAgeMonths !== undefined && (
+									<div class="flex items-center gap-2 mt-1">
+										<span class="text-[0.75rem] sm:text-[0.8rem] text-gray-500 truncate">
+											生後{item.data.childAgeMonths}ヶ月〜
 										</span>
-									)}
-								</div>
-								<p
-									class="text-[0.85rem] lg:text-sm text-gray-500 leading-relaxed"
-									set:html={tool.data.description.replace(
-										"。",
-										"。<br/>",
-									)}
-								/>
+									</div>
+								)}
 							</div>
-
-							<span class="material-symbols-outlined absolute right-6 bottom-1/2 translate-y-1/2 text-gray-300 group-hover:text-mint-500 transition-colors hidden sm:block">
-								arrow_forward_ios
-							</span>
 						</a>
 					),
 				)
@@ -284,16 +244,21 @@ const uniqueAges =
 		document.getElementById(
 			"sort-order",
 		) as HTMLSelectElement;
-	const toolsContainer =
+	const itemsContainer =
 		document.getElementById(
-			"tools-container",
+			"items-container",
 		);
 	const cards =
 		Array.from(
 			document.querySelectorAll(
-				".tool-card",
+				".item-card",
 			),
 		) as HTMLElement[];
+
+	const searchInput =
+		document.getElementById(
+			"item-search",
+		) as HTMLInputElement;
 
 	let currentCategory =
 		"すべて";
@@ -301,6 +266,8 @@ const uniqueAges =
 		"all";
 	let currentSort =
 		"recommended";
+	let searchQuery =
+		"";
 
 	function updateView() {
 		// Filter
@@ -308,6 +275,10 @@ const uniqueAges =
 			(
 				card,
 			) => {
+				const titleText = (card.querySelector('h3')?.textContent || '').toLowerCase();
+				const descText = (card.querySelector('p')?.textContent || '').toLowerCase();
+				const searchMatch = !searchQuery || titleText.includes(searchQuery) || descText.includes(searchQuery);
+
 				const categoryMatch =
 					currentCategory ===
 						"すべて" ||
@@ -333,7 +304,8 @@ const uniqueAges =
 
 				if (
 					categoryMatch &&
-					ageMatch
+					ageMatch &&
+					searchMatch
 				) {
 					card.style.display =
 						"flex";
@@ -458,13 +430,13 @@ const uniqueAges =
 
 		// Re-append to DOM in order
 		if (
-			toolsContainer
+			itemsContainer
 		) {
 			visibleCards.forEach(
 				(
 					card,
 				) =>
-					toolsContainer.appendChild(
+					itemsContainer.appendChild(
 						card,
 					),
 			);
@@ -472,7 +444,7 @@ const uniqueAges =
 				(
 					card,
 				) =>
-					toolsContainer.appendChild(
+					itemsContainer.appendChild(
 						card,
 					),
 			);
@@ -556,6 +528,14 @@ const uniqueAges =
 					.value;
 			updateView();
 		},
+	);
+
+	searchInput?.addEventListener(
+		"input",
+		(e) => {
+			searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+			updateView();
+		}
 	);
 </script>
 

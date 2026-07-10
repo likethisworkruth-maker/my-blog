@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import LikeButton from '../../components/LikeButton.astro';
+import ActionBar from '../../components/ActionBar.astro';
 import Comments from '../../components/Comments.astro';
 import { SITE_TITLE } from '../../consts';
 import { UI } from '../../i18n/ja';
@@ -53,21 +54,7 @@ const { Content } = await render(log);
 			</div>
 
 			<!-- Action Bar (Bottom of Content) -->
-			<div class="flex items-center justify-start gap-3 my-12 pt-8 border-t border-gray-100">
-				<LikeButton slug={`logs/${log.id}`} />
-				<button 
-					class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95 ml-2" 
-					onclick="document.getElementById('comments').scrollIntoView({behavior: 'smooth'})"
-				>
-					<span class="material-symbols-outlined text-[1.5rem] font-light">chat_bubble</span>
-				</button>
-				<button 
-					class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95" 
-					onclick="if(window.openShareModal) window.openShareModal()"
-				>
-					<span class="material-symbols-outlined text-[1.5rem] font-light">ios_share</span>
-				</button>
-			</div>
+			<ActionBar slug={`logs/${log.id}`} />
 
 			<Comments slug={`logs/${log.id}`} />
 

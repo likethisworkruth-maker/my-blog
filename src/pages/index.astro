@@ -28,27 +28,18 @@ const recentLogs =
 		3,
 	); // Changed to 3 rows as requested
 
-const tools =
-	await getCollection(
-		"tools",
-	);
-tools.sort(
-	(
-		a,
-		b,
-	) =>
-		a
-			.data
-			.order -
-		b
-			.data
-			.order,
-);
-const firstTools =
-	tools.slice(
-		0,
-		4,
-	);
+const knowhow = await getCollection('knowhow');
+knowhow.sort((a, b) => a.data.order - b.data.order);
+const firstKnowhow = knowhow.slice(0, 4);
+
+const apps = await getCollection('apps');
+apps.sort((a, b) => a.data.order - b.data.order);
+const firstApps = apps.slice(0, 4);
+
+const items = await getCollection('items');
+items.sort((a, b) => a.data.order - b.data.order);
+const firstItems = items.slice(0, 4);
+
 ---
 
 <Layout
@@ -73,251 +64,91 @@ const firstTools =
 					.home
 					.heroTitle}
 			/>
-			<p
-				class="text-[0.85rem] lg:text-base text-gray-700 mb-8 leading-relaxed max-w-lg font-medium"
-				set:html={UI
-					.home
-					.heroDesc}
-			/>
-			<div
-				class="flex flex-col sm:flex-row gap-4"
-			>
+			{UI.home.heroDesc && (
+				<p
+					class="text-[0.85rem] lg:text-base text-gray-700 mb-8 leading-relaxed max-w-lg font-medium"
+					set:html={UI.home.heroDesc}
+				/>
+			)}
+			<div class="flex flex-col sm:flex-row gap-4">
 				<a
-					href="/logs"
+					href="/knowhow"
 					class="inline-flex items-center justify-center gap-2 bg-mint-500 hover:bg-mint-600 text-white py-3 px-8 rounded-full text-sm font-semibold transition-colors"
 				>
-					{
-						UI
-							.home
-							.btnLogs
-					}
-					<span
-						class="material-symbols-outlined text-[1.1rem]"
-						>chevron_right</span
-					>
-				</a>
-				<a
-					href="/tools"
-					class="inline-flex items-center justify-center gap-2 bg-white text-mint-500 border border-mint-500 hover:bg-mint-50 py-3 px-8 rounded-full text-sm font-semibold transition-colors"
-				>
-					{
-						UI
-							.home
-							.btnTools
-					}
-					<span
-						class="material-symbols-outlined text-[1.1rem]"
-						>chevron_right</span
-					>
+					{UI.home.btnTools}
 				</a>
 			</div>
 		</div>
 	</section>
 
-	<!-- 今週の工夫 -->
+	<!-- 今週の工夫 (非表示) -->
+	{/* 
 	<section
 		class="px-6 py-6 lg:py-10"
 	>
-		<h3
-			class="text-[1.1rem] lg:text-[1.25rem] font-bold mb-4 lg:mb-6 text-navy-900"
-		>
-			{
-				UI
-					.home
-					.recentLogTitle
-			}
-		</h3>
-		<div
-			class="flex flex-col gap-4 lg:gap-6"
-		>
-			{
-				recentLogs
-					.slice(
-						0,
-						3,
-					)
-					.map(
-						(
-							log,
-						) => (
-							<a
-								href={`/logs/${log.id}/`}
-								class="block bg-white rounded-2xl border border-gray-200 p-6 lg:p-8 hover:bg-gray-50 transition-colors group relative"
-							>
-								<div class="flex flex-col lg:flex-row gap-6 lg:gap-12">
-									{log
-										.data
-										.problem && (
-										<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
-											<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl group-hover:text-mint-500 transition-colors">
-												help_outline
-											</span>
-											<div>
-												<span class="block text-[0.8rem] text-gray-500 mb-1">
-													{
-														UI
-															.common
-															.problemBadge
-													}
-												</span>
-												<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">
-													{
-														log
-															.data
-															.problem
-													}
-												</span>
-											</div>
-										</div>
-									)}
-									{log
-										.data
-										.createdTool && (
-										<div class="flex-1 flex gap-4 items-start lg:border-r lg:border-gray-100 lg:pr-6">
-											<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl group-hover:text-mint-500 transition-colors">
-												edit
-											</span>
-											<div>
-												<span class="block text-[0.8rem] text-gray-500 mb-1">
-													{
-														UI
-															.common
-															.createdToolBadge
-													}
-												</span>
-												<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">
-													{
-														log
-															.data
-															.createdTool
-													}
-												</span>
-											</div>
-										</div>
-									)}
-									{log
-										.data
-										.result && (
-										<div class="flex-1 flex gap-4 items-start">
-											<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl group-hover:text-mint-500 transition-colors">
-												check_circle
-											</span>
-											<div>
-												<span class="block text-[0.8rem] text-gray-500 mb-1">
-													{
-														UI
-															.common
-															.resultBadge
-													}
-												</span>
-												<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">
-													{
-														log
-															.data
-															.result
-													}
-												</span>
-											</div>
-										</div>
-									)}
-									{!log
-										.data
-										.problem &&
-										!log
-											.data
-											.createdTool &&
-										!log
-											.data
-											.result && (
-											<div class="flex-1 flex gap-4 items-start">
-												<span class="material-symbols-outlined text-gray-400 text-2xl lg:text-3xl group-hover:text-mint-500 transition-colors">
-													article
-												</span>
-												<div>
-													<span class="block text-[0.8rem] text-gray-500 mb-1">
-														最新の記録
-													</span>
-													<span class="block text-[0.9rem] font-bold text-navy-900 leading-snug">
-														{
-															log
-																.data
-																.title
-														}
-													</span>
-												</div>
-											</div>
-										)}
-								</div>
-								<div class="absolute top-6 right-6 lg:top-8 lg:right-8 opacity-0 group-hover:opacity-100 transition-opacity">
-									<span class="material-symbols-outlined text-mint-500">
-										arrow_forward
-									</span>
-								</div>
-							</a>
-						),
-					)
-			}
+		...
+	</section>
+	*/}
+
+	
+	
+	<!-- knowhowTitle -->
+	<section class="px-6 py-6 lg:py-10">
+		<div class="flex justify-between items-center mb-4 lg:mb-6">
+			<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">
+				{UI.home.knowhowTitle}
+			</h3>
+		</div>
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+			{firstKnowhow.map((item) => (
+				<a href={`/knowhow/${item.id}/`} class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:bg-gray-50 transition-colors group relative">
+					<div class="w-14 h-14 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+						<span class="material-symbols-outlined text-[1.75rem]">{item.data.icon}</span>
+					</div>
+					<h4 class="text-[0.95rem] font-bold mb-2 text-navy-900">{item.data.title}</h4>
+					<p class="text-[0.8rem] text-gray-500 leading-relaxed mb-4" set:html={item.data.description.replace('。', '。<br/>')} />
+				</a>
+			))}
 		</div>
 	</section>
 
-	<!-- 役に立ったツール -->
-	<section
-		class="px-6 py-6 lg:py-10"
-	>
-		<div
-			class="flex justify-between items-center mb-4 lg:mb-6"
-		>
-			<h3
-				class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900"
-			>
-				{
-					UI
-						.home
-						.toolsTitle
-				}
+	<!-- appsTitle -->
+	<section class="px-6 py-6 lg:py-10">
+		<div class="flex justify-between items-center mb-4 lg:mb-6">
+			<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">
+				{UI.home.appsTitle}
 			</h3>
 		</div>
-		<div
-			class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
-		>
-			{
-				firstTools.map(
-					(
-						tool,
-					) => (
-						<a
-							href={`/tools/${tool.id}/`}
-							class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:bg-gray-50 transition-colors group relative"
-						>
-							<div class="w-14 h-14 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-								<span class="material-symbols-outlined text-[1.75rem]">
-									{
-										tool
-											.data
-											.icon
-									}
-								</span>
-							</div>
-							<h4 class="text-[0.95rem] font-bold mb-2 text-navy-900">
-								{
-									tool
-										.data
-										.title
-								}
-							</h4>
-							<p
-								class="text-[0.8rem] text-gray-500 leading-relaxed mb-4"
-								set:html={tool.data.description.replace(
-									"。",
-									"。<br/>",
-								)}
-							/>
-							<div class="mt-auto flex justify-end">
-							</div>
-						</a>
-					),
-				)
-			}
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+			{firstApps.map((item) => (
+				<a href={`/apps/${item.id}/`} class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:bg-gray-50 transition-colors group relative">
+					<div class="w-14 h-14 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+						<span class="material-symbols-outlined text-[1.75rem]">{item.data.icon}</span>
+					</div>
+					<h4 class="text-[0.95rem] font-bold mb-2 text-navy-900">{item.data.title}</h4>
+					<p class="text-[0.8rem] text-gray-500 leading-relaxed mb-4" set:html={item.data.description.replace('。', '。<br/>')} />
+				</a>
+			))}
+		</div>
+	</section>
+
+	<!-- itemsTitle -->
+	<section class="px-6 py-6 lg:py-10">
+		<div class="flex justify-between items-center mb-4 lg:mb-6">
+			<h3 class="text-[1.1rem] lg:text-[1.25rem] font-bold text-navy-900">
+				{UI.home.itemsTitle}
+			</h3>
+		</div>
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+			{firstItems.map((item) => (
+				<a href={`/items/${item.id}/`} class="flex flex-col bg-white border border-gray-200 rounded-2xl p-6 hover:bg-gray-50 transition-colors group relative">
+					<div class="w-14 h-14 rounded-full bg-mint-50 text-mint-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+						<span class="material-symbols-outlined text-[1.75rem]">{item.data.icon}</span>
+					</div>
+					<h4 class="text-[0.95rem] font-bold mb-2 text-navy-900">{item.data.title}</h4>
+					<p class="text-[0.8rem] text-gray-500 leading-relaxed mb-4" set:html={item.data.description.replace('。', '。<br/>')} />
+				</a>
+			))}
 		</div>
 	</section>
 

@@ -1,7 +1,7 @@
 ---
 interface Props {
 	slug: string | null;
-	variant?: 'large' | 'compact' | 'footer';
+	variant?: 'large' | 'compact' | 'footer' | 'reels';
 }
 
 const { slug, variant = 'large' } = Astro.props;
@@ -52,6 +52,20 @@ const disabledAttr = slug ? {} : { disabled: true };
 	</button>
 )}
 
+{variant === 'reels' && (
+	<button
+		data-slug={slug}
+		class="like-btn group relative flex flex-col items-center gap-1 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
+		{...disabledAttr}
+	>
+		<div class="relative flex items-center justify-center">
+			<span class="material-symbols-outlined icon-empty text-white group-hover:text-pink-400 transition-colors text-[2rem] drop-shadow-md">favorite</span>
+			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-[2rem] drop-shadow-md" style="font-variation-settings: 'FILL' 1;">favorite</span>
+		</div>
+		<span class="like-count font-medium text-white group-hover:text-pink-400 transition-colors text-[0.8rem] drop-shadow-md">...</span>
+	</button>
+)}
+
 <script>
 	import { createClient } from '@supabase/supabase-js';
 
@@ -61,7 +75,10 @@ const disabledAttr = slug ? {} : { disabled: true };
 	
 	let supabase;
 	if (supabaseUrl && supabaseAnonKey) {
-		supabase = createClient(supabaseUrl, supabaseAnonKey);
+		if (!(window as any).__supabaseClient) {
+			(window as any).__supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+		}
+		supabase = (window as any).__supabaseClient;
 	}
 
 	// Initialize like buttons (support View Transitions if Astro uses it)
@@ -100,14 +117,23 @@ const disabledAttr = slug ? {} : { disabled: true };
 						b.classList.add('text-pink-500');
 						iconEmpty?.classList.add('opacity-0');
 						iconFilled?.classList.remove('opacity-0');
-						countSpan?.classList.remove('text-gray-400', 'text-gray-500');
-						countSpan?.classList.add('text-pink-500');
+						if (b.querySelector('.icon-empty')?.classList.contains('text-white')) {
+							countSpan?.classList.remove('text-white');
+							countSpan?.classList.add('text-pink-500');
+						} else {
+							countSpan?.classList.remove('text-gray-400', 'text-gray-500');
+							countSpan?.classList.add('text-pink-500');
+						}
 					} else {
 						b.classList.remove('liked', 'border-pink-200', 'bg-pink-50', 'text-pink-500');
 						iconEmpty?.classList.remove('opacity-0');
 						iconFilled?.classList.add('opacity-0');
-						countSpan?.classList.remove('text-pink-500');
-						// Note: restoring the exact gray color is tricky, but Astro component re-render handles it
+						if (b.querySelector('.icon-empty')?.classList.contains('text-white')) {
+							countSpan?.classList.remove('text-pink-500');
+							countSpan?.classList.add('text-white');
+						} else {
+							countSpan?.classList.remove('text-pink-500');
+						}
 					}
 				});
 			};
@@ -129,7 +155,7 @@ const disabledAttr = slug ? {} : { disabled: true };
 					.from('likes')
 					.select('like_count')
 					.eq('slug', slug)
-					.single();
+					.maybeSingle();
 					
 				if (data) {
 					updateAllCountText(data.like_count.toString());
@@ -146,39 +172,65 @@ const disabledAttr = slug ? {} : { disabled: true };
 			// Handle click on ANY of the buttons for this slug
 			btns.forEach(btn => {
 				btn.addEventListener('click', async () => {
-					if (btn.hasAttribute('data-loading') || localStorage.getItem(storageKey)) {
+					if (btn.hasAttribute('data-loading')) {
 						return;
 					}
+					
+					const isCurrentlyLiked = !!localStorage.getItem(storageKey);
 					
 					// Set loading on all
 					btns.forEach(b => b.setAttribute('data-loading', 'true'));
 					
-					// Optimistic UI update
 					const currentCount = parseInt(btn.querySelector('.like-count')?.textContent || '0');
-					updateAllCountText((currentCount + 1).toString());
-					
-					setAllLikedUI(true);
-					
-					// Pop animation class only on clicked button
-					btn.classList.add('scale-110');
-					setTimeout(() => {
-						btn.classList.remove('scale-110');
-					}, 150);
-					
-					localStorage.setItem(storageKey, 'true');
 
-					if (supabase) {
-						try {
-							const { data, error } = await supabase.rpc('increment_likes', { slug_text: slug });
-							if (error) throw error;
-							if (data !== null) {
-								updateAllCountText(data.toString()); // Update with actual DB count
+					if (isCurrentlyLiked) {
+						// UN-LIKE (Cancel)
+						const newCount = Math.max(0, currentCount - 1);
+						updateAllCountText(newCount.toString());
+						setAllLikedUI(false);
+						localStorage.removeItem(storageKey);
+
+						if (supabase) {
+							try {
+								const { data, error } = await supabase.rpc('decrement_likes', { slug_text: slug });
+								if (error) throw error;
+								if (data !== null) {
+									updateAllCountText(data.toString()); // Update with actual DB count
+								}
+							} catch (err) {
+								console.error('Error updating likes (decrement):', err);
+								// Revert on failure
+								updateAllCountText(currentCount.toString());
+								setAllLikedUI(true);
+								localStorage.setItem(storageKey, 'true');
 							}
-						} catch (err) {
-							console.error('Error updating likes:', err);
-							updateAllCountText(currentCount.toString());
-							setAllLikedUI(false);
-							localStorage.removeItem(storageKey);
+						}
+					} else {
+						// LIKE
+						updateAllCountText((currentCount + 1).toString());
+						setAllLikedUI(true);
+						localStorage.setItem(storageKey, 'true');
+						
+						// Pop animation class only on clicked button
+						btn.classList.add('scale-110');
+						setTimeout(() => {
+							btn.classList.remove('scale-110');
+						}, 150);
+
+						if (supabase) {
+							try {
+								const { data, error } = await supabase.rpc('increment_likes', { slug_text: slug });
+								if (error) throw error;
+								if (data !== null) {
+									updateAllCountText(data.toString()); // Update with actual DB count
+								}
+							} catch (err) {
+								console.error('Error updating likes (increment):', err);
+								// Revert on failure
+								updateAllCountText(currentCount.toString());
+								setAllLikedUI(false);
+								localStorage.removeItem(storageKey);
+							}
 						}
 					}
 					

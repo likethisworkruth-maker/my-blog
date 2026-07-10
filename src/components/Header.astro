@@ -49,24 +49,35 @@ const currentPath =
 						.home
 				}
 			</a>
+
 			<a
-				href="/logs"
-				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("logs") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+				href="/knowhow"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("knowhow") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
 				{
 					UI
 						.headerNav
-						.logs
+						.knowhow
 				}
 			</a>
 			<a
-				href="/tools"
-				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("tools") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+				href="/apps"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("apps") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
 				{
 					UI
 						.headerNav
-						.tools
+						.apps
+				}
+			</a>
+			<a
+				href="/items"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("items") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{
+					UI
+						.headerNav
+						.items
 				}
 			</a>
 		</nav>

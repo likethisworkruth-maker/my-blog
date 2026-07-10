@@ -1,33 +1,33 @@
 ---
 import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
-import LikeButton from "../../components/LikeButton.astro";
+import ActionBar from "../../components/ActionBar.astro";
 import Comments from "../../components/Comments.astro";
 import { SITE_TITLE } from "../../consts";
 import { UI } from "../../i18n/ja";
 
 export async function getStaticPaths() {
-	const tools = await getCollection("tools");
-	return tools.map((tool) => ({
-		params: { id: tool.id },
-		props: { tool },
+	const items = await getCollection("items");
+	return items.map((item) => ({
+		params: { id: item.id },
+		props: { item },
 	}));
 }
 
-const { tool } = Astro.props;
-const { Content } = await render(tool);
+const { item } = Astro.props;
+const { Content } = await render(item);
 ---
 
 <Layout
-	title={`${tool.data.title} | ${SITE_TITLE}`}
-	description={tool.data.description}
-	image={tool.data.coverImage}
+	title={`${item.data.title} | ${SITE_TITLE}`}
+	description={item.data.description}
+	image={item.data.coverImage}
 >
 	<!-- Top Image Area (Full width on mobile, rounded on PC) -->
 	<div class="w-full max-w-5xl mx-auto lg:mt-8 lg:px-6">
 		<div class="w-full aspect-video lg:rounded-2xl bg-mint-50 flex items-center justify-center overflow-hidden border-b lg:border border-gray-200">
-			{tool.data.coverImage ? (
-				<img src={tool.data.coverImage} alt={tool.data.title} class="w-full h-full object-cover" />
+			{item.data.coverImage ? (
+				<img src={item.data.coverImage} alt={item.data.title} class="w-full h-full object-cover" />
 			) : (
 				<span class="material-symbols-outlined text-mint-200 text-5xl">image</span>
 			)}
@@ -40,39 +40,36 @@ const { Content } = await render(tool);
 			<!-- Header inside card -->
 			<div class="pb-8 border-b border-gray-100 mb-8">
 				<div class="flex items-center gap-2 text-gray-400 font-bold text-[0.85rem] mb-3">
-					{tool.data.categories && tool.data.categories.join(', ')}
-					{tool.data.childAgeMonths !== undefined && (tool.data.categories ? ` • 生後${tool.data.childAgeMonths}ヶ月` : `生後${tool.data.childAgeMonths}ヶ月`)}
+					{item.data.categories && item.data.categories.join(', ')}
+					{item.data.childAgeMonths !== undefined && (item.data.categories ? ` • 生後${item.data.childAgeMonths}ヶ月` : `生後${item.data.childAgeMonths}ヶ月`)}
 				</div>
-				<h1 class="text-[1.5rem] lg:text-[2rem] font-bold leading-tight mb-2 text-navy-900">{tool.data.title}</h1>
+				<h1 class="text-[1.5rem] lg:text-[2rem] font-bold leading-tight mb-2 text-navy-900">{item.data.title}</h1>
 				<p class="text-gray-600 text-[0.95rem] lg:text-[1.1rem] leading-relaxed mt-4 mb-6">
-					{tool.data.description}
+					{item.data.description}
 				</p>
 				
 				<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-					{tool.data.actionUrl ? (
+					{item.data.actionUrl ? (
 						<a
-							href={tool.data.actionUrl}
+							href={item.data.actionUrl}
 							target="_blank"
 							rel="noopener noreferrer"
 							class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
 						>
-							{tool.data.actionText || UI.tools.btnTry}
-							<span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+							{item.data.actionText || UI.items.btnTry}
 						</a>
 					) : (
 						<button
 							class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
 						>
-							{tool.data.actionText || UI.tools.btnTry}
-							<span class="material-symbols-outlined text-[1.1rem]">chevron_right</span>
+							{item.data.actionText || UI.items.btnTry}
 						</button>
 					)}
 					<a
 						href="/logs"
 						class="bg-white border border-mint-500 hover:bg-mint-50 text-mint-500 font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2"
 					>
-						<span class="material-symbols-outlined text-[1.1rem]">menu_book</span>
-						{UI.tools.btnReadLog}
+						{UI.items.btnReadLog}
 					</a>
 				</div>
 			</div>
@@ -83,23 +80,9 @@ const { Content } = await render(tool);
 			</div>
 
 			<!-- Action Bar (Bottom of Content) -->
-			<div class="flex items-center justify-start gap-3 my-12 pt-8 border-t border-gray-100">
-				<LikeButton slug={`tools/${tool.id}`} />
-				<button 
-					class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95 ml-2" 
-					onclick="document.getElementById('comments').scrollIntoView({behavior: 'smooth'})"
-				>
-					<span class="material-symbols-outlined text-[1.5rem] font-light">chat_bubble</span>
-				</button>
-				<button 
-					class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-95" 
-					onclick="if(window.openShareModal) window.openShareModal()"
-				>
-					<span class="material-symbols-outlined text-[1.5rem] font-light">ios_share</span>
-				</button>
-			</div>
+			<ActionBar slug={`items/${item.id}`} />
 
-			<Comments slug={`tools/${tool.id}`} />
+			<Comments slug={`items/${item.id}`} />
 
 		</div>
 	</div>

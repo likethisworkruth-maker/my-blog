@@ -1,25 +1,34 @@
 import { getCollection } from 'astro:content';
 
 export async function GET() {
-  const logs = await getCollection('logs');
-  const tools = await getCollection('tools');
+  const knowhow = await getCollection('knowhow');
+  const apps = await getCollection('apps');
+  const items = await getCollection('items');
 
   const searchIndex = [
-    ...logs.map((log) => ({
-      id: log.id,
-      title: log.data.title,
-      description: `${log.data.problem || ''} ${log.data.result || ''} ${log.data.createdTool || ''}`,
-      url: `/logs/${log.id}/`,
-      type: '困りごと記録',
-      icon: 'menu_book',
+    ...knowhow.map((item) => ({
+      id: item.id,
+      title: item.data.title,
+      description: item.data.description,
+      url: `/knowhow/${item.id}/`,
+      type: 'ノウハウ',
+      icon: item.data.icon || 'checklist',
     })),
-    ...tools.map((tool) => ({
-      id: tool.id,
-      title: tool.data.title,
-      description: tool.data.description,
-      url: `/tools/${tool.id}/`,
-      type: 'おすすめアプリ',
-      icon: tool.data.icon || 'build',
+    ...apps.map((app) => ({
+      id: app.id,
+      title: app.data.title,
+      description: app.data.description,
+      url: `/apps/${app.id}/`,
+      type: 'アプリ',
+      icon: app.data.icon || 'apps',
+    })),
+    ...items.map((item) => ({
+      id: item.id,
+      title: item.data.title,
+      description: item.data.description,
+      url: `/items/${item.id}/`,
+      type: 'アイテム',
+      icon: item.data.icon || 'toys_and_games',
     })),
   ];
 
