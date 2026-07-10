@@ -270,11 +270,8 @@ const uniqueAges =
 	</div>
 
 	<!-- Modal (Reels Fullscreen Viewer) -->
-	<dialog id="post-modal" class="bg-gray-100 w-full h-full max-w-none max-h-none m-0 p-0 border-none outline-none">
+	<dialog id="post-modal" class="bg-[#111315] w-full h-full max-w-none max-h-none m-0 p-0 border-none outline-none">
 		<div class="relative w-full h-full flex flex-col items-center justify-center mx-auto overflow-hidden">
-			<button id="close-modal" class="absolute top-4 lg:top-6 left-4 lg:left-6 z-50 text-white text-3xl font-light hover:text-gray-300 transition-colors bg-black/30 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer outline-none border border-white/10 shadow-lg backdrop-blur-sm">
-				<span class="material-symbols-outlined">close</span>
-			</button>
 			<div id="modal-content-wrapper" class="w-full flex justify-center items-center h-full">
 				<div id="loading-spinner" class="flex flex-col items-center gap-3 text-white">
 					<span class="material-symbols-outlined animate-spin text-4xl">progress_activity</span>
@@ -289,7 +286,6 @@ const uniqueAges =
 	document.addEventListener('astro:page-load', () => {
 		// Modal Logic
 		const modal = document.getElementById('post-modal') as HTMLDialogElement;
-		const closeBtn = document.getElementById('close-modal');
 		const wrapper = document.getElementById('modal-content-wrapper');
 		const loadingSpinner = document.getElementById('loading-spinner');
 
@@ -311,9 +307,6 @@ const uniqueAges =
 		}
 	}
 
-	if (closeBtn) {
-		closeBtn.addEventListener('click', closeModal);
-	}
 
 	if (modal) {
 		modal.addEventListener('click', (e) => {
@@ -365,22 +358,24 @@ const uniqueAges =
         const tabContentDesc = document.getElementById('tab-content-desc');
         const tabContentComments = document.getElementById('tab-content-comments');
 
-        if (tab === 'desc') {
-            tabBtnDesc?.classList.replace('text-gray-400', 'text-navy-900');
-            tabBtnDesc?.classList.replace('border-transparent', 'border-navy-900');
-            tabBtnComments?.classList.replace('text-navy-900', 'text-gray-400');
-            tabBtnComments?.classList.replace('border-navy-900', 'border-transparent');
-            tabContentDesc?.classList.remove('hidden');
-            tabContentComments?.classList.add('hidden');
-            tabContentComments?.classList.remove('flex');
-        } else {
-            tabBtnComments?.classList.replace('text-gray-400', 'text-navy-900');
-            tabBtnComments?.classList.replace('border-transparent', 'border-navy-900');
-            tabBtnDesc?.classList.replace('text-navy-900', 'text-gray-400');
-            tabBtnDesc?.classList.replace('border-navy-900', 'border-transparent');
-            tabContentComments?.classList.remove('hidden');
-            tabContentComments?.classList.add('flex');
-            tabContentDesc?.classList.add('hidden');
+            const showDescription = tab === 'desc';
+            tabBtnDesc?.classList.toggle('text-white', showDescription);
+            tabBtnDesc?.classList.toggle('text-gray-400', !showDescription);
+            tabBtnDesc?.classList.toggle('border-white', showDescription);
+            tabBtnDesc?.classList.toggle('border-transparent', !showDescription);
+            tabBtnComments?.classList.toggle('text-white', !showDescription);
+            tabBtnComments?.classList.toggle('text-gray-400', showDescription);
+            tabBtnComments?.classList.toggle('border-white', !showDescription);
+            tabBtnComments?.classList.toggle('border-transparent', showDescription);
+
+            if (showDescription) {
+                tabContentDesc?.classList.remove('hidden');
+                tabContentComments?.classList.add('hidden');
+                tabContentComments?.classList.remove('flex');
+            } else {
+                tabContentComments?.classList.remove('hidden');
+                tabContentComments?.classList.add('flex');
+                tabContentDesc?.classList.add('hidden');
             
             const form = tabContentComments?.querySelector('input[type="text"]') as HTMLInputElement;
             if (form) form.focus();
@@ -420,12 +415,7 @@ const uniqueAges =
         const mobile = isMobile();
         const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
         
-        const tabContentDesc = document.getElementById('tab-content-desc');
-        const activeTab = tabContentDesc?.classList.contains('hidden') ? 'comments' : 'desc';
-
-        if (isOpened && activeTab === tab) {
-            window.toggleInfoPanel();
-        } else if (isOpened) {
+        if (isOpened) {
             window.switchTab(tab);
             setUrlTab(tab);
         } else {
@@ -498,19 +488,6 @@ const uniqueAges =
 				wrapper.innerHTML = '';
 				wrapper.appendChild(content);
 				
-				// Initialize Tabs manually since this is injected HTML
-				const tabBtns = wrapper.querySelectorAll('.tab-btn');
-				tabBtns.forEach(btn => {
-					btn.addEventListener('click', () => {
-						const targetId = btn.getAttribute('data-target');
-                        if (targetId === 'tab-content-comments') {
-                            window.toggleTab('comments');
-                        } else {
-                            window.toggleTab('desc');
-                        }
-					});
-				});
-
 				// Re-initialize comments
 				document.dispatchEvent(new Event('astro:page-load'));
 
@@ -599,10 +576,10 @@ const uniqueAges =
 		// Debounce wheel events to prevent double navigation
 		if (wheelTimeout) return;
 		
-		if (e.deltaY > 50) {
+		if (e.deltaY > 0) {
 			navigateToRelative(1);
 			wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
-		} else if (e.deltaY < -50) {
+		} else if (e.deltaY < 0) {
 			navigateToRelative(-1);
 			wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
 		}

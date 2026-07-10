@@ -43,10 +43,7 @@ const formClass = variant === 'modal'
 		{variant === 'default' && (
 			<h4 class="text-sm font-bold text-gray-700 mb-4">コメントを投稿する</h4>
 		)}
-		<div class="flex items-center gap-3">
-			<div class="w-8 h-8 rounded-full bg-gray-200 shrink-0 flex items-center justify-center overflow-hidden">
-				<span class="material-symbols-outlined text-gray-500 text-[1.2rem]">person</span>
-			</div>
+		<div class="flex items-center">
 			<div class={`flex-grow flex items-center rounded-full border ${variant === 'reels' ? 'border-gray-700 bg-black/30' : 'border-gray-200 bg-white'} px-4 py-2`}>
 				<input 
 					type="text" 
@@ -58,7 +55,7 @@ const formClass = variant === 'modal'
 				<button 
 					type="submit" 
 					id="comment-submit"
-					class={`ml-2 font-bold text-sm disabled:opacity-50 transition-colors ${variant === 'reels' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-500 hover:text-blue-600'}`}
+					class={`ml-3 shrink-0 whitespace-nowrap font-bold text-sm disabled:opacity-50 transition-colors ${variant === 'reels' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-500 hover:text-blue-600'}`}
 				>
 					送信
 				</button>
@@ -104,9 +101,8 @@ const formClass = variant === 'modal'
 		supabase = (window as any).__supabaseClient;
 	}
 
-	const initComments = async () => {
-		const section = document.getElementById('comments');
-		if (!section || section.hasAttribute('data-initialized')) return;
+	const initCommentSection = async (section: HTMLElement) => {
+		if (section.hasAttribute('data-initialized')) return;
 		section.setAttribute('data-initialized', 'true');
 
 		const slug = section.getAttribute('data-slug');
@@ -117,10 +113,10 @@ const formClass = variant === 'modal'
 			// Supabase is not configured, leave empty message
 			return;
 		}
-		const commentsList = document.getElementById('comments-list');
-		const form = document.getElementById('comment-form') as HTMLFormElement;
-		const submitBtn = document.getElementById('comment-submit') as HTMLButtonElement;
-		const emptyEl = document.getElementById('comments-empty');
+		const commentsList = section.querySelector('#comments-list');
+		const form = section.querySelector('#comment-form') as HTMLFormElement;
+		const submitBtn = section.querySelector('#comment-submit') as HTMLButtonElement;
+		const emptyEl = section.querySelector('#comments-empty');
 
 		// Render single comment
 		const renderComment = (comment: any, isPending = false) => {
@@ -144,9 +140,6 @@ const formClass = variant === 'modal'
 			if (isReels) {
 				div.innerHTML = `
 					${pendingBadge}
-					<div class="w-8 h-8 rounded-full bg-gray-800 shrink-0 flex items-center justify-center text-gray-400 overflow-hidden mt-1">
-						<span class="material-symbols-outlined text-[1.2rem]">person</span>
-					</div>
 					<div class="flex-grow">
 						<div class="flex items-baseline gap-2 mb-1">
 							<span class="font-bold text-white text-[0.85rem]">${escapeHtml(authorName)}</span>
@@ -155,25 +148,18 @@ const formClass = variant === 'modal'
 						<div class="text-[0.85rem] text-gray-200 leading-relaxed">
 							${contentHtml}
 						</div>
-						<div class="mt-2 text-[0.75rem] text-gray-500 font-medium">返信</div>
 					</div>
-					<button class="shrink-0 pt-2 px-2 text-gray-500 hover:text-white transition-colors">
-						<span class="material-symbols-outlined text-[1rem] font-light">favorite</span>
-					</button>
 				`;
 			} else {
 				div.innerHTML = `
 					${pendingBadge}
 					<div class="flex justify-between items-start mb-2">
-						<div class="font-bold text-gray-700 text-[0.8rem] sm:text-sm flex items-center gap-2">
-							<div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-								<span class="material-symbols-outlined text-[1rem]">person</span>
-							</div>
+						<div class="font-bold text-gray-700 text-[0.8rem] sm:text-sm">
 							${escapeHtml(authorName)}
 						</div>
 						<div class="text-[0.65rem] text-gray-400">${isPending ? '送信完了' : formatDate(comment.created_at)}</div>
 					</div>
-					<div class="text-[0.85rem] sm:text-sm text-gray-600 leading-relaxed sm:pl-8">
+					<div class="text-[0.85rem] sm:text-sm text-gray-600 leading-relaxed">
 						${contentHtml}
 					</div>
 				`;
@@ -232,7 +218,7 @@ const formClass = variant === 'modal'
 					form.reset();
 					
 					// Remove empty state message if exists
-					const emptyEl = document.getElementById('comments-empty');
+					const emptyEl = section.querySelector('#comments-empty');
 					if (emptyEl) emptyEl.remove();
 
 					// Render as pending and prepend to list
@@ -258,6 +244,12 @@ const formClass = variant === 'modal'
 				}
 			});
 		}
+	};
+
+	const initComments = () => {
+		document.querySelectorAll<HTMLElement>('[data-slug][data-variant]').forEach((section) => {
+			void initCommentSection(section);
+		});
 	};
 
 	// Initialize

@@ -97,9 +97,20 @@
 
         backdrop.addEventListener('click', (window as any).closeShareModal);
         cancelBtn?.addEventListener('click', (window as any).closeShareModal);
+
+		if (!document.documentElement.hasAttribute('data-share-listener')) {
+			document.documentElement.setAttribute('data-share-listener', 'true');
+			document.addEventListener('click', (event) => {
+				const target = event.target as HTMLElement;
+				if (!target.closest('[data-share-trigger]')) return;
+				event.preventDefault();
+				(window as any).openShareModal?.();
+			});
+		}
     };
 
     // Initialize on DOM load and Astro page load
+	setupShareModal();
     document.addEventListener('DOMContentLoaded', setupShareModal);
     document.addEventListener('astro:page-load', setupShareModal);
 </script>
