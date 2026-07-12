@@ -21,7 +21,7 @@ const { problemSlug, methodSlug } = Astro.props as { problemSlug?: string; metho
     try {
       const data = root.dataset.problem ? await trialApi.getProblemResults(root.dataset.problem) : await trialApi.getMethodResults(root.dataset.method!);
       const total = Number(data?.total ?? 0); count.textContent = `${total}件`;
-      if (!total) { message.textContent = 'まだ公開できる回答がありません。最初の回答をお待ちしています。'; return; }
+      if (!total) { root.style.display = 'none'; return; }
       message.textContent = data.show_percentages ? '回答が集まったため、件数と割合を表示しています。' : '現在は件数だけを表示しています。';
       const outcomes = Array.isArray(data.outcomes) ? data.outcomes : [];
       bars.innerHTML = outcomes.map((item: { key: string; count: number }) => {

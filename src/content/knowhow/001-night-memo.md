@@ -1,6 +1,6 @@
 ---
-title: "夜泣き対応メモ"
-description: "夜泣き時の対応手順や、ミルクのタイミング、チェック項目をまとめたメモです。パートナーとの連携にも役立ちます。"
+title: "夜間対応メモ"
+description: "夜間対応時のミルクや、おむつのタイミングを記録するメモです。パートナーとの連携にも役立ちます。"
 coverImage: "/images/checklist_sample_jp.png"
 icon: "description"
 isFree: true

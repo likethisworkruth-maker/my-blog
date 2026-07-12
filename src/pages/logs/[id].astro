@@ -37,14 +37,9 @@ const { Content } = await render(log);
 			<!-- Header inside card -->
 			<div class="pb-8 border-b border-gray-100 mb-8">
 				<div class="flex items-center gap-2 text-gray-400 font-bold text-[0.85rem] mb-3">
-					{log.data.pubDate.toLocaleDateString('ja-JP')}
+					{log.data.childAgeMonths !== undefined && `生後${log.data.childAgeMonths}ヶ月頃`}
 				</div>
 				<h1 class="text-[1.5rem] lg:text-[2rem] font-bold leading-tight mb-2 text-navy-900">{log.data.title}</h1>
-				
-				<!-- Like Button (Compact) -->
-				<div class="mt-4 flex items-center">
-					<LikeButton slug={`logs/${log.id}`} variant="compact" />
-				</div>
 			</div>
 			
 			<!-- Content Area -->

@@ -8,5 +8,5 @@ const { problem: initialProblem, methods: trialMethods } = Astro.props;
 <Layout title={`回答する（内部テスト中）：${initialProblem.title}`} description="現在内部テスト中です。アカウント不要。3問、約30秒で回答できます。" noindex={true}>
   <section class="px-6 py-10 lg:py-16"><div class="mx-auto max-w-2xl"><a href={`/problems/${initialProblem.slug}/`} class="text-sm font-bold text-gray-500">← 質問ページへ戻る</a>
   <div class="mt-4 p-4 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold flex items-center gap-2"><span class="material-symbols-outlined" aria-hidden="true">science</span>現在は回答機能の内部テスト中です。送信されたデータはテスト用として扱われます。</div>
-  <div class="mt-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:p-10"><QuestionFlow problemSlug={initialProblem.slug} questionText={initialProblem.questionText} methods={trialMethods} /></div><p class="mt-5 text-xs leading-6 text-gray-500">回答により個別の医療・発達判断を行うものではありません。送信前に<a href="/terms/" class="underline">利用規約</a>と<a href="/privacy/" class="underline">プライバシーポリシー</a>をご確認ください。</p></div></section>
+  <div class="mt-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:p-10"><QuestionFlow problemSlug={initialProblem.slug} questionText={initialProblem.questionText} methods={trialMethods} /></div></div></section>
 </Layout>

@@ -52,14 +52,14 @@ const { Content } = await render(app);
 				<div class="font-bold text-gray-800 text-[1.1rem]">
 					{app.data.childAgeMonths !== undefined ? `生後${app.data.childAgeMonths}ヶ月〜` : '全年齢'}
 				</div>
-				<div class="text-[0.7rem] text-gray-500">対象年齢</div>
+				<div class="text-[0.7rem] text-gray-500">使い始めた時期</div>
 			</div>
 		</div>
 
 		<!-- 3. My Personal Thoughts (Markdown Content) -->
 		<div class="bg-gray-50 rounded-3xl p-6 sm:p-8 mb-10 border border-gray-100 mt-8">
 			<h2 class="text-[1.25rem] font-bold text-navy-900 mb-6 flex items-center gap-2">
-				おとうさんの感想
+				わが家で使った感想
 			</h2>
 			<div class="content-area">
 				<Content />

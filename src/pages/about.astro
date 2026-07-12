@@ -4,89 +4,70 @@ import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
 
 <TrialStaticLayout
 	title="このサイトについて | 育児の困りごとメモ"
-	description="育児の困りごとメモの目的、掲載方針、情報の読み方について説明します。"
+	description="育児の困りごとメモの目的、掲載方針について説明します。"
 >
 	<article class="mx-auto max-w-3xl px-6 py-12 lg:py-20">
 		<header class="border-b border-gray-200 pb-8">
-			<p class="text-sm font-bold text-mint-600">ABOUT THIS SITE</p>
-			<h1 class="mt-2 text-3xl font-bold tracking-tight text-navy-900">このサイトについて</h1>
-			<p class="mt-4 text-sm text-gray-500">最終更新：2026年7月12日</p>
-			<p class="mt-6 text-base leading-8 text-gray-600">
-				「育児の困りごとメモ」は、同じ困りごとを経験した家庭が、何を試し、実際にどうなったかを比べられるように整理するサイトです。
+			<h1 class="text-3xl font-bold tracking-tight text-navy-900">このサイトについて</h1>
+			<p class="mt-4 text-base leading-relaxed text-gray-600">
+				初めての育児で困ったことを、わが家で試した方法と一緒に残している個人運営のサイトです。
 			</p>
 		</header>
 
 		<div class="mt-10 space-y-12 text-[0.95rem] leading-8 text-gray-700">
+			<!-- 1. 誰向けか・何が見つかるか -->
 			<section>
-				<h2 class="text-xl font-bold text-navy-900">このサイトを作る理由</h2>
+				<h2 class="text-xl font-bold text-navy-900">対象と見つかるもの</h2>
 				<p class="mt-4">
-					育児の体験談は役に立つ一方で、家庭ごとに前提や試した方法が違うため、自分の状況と比べにくいことがあります。このサイトでは、自由な体験談だけを並べるのではなく、「困っていたこと」「試した方法」「続けやすさ」「その後の変化」など、共通する項目に分けて整理します。
+					妊娠後期から1歳ごろまでの、初めて育児に直面している保護者の方を対象としています。
+					「予定共有」「育児記録」「持ち物管理」など、日々の具体的な困りごとに対し、わが家で実際にどんな対策を試したかをまとめています。
 				</p>
 				<p class="mt-3">
-					誰かの方法を正解として紹介するのではなく、選択肢と結果の違いを見渡し、自分の家庭で試す方法を考える材料にしてもらうことが目的です。
+					うまくいったことだけでなく、<strong>面倒だった点や、続かなかった理由</strong>もあわせて記録することで、一般論ではなく「自分の家庭に合うかどうか」を考える材料を見つけることができます。
 				</p>
 			</section>
 
+			<!-- 2. 掲載している内容 -->
 			<section>
-				<h2 class="text-xl font-bold text-navy-900">掲載する内容</h2>
-				<div class="mt-5 grid gap-4 sm:grid-cols-2">
+				<h2 class="text-xl font-bold text-navy-900">掲載している内容</h2>
+				<div class="mt-5 grid gap-4 sm:grid-cols-3">
 					<a href="/problems/" class="block rounded-2xl border border-gray-200 p-5 hover:bg-gray-50 transition-colors">
-						<h3 class="font-bold text-navy-900 flex items-center gap-1">困りごと <span class="text-sm font-normal text-mint-600" aria-hidden="true">→ 一覧を見る</span></h3>
-						<p class="mt-2 text-sm leading-7 text-gray-600">比較の起点となる、具体的な育児上の困りごとです。</p>
+						<h3 class="font-bold text-navy-900 flex items-center gap-1">困りごと <span class="text-xs font-normal text-mint-600" aria-hidden="true">→</span></h3>
+						<p class="mt-2 text-xs leading-relaxed text-gray-600">解決したい具体的な困りごとです。</p>
 					</a>
 					<a href="/methods/" class="block rounded-2xl border border-gray-200 p-5 hover:bg-gray-50 transition-colors">
-						<h3 class="font-bold text-navy-900 flex items-center gap-1">試した方法 <span class="text-sm font-normal text-mint-600" aria-hidden="true">→ 一覧を見る</span></h3>
-						<p class="mt-2 text-sm leading-7 text-gray-600">家庭内の工夫、アプリ、商品・道具を同じ形式で整理します。</p>
+						<h3 class="font-bold text-navy-900 flex items-center gap-1">試した方法 <span class="text-xs font-normal text-mint-600" aria-hidden="true">→</span></h3>
+						<p class="mt-2 text-xs leading-relaxed text-gray-600">家庭内の工夫、使ってみたアプリなどを紹介します。</p>
 					</a>
-					<div class="rounded-2xl border border-gray-200 p-5">
-						<h3 class="font-bold text-navy-900">回答結果</h3>
-						<p class="mt-2 text-sm leading-7 text-gray-600">集まった回答を集計し、方法ごとの回答数と割合を示します（現在は内部テスト中）。</p>
-					</div>
 					<a href="/logs/" class="block rounded-2xl border border-gray-200 p-5 hover:bg-gray-50 transition-colors">
-						<h3 class="font-bold text-navy-900 flex items-center gap-1">読みもの <span class="text-sm font-normal text-mint-600" aria-hidden="true">→ 一覧を見る</span></h3>
-						<p class="mt-2 text-sm leading-7 text-gray-600">結果の読み方や、試す際に確認したい点を補足します。</p>
+						<h3 class="font-bold text-navy-900 flex items-center gap-1">読みもの <span class="text-xs font-normal text-mint-600" aria-hidden="true">→</span></h3>
+						<p class="mt-2 text-xs leading-relaxed text-gray-600">日々の具体的な試行錯誤の記録です。</p>
 					</a>
 				</div>
 			</section>
 
+			<!-- 3. 運営者自身の記録から始めていること -->
 			<section>
-				<h2 class="text-xl font-bold text-navy-900">回答と集計の考え方</h2>
-				<ul class="mt-4 space-y-3">
-					<li class="flex gap-3"><span class="mt-1 text-mint-600" aria-hidden="true">●</span><span><strong class="text-navy-900">回答数を併記します：</strong>割合だけを大きく見せず、判断材料となる回答数も表示します。</span></li>
-					<li class="flex gap-3"><span class="mt-1 text-mint-600" aria-hidden="true">●</span><span><strong class="text-navy-900">少数回答は細分化しません：</strong>個々の回答者が推測されにくくなるよう、一定数に満たない条件別集計は公開しません。</span></li>
-					<li class="flex gap-3"><span class="mt-1 text-mint-600" aria-hidden="true">●</span><span><strong class="text-navy-900">自由記述は確認後に掲載します：</strong>個人情報、広告、誹謗中傷などが含まれていないことを運営者が確認します。</span></li>
-					<li class="flex gap-3"><span class="mt-1 text-mint-600" aria-hidden="true">●</span><span><strong class="text-navy-900">回答の偏りを前提にします：</strong>無作為抽出の統計調査ではなく、サイトを訪れて回答した方の結果であることを明記します。</span></li>
-				</ul>
-			</section>
-
-			<section>
-				<h2 class="text-xl font-bold text-navy-900">現在の検証テーマ</h2>
+				<h2 class="text-xl font-bold text-navy-900">運営者自身の記録から始めています</h2>
 				<p class="mt-4">
-					現在は、運営者自身の育児記録と試した方法を整理している段階（フェーズ1）です。一般の方からの回答募集は、準備が整ったテーマから限定的に開始します。
+					将来的には、同じ悩みを持つ他のご家庭が「何を試して、どうだったか」を同じ項目で比較できる機能の公開を目指していますが、現在はまず運営者自身が実際に困って試した内容を記事として蓄積している段階（フェーズ1）です。
 				</p>
-				<p class="mt-3">
-					現在は「予防接種・健診の予定を家族でどう共有するか」という一つの困りごとで、回答方法と結果の見せ方を検証しています。これは予防接種の要否や時期を判断する調査ではなく、決まった予定を家庭内で共有する方法についての調査です。
-				</p>
-				<a href="/problems/" class="mt-5 inline-flex items-center gap-2 font-bold text-mint-600">
-					現在の困りごとを見る
-					<span class="material-symbols-outlined text-lg" aria-hidden="true">arrow_forward</span>
-				</a>
 			</section>
 
+			<!-- 4. 医療・発達判断は扱わないこと -->
 			<section class="rounded-2xl border border-orange-100 bg-orange-50 p-6">
-				<h2 class="text-xl font-bold text-orange-900">このサイトが提供しないもの</h2>
-				<ul class="mt-4 list-disc space-y-2 pl-5 text-orange-900">
-					<li>診断、治療、服薬、発達評価などの医療・専門的助言</li>
-					<li>すべての家庭に当てはまる育児の正解</li>
-					<li>個別の育児相談への回答</li>
-					<li>特定の商品やサービスの効果保証</li>
-				</ul>
-				<p class="mt-4 text-sm leading-7 text-orange-900">当サイトは医療・発達上の判断を提供するものではありません。詳しくは<a href="/disclaimer/" class="font-bold underline underline-offset-4">免責事項</a>をご確認ください。</p>
+				<h2 class="text-xl font-bold text-orange-900">医療・発達上の判断は扱いません</h2>
+				<p class="mt-3 text-orange-950 text-sm leading-relaxed">
+					当サイトに掲載している情報は、あくまでわが家での実体験や試行錯誤に基づくものです。診断、治療、服薬、予防接種のスケジュール判断、発達評価などの専門的な助言ではありません。医療・発達に関する判断は、必ず公式情報や小児科等の専門機関にご確認ください。詳細は<a href="/disclaimer/" class="font-bold underline underline-offset-4">免責事項</a>に掲載しています。
+				</p>
 			</section>
 
+			<!-- 5. 運営・お問い合わせ -->
 			<section>
 				<h2 class="text-xl font-bold text-navy-900">運営・お問い合わせ</h2>
-				<p class="mt-4">本サイトは個人で運営しています。掲載内容の誤り、権利に関するご連絡、投稿削除のご相談は、運営者の <a class="font-bold text-mint-600 underline underline-offset-4" href="https://note.com/alert_weasel3202" target="_blank" rel="noopener noreferrer">note</a> からお知らせください。個別の育児相談には回答していません。</p>
+				<p class="mt-4">
+					本サイトは個人で運営しています。掲載内容の誤り、権利に関するご連絡、投稿削除のご相談は、運営者の <a class="font-bold text-mint-600 underline underline-offset-4" href="https://note.com/alert_weasel3202" target="_blank" rel="noopener noreferrer">note</a> からお知らせください。個別の育児相談等にはお答えできませんのでご了承ください。
+				</p>
 			</section>
 		</div>
 	</article>

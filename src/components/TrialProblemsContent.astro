@@ -2,36 +2,21 @@
 const problem = {
 	slug: 'vaccine-schedule-sharing',
 	title: '予防接種・健診の予定共有',
-	questionText: '予防接種・健診の予定を、家族でどう共有していますか？',
-	description: '予定の伝え忘れや確認漏れを減らすために、各家庭で試した方法と結果を比べます。医療判断ではなく、予定共有の方法についての調査です。',
+	questionText: '予防接種・健診の予定を、家族でどう共有する？',
+	description: '予定の伝え忘れや確認漏れを減らすために、わが家で試した方法をまとめています。',
 };
 ---
 
 <section class="px-6 py-12 lg:py-20">
 	<div class="mx-auto max-w-3xl">
-		<p class="text-sm font-bold text-mint-600">困りごとを起点に比べる</p>
-		<h1 class="mt-2 text-3xl font-bold text-navy-900">困りごとを探す</h1>
-		<p class="mt-4 leading-8 text-gray-600">自由な体験談ではなく、「何を試し、どうなったか」を同じ項目で比べられるように整理しています。現在は一つのテーマで検証しています。</p>
+		<h1 class="text-3xl font-bold text-navy-900">困りごと</h1>
 
-		<article class="mt-9 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:p-8">
-			<div class="mb-4 flex items-center gap-2 text-xs font-bold text-mint-600">
-				<span class="material-symbols-outlined" aria-hidden="true">science</span>
-				検証中テーマ
-			</div>
+		<article class="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:p-8">
 			<h2 class="text-xl font-bold leading-relaxed text-navy-900">{problem.questionText}</h2>
-			<p class="mt-3 text-sm leading-7 text-gray-600">{problem.description}</p>
+			<p class="mt-4 leading-relaxed text-gray-600 text-sm sm:text-base">{problem.description}</p>
 			
-			<div class="mt-5 p-4 bg-gray-50 rounded-2xl flex flex-wrap gap-x-6 gap-y-2 text-xs font-bold text-gray-500">
-				<span>運営者の読みもの：1件</span>
-				<span class="text-gray-300">|</span>
-				<span>試した方法：5件</span>
-				<span class="text-gray-300">|</span>
-				<span class="text-mint-600">外部回答：準備中（内部テスト）</span>
-			</div>
-
-			<div class="mt-6 flex flex-wrap gap-3">
-				<a href={'/problems/' + problem.slug + '/'} class="rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-mint-600">詳細と比較を見る</a>
-				<a href={'/answer/' + problem.slug + '/'} class="rounded-full border border-gray-300 px-6 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 transition">回答（テスト）</a>
+			<div class="mt-6">
+				<a href={'/problems/' + problem.slug + '/'} class="inline-block rounded-full bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 text-sm transition-colors">試した方法を見る</a>
 			</div>
 		</article>
 	</div>

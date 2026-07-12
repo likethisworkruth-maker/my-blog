@@ -6,195 +6,37 @@ import { UI } from '../../i18n/ja';
 
 const logs = await getCollection('logs');
 logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
-
-const uniqueCategories = [...new Set(logs.flatMap(log => log.data.categories || []))];
-const displayCategories = uniqueCategories.length > 0 ? ['すべて', ...uniqueCategories] : ['すべて', '育児記録', '夫婦共有', '予定・健診', '離乳食'];
-
-const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(age => age !== undefined))].sort((a, b) => a! - b!);
 ---
 
-<Layout title={`${UI.logs.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
-	
-	<div class="px-6 py-8 lg:py-12">
-		<h2 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-6">{UI.logs.pageTitle}</h2>
+<Layout title={`${UI.logs.logsTitle || '読みもの'} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+	<div class="px-6 py-8 lg:py-12 max-w-4xl mx-auto">
+		<h1 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-2">読みもの</h1>
+		<p class="text-sm text-gray-500 mb-8">わが家で直面した困りごとと、試行錯誤した日々の記録です。</p>
 		
-		<div class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between">
-			<!-- Categories -->
-			<div class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto" id="category-filters">
-				{displayCategories.map((category, index) => (
-					<button 
-						class={`category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors ${index === 0 ? 'border-mint-500 bg-mint-50 text-mint-500 font-bold' : 'border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50'}`}
-						data-category={category}
-					>
-						{category}
-					</button>
-				))}
-			</div>
-			
-			<!-- Age & Sort -->
-			<div class="flex gap-3 w-full lg:w-auto shrink-0">
-				<select id="age-filter" class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500">
-					<option value="all">すべての月齢</option>
-					{uniqueAges.map(age => (
-						<option value={age.toString()}>生後{age}ヶ月</option>
-					))}
-					<option value="none">月齢未指定</option>
-				</select>
-				
-				<select id="sort-order" class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500">
-					<option value="newest">最新順</option>
-					<option value="age-asc">月齢が低い順</option>
-					<option value="age-desc">月齢が高い順</option>
-				</select>
-			</div>
-		</div>
-		
-		<div class="flex flex-col gap-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6" id="logs-container">
+		<div class="grid gap-6 md:grid-cols-2">
 			{logs.map((log) => (
-				<a href={`/logs/${log.id}/`} class="log-card flex flex-col bg-white border-b border-gray-100 md:border md:border-gray-200 md:rounded-2xl transition-colors hover:bg-gray-50 group overflow-hidden" 
-                   data-categories={(log.data.categories || []).join(',')}
-                   data-age={log.data.childAgeMonths ?? 'none'}
-                   data-lognumber={log.data.logNumber}
-                >
-					<!-- Top section: Mobile flex-row-reverse, PC flex-col -->
-					<div class="flex flex-row-reverse sm:flex-col">
-						<!-- Thumbnail -->
-						<div class="w-[120px] sm:w-full h-auto aspect-video bg-gray-100 shrink-0 relative flex items-center justify-center border-l sm:border-l-0 sm:border-b border-gray-100 overflow-hidden">
-							{log.data.coverImage ? (
-								<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover" />
-							) : (
-								<span class="material-symbols-outlined text-gray-300 text-4xl sm:text-5xl" aria-hidden="true">image</span>
-							)}
+				<a href={`/logs/${log.id}/`} class="flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow group">
+					{log.data.coverImage && (
+						<div class="aspect-video w-full overflow-hidden bg-gray-50 flex items-center justify-center border-b border-gray-100">
+							<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
 						</div>
-						
-						<!-- Title & Tags -->
-						<div class="flex-grow p-3 sm:p-5 sm:pb-0 flex flex-col justify-center">
-							<div class="mb-1.5 flex items-center gap-1.5 flex-wrap">
-								<span class="text-[0.75rem] font-bold text-gray-500">{log.data.pubDate.toLocaleDateString('ja-JP')}</span>
+					)}
+					<div class="p-6 flex-grow flex flex-col justify-between">
+						<div>
+							<div class="flex items-center gap-2 mb-2">
 								{log.data.childAgeMonths !== undefined && (
-									<span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[0.65rem] font-bold shrink-0">
-										生後{log.data.childAgeMonths}ヶ月
+									<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">
+										生後{log.data.childAgeMonths}ヶ月頃
 									</span>
 								)}
 							</div>
-							<h3 class="text-[0.95rem] sm:text-[1.1rem] lg:text-[1.15rem] font-bold leading-snug text-navy-900 m-0">{log.data.title}</h3>
+							<h2 class="text-lg font-bold text-navy-900 leading-snug group-hover:text-mint-600 transition-colors">{log.data.title}</h2>
+							<p class="text-sm text-gray-600 mt-2 leading-relaxed">{log.data.problem}</p>
 						</div>
-					</div>
-
-					<!-- Bottom Info -->
-					<div class="p-3 pt-1.5 sm:p-5 sm:pt-4 flex flex-col gap-1.5 relative flex-grow">
-						<div class="flex flex-col gap-1.5">
-							{log.data.createdTool && (
-								<div class="flex items-center gap-2 text-[0.8rem]">
-									<span class="bg-mint-50 text-mint-500 px-1.5 py-0.5 rounded text-[0.65rem] font-bold shrink-0">{UI.common.createdToolBadge}</span>
-									<span class="text-gray-600 leading-tight">{log.data.createdTool}</span>
-								</div>
-							)}
-							{log.data.result && (
-								<div class="flex items-center gap-2 text-[0.8rem]">
-									<span class="bg-mint-50 text-mint-500 px-1.5 py-0.5 rounded text-[0.65rem] font-bold shrink-0">{UI.common.resultBadge}</span>
-									<span class="text-gray-600 leading-tight">{log.data.result}</span>
-								</div>
-							)}
-						</div>
-						
-
+						<span class="text-xs font-bold text-mint-600 mt-6 flex items-center gap-0.5">詳しく見る <span class="material-symbols-outlined text-xs" aria-hidden="true">chevron_right</span></span>
 					</div>
 				</a>
 			))}
 		</div>
 	</div>
 </Layout>
-
-<script>
-	const categoryButtons = document.querySelectorAll('.category-btn');
-	const ageFilter = document.getElementById('age-filter') as HTMLSelectElement;
-	const sortOrder = document.getElementById('sort-order') as HTMLSelectElement;
-	const logsContainer = document.getElementById('logs-container');
-	const cards = Array.from(document.querySelectorAll('.log-card')) as HTMLElement[];
-
-	let currentCategory = 'すべて';
-	let currentAge = 'all';
-	let currentSort = 'newest';
-
-	function updateView() {
-		// Filter
-		cards.forEach(card => {
-			const categoryMatch = currentCategory === 'すべて' || (card.getAttribute('data-categories') || '').split(',').includes(currentCategory);
-			const ageMatch = currentAge === 'all' || card.getAttribute('data-age') === currentAge;
-			
-			if (categoryMatch && ageMatch) {
-				card.style.display = 'flex';
-			} else {
-				card.style.display = 'none';
-			}
-		});
-
-		// Sort
-		const visibleCards = cards.filter(card => card.style.display !== 'none');
-		const hiddenCards = cards.filter(card => card.style.display === 'none');
-
-		visibleCards.sort((a, b) => {
-			if (currentSort === 'newest') {
-				const numA = a.getAttribute('data-lognumber') || '';
-				const numB = b.getAttribute('data-lognumber') || '';
-				return numB.localeCompare(numA);
-			} else {
-				const ageA = a.getAttribute('data-age');
-				const ageB = b.getAttribute('data-age');
-				const valA = ageA === 'none' ? Infinity : parseInt(ageA || '0', 10);
-				const valB = ageB === 'none' ? Infinity : parseInt(ageB || '0', 10);
-
-				if (currentSort === 'age-asc') {
-					return valA - valB;
-				} else { // age-desc
-					if (valA === Infinity && valB !== Infinity) return 1;
-					if (valB === Infinity && valA !== Infinity) return -1;
-					return valB - valA;
-				}
-			}
-		});
-
-		// Re-append to DOM in order
-		if (logsContainer) {
-			visibleCards.forEach(card => logsContainer.appendChild(card));
-			hiddenCards.forEach(card => logsContainer.appendChild(card));
-		}
-	}
-
-	categoryButtons.forEach(button => {
-		button.addEventListener('click', () => {
-			currentCategory = button.getAttribute('data-category') || 'すべて';
-			
-			// Update button styles
-			categoryButtons.forEach(btn => {
-				btn.classList.remove('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
-				btn.classList.add('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
-			});
-			button.classList.remove('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
-			button.classList.add('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
-
-			updateView();
-		});
-	});
-
-	ageFilter?.addEventListener('change', (e) => {
-		currentAge = (e.target as HTMLSelectElement).value;
-		updateView();
-	});
-
-	sortOrder?.addEventListener('change', (e) => {
-		currentSort = (e.target as HTMLSelectElement).value;
-		updateView();
-	});
-</script>
-
-<style>
-	.scrollbar-hide::-webkit-scrollbar {
-		display: none;
-	}
-	.scrollbar-hide {
-		-ms-overflow-style: none;
-		scrollbar-width: none;
-	}
-</style>

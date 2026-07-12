@@ -10,10 +10,9 @@ posts.sort((a, b) => a.data.order - b.data.order);
 
 <Layout title={`${UI.knowhow.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
 	<div class="px-6 py-8 lg:py-12 max-w-4xl mx-auto">
-		<h1 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-2">
+		<h1 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-8">
 			{UI.knowhow.pageTitle}
 		</h1>
-		<p class="text-sm text-gray-500 mb-8">{UI.knowhow.pageDesc}</p>
 
 		<div class="grid gap-6 md:grid-cols-2">
 			{posts.map((post) => (

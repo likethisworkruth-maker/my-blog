@@ -13,7 +13,7 @@ export default defineConfig({
     mdx(), 
     sitemap({
       filter: (page) => {
-        const excluded = ['/403/', '/answer/', '/results/', '/items/003-item-sample'];
+        const excluded = ['/403/', '/answer/', '/results/', '/items/'];
         return !excluded.some(path => page.includes(path));
       }
     })

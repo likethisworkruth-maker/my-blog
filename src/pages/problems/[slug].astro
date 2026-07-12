@@ -3,20 +3,91 @@ import Layout from '../../layouts/Layout.astro';
 import MethodCard from '../../components/methods/MethodCard.astro';
 import ResultSummary from '../../components/results/ResultSummary.astro';
 import { loadInitialTrialCatalog } from '../../data/trialRepository';
-export async function getStaticPaths() { const catalog = await loadInitialTrialCatalog(); return [{ params: { slug: catalog.problem.slug }, props: catalog }]; }
-const { problem: initialProblem, methods: trialMethods } = Astro.props;
----
-<Layout title={`${initialProblem.title} | 育児の困りごとメモ`} description={initialProblem.description}>
-  <section class="px-6 py-10 lg:py-16"><div class="mx-auto max-w-4xl"><a href="/problems/" class="text-sm font-bold text-gray-500">← 困りごと一覧</a><div class="mt-6 rounded-3xl bg-mint-50 p-6 lg:p-10"><p class="text-sm font-bold text-mint-600">30秒の質問</p><h1 class="mt-3 text-2xl font-bold leading-relaxed text-navy-900 lg:text-3xl">{initialProblem.questionText}</h1><p class="mt-4 max-w-2xl leading-8 text-gray-600">{initialProblem.description}</p>
-  
-  {initialProblem.slug === 'vaccine-schedule-sharing' && (
-    <div class="mt-6 border border-mint-200 bg-white rounded-2xl p-6">
-      <p class="text-sm font-bold text-gray-500 mb-2">運営者の記録</p>
-      <a href="/logs/002-vaccine/" class="text-lg font-bold text-navy-900 hover:text-mint-600 transition-colors block">
-        予防接種の予定が頭に入らない問題
-      </a>
-    </div>
-  )}
 
-  <a href={`/answer/${initialProblem.slug}/`} class="mt-7 inline-block rounded-full bg-gray-200 px-7 py-3 font-bold text-gray-600 hover:bg-gray-300">回答機能は準備中です（内部テスト中）</a></div><div class="mt-8"><ResultSummary problemSlug={initialProblem.slug} /></div><section class="mt-12"><h2 class="text-xl font-bold text-navy-900">この困りごとで試されている方法</h2><p class="mt-2 text-sm text-gray-600">家庭内の工夫、アプリ、道具を同じ形式で比較します。</p><div class="mt-6 grid gap-4 md:grid-cols-2">{trialMethods.map(method => <MethodCard method={method} />)}</div></section></div></section>
+export async function getStaticPaths() {
+  const catalog = await loadInitialTrialCatalog();
+  return [{ params: { slug: catalog.problem.slug }, props: catalog }];
+}
+
+const { problem: initialProblem, methods: trialMethods } = Astro.props;
+
+// Filter tried vs other candidate methods
+const triedMethods = trialMethods.filter(m => m.operatorExperience?.status === 'tried');
+const otherMethods = trialMethods.filter(m => m.operatorExperience?.status !== 'tried');
+---
+
+<Layout title={`${initialProblem.title} | 育児の困りごとメモ`} description={initialProblem.description}>
+  <section class="px-6 py-10 lg:py-16">
+    <div class="mx-auto max-w-4xl">
+      <a href="/problems/" class="text-sm font-bold text-gray-500 hover:text-mint-600 transition-colors flex items-center gap-1 mb-6">
+        <span class="material-symbols-outlined text-sm" aria-hidden="true">arrow_back</span> 困りごと一覧へ戻る
+      </a>
+
+      <!-- 1. 困りごとの説明 -->
+      <div class="rounded-3xl bg-mint-50 p-6 lg:p-10 mb-10">
+        <h1 class="text-2xl font-bold leading-relaxed text-navy-900 lg:text-3xl">{initialProblem.questionText}</h1>
+        <p class="mt-4 leading-relaxed text-gray-700 text-sm sm:text-base">{initialProblem.description}</p>
+      </div>
+
+      <!-- 2. わが家で困った記録 -->
+      {initialProblem.slug === 'vaccine-schedule-sharing' && (
+        <section class="mb-10">
+          <h2 class="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2 border-b border-gray-100 pb-2">
+            <span class="material-symbols-outlined text-mint-500" aria-hidden="true">menu_book</span>
+            わが家で困った記録（読みもの）
+          </h2>
+          <div class="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-sm transition-shadow">
+            <a href="/logs/002-vaccine/" class="group">
+              <span class="text-xs font-bold text-gray-400 block mb-1">生後2ヶ月頃</span>
+              <h3 class="text-base font-bold text-navy-900 group-hover:text-mint-600 transition-colors">
+                予防接種の予定が頭に入らない問題
+              </h3>
+              <p class="text-sm text-gray-600 mt-2 leading-relaxed">
+                0歳児の予防接種は種類も回数も多く、同時接種や間隔のルールもあってスケジュール管理が非常に複雑でした。夫婦で予定をどう忘れずに共有するかに悩みました。
+              </p>
+              <span class="text-xs font-bold text-mint-600 mt-4 flex items-center gap-0.5">この記事を読む <span class="material-symbols-outlined text-xs" aria-hidden="true">chevron_right</span></span>
+            </a>
+          </div>
+        </section>
+      )}
+
+      <!-- 3. わが家で試した方法 -->
+      {triedMethods.length > 0 && (
+        <section class="mb-10">
+          <h2 class="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2 border-b border-gray-100 pb-2">
+            <span class="material-symbols-outlined text-mint-500" aria-hidden="true">check_circle</span>
+            わが家で試した方法
+          </h2>
+          <div class="grid gap-4 md:grid-cols-2">
+            {triedMethods.map(method => <MethodCard method={method} />)}
+          </div>
+        </section>
+      )}
+
+      <!-- 4. その他の方法 -->
+      {otherMethods.length > 0 && (
+        <section class="mb-10">
+          <h2 class="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2 border-b border-gray-100 pb-2">
+            <span class="material-symbols-outlined text-gray-400" aria-hidden="true">help</span>
+            その他の方法（検討中など）
+          </h2>
+          <div class="grid gap-4 md:grid-cols-2">
+            {otherMethods.map(method => <MethodCard method={method} />)}
+          </div>
+        </section>
+      )}
+
+      <!-- 5. 将来、回答結果 (ResultSummary will hide itself dynamically if 0 results exist) -->
+      <div class="mt-8">
+        <ResultSummary problemSlug={initialProblem.slug} />
+      </div>
+
+      <!-- Medical Disclaimer at bottom -->
+      <footer class="mt-16 pt-6 border-t border-gray-100 text-center">
+        <p class="text-xs text-gray-400">
+          医療・発達に関する判断は、公式情報や専門機関をご確認ください。
+        </p>
+      </footer>
+    </div>
+  </section>
 </Layout>
