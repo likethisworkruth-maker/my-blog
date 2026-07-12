@@ -17,8 +17,8 @@ const disabledAttr = slug ? {} : { disabled: true };
 		{...disabledAttr}
 	>
 		<div class="w-12 h-12 rounded-full border border-gray-300 group-hover:border-pink-300 group-[.liked]:border-pink-400 flex items-center justify-center relative bg-white transition-colors">
-			<span class="material-symbols-outlined icon-empty text-gray-400 group-hover:text-pink-400 transition-colors text-[1.4rem]">favorite</span>
-			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 m-auto h-[1.4rem] w-[1.4rem] opacity-0 transition-opacity text-[1.4rem] leading-none" style="font-variation-settings: 'FILL' 1;">favorite</span>
+			<span class="material-symbols-outlined icon-empty text-gray-400 group-hover:text-pink-400 transition-colors text-[1.4rem]" aria-hidden="true">favorite</span>
+			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 m-auto h-[1.4rem] w-[1.4rem] opacity-0 transition-opacity text-[1.4rem] leading-none" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">favorite</span>
 		</div>
 		<span class="like-count font-bold text-gray-500 group-hover:text-pink-500 group-[.liked]:text-pink-500 transition-colors text-lg">...</span>
 	</button>
@@ -31,8 +31,8 @@ const disabledAttr = slug ? {} : { disabled: true };
 		{...disabledAttr}
 	>
 		<div class="relative flex items-center justify-center">
-			<span class="material-symbols-outlined icon-empty text-gray-400 group-hover:text-pink-400 transition-colors text-[1.2rem]">favorite</span>
-			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-[1.2rem]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+			<span class="material-symbols-outlined icon-empty text-gray-400 group-hover:text-pink-400 transition-colors text-[1.2rem]" aria-hidden="true">favorite</span>
+			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-[1.2rem]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">favorite</span>
 		</div>
 		<span class="like-count font-bold text-gray-500 group-hover:text-pink-500 transition-colors text-[0.9rem]">...</span>
 	</button>
@@ -45,8 +45,8 @@ const disabledAttr = slug ? {} : { disabled: true };
 		{...disabledAttr}
 	>
 		<div class="relative flex items-center justify-center">
-			<span class="material-symbols-outlined icon-empty text-2xl group-hover:text-pink-400 transition-colors">favorite</span>
-			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-2xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
+			<span class="material-symbols-outlined icon-empty text-2xl group-hover:text-pink-400 transition-colors" aria-hidden="true">favorite</span>
+			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-2xl" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">favorite</span>
 		</div>
 		<span class="like-count-footer">いいね (<span class="like-count">...</span>)</span>
 	</button>
@@ -59,8 +59,8 @@ const disabledAttr = slug ? {} : { disabled: true };
 		{...disabledAttr}
 	>
 		<div class="relative flex items-center justify-center">
-			<span class="material-symbols-outlined icon-empty text-white group-hover:text-pink-400 transition-colors text-[2rem] drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">favorite</span>
-			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-[2rem] drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+			<span class="material-symbols-outlined icon-empty text-white group-hover:text-pink-400 transition-colors text-[2rem] drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" aria-hidden="true">favorite</span>
+			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-[2rem] drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">favorite</span>
 		</div>
 		<span class="like-count font-medium text-white group-hover:text-pink-400 transition-colors text-[0.8rem] drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">...</span>
 	</button>

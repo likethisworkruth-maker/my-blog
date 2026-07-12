@@ -7,5 +7,16 @@ export async function getStaticPaths() { const catalog = await loadInitialTrialC
 const { problem: initialProblem, methods: trialMethods } = Astro.props;
 ---
 <Layout title={`${initialProblem.title} | 育児の困りごとメモ`} description={initialProblem.description}>
-  <section class="px-6 py-10 lg:py-16"><div class="mx-auto max-w-4xl"><a href="/problems/" class="text-sm font-bold text-gray-500">← 困りごと一覧</a><div class="mt-6 rounded-3xl bg-mint-50 p-6 lg:p-10"><p class="text-sm font-bold text-mint-600">30秒の質問</p><h1 class="mt-3 text-2xl font-bold leading-relaxed text-navy-900 lg:text-3xl">{initialProblem.questionText}</h1><p class="mt-4 max-w-2xl leading-8 text-gray-600">{initialProblem.description}</p><a href={`/answer/${initialProblem.slug}/`} class="mt-7 inline-block rounded-full bg-mint-500 px-7 py-3 font-bold text-white hover:bg-mint-600">回答して結果を見る</a></div><div class="mt-8"><ResultSummary problemSlug={initialProblem.slug} /></div><section class="mt-12"><h2 class="text-xl font-bold text-navy-900">この困りごとで試されている方法</h2><p class="mt-2 text-sm text-gray-600">家庭内の工夫、アプリ、道具を同じ形式で比較します。</p><div class="mt-6 grid gap-4 md:grid-cols-2">{trialMethods.map(method => <MethodCard method={method} />)}</div></section></div></section>
+  <section class="px-6 py-10 lg:py-16"><div class="mx-auto max-w-4xl"><a href="/problems/" class="text-sm font-bold text-gray-500">← 困りごと一覧</a><div class="mt-6 rounded-3xl bg-mint-50 p-6 lg:p-10"><p class="text-sm font-bold text-mint-600">30秒の質問</p><h1 class="mt-3 text-2xl font-bold leading-relaxed text-navy-900 lg:text-3xl">{initialProblem.questionText}</h1><p class="mt-4 max-w-2xl leading-8 text-gray-600">{initialProblem.description}</p>
+  
+  {initialProblem.slug === 'vaccine-schedule-sharing' && (
+    <div class="mt-6 border border-mint-200 bg-white rounded-2xl p-6">
+      <p class="text-sm font-bold text-gray-500 mb-2">運営者の記録</p>
+      <a href="/logs/002-vaccine/" class="text-lg font-bold text-navy-900 hover:text-mint-600 transition-colors block">
+        予防接種の予定が頭に入らない問題
+      </a>
+    </div>
+  )}
+
+  <a href={`/answer/${initialProblem.slug}/`} class="mt-7 inline-block rounded-full bg-gray-200 px-7 py-3 font-bold text-gray-600 hover:bg-gray-300">回答機能は準備中です（内部テスト中）</a></div><div class="mt-8"><ResultSummary problemSlug={initialProblem.slug} /></div><section class="mt-12"><h2 class="text-xl font-bold text-navy-900">この困りごとで試されている方法</h2><p class="mt-2 text-sm text-gray-600">家庭内の工夫、アプリ、道具を同じ形式で比較します。</p><div class="mt-6 grid gap-4 md:grid-cols-2">{trialMethods.map(method => <MethodCard method={method} />)}</div></section></div></section>
 </Layout>

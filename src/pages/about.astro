@@ -30,22 +30,22 @@ import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
 			<section>
 				<h2 class="text-xl font-bold text-navy-900">掲載する内容</h2>
 				<div class="mt-5 grid gap-4 sm:grid-cols-2">
-					<div class="rounded-2xl border border-gray-200 p-5">
-						<h3 class="font-bold text-navy-900">困りごと</h3>
+					<a href="/problems/" class="block rounded-2xl border border-gray-200 p-5 hover:bg-gray-50 transition-colors">
+						<h3 class="font-bold text-navy-900 flex items-center gap-1">困りごと <span class="text-sm font-normal text-mint-600" aria-hidden="true">→ 一覧を見る</span></h3>
 						<p class="mt-2 text-sm leading-7 text-gray-600">比較の起点となる、具体的な育児上の困りごとです。</p>
-					</div>
-					<div class="rounded-2xl border border-gray-200 p-5">
-						<h3 class="font-bold text-navy-900">試した方法</h3>
+					</a>
+					<a href="/methods/" class="block rounded-2xl border border-gray-200 p-5 hover:bg-gray-50 transition-colors">
+						<h3 class="font-bold text-navy-900 flex items-center gap-1">試した方法 <span class="text-sm font-normal text-mint-600" aria-hidden="true">→ 一覧を見る</span></h3>
 						<p class="mt-2 text-sm leading-7 text-gray-600">家庭内の工夫、アプリ、商品・道具を同じ形式で整理します。</p>
-					</div>
+					</a>
 					<div class="rounded-2xl border border-gray-200 p-5">
 						<h3 class="font-bold text-navy-900">回答結果</h3>
-						<p class="mt-2 text-sm leading-7 text-gray-600">集まった回答を集計し、方法ごとの回答数と割合を示します。</p>
+						<p class="mt-2 text-sm leading-7 text-gray-600">集まった回答を集計し、方法ごとの回答数と割合を示します（現在は内部テスト中）。</p>
 					</div>
-					<div class="rounded-2xl border border-gray-200 p-5">
-						<h3 class="font-bold text-navy-900">読みもの</h3>
+					<a href="/logs/" class="block rounded-2xl border border-gray-200 p-5 hover:bg-gray-50 transition-colors">
+						<h3 class="font-bold text-navy-900 flex items-center gap-1">読みもの <span class="text-sm font-normal text-mint-600" aria-hidden="true">→ 一覧を見る</span></h3>
 						<p class="mt-2 text-sm leading-7 text-gray-600">結果の読み方や、試す際に確認したい点を補足します。</p>
-					</div>
+					</a>
 				</div>
 			</section>
 
@@ -62,6 +62,9 @@ import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
 			<section>
 				<h2 class="text-xl font-bold text-navy-900">現在の検証テーマ</h2>
 				<p class="mt-4">
+					現在は、運営者自身の育児記録と試した方法を整理している段階（フェーズ1）です。一般の方からの回答募集は、準備が整ったテーマから限定的に開始します。
+				</p>
+				<p class="mt-3">
 					現在は「予防接種・健診の予定を家族でどう共有するか」という一つの困りごとで、回答方法と結果の見せ方を検証しています。これは予防接種の要否や時期を判断する調査ではなく、決まった予定を家庭内で共有する方法についての調査です。
 				</p>
 				<a href="/problems/" class="mt-5 inline-flex items-center gap-2 font-bold text-mint-600">

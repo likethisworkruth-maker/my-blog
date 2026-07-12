@@ -4,7 +4,7 @@ const { method } = Astro.props as { method: TrialMethod };
 ---
 <a href={`/methods/${method.slug}/`} class="group block rounded-2xl border border-gray-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
   <div class="flex items-start gap-4">
-    <span class="material-symbols-outlined flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-mint-50 text-mint-600">{method.icon}</span>
+    <span class="material-symbols-outlined flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-mint-50 text-mint-600" aria-hidden="true">{method.icon}</span>
     <div><p class="text-xs font-bold text-gray-500">{methodTypeLabels[method.methodType]}</p><h2 class="mt-1 font-bold text-navy-900">{method.name}</h2><p class="mt-2 text-sm leading-6 text-gray-600">{method.description}</p></div>
   </div>
 </a>

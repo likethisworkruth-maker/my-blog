@@ -9,8 +9,15 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://likethis.work',
-  integrations: [mdx(), sitemap()],
-
+  integrations: [
+    mdx(), 
+    sitemap({
+      filter: (page) => {
+        const excluded = ['/403/', '/answer/', '/results/', '/items/003-item-sample'];
+        return !excluded.some(path => page.includes(path));
+      }
+    })
+  ],
   fonts: [
       {
           provider: fontProviders.local(),

@@ -63,7 +63,7 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 							{log.data.coverImage ? (
 								<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover" />
 							) : (
-								<span class="material-symbols-outlined text-gray-300 text-4xl sm:text-5xl">image</span>
+								<span class="material-symbols-outlined text-gray-300 text-4xl sm:text-5xl" aria-hidden="true">image</span>
 							)}
 						</div>
 						

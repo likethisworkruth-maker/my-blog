@@ -11,6 +11,7 @@ interface Props {
 	description: string;
 	image?: string | ImageMetadata;
 	fullScreen?: boolean;
+	noindex?: boolean;
 }
 
 const {
@@ -18,13 +19,14 @@ const {
 	description,
 	image,
 	fullScreen = false,
+	noindex = false,
 } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="ja" class={fullScreen ? "overflow-hidden w-full h-full" : ""}>
 	<head>
-		<BaseHead title={title} description={description} image={image} />
+		<BaseHead title={title} description={description} image={image} noindex={noindex} />
 	</head>
 	<body class={`${fullScreen ? 'bg-[#111315]' : 'bg-gray-50 lg:bg-white'} text-gray-700 antialiased font-sans ${fullScreen ? 'overflow-hidden w-full h-full overscroll-none' : ''}`}>
 		<div class={`w-full relative mx-auto ${fullScreen ? 'bg-[#111315] h-[100dvh] flex items-center justify-center' : 'bg-white min-h-screen flex flex-col'}`}>

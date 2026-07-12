@@ -4,16 +4,16 @@ import { SITE_TITLE } from '../consts';
 import { UI } from '../i18n/ja';
 ---
 
-<Layout title={`${UI.error.forbiddenTitle} | ${SITE_TITLE}`} description={UI.error.forbiddenDesc}>
+<Layout title={`${UI.error.forbiddenTitle} | ${SITE_TITLE}`} description={UI.error.forbiddenDesc} noindex={true}>
 	<div class="px-6 py-16 lg:py-32 flex flex-col items-center justify-center text-center min-h-[60vh]">
 		<div class="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-6 border border-orange-100 text-orange-400">
-			<span class="material-symbols-outlined text-[3rem]">lock</span>
+			<span class="material-symbols-outlined text-[3rem]" aria-hidden="true">lock</span>
 		</div>
 		<h1 class="text-[2rem] lg:text-[3rem] font-bold text-navy-900 mb-4">{UI.error.forbiddenCode}</h1>
 		<h2 class="text-[1.25rem] font-bold text-gray-700 mb-4">{UI.error.forbiddenTitle}</h2>
 		<p class="text-gray-500 mb-8 max-w-md leading-relaxed" set:html={UI.error.forbiddenDesc}></p>
 		<a href="/" class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center gap-2 inline-flex">
-			<span class="material-symbols-outlined text-[1.1rem]">home</span> {UI.error.btnHome}
+			<span class="material-symbols-outlined text-[1.1rem]" aria-hidden="true">home</span> {UI.error.btnHome}
 		</a>
 	</div>
 </Layout>

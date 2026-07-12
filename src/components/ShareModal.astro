@@ -15,7 +15,7 @@
             <!-- Copy Link -->
             <button onclick="navigator.clipboard.writeText(location.href); alert('リンクをコピーしました'); window.closeShareModal();" class="flex flex-col items-center gap-1.5 flex-1 group">
                 <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 group-hover:bg-gray-300 transition-colors">
-                    <span class="material-symbols-outlined text-[1.2rem] sm:text-[1.5rem] font-light">link</span>
+                    <span class="material-symbols-outlined text-[1.2rem] sm:text-[1.5rem] font-light" aria-hidden="true">link</span>
                 </div>
                 <span class="text-[0.6rem] sm:text-[0.65rem] text-gray-500 font-medium whitespace-nowrap scale-90 sm:scale-100">リンクをコピー</span>
             </button>

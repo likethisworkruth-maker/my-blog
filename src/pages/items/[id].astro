@@ -2,7 +2,6 @@
 import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ActionBar from "../../components/ActionBar.astro";
-import Comments from "../../components/Comments.astro";
 import { SITE_TITLE } from "../../consts";
 import { UI } from "../../i18n/ja";
 
@@ -29,7 +28,7 @@ const { Content } = await render(item);
 			{item.data.coverImage ? (
 				<img src={item.data.coverImage} alt={item.data.title} class="w-full h-full object-cover" />
 			) : (
-				<span class="material-symbols-outlined text-mint-200 text-5xl">image</span>
+				<span class="material-symbols-outlined text-mint-200 text-5xl" aria-hidden="true">image</span>
 			)}
 		</div>
 	</div>
@@ -81,8 +80,6 @@ const { Content } = await render(item);
 
 			<!-- Action Bar (Bottom of Content) -->
 			<ActionBar slug={`items/${item.id}`} />
-
-			<Comments slug={`items/${item.id}`} />
 
 		</div>
 	</div>

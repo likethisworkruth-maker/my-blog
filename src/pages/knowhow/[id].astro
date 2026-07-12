@@ -2,7 +2,6 @@
 import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ActionBar from "../../components/ActionBar.astro";
-import Comments from "../../components/Comments.astro";
 import { SITE_TITLE } from "../../consts";
 
 export async function getStaticPaths() {
@@ -36,7 +35,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 		
 		<!-- PC Back Button -->
 		<button onclick="if(this.closest('dialog') && window.closeModal) { window.closeModal(); } else if (window.astroNavigate) { window.astroNavigate('/knowhow'); } else { window.location.href='/knowhow'; }" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
-			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
+			<span class="material-symbols-outlined font-bold" aria-hidden="true">arrow_back_ios_new</span>
 		</button>
 
 		<div class="flex flex-row items-stretch justify-center h-[100dvh] lg:h-[85dvh] lg:max-h-[900px] w-full max-w-[1200px] mx-auto lg:py-6 relative transition-all duration-300" id="main-content-wrapper">
@@ -47,7 +46,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                 <div class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl" transition:name="knowhow-media">
                     <!-- Mobile Back Button -->
                     <button onclick="if(this.closest('dialog') && window.closeModal) { window.closeModal(); } else if (window.astroNavigate) { window.astroNavigate('/knowhow'); } else { window.location.href='/knowhow'; }" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors w-10 h-10 flex items-center justify-center cursor-pointer outline-none">
-                        <span class="material-symbols-outlined">arrow_back_ios_new</span>
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_back_ios_new</span>
                     </button>
                     
                     {knowhow.data.coverImage ? (
@@ -58,17 +57,17 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                         />
                     ) : (
                         <div class="w-full h-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-gray-700 text-5xl">image</span>
+                            <span class="material-symbols-outlined text-gray-700 text-5xl" aria-hidden="true">image</span>
                         </div>
                     )}
 
                     <!-- Floating Caption (Bottom Left) -->
                     <div class="absolute bottom-0 left-0 w-full p-4 lg:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none pb-8 lg:pb-6 z-10">
-                        <div class="pointer-events-auto cursor-pointer" onclick="if(window.toggleDescPanel) window.toggleDescPanel()">
-                            <h1 class="text-white font-bold text-lg mb-2 drop-shadow-md leading-snug pr-16">{knowhow.data.title}</h1>
-                            <div class="text-white/90 text-sm drop-shadow-md prose prose-invert prose-sm max-w-none pr-16 line-clamp-2" id="caption-content">
-                                <Content />
-                            </div>
+                        <div class="pointer-events-auto cursor-pointer" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
+                            <h2 class="text-white font-bold text-lg mb-2 drop-shadow-md leading-snug pr-16">{knowhow.data.title}</h2>
+                            <p class="text-white/90 text-sm drop-shadow-md pr-16 line-clamp-2">
+                                {knowhow.data.description}
+                            </p>
                         </div>
                     </div>
 
@@ -89,26 +88,20 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                 id="info-panel" 
                 class="fixed lg:relative bottom-0 left-0 w-full h-[65dvh] lg:h-full lg:w-0 bg-[#262626] z-50 lg:z-10 transform translate-y-full lg:translate-y-0 transition-all duration-300 ease-out flex flex-col shadow-2xl lg:shadow-xl rounded-t-3xl lg:rounded-xl overflow-hidden opacity-100 lg:opacity-0 lg:ml-0"
             >
-                <div class="flex items-center justify-between pl-4 pr-14 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
-					<div class="flex-grow flex items-stretch justify-center w-full">
-						<button id="tab-btn-desc" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
-						<button id="tab-btn-comments" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">コメント</button>
-                    </div>
+                <div class="flex items-center justify-between pl-6 pr-14 py-4 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
+                    <h2 class="font-bold text-white text-lg">説明</h2>
                     <button class="absolute right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
-                        <span class="material-symbols-outlined font-light">close</span>
+                        <span class="material-symbols-outlined font-light" aria-hidden="true">close</span>
                     </button>
                 </div>
 
                 <!-- Description Content -->
-                <div id="tab-content-desc" class="flex-grow overflow-y-auto p-4 sm:p-6 content-area bg-[#262626] text-gray-100 overscroll-contain min-w-[320px]">
+                <div class="flex-grow overflow-y-auto p-4 sm:p-6 content-area bg-[#262626] text-gray-100 overscroll-contain min-w-[320px]">
                     <h1 class="text-[1.25rem] font-bold text-white leading-snug mb-4">{knowhow.data.title}</h1>
                     <p class="text-[0.95rem] text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">{knowhow.data.description}</p>
-                    <Content />
-                </div>
-
-                <!-- Comments Content -->
-                <div id="tab-content-comments" class="flex-grow overflow-hidden hidden bg-[#262626] flex-col min-w-[320px]">
-                    <Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
+                    <div class="prose prose-invert prose-sm max-w-none">
+                        <Content />
+                    </div>
                 </div>
             </div>
 		</div>
@@ -152,43 +145,6 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
         // We bind functions to window dynamically so they fetch the latest DOM elements
         const isMobile = () => window.innerWidth < 1024;
         
-        const setUrlTab = (tab: string | null) => {
-            const url = new URL(window.location.href);
-            if (tab) url.searchParams.set('tab', tab);
-            else url.searchParams.delete('tab');
-            history.replaceState(null, '', url.toString());
-        };
-
-        window.switchTab = (tab: 'desc' | 'comments') => {
-            const tabBtnDesc = document.getElementById('tab-btn-desc');
-            const tabBtnComments = document.getElementById('tab-btn-comments');
-            const tabContentDesc = document.getElementById('tab-content-desc');
-            const tabContentComments = document.getElementById('tab-content-comments');
-
-            const showDescription = tab === 'desc';
-            tabBtnDesc?.classList.toggle('text-white', showDescription);
-            tabBtnDesc?.classList.toggle('text-gray-400', !showDescription);
-            tabBtnDesc?.classList.toggle('border-white', showDescription);
-            tabBtnDesc?.classList.toggle('border-transparent', !showDescription);
-            tabBtnComments?.classList.toggle('text-white', !showDescription);
-            tabBtnComments?.classList.toggle('text-gray-400', showDescription);
-            tabBtnComments?.classList.toggle('border-white', !showDescription);
-            tabBtnComments?.classList.toggle('border-transparent', showDescription);
-
-            if (showDescription) {
-                tabContentDesc?.classList.remove('hidden');
-                tabContentComments?.classList.add('hidden');
-                tabContentComments?.classList.remove('flex');
-            } else {
-                tabContentComments?.classList.remove('hidden');
-                tabContentComments?.classList.add('flex');
-                tabContentDesc?.classList.add('hidden');
-                
-                const form = tabContentComments?.querySelector('input[type="text"]') as HTMLInputElement;
-                if (form) form.focus();
-            }
-        };
-
         window.toggleInfoPanel = () => {
             const infoPanel = document.getElementById('info-panel');
             if (!infoPanel) return;
@@ -197,7 +153,6 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
             if (mobile) {
                 infoPanel.classList.toggle('translate-y-full');
             } else {
-                // PC: Toggle width and opacity
                 if (infoPanel.classList.contains('lg:w-0')) {
                     infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
                     infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
@@ -206,43 +161,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                     infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
                 }
             }
-
-            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
-            if (isOpened) {
-                const tabContentDesc = document.getElementById('tab-content-desc');
-                const activeTab = tabContentDesc?.classList.contains('hidden') ? 'comments' : 'desc';
-                setUrlTab(activeTab);
-            } else {
-                setUrlTab(null);
-            }
         };
-
-        window.toggleTab = (tab: 'desc' | 'comments') => {
-            const infoPanel = document.getElementById('info-panel');
-            if (!infoPanel) return;
-            const mobile = isMobile();
-            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
-            
-			if (isOpened) {
-                // Switch if already open
-                window.switchTab(tab);
-                setUrlTab(tab);
-            } else {
-                // Open and switch
-                window.switchTab(tab);
-                if (mobile) {
-                    infoPanel.classList.remove('translate-y-full');
-                } else {
-                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-                }
-                setUrlTab(tab);
-            }
-        };
-
-        // Backward compatibility for existing buttons
-		window.toggleCommentsPanel = () => window.toggleTab('comments');
-		window.toggleDescPanel = () => window.toggleTab('desc');
 
 		// Close panel if clicked outside
 		document.addEventListener('click', (e) => {

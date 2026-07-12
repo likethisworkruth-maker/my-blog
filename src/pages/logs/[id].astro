@@ -3,7 +3,6 @@ import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import LikeButton from '../../components/LikeButton.astro';
 import ActionBar from '../../components/ActionBar.astro';
-import Comments from '../../components/Comments.astro';
 import { SITE_TITLE } from '../../consts';
 import { UI } from '../../i18n/ja';
 
@@ -26,7 +25,7 @@ const { Content } = await render(log);
 			{log.data.coverImage ? (
 				<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover" />
 			) : (
-				<span class="material-symbols-outlined text-gray-300 text-5xl">image</span>
+				<span class="material-symbols-outlined text-gray-300 text-5xl" aria-hidden="true">image</span>
 			)}
 		</div>
 	</div>
@@ -55,8 +54,6 @@ const { Content } = await render(log);
 
 			<!-- Action Bar (Bottom of Content) -->
 			<ActionBar slug={`logs/${log.id}`} />
-
-			<Comments slug={`logs/${log.id}`} />
 
 		</div>
 		
