@@ -1,10 +1,8 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import LikeButton from '../../components/LikeButton.astro';
 import ActionBar from '../../components/ActionBar.astro';
 import { SITE_TITLE } from '../../consts';
-import { UI } from '../../i18n/ja';
 
 export async function getStaticPaths() {
 	const logs = await getCollection('logs');

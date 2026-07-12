@@ -1,0 +1,10 @@
+---
+export function getStaticPaths() {
+	return [
+		{ params: { id: "night-memo" }, props: { destination: "/knowhow/001-night-memo/" } },
+		{ params: { id: "family-log" }, props: { destination: "/knowhow/002-family-log/" } },
+	];
+}
+
+return Astro.redirect(Astro.props.destination, 301);
+---

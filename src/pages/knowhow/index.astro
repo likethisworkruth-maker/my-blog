@@ -9,14 +9,14 @@ posts.sort((a, b) => a.data.order - b.data.order);
 ---
 
 <Layout title={`${UI.knowhow.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
-	<div class="px-6 py-8 lg:py-12 max-w-4xl mx-auto">
+	<div class="px-6 py-8 lg:py-12 max-w-6xl mx-auto">
 		<h1 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-8">
 			{UI.knowhow.pageTitle}
 		</h1>
 
 		<div class="grid gap-6 md:grid-cols-2">
 			{posts.map((post) => (
-				<a href={`/knowhow/${post.id}/`} class="flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow group">
+				<a href={`/knowhow/${post.id}/`} class="w-full flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow group">
 					{post.data.coverImage && (
 						<div class="aspect-video w-full overflow-hidden bg-gray-50 flex items-center justify-center border-b border-gray-100">
 							<img src={post.data.coverImage} alt={post.data.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

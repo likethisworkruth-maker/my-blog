@@ -16,6 +16,7 @@ export function errorStatus(message: string) {
   if (message.includes('rate_limit')) return 429;
   if (message.includes('invalid') || message.includes('payload') || message.includes('method') || message.includes('spam')) return 400;
   if (message.includes('answer_not_open')) return 409;
+  if (message.includes('duplicate')) return 409;
   if (message.includes('conflict')) return 409;
   if (message.includes('token') || message.includes('not_found')) return 404;
   return 500;
@@ -26,6 +27,7 @@ const publicErrorCodes = [
   'invalid_credential', 'invalid_id', 'invalid_payload', 'invalid_has_action',
   'invalid_edit_token', 'invalid_rate_limit_key', 'spam_rejected',
   'answer_not_open', 'method_not_available', 'edit_conflict',
+  'duplicate_response',
   'invalid_token_or_deleted', 'not_found_or_invalid_token',
 ] as const;
 

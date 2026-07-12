@@ -209,7 +209,7 @@ const formClass = variant === 'modal'
 					const { error } = await supabase
 						.from('comments')
 						.insert([
-							{ slug, author_name, content }
+							{ slug, author_name, content } as never
 						]);
 
 					if (error) throw error;

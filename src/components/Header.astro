@@ -26,9 +26,6 @@ const currentPath =
 			href="/"
 			class="flex items-center gap-2 text-navy-900 font-bold text-[1.1rem]"
 		>
-			<span class="material-symbols-outlined text-mint-500"
-				 aria-hidden="true">edit</span
-			>
 			{
 				SITE_TITLE
 			}
@@ -45,16 +42,16 @@ const currentPath =
 				{UI.headerNav.home}
 			</a>
 			<a
-				href="/problems/"
-				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("problems") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+				href="/knowhow/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("knowhow") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
-				{UI.headerNav.problems}
+				{UI.headerNav.knowhow}
 			</a>
 			<a
-				href="/methods/"
-				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("methods") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+				href="/apps/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("apps") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
-				{UI.headerNav.methods}
+				{UI.headerNav.apps}
 			</a>
 			<a
 				href="/logs/"
@@ -63,10 +60,10 @@ const currentPath =
 				{UI.headerNav.logs}
 			</a>
 			<a
-				href="/about/"
-				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("about") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+				href="/naraibase/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("naraibase") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
-				{UI.headerNav.about}
+				{UI.headerNav.naraibase}
 			</a>
 		</nav>
 	</div>

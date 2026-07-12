@@ -9,7 +9,7 @@ items.sort((a, b) => a.data.order - b.data.order);
 ---
 
 <Layout title={`${UI.items.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
-	<div class="px-6 py-8 lg:py-12 max-w-4xl mx-auto">
+	<div class="px-6 py-8 lg:py-12 max-w-6xl mx-auto">
 		<h1 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-2">
 			{UI.items.pageTitle}
 		</h1>
@@ -18,7 +18,7 @@ items.sort((a, b) => a.data.order - b.data.order);
 		{items.length === 0 ? (
 			<div class="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
 				<span class="material-symbols-outlined text-gray-300 text-5xl mb-4" aria-hidden="true">shopping_bag</span>
-				<p class="text-sm text-gray-500 font-medium">現在、わが家で使ったアイテムの記録を準備しています。</p>
+				<p class="text-sm text-gray-500 font-medium">現在、アイテムの紹介記事を準備しています。</p>
 			</div>
 		) : (
 			<div class="grid gap-6 md:grid-cols-2">

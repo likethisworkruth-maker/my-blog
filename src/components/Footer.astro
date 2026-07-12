@@ -35,18 +35,25 @@ const today =
 			<span>{UI.footerNav.home}</span>
 		</a>
 		<a
-			href="/problems/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("problems") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+			href="/knowhow/"
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("knowhow") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
 		>
-			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("problems") ? "material-symbols-filled" : ""}`} aria-hidden="true">help_center</span>
-			<span>{UI.footerNav.problems}</span>
+			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("knowhow") ? "material-symbols-filled" : ""}`} aria-hidden="true">lightbulb</span>
+			<span>{UI.footerNav.knowhow}</span>
 		</a>
 		<a
-			href="/methods/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("methods") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+			href="/naraibase/"
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("naraibase") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
 		>
-			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("methods") ? "material-symbols-filled" : ""}`} aria-hidden="true">science</span>
-			<span>{UI.footerNav.methods}</span>
+			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("naraibase") ? "material-symbols-filled" : ""}`} aria-hidden="true">school</span>
+			<span>{UI.footerNav.naraibase}</span>
+		</a>
+		<a
+			href="/apps/"
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("apps") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+		>
+			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("apps") ? "material-symbols-filled" : ""}`} aria-hidden="true">apps</span>
+			<span>{UI.footerNav.apps}</span>
 		</a>
 		<a
 			href="/logs/"
@@ -54,13 +61,6 @@ const today =
 		>
 			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("logs") ? "material-symbols-filled" : ""}`} aria-hidden="true">auto_stories</span>
 			<span>{UI.footerNav.logs}</span>
-		</a>
-		<a
-			href="/about/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("about") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
-		>
-			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("about") ? "material-symbols-filled" : ""}`} aria-hidden="true">info</span>
-			<span>{UI.footerNav.about}</span>
 		</a>
 	</div>
 </footer>
@@ -77,12 +77,8 @@ const today =
 			<div
 				class="font-bold text-navy-900 text-[1.1rem] flex items-center gap-2 justify-center md:justify-start mb-1"
 			>
-				<span class="material-symbols-outlined text-mint-500" aria-hidden="true">edit</span>
 				{SITE_TITLE}
 			</div>
-			<p class="text-[0.85rem] text-gray-500 font-bold mb-2">
-				運営：週5時間おとうさんプログラマー
-			</p>
 			<p
 				class="text-[0.8rem] text-gray-400"
 			>

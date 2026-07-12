@@ -1,0 +1,299 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { SITE_TITLE } from "../../consts";
+import {
+	NARAIBASE_LESSONS,
+	NARAIBASE_MIN_GENDER_RESPONSES,
+	NARAIBASE_MIN_RESPONSES,
+} from "../../data/naraibase";
+
+export async function getStaticPaths() {
+	return NARAIBASE_LESSONS.map((l) => ({
+		params: { lesson: l.slug },
+		props: { lessonName: l.name }
+	}));
+}
+
+const { lesson } = Astro.params;
+const { lessonName } = Astro.props;
+const clientConfig = JSON.stringify({
+	lessonSlug: lesson,
+	minResponses: NARAIBASE_MIN_RESPONSES,
+	minGenderResponses: NARAIBASE_MIN_GENDER_RESPONSES,
+}).replaceAll('<', '\\u003c');
+---
+
+<Layout title={`${lessonName}の習い事データ・経験者の本音 | Naraibase | ${SITE_TITLE}`} description={`${lessonName}を経験した大人の実体験データ。「大人になって役立ったか」「子どもに勧めたいか」の統計と本音を公開。`}>
+	<section class="px-6 py-8 lg:py-12 max-w-4xl mx-auto">
+		<!-- Back to list -->
+		<div class="mb-6">
+			<a href="/naraibase/" class="text-xs font-bold text-gray-500 hover:text-mint-600 flex items-center gap-0.5">
+				<span class="material-symbols-outlined text-xs" aria-hidden="true">arrow_back</span>
+				Naraibaseトップへ戻る
+			</a>
+		</div>
+
+		<!-- Title header -->
+		<div class="border-b border-gray-200 pb-6 mb-8">
+			<div class="flex items-center gap-2 mb-2">
+				<span class="material-symbols-outlined text-mint-500" aria-hidden="true">school</span>
+				<span class="text-xs font-bold text-mint-600 bg-mint-50 px-2 py-0.5 rounded-full">Naraibase 調査結果</span>
+			</div>
+			<h1 class="text-2xl lg:text-3xl font-black text-navy-900 leading-snug">
+				{lessonName}の習い事データ
+			</h1>
+		</div>
+
+		<!-- Statistics Panel (Skeletons/Containers filled by Client JS) -->
+		<div class="bg-white border border-gray-200 rounded-3xl p-6 lg:p-10 shadow-sm mb-8">
+			<h2 class="text-lg font-bold text-navy-900 mb-6 flex items-center gap-2">
+				<span class="material-symbols-outlined text-mint-500" aria-hidden="true">equalizer</span>
+				回答結果の統計
+			</h2>
+			
+			<div id="stats-loading" class="py-12 flex flex-col items-center justify-center text-gray-400">
+				<div class="w-8 h-8 border-4 border-mint-500 border-t-transparent rounded-full animate-spin"></div>
+				<p class="mt-4 text-xs font-medium">集計データを読み込み中...</p>
+			</div>
+			<div id="stats-error" class="hidden rounded-2xl bg-red-50 p-6 text-center text-xs font-bold text-red-700" role="alert">
+				集計データを読み込めませんでした。時間をおいて再度お試しください。
+			</div>
+
+
+			<div id="stats-recruiting" class="hidden py-8 text-center bg-gray-50 rounded-2xl p-6">
+				<span class="material-symbols-outlined text-4xl text-gray-400 mb-2" aria-hidden="true">group_add</span>
+				<h3 class="font-bold text-navy-900 text-base">現在回答を募集中です</h3>
+				<p class="text-xs text-gray-500 mt-2 max-w-sm mx-auto leading-relaxed">
+					回答が20件以上集まった後、統計の割合を掲載します。ぜひあなたの経験も教えてください。
+				</p>
+				<a href={`/naraibase/answer/?lesson=${lesson}`} class="mt-4 inline-block rounded-full bg-mint-500 hover:bg-mint-600 text-white font-bold py-2.5 px-6 text-xs transition-colors">
+					自分の経験を回答する
+				</a>
+			</div>
+
+			<div id="stats-display" class="hidden space-y-8">
+				<p id="stats-source-info" class="text-xs text-gray-400"></p>
+				
+				<!-- Main useful / recommended meters -->
+				<div class="grid gap-6 md:grid-cols-2">
+					<!-- Useful card -->
+					<div class="bg-gray-50 rounded-2xl p-6 flex flex-col justify-between">
+						<div>
+							<h3 class="font-bold text-navy-900 text-sm">大人になった今、この習い事は役に立った？</h3>
+							<p class="text-2xs text-gray-500 mt-1">「はい」と回答した人の割合</p>
+						</div>
+						<div class="mt-4 flex items-baseline gap-1">
+							<span id="stat-useful-percent" class="text-4xl lg:text-5xl font-black text-mint-600">--</span>
+							<span class="text-xs font-bold text-gray-500">%</span>
+						</div>
+						<div class="mt-4 w-full bg-gray-200 rounded-full h-2">
+							<div id="stat-useful-bar" class="bg-mint-500 h-2 rounded-full" style="width: 0%"></div>
+						</div>
+						<div class="mt-2 flex justify-between text-2xs text-gray-500">
+							<span id="stat-useful-yes-cnt">はい: --人</span>
+							<span id="stat-useful-no-cnt">いいえ: --人</span>
+						</div>
+					</div>
+
+					<!-- Recommended card -->
+					<div class="bg-gray-50 rounded-2xl p-6 flex flex-col justify-between">
+						<div>
+							<h3 class="font-bold text-navy-900 text-sm">自分の子どもにも勧めたい？</h3>
+							<p class="text-2xs text-gray-500 mt-1">「はい」と回答した人の割合</p>
+						</div>
+						<div class="mt-4 flex items-baseline gap-1">
+							<span id="stat-recommended-percent" class="text-4xl lg:text-5xl font-black text-mint-600">--</span>
+							<span class="text-xs font-bold text-gray-500">%</span>
+						</div>
+						<div class="mt-4 w-full bg-gray-200 rounded-full h-2">
+							<div id="stat-recommended-bar" class="bg-mint-500 h-2 rounded-full" style="width: 0%"></div>
+						</div>
+						<div class="mt-2 flex justify-between text-2xs text-gray-500">
+							<span id="stat-recommended-yes-cnt">勧めたい: --人</span>
+							<span id="stat-recommended-no-cnt">勧めたくない: --人</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Gender comparison -->
+				<div id="stats-gender-section" class="hidden border-t border-gray-100 pt-6">
+					<h3 class="font-bold text-navy-900 text-sm mb-4">男女別の役立ち度（はい回答数・割合）</h3>
+					<div class="grid gap-4 sm:grid-cols-2">
+						<div class="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-white">
+							<span class="text-xs text-gray-500 flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>男性</span>
+							<span id="stat-gender-male" class="text-sm font-bold text-navy-900">--% (--人中--人)</span>
+						</div>
+						<div class="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-white">
+							<span class="text-xs text-gray-500 flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>女性</span>
+							<span id="stat-gender-female" class="text-sm font-bold text-navy-900">--% (--人中--人)</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Free text reviews / Reasons (Skeletons/Containers filled by Client JS) -->
+		<div class="bg-white border border-gray-200 rounded-3xl p-6 lg:p-10 shadow-sm">
+			<h2 class="text-lg font-bold text-navy-900 mb-6 flex items-center gap-2">
+				<span class="material-symbols-outlined text-mint-500" aria-hidden="true">chat_bubble</span>
+				経験者の本音・理由
+			</h2>
+
+			<div id="reasons-loading" class="py-8 flex flex-col items-center justify-center text-gray-400">
+				<div class="w-6 h-6 border-4 border-mint-500 border-t-transparent rounded-full animate-spin"></div>
+			</div>
+
+			<div id="reasons-error" class="hidden rounded-2xl bg-red-50 p-6 text-center text-xs font-bold text-red-700" role="alert">
+				経験者の理由を読み込めませんでした。時間をおいて再度お試しください。
+			</div>
+
+			<!-- Reasons List -->
+			<div id="reasons-container" class="hidden space-y-6">
+				<!-- Injected by script -->
+			</div>
+
+			<!-- Mask/Restriction Box (If user has not answered any questionnaire) -->
+			<div id="reasons-mask-box" class="hidden mt-8 rounded-2xl border border-dashed border-mint-300 bg-mint-50/30 p-6 text-center">
+				<span class="material-symbols-outlined text-4xl text-mint-600 mb-2" aria-hidden="true">lock</span>
+				<h3 class="font-bold text-navy-900 text-sm sm:text-base">あなたの経験を一件共有すると、<br class="sm:hidden" />経験者の理由を読めます。</h3>
+				<p class="text-xs text-gray-500 mt-2 max-w-md mx-auto leading-relaxed">
+					選択式の必須回答は4問（約20秒）です。自由記述は任意です。
+				</p>
+				<a href={`/naraibase/answer/?lesson=${lesson}`} class="mt-4 inline-block rounded-full bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 text-xs transition-colors shadow-sm">
+					回答して理由を見る
+				</a>
+			</div>
+			
+			<div id="reasons-empty" class="hidden py-8 text-center text-gray-400 text-xs">
+				承認済みの自由記述レビューはまだ投稿されていません。
+			</div>
+		</div>
+	</section>
+
+	<script is:inline id="naraibase-config" type="application/json" set:html={clientConfig}></script>
+	<script>
+		import { getNaraibaseSessionId, naraibaseClient } from "../../lib/naraibaseClient";
+		import type { NaraibaseReason, NaraibaseReasons, NaraibaseStats } from "../../lib/naraibaseClient";
+
+		type DetailConfig = { lessonSlug: string; minResponses: number; minGenderResponses: number };
+		const byId = (id: string) => document.getElementById(id)!;
+		const config = JSON.parse(byId('naraibase-config').textContent || '{}') as DetailConfig;
+
+		function percentage(yes: number, total: number) {
+			return total > 0 ? Math.round((yes / total) * 100) : 0;
+		}
+
+		function renderStats(stats: NaraibaseStats) {
+			byId('stats-loading').classList.add('hidden');
+			if (stats.total_approved < config.minResponses) {
+				byId('stats-recruiting').classList.remove('hidden');
+				return;
+			}
+
+			byId('stats-display').classList.remove('hidden');
+			const updated = stats.last_updated_at
+				? ` / 最終更新: ${new Date(stats.last_updated_at).toLocaleDateString('ja-JP')}`
+				: '';
+			byId('stats-source-info').textContent =
+				`回答元の内訳 — 調査モニター: ${stats.research_panel}件 / サイト: ${stats.site}件 / キャンペーン: ${stats.campaign}件${updated}（テスト回答は除外）`;
+
+			const usefulPct = percentage(stats.useful_yes, stats.useful_yes + stats.useful_no);
+			byId('stat-useful-percent').textContent = String(usefulPct);
+			byId('stat-useful-bar').style.width = `${usefulPct}%`;
+			byId('stat-useful-yes-cnt').textContent = `はい: ${stats.useful_yes}人`;
+			byId('stat-useful-no-cnt').textContent = `いいえ: ${stats.useful_no}人`;
+
+			const recommendedPct = percentage(stats.recommended_yes, stats.recommended_yes + stats.recommended_no);
+			byId('stat-recommended-percent').textContent = String(recommendedPct);
+			byId('stat-recommended-bar').style.width = `${recommendedPct}%`;
+			byId('stat-recommended-yes-cnt').textContent = `勧めたい: ${stats.recommended_yes}人`;
+			byId('stat-recommended-no-cnt').textContent = `勧めたくない: ${stats.recommended_no}人`;
+
+			if (stats.male_total >= config.minGenderResponses || stats.female_total >= config.minGenderResponses) {
+				byId('stats-gender-section').classList.remove('hidden');
+				byId('stat-gender-male').textContent = stats.male_total >= config.minGenderResponses
+					? `${percentage(stats.male_useful_yes, stats.male_total)}% (${stats.male_total}人中 ${stats.male_useful_yes}人)`
+					: `集計中（${config.minGenderResponses}件以上で掲載）`;
+				byId('stat-gender-female').textContent = stats.female_total >= config.minGenderResponses
+					? `${percentage(stats.female_useful_yes, stats.female_total)}% (${stats.female_total}人中 ${stats.female_useful_yes}人)`
+					: `集計中（${config.minGenderResponses}件以上で掲載）`;
+			}
+		}
+
+		function appendReason(parent: HTMLElement, title: string, body: string) {
+			const box = document.createElement('div');
+			box.className = 'space-y-1';
+			const heading = document.createElement('h4');
+			heading.className = 'text-2xs font-bold text-navy-900';
+			heading.textContent = title;
+			const paragraph = document.createElement('p');
+			paragraph.className = 'text-xs text-gray-600 leading-relaxed whitespace-pre-wrap';
+			paragraph.textContent = body;
+			box.append(heading, paragraph);
+			parent.appendChild(box);
+		}
+
+		function createReasonCard(reason: NaraibaseReason) {
+			const card = document.createElement('div');
+			card.className = 'border border-gray-100 rounded-2xl p-5 space-y-4 bg-gray-50/30';
+			const head = document.createElement('div');
+			head.className = 'flex items-center justify-between text-2xs text-gray-400';
+			const respondent = document.createElement('span');
+			respondent.textContent = reason.gender === 'male' ? '👤 男性の回答者' : '👤 女性の回答者';
+			const date = document.createElement('span');
+			date.textContent = new Date(reason.created_at).toLocaleDateString('ja-JP');
+			head.append(respondent, date);
+			card.appendChild(head);
+			if (reason.useful_reason) appendReason(card, '役立ち度についての本音：', reason.useful_reason);
+			if (reason.recommended_reason) appendReason(card, '子どもに勧めるかどうかの本音：', reason.recommended_reason);
+			return card;
+		}
+
+		function renderReasons(result: NaraibaseReasons) {
+			byId('reasons-loading').classList.add('hidden');
+			if (result.reasons.length === 0) {
+				byId('reasons-empty').classList.remove('hidden');
+				return;
+			}
+			const container = byId('reasons-container');
+			container.replaceChildren(...result.reasons.map(createReasonCard));
+			container.classList.remove('hidden');
+			if (!result.has_answered) {
+				container.classList.add('opacity-50', 'pointer-events-none', 'select-none');
+				byId('reasons-mask-box').classList.remove('hidden');
+			}
+		}
+
+		async function initNaraibaseDetail() {
+			if (!config.lessonSlug) {
+				byId('stats-loading').classList.add('hidden');
+				byId('reasons-loading').classList.add('hidden');
+				byId('stats-error').classList.remove('hidden');
+				byId('reasons-error').classList.remove('hidden');
+				return;
+			}
+
+			const sessionId = getNaraibaseSessionId();
+			const [statsResult, reasonsResult] = await Promise.allSettled([
+				naraibaseClient.getStats(config.lessonSlug),
+				naraibaseClient.getReasons(config.lessonSlug, sessionId),
+			]);
+
+			if (statsResult.status === 'fulfilled') renderStats(statsResult.value);
+			else {
+				console.error(statsResult.reason);
+				byId('stats-loading').classList.add('hidden');
+				byId('stats-error').classList.remove('hidden');
+			}
+
+			if (reasonsResult.status === 'fulfilled') renderReasons(reasonsResult.value);
+			else {
+				console.error(reasonsResult.reason);
+				byId('reasons-loading').classList.add('hidden');
+				byId('reasons-error').classList.remove('hidden');
+			}
+		}
+
+		document.addEventListener('DOMContentLoaded', initNaraibaseDetail);
+	</script>
+</Layout>

@@ -73,7 +73,7 @@ const disabledAttr = slug ? {} : { disabled: true };
 	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 	
-	let supabase;
+	let supabase: any = null;
 	if (supabaseUrl && supabaseAnonKey) {
 		if (!(window as any).__supabaseClient) {
 			(window as any).__supabaseClient = createClient(supabaseUrl, supabaseAnonKey);

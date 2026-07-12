@@ -1,10 +1,4 @@
 project_id = "parenting-trial-database"
 
-[functions.submit-trial-response]
-verify_jwt = false
-[functions.get-editable-response]
-verify_jwt = false
-[functions.update-trial-response]
-verify_jwt = false
-[functions.delete-trial-response]
+[functions.submit-naraibase-response]
 verify_jwt = false

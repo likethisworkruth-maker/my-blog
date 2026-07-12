@@ -3,7 +3,6 @@ import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ActionBar from "../../components/ActionBar.astro";
 import { SITE_TITLE } from "../../consts";
-import { UI } from "../../i18n/ja";
 
 export async function getStaticPaths() {
 	const apps = await getCollection("apps");
@@ -59,7 +58,7 @@ const { Content } = await render(app);
 		<!-- 3. My Personal Thoughts (Markdown Content) -->
 		<div class="bg-gray-50 rounded-3xl p-6 sm:p-8 mb-10 border border-gray-100 mt-8">
 			<h2 class="text-[1.25rem] font-bold text-navy-900 mb-6 flex items-center gap-2">
-				わが家で使った感想
+				使ってみた感想
 			</h2>
 			<div class="content-area">
 				<Content />

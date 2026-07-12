@@ -1,0 +1,226 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { SITE_TITLE } from "../../consts";
+import { NARAIBASE_LESSONS as lessons } from "../../data/naraibase";
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
+---
+
+<Layout title={`経験を回答する | Naraibase | ${SITE_TITLE}`} description="子ども時代の習い事についての経験を回答するフォームです。約20秒で入力完了します。" noindex={true}>
+	<section class="px-6 py-10 lg:py-16 max-w-2xl mx-auto">
+		<div class="mb-6">
+			<a href="/naraibase/" class="text-xs font-bold text-gray-500 hover:text-mint-600 flex items-center gap-0.5">
+				<span class="material-symbols-outlined text-xs" aria-hidden="true">arrow_back</span>
+				Naraibaseトップへ戻る
+			</a>
+		</div>
+
+		<div class="bg-white border border-gray-200 rounded-3xl p-6 lg:p-10 shadow-sm">
+			<header class="border-b border-gray-100 pb-6 mb-8">
+				<span class="text-xs font-bold text-mint-600 bg-mint-50 px-2 py-0.5 rounded-full">アンケート</span>
+				<h1 class="text-2xl lg:text-3xl font-black text-navy-900 mt-2">
+					習い事の経験についての回答
+				</h1>
+				<p class="text-xs text-gray-500 mt-2">
+					対象：18歳以上で、ご自身の子ども時代の習い事経験を回答いただける方
+				</p>
+			</header>
+
+			<!-- Success State -->
+			<div id="submit-success" class="hidden text-center py-8 space-y-4">
+				<span class="material-symbols-outlined text-5xl text-mint-500" aria-hidden="true">check_circle</span>
+				<h2 class="text-xl font-bold text-navy-900">回答ありがとうございました</h2>
+				<p class="text-sm text-gray-600">
+					ご回答いただいた内容は不正チェック・審査の上、統計データおよび自由記述として反映されます。
+				</p>
+				<div class="pt-4">
+				<div class="rounded-xl bg-gray-50 p-4 text-left">
+					<p class="text-xs text-gray-500">この回答を後から変更・削除するためのURLです。失くさない場所へ保存してください。</p>
+					<code id="edit-url" class="mt-2 block break-all text-xs text-gray-700"></code>
+					<a id="edit-url-link" class="mt-3 inline-block text-xs font-bold text-mint-600 underline">編集URLを開く</a>
+				</div>
+					<a id="success-back-link" href="/naraibase/" class="inline-block rounded-full bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 text-sm transition-colors shadow-sm">
+						戻る
+					</a>
+				</div>
+			</div>
+
+			<!-- Form State -->
+			<form id="naraibase-form" class="space-y-8">
+				<!-- 1. 性別 -->
+				<div class="space-y-3">
+					<label class="block text-sm font-bold text-navy-900">
+						1. 性別 <span class="text-xs text-red-500 font-normal">（必須）</span>
+					</label>
+					<div class="flex gap-4">
+						<label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+							<input type="radio" name="gender" value="male" required class="accent-mint-500 w-4 h-4" />
+							男性
+						</label>
+						<label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+							<input type="radio" name="gender" value="female" required class="accent-mint-500 w-4 h-4" />
+							女性
+						</label>
+					</div>
+				</div>
+
+				<!-- 2. 習い事の種類 -->
+				<div class="space-y-3">
+					<label class="block text-sm font-bold text-navy-900" for="lesson_slug">
+						2. 子どもの頃に経験した習い事 <span class="text-xs text-red-500 font-normal">（必須）</span>
+					</label>
+					<select id="lesson_slug" name="lesson_slug" required class="w-full rounded-xl border border-gray-300 px-4 py-3 font-normal text-sm bg-white outline-none focus:border-mint-500 transition-colors">
+						<option value="">選択してください</option>
+						{lessons.map((l) => (
+							<option value={l.slug}>{l.name}</option>
+						))}
+					</select>
+				</div>
+
+				<!-- 3. 役立ち度 -->
+				<div class="space-y-3">
+					<label class="block text-sm font-bold text-navy-900">
+						3. 大人になった今、その習い事は役に立ったと思いますか？ <span class="text-xs text-red-500 font-normal">（必須）</span>
+					</label>
+					<div class="flex gap-4">
+						<label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+							<input type="radio" name="is_useful" value="true" required class="accent-mint-500 w-4 h-4" />
+							はい
+						</label>
+						<label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+							<input type="radio" name="is_useful" value="false" required class="accent-mint-500 w-4 h-4" />
+							いいえ
+						</label>
+					</div>
+				</div>
+
+				<!-- 4. 勧めたい度 -->
+				<div class="space-y-3">
+					<label class="block text-sm font-bold text-navy-900">
+						4. 自分に子どもがいる、または将来できたとしたら、同じ習い事を勧めたいと思いますか？ <span class="text-xs text-red-500 font-normal">（必須）</span>
+					</label>
+					<div class="flex gap-4">
+						<label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+							<input type="radio" name="is_recommended" value="true" required class="accent-mint-500 w-4 h-4" />
+							はい
+						</label>
+						<label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+							<input type="radio" name="is_recommended" value="false" required class="accent-mint-500 w-4 h-4" />
+							いいえ
+						</label>
+					</div>
+				</div>
+
+				<!-- 5. 役立ち度の理由 (Optional) -->
+				<div class="space-y-3 border-t border-gray-100 pt-6">
+					<label class="block text-sm font-bold text-navy-900" for="useful_reason">
+						5. 役に立った／役に立たなかった理由 <span class="text-xs text-gray-400 font-normal">（任意）</span>
+					</label>
+					<p class="text-2xs text-gray-400 leading-normal">
+						⚠️ 個人名、教室名、学校名、住所、連絡先などは入力しないでください。
+					</p>
+					<textarea id="useful_reason" name="useful_reason" maxlength="500" rows="3" placeholder="大人になって実感していること、具体的なエピソードなどを入力してください。" class="w-full rounded-xl border border-gray-300 px-4 py-3 font-normal text-sm outline-none focus:border-mint-500 transition-colors"></textarea>
+				</div>
+
+				<!-- 6. 勧めたい度の理由 (Optional) -->
+				<div class="space-y-3">
+					<label class="block text-sm font-bold text-navy-900" for="recommended_reason">
+						6. 勧めたい／勧めたくない理由 <span class="text-xs text-gray-400 font-normal">（任意）</span>
+					</label>
+					<p class="text-2xs text-gray-400 leading-normal">
+						⚠️ 個人名、教室名、学校名、住所、連絡先などは入力しないでください。
+					</p>
+					<textarea id="recommended_reason" name="recommended_reason" maxlength="500" rows="3" placeholder="親の目線から考えたメリットやデメリット、勧めたい年齢などを入力してください。" class="w-full rounded-xl border border-gray-300 px-4 py-3 font-normal text-sm outline-none focus:border-mint-500 transition-colors"></textarea>
+				</div>
+
+				<!-- Submit Button -->
+				<div class="pt-4 border-t border-gray-100 flex flex-col gap-3">
+					{turnstileSiteKey && <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-language="ja"></div>}
+					<button data-submit type="submit" class="w-full rounded-full bg-mint-500 hover:bg-mint-600 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold py-3.5 px-6 text-sm transition-colors shadow-sm">
+						回答を送信する
+					</button>
+					<p id="submit-error" class="text-xs font-bold text-red-500 text-center" role="alert"></p>
+				</div>
+			</form>
+		</div>
+	</section>
+
+	<script>
+		import { getNaraibaseSessionId, naraibaseClient, randomCredential } from "../../lib/naraibaseClient";
+
+		const startedAt = Date.now();
+		function getQueryParam(name: string) {
+			const params = new URLSearchParams(location.search);
+			return params.get(name);
+		}
+
+		function initNaraibaseForm() {
+			// Preselect lesson if passed in query param
+			const lessonParam = getQueryParam('lesson');
+			const selectEl = document.getElementById('lesson_slug') as HTMLSelectElement | null;
+			if (lessonParam && selectEl?.querySelector(`option[value="${CSS.escape(lessonParam)}"]`)) {
+				selectEl.value = lessonParam;
+			}
+
+			const sessionId = getNaraibaseSessionId();
+
+			const form = document.getElementById('naraibase-form') as HTMLFormElement | null;
+			const successEl = document.getElementById('submit-success');
+			const errorEl = document.getElementById('submit-error');
+			if (!form || !successEl || !errorEl) return;
+
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				errorEl.textContent = '';
+				const submitButton = form.querySelector<HTMLButtonElement>('[data-submit]');
+				if (submitButton) {
+					submitButton.disabled = true;
+					submitButton.textContent = '送信中…';
+				}
+
+				const formData = new FormData(form);
+				const gender = String(formData.get('gender')) as 'male' | 'female';
+				const lessonSlug = String(formData.get('lesson_slug'));
+				const usefulReason = String(formData.get('useful_reason') ?? '').trim();
+				const recommendedReason = String(formData.get('recommended_reason') ?? '').trim();
+				const editToken = randomCredential();
+
+				try {
+					const result = await naraibaseClient.submit({
+						session_id: sessionId,
+						edit_token: editToken,
+						started_at: startedAt,
+						turnstile_token: form.querySelector<HTMLInputElement>('[name="cf-turnstile-response"]')?.value ?? null,
+						gender,
+						lesson_slug: lessonSlug,
+						is_useful: formData.get('is_useful') === 'true',
+						is_recommended: formData.get('is_recommended') === 'true',
+						useful_reason: usefulReason,
+						recommended_reason: recommendedReason,
+					});
+
+					const editUrl = `${location.origin}/naraibase/answer/edit/#id=${encodeURIComponent(result.id)}&token=${encodeURIComponent(editToken)}`;
+					const editCode = document.getElementById('edit-url');
+					const editLink = document.getElementById('edit-url-link') as HTMLAnchorElement | null;
+					if (editCode) editCode.textContent = editUrl;
+					if (editLink) editLink.href = editUrl;
+
+					form.classList.add('hidden');
+					successEl.classList.remove('hidden');
+					const backLink = document.getElementById('success-back-link') as HTMLAnchorElement | null;
+					if (backLink) backLink.href = `/naraibase/${encodeURIComponent(lessonSlug)}/`;
+				} catch (error) {
+					errorEl.textContent = error instanceof Error ? error.message : '送信中にエラーが発生しました。';
+					(window as typeof window & { turnstile?: { reset(): void } }).turnstile?.reset();
+				} finally {
+					if (submitButton && !form.classList.contains('hidden')) {
+						submitButton.disabled = false;
+						submitButton.textContent = '回答を送信する';
+					}
+				}
+			});
+		}
+
+		document.addEventListener('DOMContentLoaded', initNaraibaseForm);
+	</script>
+	{turnstileSiteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+</Layout>
