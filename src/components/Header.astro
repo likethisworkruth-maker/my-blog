@@ -51,6 +51,13 @@ const currentPath =
 			</a>
 
 			<a
+				href="/problems/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("problems") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{UI.headerNav.problems}
+			</a>
+
+			<a
 				href="/knowhow"
 				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("knowhow") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>

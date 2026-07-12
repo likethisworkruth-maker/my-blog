@@ -1,6 +1,7 @@
 export const UI = {
 	headerNav: {
 		home: "ホーム",
+		problems: "困りごと",
 		knowhow: "ノウハウ",
 		apps: "アプリ",
 		items: "アイテム",

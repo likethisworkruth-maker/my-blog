@@ -1,0 +1,91 @@
+---
+import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
+---
+
+<TrialStaticLayout
+	title="プライバシーポリシー | 育児の困りごとメモ"
+	description="育児の困りごとメモが回答やアクセス情報をどのように取り扱うかを説明します。"
+>
+	<article class="mx-auto max-w-3xl px-6 py-12 lg:py-20">
+		<header class="border-b border-gray-200 pb-8">
+			<p class="text-sm font-bold text-mint-600">PRIVACY POLICY</p>
+			<h1 class="mt-2 text-3xl font-bold tracking-tight text-navy-900">プライバシーポリシー</h1>
+			<p class="mt-4 text-sm text-gray-500">制定・最終更新：2026年7月12日</p>
+		</header>
+
+		<div class="mt-10 space-y-10 text-[0.95rem] leading-8 text-gray-700">
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">1. 基本方針</h2>
+				<p class="mt-3">「育児の困りごとメモ」（以下「当サイト」）は、匿名で回答できること、集計結果から個々の家庭を推測されにくいことを重視し、サービス提供に必要な範囲で情報を取り扱います。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">2. 取得する情報</h2>
+				<ul class="mt-3 list-disc space-y-3 pl-6">
+					<li><strong class="text-navy-900">回答内容：</strong>選択した方法、利用状況、続けやすさ、結果、自由記述など、各アンケートで回答した内容</li>
+					<li><strong class="text-navy-900">回答管理情報：</strong>匿名セッションを識別する値、回答の編集・削除に使うトークンを安全な方式で変換した値、回答日時、更新日時</li>
+					<li><strong class="text-navy-900">不正利用対策情報：</strong>短時間の連続送信を制限するため、IPアドレス等を日単位の識別値へ変換した情報</li>
+					<li><strong class="text-navy-900">流入情報：</strong>キャンペーン識別子や参照元など、どの案内から回答ページへ来たかを確認するための情報</li>
+					<li><strong class="text-navy-900">アクセス情報：</strong>閲覧ページ、参照元、利用日時、端末・ブラウザーの種類、おおよその地域など、Google Analyticsが取得する情報</li>
+					<li><strong class="text-navy-900">お問い合わせ情報：</strong>外部の連絡先を通じて利用者が送信した内容と、返信に必要な情報</li>
+				</ul>
+				<p class="mt-4">回答にアカウント登録、氏名、メールアドレスは求めません。自由記述には、ご本人やお子さまを特定できる情報を入力しないでください。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">3. 利用目的</h2>
+				<ul class="mt-3 list-disc space-y-2 pl-6">
+					<li>回答の受付、確認、編集、削除機能の提供</li>
+					<li>回答結果の集計、比較、表示</li>
+					<li>重複回答、スパム、機械的な連続送信の防止</li>
+					<li>利用状況の把握と、設問・表示・導線の改善</li>
+					<li>障害、セキュリティ問題、規約違反への対応</li>
+					<li>お問い合わせへの対応</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">4. 匿名性と編集用URL</h2>
+				<p class="mt-3">回答者を識別する値と編集トークンは、そのまま保存せず、安全な方式で変換した値を保存します。回答完了時に表示される編集用URLを知っている方は回答を確認・変更・削除できるため、第三者へ共有しないでください。</p>
+				<p class="mt-3">匿名回答であっても、自由記述へ具体的な氏名、所属先、日時、病歴などを書き込むと、内容から本人やご家族を推測される可能性があります。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">5. 不正利用対策</h2>
+				<p class="mt-3">IPアドレスそのものを回答データとして保存せず、秘密情報と日付を使って変換した短期的な値をレート制限に利用します。この値は長期的な利用者追跡には使用せず、原則として7日を目安に削除します。サーバーや外部サービスの一般的な通信ログでは、セキュリティ確保のためIPアドレス等が一時的に処理される場合があります。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">6. 集計結果の公開</h2>
+				<p class="mt-3">選択式回答は個人を特定しない集計結果として公開します。割合を表示する場合は回答数を併記し、回答数が少ない条件別集計は公開しません。自由記述は、個人情報、誹謗中傷、広告等が含まれていないことを運営者が確認した後に公開する場合があります。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">7. Cookie・ローカルストレージ</h2>
+				<p class="mt-3">当サイトでは、Google Analyticsによるアクセス解析にCookie等を使用する場合があります。また、回答途中の状態や流入情報などをブラウザー内へ一時的に保存する場合があります。ブラウザーの設定からCookieやサイトデータを削除できますが、回答の再開など一部機能が利用できなくなる場合があります。</p>
+				<p class="mt-3">Google Analyticsによる情報の取り扱いと無効化方法は、Googleの<a class="font-bold text-mint-600 underline underline-offset-4" href="https://policies.google.com/privacy?hl=ja" target="_blank" rel="noopener noreferrer">プライバシーポリシー</a>および<a class="font-bold text-mint-600 underline underline-offset-4" href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener noreferrer">オプトアウト アドオン</a>をご確認ください。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">8. 外部サービスと第三者提供</h2>
+				<p class="mt-3">当サイトは、データ保存・認証基盤としてSupabase、アクセス解析としてGoogle Analyticsを利用します。これらの事業者は、サービス提供に必要な範囲で情報を処理します。</p>
+				<p class="mt-3">法令に基づく場合、人の生命・身体・財産の保護に必要な場合、または利用目的の達成に必要な範囲で業務を委託する場合を除き、取得した情報を本人の同意なく第三者へ提供しません。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">9. 保存期間と安全管理</h2>
+				<p class="mt-3">回答は集計・検証に必要な期間保存します。削除操作を行った回答は直ちに公開集計から除外し、バックアップや不正利用調査に必要な期間を経た後に削除します。アクセス権限の制限、認証情報の管理、通信の暗号化など、合理的な安全対策に努めます。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">10. 確認・変更・削除</h2>
+				<p class="mt-3">回答完了時の編集用URLから、ご自身の回答を確認・変更・削除できます。編集用URLを利用できない場合は、本人確認ができないため個別対応できないことがあります。掲載された自由記述や情報の取り扱いに関するご相談は、対象ページと内容を添えて、運営者の <a class="font-bold text-mint-600 underline underline-offset-4" href="https://note.com/alert_weasel3202" target="_blank" rel="noopener noreferrer">note</a> からご連絡ください。</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">11. ポリシーの変更</h2>
+				<p class="mt-3">サービス内容や法令の変更に応じて本ポリシーを改定することがあります。重要な変更は、本ページの更新日を変更してお知らせします。</p>
+			</section>
+		</div>
+	</article>
+</TrialStaticLayout>
