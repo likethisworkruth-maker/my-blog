@@ -1,0 +1,11 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MethodCard from '../../components/methods/MethodCard.astro';
+import ResultSummary from '../../components/results/ResultSummary.astro';
+import { loadInitialTrialCatalog } from '../../data/trialRepository';
+export async function getStaticPaths() { const catalog = await loadInitialTrialCatalog(); return [{ params: { slug: catalog.problem.slug }, props: catalog }]; }
+const { problem: initialProblem, methods: trialMethods } = Astro.props;
+---
+<Layout title={`${initialProblem.title} | 育児の困りごとメモ`} description={initialProblem.description}>
+  <section class="px-6 py-10 lg:py-16"><div class="mx-auto max-w-4xl"><a href="/problems/" class="text-sm font-bold text-gray-500">← 困りごと一覧</a><div class="mt-6 rounded-3xl bg-mint-50 p-6 lg:p-10"><p class="text-sm font-bold text-mint-600">30秒の質問</p><h1 class="mt-3 text-2xl font-bold leading-relaxed text-navy-900 lg:text-3xl">{initialProblem.questionText}</h1><p class="mt-4 max-w-2xl leading-8 text-gray-600">{initialProblem.description}</p><a href={`/answer/${initialProblem.slug}/`} class="mt-7 inline-block rounded-full bg-mint-500 px-7 py-3 font-bold text-white hover:bg-mint-600">回答して結果を見る</a></div><div class="mt-8"><ResultSummary problemSlug={initialProblem.slug} /></div><section class="mt-12"><h2 class="text-xl font-bold text-navy-900">この困りごとで試されている方法</h2><p class="mt-2 text-sm text-gray-600">家庭内の工夫、アプリ、道具を同じ形式で比較します。</p><div class="mt-6 grid gap-4 md:grid-cols-2">{trialMethods.map(method => <MethodCard method={method} />)}</div></section></div></section>
+</Layout>

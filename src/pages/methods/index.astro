@@ -1,0 +1,10 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MethodCard from '../../components/methods/MethodCard.astro';
+import { methodTypeLabels } from '../../data/trialCatalog';
+import { loadInitialTrialCatalog } from '../../data/trialRepository';
+const { methods: trialMethods } = await loadInitialTrialCatalog();
+---
+<Layout title="試した方法を見る | 育児の困りごとメモ" description="家庭内の工夫、アプリ、商品を、各家庭で試した結果から比較します。">
+  <section class="px-6 py-12 lg:py-20"><div class="mx-auto max-w-4xl"><p class="text-sm font-bold text-mint-600">アプリも商品も、試した結果で見る</p><h1 class="mt-2 text-3xl font-bold text-navy-900">試した方法</h1><p class="mt-4 max-w-2xl leading-8 text-gray-600">単なる一覧ではなく、どんな困りごとに使い、少し楽になったか、続けられたかを同じ形式で確認できます。</p>{(['household_rule','app','item'] as const).map(type => <section class="mt-10"><h2 class="text-xl font-bold text-navy-900">{methodTypeLabels[type]}</h2><div class="mt-4 grid gap-4 md:grid-cols-2">{trialMethods.filter(m => m.methodType === type).map(method => <MethodCard method={method} />)}{trialMethods.filter(m => m.methodType === type).length === 0 && <p class="rounded-xl bg-gray-50 p-5 text-sm text-gray-500">回答が集まり次第追加します。</p>}</div></section>)}</div></section>
+</Layout>

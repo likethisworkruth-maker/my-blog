@@ -1,0 +1,165 @@
+---
+import type { TrialMethod } from '../../data/trialCatalog';
+import { methodTypeLabels } from '../../data/trialCatalog';
+import ResultSummary from '../results/ResultSummary.astro';
+const { problemSlug, questionText, methods } = Astro.props as { problemSlug: string; questionText: string; methods: TrialMethod[] };
+const safeData = JSON.stringify({ problemSlug, methods }).replaceAll('<', '\\u003c');
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
+---
+<div class="answer-flow">
+  <script type="application/json" class="answer-config" set:html={safeData}></script>
+  <div class="mb-7" data-progress-wrap>
+    <div class="flex items-center justify-between text-xs font-bold text-gray-500"><span data-progress-label>1 / 3</span><span>必須回答は約30秒</span></div>
+    <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-200"><div data-progress class="h-full w-1/3 rounded-full bg-mint-500 transition-all"></div></div>
+  </div>
+
+  <section data-step="1">
+    <p class="text-sm font-bold text-mint-600">質問 1</p>
+    <h1 class="mt-2 text-2xl font-bold leading-relaxed text-navy-900">この困りごとに、何か対策していますか？</h1>
+    <p class="mt-3 text-sm leading-7 text-gray-600">{questionText}</p>
+    <div class="mt-7 grid gap-3 sm:grid-cols-2">
+      <button type="button" data-action-value="true" class="answer-choice">している・試したことがある</button>
+      <button type="button" data-action-value="false" class="answer-choice">まだしていない</button>
+    </div>
+  </section>
+
+  <section data-step="2" hidden>
+    <p class="text-sm font-bold text-mint-600">質問 2</p>
+    <h1 class="mt-2 text-2xl font-bold leading-relaxed text-navy-900">今回、結果を残す方法を一つ選んでください</h1>
+    <p class="mt-3 text-sm text-gray-600">複数試した場合は、方法ごとに回答できます。</p>
+    <div class="mt-6 flex flex-wrap gap-2">
+      {(['household_rule','app','item'] as const).map((type) => <button type="button" data-method-type={type} class="rounded-full border border-gray-300 px-4 py-2 text-sm font-bold hover:border-mint-500">{methodTypeLabels[type]}</button>)}
+    </div>
+    <div data-method-list class="mt-5 grid gap-3"></div>
+    <div data-other-wrap class="mt-4" hidden><label class="text-sm font-bold text-navy-900" for="other-method">方法の名前</label><input id="other-method" maxlength="80" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3" placeholder="例：冷蔵庫に予定メモを貼る" /></div>
+    <div class="mt-8 flex gap-3"><button type="button" data-back class="answer-back">戻る</button><button type="button" data-next-method class="answer-primary" disabled>次へ</button></div>
+  </section>
+
+  <section data-step="3" hidden>
+    <p class="text-sm font-bold text-mint-600">質問 3</p>
+    <h1 class="mt-2 text-2xl font-bold leading-relaxed text-navy-900">その方法で、少しでも楽になりましたか？</h1>
+    <div class="mt-7 grid gap-3">
+      <button type="button" data-outcome="easier" class="answer-choice">はい、少し楽になった</button>
+      <button type="button" data-outcome="no_change" class="answer-choice">変わらない</button>
+      <button type="button" data-outcome="harder" class="answer-choice">むしろ大変になった</button>
+    </div>
+    <div class="mt-8"><button type="button" data-back class="answer-back">戻る</button></div>
+  </section>
+
+  <section data-step="submit" hidden>
+    <div class="rounded-2xl bg-mint-50 p-6"><p class="font-bold text-navy-900">3問の回答ができました</p><p class="mt-2 text-sm leading-6 text-gray-600">選択式回答はスパム・重複判定後に集計されます。自由記述は公開前に確認します。</p></div>
+    <label class="sr-only" for="website-field">ウェブサイト</label><input id="website-field" tabindex="-1" autocomplete="off" class="absolute -left-[9999px]" />
+    {turnstileSiteKey && <div class="cf-turnstile mt-5" data-sitekey={turnstileSiteKey} data-language="ja" data-theme="light"></div>}
+    <div class="mt-7 flex gap-3"><button type="button" data-back class="answer-back">戻る</button><button type="button" data-submit class="answer-primary">この内容で回答する</button></div>
+    <p data-submit-error class="mt-4 text-sm font-bold text-red-600" role="alert"></p>
+  </section>
+
+  <section data-step="complete" hidden>
+    <div class="rounded-3xl bg-mint-50 p-6 lg:p-8"><span class="material-symbols-outlined text-4xl text-mint-600">check_circle</span><h1 class="mt-3 text-2xl font-bold text-navy-900">回答ありがとうございます</h1><p class="mt-3 text-sm leading-7 text-gray-600">今回の回答は確認後に集計へ追加されます。下のURLは、回答を後から更新・削除するために必要です。</p>
+      <div class="mt-5 rounded-xl bg-white p-4"><code data-edit-url class="break-all text-xs text-gray-700"></code><button type="button" data-copy-url class="mt-3 rounded-full border border-mint-500 px-4 py-2 text-sm font-bold text-mint-600">編集URLをコピー</button><p data-copy-status class="mt-2 text-xs text-gray-500"></p></div>
+    </div>
+    <details class="mt-6 rounded-2xl border border-gray-200 bg-white p-5"><summary class="cursor-pointer font-bold text-navy-900">任意：もう少し詳しく答える</summary>
+      <form data-optional class="mt-5 space-y-5">
+        <label class="block text-sm font-bold">お子さんの年齢区分<select name="age_band" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"><option value="">回答しない</option><option value="pregnancy">妊娠中</option><option value="0_5m">0〜5か月</option><option value="6_11m">6〜11か月</option><option value="1y">1歳</option><option value="2y">2歳</option><option value="3_5y">3〜5歳</option><option value="6y_plus">6歳以上</option></select></label>
+        <label class="block text-sm font-bold">今も続けていますか？<select name="continuation_status" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"><option value="">回答しない</option><option value="continuing">続けている</option><option value="sometimes">ときどき使う</option><option value="stopped">やめた</option><option value="not_started">まだ始めていない</option></select></label>
+        <label class="block text-sm font-bold">使った期間<input name="usage_period" maxlength="80" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal" placeholder="例：3か月" /></label>
+        <label class="block text-sm font-bold">続けにくかった点<textarea name="difficulty_text" maxlength="500" rows="3" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"></textarea></label>
+        <label class="block text-sm font-bold">困っていた状況<textarea name="situation_text" maxlength="1000" rows="4" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"></textarea></label>
+        <label class="block text-sm font-bold">具体的な使い方<textarea name="usage_text" maxlength="1000" rows="4" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"></textarea></label>
+        <label class="block text-sm font-bold">良かった点<textarea name="good_points_text" maxlength="1000" rows="4" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"></textarea></label>
+        <label class="block text-sm font-bold">合いそうな家庭<textarea name="fit_household_text" maxlength="700" rows="3" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"></textarea></label>
+        <label class="block text-sm font-bold">次に見直すこと<textarea name="next_step_text" maxlength="700" rows="3" class="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-normal"></textarea></label>
+        <button class="answer-primary" type="submit">追加回答を保存</button><p data-optional-status class="text-sm font-bold" role="status"></p>
+      </form>
+    </details>
+    <div class="mt-7"><ResultSummary problemSlug={problemSlug} /></div>
+  </section>
+  <noscript><p class="rounded-xl bg-orange-50 p-4 text-sm">回答にはJavaScriptが必要です。</p></noscript>
+</div>
+
+<script>
+  import { trackTrialEvent } from '../../lib/analytics';
+  import { campaignSource, getSessionId, randomCredential, trialApi } from '../../lib/trialApi';
+  function initAnswerFlows() {
+  document.querySelectorAll<HTMLElement>('.answer-flow').forEach((root) => {
+    if (root.dataset.answerInitialized === 'true') return;
+    root.dataset.answerInitialized = 'true';
+    root.dataset.started = String(Date.now());
+    const config = JSON.parse(root.querySelector('.answer-config')!.textContent ?? '{}');
+    trackTrialEvent('answer_start', { problem_slug: config.problemSlug, campaign_source: campaignSource() });
+    const state: any = { has_action: null, method_id: null, method_type_raw: null, method_name_raw: null, outcome: null };
+    let step: string = '1'; let responseId = ''; let rawToken = ''; let version = 1;
+    const show = (next: string) => {
+      step = next; root.querySelectorAll<HTMLElement>('[data-step]').forEach((el) => el.hidden = el.dataset.step !== next);
+      const number = next === '1' ? 1 : next === '2' ? 2 : 3;
+      const wrap = root.querySelector<HTMLElement>('[data-progress-wrap]')!; wrap.hidden = ['complete'].includes(next);
+      root.querySelector<HTMLElement>('[data-progress-label]')!.textContent = `${number} / 3`;
+      root.querySelector<HTMLElement>('[data-progress]')!.style.width = `${number / 3 * 100}%`;
+      root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    root.querySelectorAll<HTMLButtonElement>('[data-action-value]').forEach((button) => button.addEventListener('click', () => {
+      state.has_action = button.dataset.actionValue === 'true'; show(state.has_action ? '2' : 'submit');
+    }));
+    let selectedType = '';
+    root.querySelectorAll<HTMLButtonElement>('[data-method-type]').forEach((button) => button.addEventListener('click', () => {
+      selectedType = button.dataset.methodType!; state.method_id = null; state.method_name_raw = null; state.method_type_raw = null;
+      root.querySelector<HTMLButtonElement>('[data-next-method]')!.disabled = true;
+      root.querySelector<HTMLElement>('[data-other-wrap]')!.hidden = true;
+      root.querySelector<HTMLInputElement>('#other-method')!.value = '';
+      root.querySelectorAll('[data-method-type]').forEach((b) => b.classList.toggle('border-mint-500', b === button));
+      const list = root.querySelector<HTMLElement>('[data-method-list]')!;
+      const available = config.methods.filter((m: any) => m.methodType === selectedType);
+      list.replaceChildren();
+      available.forEach((method: any) => {
+        const choice = document.createElement('button');
+        choice.type = 'button'; choice.dataset.methodId = method.id;
+        choice.className = 'answer-choice text-left'; choice.textContent = method.name;
+        list.appendChild(choice);
+      });
+      const otherChoice = document.createElement('button');
+      otherChoice.type = 'button'; otherChoice.dataset.methodOther = '';
+      otherChoice.className = 'answer-choice text-left'; otherChoice.textContent = 'その他の方法';
+      list.appendChild(otherChoice);
+      list.querySelectorAll<HTMLButtonElement>('[data-method-id]').forEach((choice) => choice.addEventListener('click', () => { state.method_id = choice.dataset.methodId; state.method_type_raw = null; state.method_name_raw = null; root.querySelector<HTMLElement>('[data-other-wrap]')!.hidden = true; selectMethod(choice); }));
+      list.querySelector<HTMLButtonElement>('[data-method-other]')!.addEventListener('click', (event) => { state.method_id = null; state.method_type_raw = selectedType; root.querySelector<HTMLElement>('[data-other-wrap]')!.hidden = false; selectMethod(event.currentTarget as HTMLElement); });
+    }));
+    const selectMethod = (selected: HTMLElement) => { root.querySelectorAll('[data-method-list] button').forEach((b) => b.classList.toggle('is-selected', b === selected)); root.querySelector<HTMLButtonElement>('[data-next-method]')!.disabled = false; };
+    root.querySelector('[data-next-method]')?.addEventListener('click', () => {
+      if (!state.method_id) { const name = (root.querySelector<HTMLInputElement>('#other-method')!.value).trim(); if (!name) { root.querySelector<HTMLInputElement>('#other-method')!.focus(); return; } state.method_name_raw = name; }
+      show('3');
+    });
+    root.querySelectorAll<HTMLButtonElement>('[data-outcome]').forEach((button) => button.addEventListener('click', () => { state.outcome = button.dataset.outcome; show('submit'); }));
+    root.querySelectorAll('[data-back]').forEach((button) => button.addEventListener('click', () => show(step === '2' ? '1' : step === '3' ? '2' : state.has_action ? '3' : '1')));
+    root.querySelector('[data-submit]')?.addEventListener('click', async () => {
+      const button = root.querySelector<HTMLButtonElement>('[data-submit]')!; const error = root.querySelector<HTMLElement>('[data-submit-error]')!;
+      button.disabled = true; button.textContent = '送信中…'; error.textContent = '';
+      try {
+        rawToken = randomCredential();
+        const turnstileToken = root.querySelector<HTMLInputElement>('[name="cf-turnstile-response"]')?.value ?? null;
+        const result = await trialApi.submit({ payload: { problem_slug: config.problemSlug, ...state, honeypot: (root.querySelector<HTMLInputElement>('#website-field')!.value) }, edit_token: rawToken, session_id: getSessionId(), campaign_source: campaignSource(), started_at: Number(root.dataset.started), turnstile_token: turnstileToken });
+        responseId = result.id; const url = `${location.origin}/answer/edit/#id=${encodeURIComponent(responseId)}&token=${encodeURIComponent(rawToken)}`;
+        trackTrialEvent('base_answer_complete', { problem_slug: config.problemSlug, campaign_source: campaignSource(), method_type: state.method_type_raw ?? config.methods.find((m: any) => m.id === state.method_id)?.methodType });
+        root.querySelector<HTMLElement>('[data-edit-url]')!.textContent = url; show('complete'); sessionStorage.removeItem(`answer-${config.problemSlug}`);
+      } catch (e) { error.textContent = e instanceof Error ? e.message : '送信に失敗しました。'; (window as any).turnstile?.reset(); button.disabled = false; button.textContent = 'この内容で回答する'; }
+    });
+    root.querySelector('[data-copy-url]')?.addEventListener('click', async () => { await navigator.clipboard.writeText(root.querySelector('[data-edit-url]')!.textContent ?? ''); root.querySelector<HTMLElement>('[data-copy-status]')!.textContent = 'コピーしました。失くさない場所へ保存してください。'; trackTrialEvent('edit_link_copy', { problem_slug: config.problemSlug }); });
+    root.querySelector<HTMLFormElement>('[data-optional]')?.addEventListener('submit', async (event) => {
+      event.preventDefault(); const form = event.currentTarget as HTMLFormElement; const status = root.querySelector<HTMLElement>('[data-optional-status]')!;
+      const payload = Object.fromEntries([...new FormData(form)].map(([key, value]) => [key, String(value).trim()]));
+      try { const result = await trialApi.update(responseId, rawToken, version, payload); version = result.version; status.className = 'text-sm font-bold text-mint-600'; status.textContent = '保存しました。自由記述は確認後に公開されます。'; trackTrialEvent('optional_answer_complete', { problem_slug: config.problemSlug }); }
+      catch (e) { status.className = 'text-sm font-bold text-red-600'; status.textContent = e instanceof Error ? e.message : '保存できませんでした。'; }
+    });
+  });
+  }
+  initAnswerFlows();
+  document.addEventListener('astro:page-load', initAnswerFlows);
+</script>
+{turnstileSiteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+
+<style>
+  .answer-choice { border: 1px solid #d1d5db; border-radius: 1rem; padding: 1rem 1.25rem; font-weight: 700; color: #16254c; background: white; transition: .15s; }
+  .answer-choice:hover, .answer-choice.is-selected { border-color: #3ec7a6; background: #e9fbf6; }
+  .answer-primary { border-radius: 9999px; background: #3ec7a6; color: white; padding: .8rem 1.5rem; font-size: .875rem; font-weight: 700; }
+  .answer-primary:hover { background: #32b395; } .answer-primary:disabled { opacity: .45; cursor: not-allowed; }
+  .answer-back { border-radius: 9999px; border: 1px solid #d1d5db; padding: .8rem 1.5rem; font-size: .875rem; font-weight: 700; }
+</style>
