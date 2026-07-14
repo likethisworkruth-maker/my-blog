@@ -1,7 +1,8 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
-import { SITE_TITLE } from "../consts";
+import LogCard from "../components/LogCard.astro";
+import { SHOW_NARAIBASE, SITE_TITLE } from "../consts";
 
 const logs = await getCollection("logs");
 logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
@@ -9,28 +10,36 @@ const recentLogs = logs.slice(0, 3);
 ---
 
 <Layout title={SITE_TITLE} description="初めての育児で直面した困りごとへの具体的な対策や、アプリの活用法などをまとめています。">
-	<!-- 1. Hero: このサイトでできること -->
-	<section class="px-6 py-12 lg:py-20 bg-mint-50/20 border-b border-gray-100">
-		<div class="mx-auto max-w-6xl">
-			<h1 class="text-2xl lg:text-3xl leading-[1.6] font-bold text-navy-900 mb-6">
-				初めての育児で直面した困りごとと、<br class="hidden sm:inline" />その対策や具体的な試行錯誤をまとめています。
+	<section class="relative bg-[url('/hero-bg.png')] bg-cover bg-right bg-no-repeat px-6 pt-12 pb-16 lg:pt-24 lg:pb-28">
+		<div class="absolute inset-0 bg-gradient-to-b from-white via-white/80 to-white/30 backdrop-blur-[2px] sm:bg-none sm:bg-transparent sm:backdrop-blur-none"></div>
+		<div class="relative z-10 max-w-xl">
+			<h1 class="text-[1.25rem] lg:text-[1.6rem] leading-[1.8] lg:leading-loose font-bold text-navy-900 tracking-wide">
+				初めての育児で直面した困りごとと、<br />その対策や試行錯誤をまとめています。
 			</h1>
-			<p class="text-sm lg:text-base text-gray-700 leading-relaxed max-w-2xl">
-				妊娠後期から1歳ごろまでの、予定共有、育児記録、持ち物管理など。<br />
-				うまくいったことだけでなく、面倒だった点や、続かなかった理由もまとめています。
-			</p>
-			
-			<div class="mt-8 flex flex-wrap gap-4">
-				<a href="/knowhow/" class="rounded-full bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 text-sm transition-colors shadow-sm">
-					チェクリストを見る
+		</div>
+	</section>
+
+	<section class="px-6 py-12 lg:py-16">
+		<div class="max-w-6xl mx-auto">
+			<div class="grid gap-4 sm:grid-cols-3">
+				<a href="/knowhow/" class="block rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 hover:border-mint-500 transition-all group">
+					<span class="material-symbols-outlined text-mint-500 text-3xl mb-3" aria-hidden="true">description</span>
+					<h2 class="font-bold text-navy-900 text-lg group-hover:text-mint-600 transition-colors">チェクリスト</h2>
+					<p class="mt-2 text-xs leading-relaxed text-gray-600">冷蔵庫のカレンダーやメモ、連絡時のルールなど工夫した仕組みです。</p>
 				</a>
-				<a href="/logs/" class="rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-8 text-sm transition-colors shadow-sm">
-					育児ログを見る
+				<a href="/apps/" class="block rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 hover:border-mint-500 transition-all group">
+					<span class="material-symbols-outlined text-mint-500 text-3xl mb-3" aria-hidden="true">apps</span>
+					<h2 class="font-bold text-navy-900 text-lg group-hover:text-mint-600 transition-colors">アプリ</h2>
+					<p class="mt-2 text-xs leading-relaxed text-gray-600">実際に使ってみたアプリやサービスを紹介しています。</p>
+				</a>
+				<a href="/items/" class="block rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 hover:border-mint-500 transition-all group">
+					<span class="material-symbols-outlined text-mint-500 text-3xl mb-3" aria-hidden="true">toys_and_games</span>
+					<h2 class="font-bold text-navy-900 text-lg group-hover:text-mint-600 transition-colors">アイテム</h2>
+					<p class="mt-2 text-xs leading-relaxed text-gray-600">育児の困りごとをラクにするために使ったアイテムを紹介しています。</p>
 				</a>
 			</div>
 		</div>
 	</section>
-
 	<section class="px-6 py-12 lg:py-16 bg-gray-50/20 border-b border-gray-50">
 		<div class="max-w-6xl mx-auto">
 			<div class="flex items-center justify-between mb-8">
@@ -38,63 +47,27 @@ const recentLogs = logs.slice(0, 3);
 				<a href="/logs/" class="text-xs font-bold text-mint-600 hover:underline flex items-center gap-0.5">すべての記録を見る <span class="material-symbols-outlined text-sm" aria-hidden="true">chevron_right</span></a>
 			</div>
 			
-			<div class="grid gap-6 md:grid-cols-2">
-				{recentLogs.map((log) => (
-					<a href={`/logs/${log.id}/`} class="w-full flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow group">
-						{log.data.coverImage && (
-							<div class="aspect-video w-full overflow-hidden bg-gray-50 flex items-center justify-center border-b border-gray-100">
-								<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-							</div>
-						)}
-						<div class="p-6 flex-grow flex flex-col justify-between">
-							<div>
-								<span class="text-xs font-bold text-gray-400">
-									{log.data.childAgeMonths !== undefined ? `生後${log.data.childAgeMonths}ヶ月頃` : ''}
-								</span>
-								<h3 class="font-bold text-navy-900 mt-1 leading-snug group-hover:text-mint-600 transition-colors">{log.data.title}</h3>
-								<p class="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">{log.data.problem}</p>
-							</div>
-							<span class="text-xs font-bold text-mint-600 mt-4 flex items-center gap-0.5">記事を読む <span class="material-symbols-outlined text-xs" aria-hidden="true">chevron_right</span></span>
-						</div>
-					</a>
-				))}
+			<div class="flex flex-col gap-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6">
+				{recentLogs.map((log) => <LogCard log={log} />)}
 			</div>
 		</div>
 	</section>
 
-	<!-- 4. 試した方法 -->
-	<section class="px-6 py-12 lg:py-16">
-		<div class="max-w-6xl mx-auto">
-			<h2 class="text-lg font-bold text-navy-900 mb-6">試した方法</h2>
-			<div class="grid gap-4 sm:grid-cols-2">
-				<a href="/knowhow/" class="block rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 hover:border-mint-500 transition-all group">
-					<span class="material-symbols-outlined text-mint-500 text-3xl mb-3" aria-hidden="true">description</span>
-					<h3 class="font-bold text-navy-900 text-lg group-hover:text-mint-600 transition-colors">チェクリスト</h3>
-					<p class="mt-2 text-xs leading-relaxed text-gray-600">冷蔵庫のカレンダーやメモ、連絡時のルールなど工夫した仕組みです。</p>
-				</a>
-				<a href="/apps/" class="block rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 hover:border-mint-500 transition-all group">
-					<span class="material-symbols-outlined text-mint-500 text-3xl mb-3" aria-hidden="true">event</span>
-					<h3 class="font-bold text-navy-900 text-lg group-hover:text-mint-600 transition-colors">アプリ・サービス</h3>
-					<p class="mt-2 text-xs leading-relaxed text-gray-600">カレンダー、Notion、LINEなど実際に使ってみたアプリのご紹介です。</p>
-				</a>
-			</div>
-		</div>
-	</section>
-
-	<!-- Naraibase -->
+	{/* Naraibase */}
+	{SHOW_NARAIBASE && (
 	<section class="px-6 py-12 lg:py-16">
 		<div class="max-w-6xl mx-auto">
 			<div class="bg-navy-900 text-white p-8 sm:p-12 rounded-3xl shadow-sm">
-				<p class="text-xs font-bold text-mint-300">子どものこれからを考える</p>
 				<h2 class="mt-3 text-2xl font-bold">Naraibase（ナライベース）</h2>
 				<p class="mt-4 max-w-2xl text-sm leading-7 text-gray-200">
 					習い事を経験した大人に、大人になった今「役立ったか」「自分の子どもにも勧めたいか」を聞き、その回答を掲載します。
 				</p>
 				<div class="mt-7 flex flex-wrap gap-3">
-					<a href="/naraibase/" class="rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">Naraibaseを見る</a>
-					<a href="/naraibase/answer/" class="rounded-full border border-white/40 px-6 py-3 text-sm font-bold text-white hover:bg-white/10">自分の経験を回答する</a>
+					<a href="https://naraibase.likethis.work/" class="rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">Naraibaseを見る</a>
 				</div>
 			</div>
 		</div>
 	</section>
+	)}
+
 </Layout>

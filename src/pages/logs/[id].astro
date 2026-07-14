@@ -1,8 +1,11 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
+import LikeButton from '../../components/LikeButton.astro';
 import ActionBar from '../../components/ActionBar.astro';
+import Comments from '../../components/Comments.astro';
 import { SITE_TITLE } from '../../consts';
+import { UI } from '../../i18n/ja';
 
 export async function getStaticPaths() {
 	const logs = await getCollection('logs');
@@ -23,23 +26,28 @@ const { Content } = await render(log);
 			{log.data.coverImage ? (
 				<img src={log.data.coverImage} alt={log.data.title} class="w-full h-full object-cover" />
 			) : (
-				<span class="material-symbols-outlined text-gray-300 text-5xl" aria-hidden="true">image</span>
+				<span class="material-symbols-outlined text-gray-300 text-5xl">image</span>
 			)}
 		</div>
 	</div>
 
 	<div class="px-6 py-6 lg:py-8 max-w-5xl mx-auto">
 
-		
+
 		<div class="bg-white rounded-2xl border-none lg:border lg:border-gray-200 shadow-none lg:p-10 mb-8">
 			<!-- Header inside card -->
 			<div class="pb-8 border-b border-gray-100 mb-8">
 				<div class="flex items-center gap-2 text-gray-400 font-bold text-[0.85rem] mb-3">
-					{log.data.childAgeMonths !== undefined && `生後${log.data.childAgeMonths}ヶ月頃`}
+					{log.data.pubDate.toLocaleDateString('ja-JP')}
 				</div>
 				<h1 class="text-[1.5rem] lg:text-[2rem] font-bold leading-tight mb-2 text-navy-900">{log.data.title}</h1>
+
+				<!-- Like Button -->
+				<div class="mt-4 flex items-center">
+					<LikeButton slug={`logs/${log.id}`} />
+				</div>
 			</div>
-			
+
 			<!-- Content Area -->
 			<div class="content-area">
 				<Content />
@@ -48,8 +56,10 @@ const { Content } = await render(log);
 			<!-- Action Bar (Bottom of Content) -->
 			<ActionBar slug={`logs/${log.id}`} />
 
+			<Comments slug={`logs/${log.id}`} />
+
 		</div>
-		
+
 
 	</div>
 </Layout>
@@ -60,7 +70,7 @@ const { Content } = await render(log);
 		display: flex;
 		flex-direction: column;
 	}
-	
+
 	.content-area :global(> h3) {
 		font-size: 1.25rem;
 		font-weight: 700;

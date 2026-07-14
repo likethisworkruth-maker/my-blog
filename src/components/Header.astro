@@ -1,5 +1,5 @@
 ---
-import { SITE_TITLE } from "../consts";
+import { SHOW_NARAIBASE, SITE_TITLE } from "../consts";
 import { UI } from "../i18n/ja";
 
 const pathname =
@@ -24,11 +24,9 @@ const currentPath =
 		<!-- Logo -->
 		<a
 			href="/"
-			class="flex items-center gap-2 text-navy-900 font-bold text-[1.1rem]"
+			class="flex items-center gap-2 font-bold text-[1.1rem] text-navy-900"
 		>
-			{
-				SITE_TITLE
-			}
+			{SITE_TITLE}
 		</a>
 
 		<!-- PC Navigation -->
@@ -54,17 +52,29 @@ const currentPath =
 				{UI.headerNav.apps}
 			</a>
 			<a
+				href="/items/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("items") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{UI.headerNav.items}
+			</a>
+			<a
 				href="/logs/"
 				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("logs") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
 				{UI.headerNav.logs}
 			</a>
-			<a
-				href="/naraibase/"
-				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("naraibase") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
-			>
+			{SHOW_NARAIBASE && (
+				<a href="https://naraibase.likethis.work/" class="rounded-full bg-[#1d224b] px-4 py-2 text-sm font-bold text-white transition-colors hover:opacity-90">
 				{UI.headerNav.naraibase}
 			</a>
+			)}
+
 		</nav>
+		{SHOW_NARAIBASE && (
+			<a href="https://naraibase.likethis.work/" class="rounded-full bg-[#1d224b] px-4 py-2 text-xs font-bold text-white transition-colors hover:opacity-90 lg:hidden">
+			{UI.headerNav.naraibase}
+		</a>
+		)}
+
 	</div>
 </header>

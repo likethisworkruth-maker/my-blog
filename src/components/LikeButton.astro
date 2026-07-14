@@ -16,7 +16,7 @@ const disabledAttr = slug ? {} : { disabled: true };
 		class="like-btn group relative flex items-center gap-2 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
 		{...disabledAttr}
 	>
-		<div class="w-12 h-12 rounded-full border border-gray-300 group-hover:border-pink-300 group-[.liked]:border-pink-400 flex items-center justify-center relative bg-white transition-colors">
+		<div class="relative flex h-8 w-8 items-center justify-center">
 			<span class="material-symbols-outlined icon-empty text-gray-400 group-hover:text-pink-400 transition-colors text-[1.4rem]" aria-hidden="true">favorite</span>
 			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 m-auto h-[1.4rem] w-[1.4rem] opacity-0 transition-opacity text-[1.4rem] leading-none" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">favorite</span>
 		</div>
@@ -111,10 +111,10 @@ const disabledAttr = slug ? {} : { disabled: true };
 					const iconFilled = b.querySelector('.icon-filled');
 					
 					if (isLiked) {
+						b.classList.add('liked', 'text-pink-500');
 						if (b.classList.contains('bg-white')) {
-							b.classList.add('liked', 'border-pink-200', 'bg-pink-50');
+							b.classList.add('border-pink-200', 'bg-pink-50');
 						}
-						b.classList.add('text-pink-500');
 						iconEmpty?.classList.add('opacity-0');
 						iconFilled?.classList.remove('opacity-0');
 						if (b.querySelector('.icon-empty')?.classList.contains('text-white')) {

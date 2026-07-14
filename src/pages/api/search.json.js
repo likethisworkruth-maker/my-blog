@@ -11,7 +11,7 @@ export async function GET() {
       title: item.data.title,
       description: item.data.description,
       url: `/knowhow/${item.id}/`,
-      type: 'ノウハウ',
+      type: 'チェクリスト',
       icon: item.data.icon || 'checklist',
     })),
     ...apps.map((app) => ({

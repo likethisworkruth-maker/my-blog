@@ -2,89 +2,410 @@
 import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ActionBar from "../../components/ActionBar.astro";
+import Comments from "../../components/Comments.astro";
 import { SITE_TITLE } from "../../consts";
 
 export async function getStaticPaths() {
 	const knowhow = await getCollection("knowhow");
-	return knowhow.map((item) => ({
+	return knowhow.map((item, index) => ({
 		params: { id: item.id },
-		props: { knowhow: item },
+		props: {
+            knowhow: item,
+            prev: knowhow[index - 1] || null,
+            next: knowhow[index + 1] || null
+        },
 	}));
 }
 
-const { knowhow } = Astro.props;
+const { knowhow, prev, next } = Astro.props;
 const { Content } = await render(knowhow);
+const prevUrl = prev ? `/knowhow/${prev.id}/` : '';
+const nextUrl = next ? `/knowhow/${next.id}/` : '';
 ---
 
 <Layout
 	title={`${knowhow.data.title} | ${SITE_TITLE}`}
 	description={knowhow.data.description}
 	image={knowhow.data.coverImage}
+    fullScreen={true}
 >
-	<!-- Top Image Area -->
-	<div class="w-full max-w-5xl mx-auto lg:mt-8 lg:px-6">
-		<div class="w-full aspect-video lg:rounded-2xl bg-mint-50 flex items-center justify-center overflow-hidden border-b lg:border border-gray-200">
-			{knowhow.data.coverImage ? (
-				<img src={knowhow.data.coverImage} alt={knowhow.data.title} class="w-full h-full object-cover" />
-			) : (
-				<span class="material-symbols-outlined text-mint-200 text-5xl" aria-hidden="true">image</span>
-			)}
-		</div>
-	</div>
+	<div class="relative w-full h-[100dvh] bg-[#111315] flex items-center justify-center overflow-hidden"
+         id="knowhow-modal-container"
+         data-prev={prevUrl}
+         data-next={nextUrl}>
 
-	<div class="px-4 sm:px-6 py-6 lg:py-10 max-w-5xl mx-auto">
-		<!-- Header -->
-		<div class="mb-6">
-			<div class="pt-1 sm:pt-2 flex-grow min-w-0">
-				<h1 class="text-[1.35rem] sm:text-[1.75rem] font-bold text-navy-900 leading-tight mb-1 sm:mb-2 break-all sm:break-auto">
-					{knowhow.data.title}
-				</h1>
-			</div>
-		</div>
+		<!-- PC Back Button -->
+		<button onclick="if(this.closest('dialog') && window.closeModal) { window.closeModal(); } else if (window.astroNavigate) { window.astroNavigate('/knowhow'); } else { window.location.href='/knowhow'; }" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
+			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
+		</button>
 
-		<!-- Metrics Row -->
-		<div class="flex items-center gap-6 sm:gap-8 mb-6 pb-6 border-b border-gray-100">
-			<!-- Age -->
-			<div class="flex flex-col items-center">
-				<div class="font-bold text-gray-800 text-[1.1rem]">
-					{knowhow.data.childAgeMonths !== undefined ? `生後${knowhow.data.childAgeMonths}ヶ月〜` : '全年齢'}
-				</div>
-				<div class="text-[0.7rem] text-gray-500">使い始めた時期</div>
-			</div>
-		</div>
+		<div class="flex flex-row items-stretch justify-center h-[100dvh] lg:h-[85dvh] lg:max-h-[900px] w-full max-w-[1200px] mx-auto lg:py-6 relative transition-all duration-300" id="main-content-wrapper">
 
-		<!-- Content -->
-		<div class="bg-gray-50 rounded-3xl p-6 sm:p-8 mb-10 border border-gray-100 mt-8">
-			<h2 class="text-[1.25rem] font-bold text-navy-900 mb-6 flex items-center gap-2">
-				使ってみた感想
-			</h2>
-			<div class="content-area">
-				<Content />
-			</div>
-		</div>
+            <!-- Media + ActionBar Container -->
+            <div class="flex flex-row items-end h-full shrink-0 relative transition-all duration-300 w-full lg:w-auto justify-center">
+                <!-- Main Media Area -->
+                <div class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl" transition:name="knowhow-media">
+                    <!-- Mobile Back Button -->
+                    <button onclick="if(this.closest('dialog') && window.closeModal) { window.closeModal(); } else if (window.astroNavigate) { window.astroNavigate('/knowhow'); } else { window.location.href='/knowhow'; }" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors w-10 h-10 flex items-center justify-center cursor-pointer outline-none">
+                        <span class="material-symbols-outlined">arrow_back_ios_new</span>
+                    </button>
 
-		<!-- Bottom Actions -->
-		<ActionBar slug={`knowhow/${knowhow.id}`} />
+                    {knowhow.data.coverImage ? (
+                        <img
+                            src={knowhow.data.coverImage}
+                            alt={knowhow.data.title}
+                            class="w-full h-full object-contain pointer-events-none"
+                        />
+                    ) : (
+                        <div class="w-full h-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-gray-700 text-5xl">image</span>
+                        </div>
+                    )}
+
+                    <!-- Floating Caption (Bottom Left) -->
+                    <div class="absolute bottom-0 left-0 w-full p-4 lg:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none pb-8 lg:pb-6 z-10">
+                        <div class="pointer-events-auto cursor-pointer" onclick="if(window.toggleDescPanel) window.toggleDescPanel()">
+                            <h1 class="text-white font-bold text-lg mb-2 drop-shadow-md leading-snug pr-16">{knowhow.data.title}</h1>
+                            <div class="text-white/90 text-sm drop-shadow-md prose prose-invert prose-sm max-w-none pr-16 line-clamp-2" id="caption-content">
+                                <Content />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Action Bar (Mobile only) -->
+                    <div class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
+                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" />
+                    </div>
+                </div>
+
+                <!-- Floating Action Bar (PC only) -->
+                <div class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
+                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" />
+                </div>
+            </div>
+
+            <!-- Unified Info Panel -->
+            <div
+                id="info-panel"
+                class="fixed lg:relative bottom-0 left-0 w-full h-[65dvh] lg:h-full lg:w-0 bg-[#262626] z-50 lg:z-10 transform translate-y-full lg:translate-y-0 transition-all duration-300 ease-out flex flex-col shadow-2xl lg:shadow-xl rounded-t-3xl lg:rounded-xl overflow-hidden opacity-100 lg:opacity-0 lg:ml-0"
+            >
+                <div class="flex items-center justify-between pl-4 pr-14 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
+					<div class="flex-grow flex items-stretch justify-center w-full">
+						<button id="tab-btn-desc" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
+						<button id="tab-btn-comments" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">コメント</button>
+                    </div>
+                    <button class="absolute right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
+                        <span class="material-symbols-outlined font-light">close</span>
+                    </button>
+                </div>
+
+                <!-- Description Content -->
+                <div id="tab-content-desc" class="flex-grow overflow-y-auto p-4 sm:p-6 content-area bg-[#262626] text-gray-100 overscroll-contain min-w-[320px]">
+                    <h1 class="text-[1.25rem] font-bold text-white leading-snug mb-4">{knowhow.data.title}</h1>
+                    <p class="text-[0.95rem] text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">{knowhow.data.description}</p>
+                    <Content />
+                </div>
+
+                <!-- Comments Content -->
+                <div id="tab-content-comments" class="flex-grow overflow-hidden hidden bg-[#262626] flex-col min-w-[320px]">
+                    <Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
+                </div>
+            </div>
+		</div>
 	</div>
 </Layout>
 
-<style>
-	/* Standard Markdown Content Styles */
-	.content-area {
-		display: flex;
-		flex-direction: column;
-	}
-	
-	.content-area :global(> h3) {
-		font-size: 1.15rem;
-		font-weight: 700;
-		color: var(--color-navy-900);
-		margin: 2rem 0 1rem;
+<script>
+    import { navigate } from 'astro:transitions/client';
+
+	// Global toggle function
+	declare global {
+		interface Window {
+            astroNavigate?: (url: string) => void;
+			toggleCommentsPanel: () => void;
+			toggleDescPanel: () => void;
+            toggleInfoPanel: () => void;
+            toggleTab: (tab: 'desc' | 'comments') => void;
+            switchTab: (tab: 'desc' | 'comments') => void;
+            closeModal?: () => void;
+		}
 	}
 
-	.content-area :global(> p), .content-area :global(> ul) {
-		margin-bottom: 1.5rem;
-		line-height: 1.8;
-		color: var(--color-gray-700);
+	window.astroNavigate = navigate;
+
+	// Astro replaces the document during client navigation. Carry the wheel/swipe
+	// direction into the incoming document so both transition snapshots use the
+	// same vertical animation instead of falling back to an instant swap.
+	document.addEventListener('astro:before-swap', (event) => {
+		const direction = document.documentElement.dataset.scrollDirection;
+		const transitionEvent = event as Event & { newDocument: Document };
+		if (direction && transitionEvent.newDocument) {
+			transitionEvent.newDocument.documentElement.dataset.scrollDirection = direction;
+		}
+	});
+
+	function initReels() {
+		const container = document.getElementById('knowhow-modal-container');
+		if (!container || container.dataset.reelsInitialized) return;
+		container.dataset.reelsInitialized = 'true';
+
+        // We bind functions to window dynamically so they fetch the latest DOM elements
+        const isMobile = () => window.innerWidth < 1024;
+
+        const setUrlTab = (tab: string | null) => {
+            const url = new URL(window.location.href);
+            if (tab) url.searchParams.set('tab', tab);
+            else url.searchParams.delete('tab');
+            history.replaceState(null, '', url.toString());
+        };
+
+        window.switchTab = (tab: 'desc' | 'comments') => {
+            const tabBtnDesc = document.getElementById('tab-btn-desc');
+            const tabBtnComments = document.getElementById('tab-btn-comments');
+            const tabContentDesc = document.getElementById('tab-content-desc');
+            const tabContentComments = document.getElementById('tab-content-comments');
+
+            const showDescription = tab === 'desc';
+            tabBtnDesc?.classList.toggle('text-white', showDescription);
+            tabBtnDesc?.classList.toggle('text-gray-400', !showDescription);
+            tabBtnDesc?.classList.toggle('border-white', showDescription);
+            tabBtnDesc?.classList.toggle('border-transparent', !showDescription);
+            tabBtnComments?.classList.toggle('text-white', !showDescription);
+            tabBtnComments?.classList.toggle('text-gray-400', showDescription);
+            tabBtnComments?.classList.toggle('border-white', !showDescription);
+            tabBtnComments?.classList.toggle('border-transparent', showDescription);
+
+            if (showDescription) {
+                tabContentDesc?.classList.remove('hidden');
+                tabContentComments?.classList.add('hidden');
+                tabContentComments?.classList.remove('flex');
+            } else {
+                tabContentComments?.classList.remove('hidden');
+                tabContentComments?.classList.add('flex');
+                tabContentDesc?.classList.add('hidden');
+
+                const form = tabContentComments?.querySelector('input[type="text"]') as HTMLInputElement;
+                if (form) form.focus();
+            }
+        };
+
+        window.toggleInfoPanel = () => {
+            const infoPanel = document.getElementById('info-panel');
+            if (!infoPanel) return;
+            const mobile = isMobile();
+
+            if (mobile) {
+                infoPanel.classList.toggle('translate-y-full');
+            } else {
+                // PC: Toggle width and opacity
+                if (infoPanel.classList.contains('lg:w-0')) {
+                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                } else {
+                    infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+            }
+
+            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+            if (isOpened) {
+                const tabContentDesc = document.getElementById('tab-content-desc');
+                const activeTab = tabContentDesc?.classList.contains('hidden') ? 'comments' : 'desc';
+                setUrlTab(activeTab);
+            } else {
+                setUrlTab(null);
+            }
+        };
+
+        window.toggleTab = (tab: 'desc' | 'comments') => {
+            const infoPanel = document.getElementById('info-panel');
+            if (!infoPanel) return;
+            const mobile = isMobile();
+            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+
+			if (isOpened) {
+                // Switch if already open
+                window.switchTab(tab);
+                setUrlTab(tab);
+            } else {
+                // Open and switch
+                window.switchTab(tab);
+                if (mobile) {
+                    infoPanel.classList.remove('translate-y-full');
+                } else {
+                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+                setUrlTab(tab);
+            }
+        };
+
+        // Backward compatibility for existing buttons
+		window.toggleCommentsPanel = () => window.toggleTab('comments');
+		window.toggleDescPanel = () => window.toggleTab('desc');
+
+		// Close panel if clicked outside
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+			if (container && container.contains(target) &&
+				(!infoPanel || !infoPanel.contains(target)) &&
+				!target.closest('button[onclick*="toggleCommentsPanel"]') &&
+				!target.closest('button[onclick*="toggleDescPanel"]') &&
+                !target.closest('button[onclick*="toggleTab"]') &&
+                !target.closest('div[onclick*="toggleDescPanel"]') &&
+				!target.closest('.like-btn')
+			) {
+				if (infoPanel) {
+					if (isMobile()) infoPanel.classList.add('translate-y-full');
+					else {
+                        infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                        infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                    }
+				}
+				setUrlTab(null);
+			}
+		});
+
+        // Navigation logic for standalone page (wheel/swipe)
+        let isNavigating = false;
+        const navigateTo = (direction: 'next' | 'prev') => {
+            if (isNavigating) return;
+            // Only navigate if we're not inside index.astro's modal
+            if (document.getElementById('post-modal')) return;
+
+            const url = container.getAttribute(`data-${direction}`);
+            if (url) {
+                isNavigating = true;
+                // AstroのView Transitions用にスクロール方向を記録
+                document.documentElement.dataset.scrollDirection = direction;
+
+                // navigate() を使用してSPA遷移
+				navigate(url);
+            }
+        };
+
+		let wheelLocked = false;
+        const handleScrollEvent = (deltaY: number, target: HTMLElement) => {
+            const infoPanel = document.getElementById('info-panel');
+            if (infoPanel && infoPanel.contains(target)) return false;
+
+			if (wheelLocked || deltaY === 0) return false;
+			if (deltaY > 0) {
+				navigateTo('next');
+				return true;
+			} else {
+				navigateTo('prev');
+				return true;
+			}
+        };
+
+        container.addEventListener('wheel', (e) => {
+            const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+            // If scrolling inside panel, ignore
+            if (infoPanel && infoPanel.contains(target)) return;
+
+			const navigated = handleScrollEvent(e.deltaY, target);
+			if (navigated) {
+				wheelLocked = true;
+				setTimeout(() => { wheelLocked = false; }, 700);
+			}
+        }, { passive: true });
+
+        // Touch swipe
+        let touchStartY = 0;
+        let touchEndY = 0;
+        container.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            touchEndY = e.touches[0].clientY;
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+            if (infoPanel && infoPanel.contains(target)) return;
+
+            const distance = touchStartY - touchEndY;
+            if (distance > 50) navigateTo('next');
+            else if (distance < -50) navigateTo('prev');
+        });
+
+		// Check initial URL
+		const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+		if (tab === 'comments' || tab === 'desc') {
+            const infoPanel = document.getElementById('info-panel');
+            if (infoPanel) {
+                window.switchTab(tab as 'comments' | 'desc');
+                if (isMobile()) {
+                    infoPanel.classList.remove('translate-y-full');
+                } else {
+                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+            }
+		}
 	}
+
+	document.addEventListener('DOMContentLoaded', initReels);
+	document.addEventListener('astro:page-load', () => {
+		// Keep the direction through the view-transition snapshot, then clean it up.
+		setTimeout(() => {
+			document.documentElement.removeAttribute('data-scroll-direction');
+		}, 500);
+        initReels();
+    });
+</script>
+
+<style is:global>
+	#caption-content h3, .content-area h3 { font-weight: bold; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.2rem; }
+	#caption-content p, .content-area p { margin-bottom: 0.5rem; }
+	#caption-content a, .content-area a { color: #60a5fa; text-decoration: underline; }
+
+    /* Keep the surrounding UI fixed and animate only the media region. */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+		animation: none;
+	}
+
+	::view-transition-group(knowhow-media) {
+		animation-duration: 0.45s;
+		animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+		overflow: hidden;
+	}
+
+    html[data-scroll-direction="next"]::view-transition-old(knowhow-media) {
+        animation: slideUpOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+    html[data-scroll-direction="next"]::view-transition-new(knowhow-media) {
+        animation: slideUpIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    html[data-scroll-direction="prev"]::view-transition-old(knowhow-media) {
+        animation: slideDownOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+    html[data-scroll-direction="prev"]::view-transition-new(knowhow-media) {
+        animation: slideDownIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes slideUpOut {
+        from { transform: translateY(0); }
+        to { transform: translateY(-100%); }
+    }
+    @keyframes slideUpIn {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    @keyframes slideDownOut {
+        from { transform: translateY(0); }
+        to { transform: translateY(100%); }
+    }
+    @keyframes slideDownIn {
+        from { transform: translateY(-100%); }
+        to { transform: translateY(0); }
+    }
 </style>

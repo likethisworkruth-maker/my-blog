@@ -1,8 +1,51 @@
 ---
+import LikeButton from './LikeButton.astro';
+
+interface Props {
+	slug: string;
+	variant?: 'default' | 'feed' | 'reels';
+}
+
+const { slug, variant = 'default' } = Astro.props;
+const id = slug.split('/')[1];
 ---
-<div class="flex items-center justify-start gap-3 my-8 pt-6 border-t border-gray-100">
-	<button class="flex items-center gap-2 px-4 py-2 border border-gray-200 hover:border-mint-500 rounded-full text-sm font-bold text-gray-600 hover:text-mint-600 transition-all active:scale-95 bg-white shadow-sm" data-share-trigger onclick="window.openShareModal?.()" aria-label="このページを共有">
-		<span class="material-symbols-outlined text-[1.1rem]" aria-hidden="true">send</span>
-		<span>このページを共有</span>
-	</button>
-</div>
+
+{variant === 'reels' ? (
+	<div class="flex flex-col items-center gap-6">
+		<LikeButton slug={slug} variant="reels" />
+		<button
+			class="flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95"
+			onclick="if(window.toggleDescPanel) window.toggleDescPanel()"
+		>
+			<span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">article</span>
+			<span class="text-[0.75rem] font-medium drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)] mt-1">説明</span>
+		</button>
+		<button
+			class="flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95"
+			onclick="if(window.toggleCommentsPanel) window.toggleCommentsPanel()"
+		>
+			<span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+			<span class="text-[0.75rem] font-medium drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)] mt-1">コメント</span>
+		</button>
+		<button class="flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" data-share-trigger onclick="window.openShareModal?.()" aria-label="このページを共有">
+			<span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">send</span>
+			<span class="text-[0.75rem] font-medium drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)] mt-1">シェア</span>
+		</button>
+	</div>
+) : (
+	<div class={`flex items-center justify-start gap-3 ${variant === 'default' ? 'my-12 pt-8 border-t border-gray-100' : 'my-3'}`}>
+		<LikeButton slug={slug} />
+		<button
+			class="flex h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95"
+			onclick={variant === 'feed'
+				? `if(window.openModal) window.openModal('${id}')`
+				: `const form = document.querySelector('[data-slug="${slug}"][data-variant] #comment-form'); form?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => form?.querySelector('textarea[name="content"]')?.focus(), 450);`}
+			aria-label="コメントを投稿"
+		>
+			<span class="material-symbols-outlined text-[1.5rem] font-light" aria-hidden="true">chat_bubble</span>
+		</button>
+		<button class="flex h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95" data-share-trigger onclick="window.openShareModal?.()" aria-label="このページを共有">
+			<span class="material-symbols-outlined text-[1.5rem] font-light" aria-hidden="true">send</span>
+		</button>
+	</div>
+)}

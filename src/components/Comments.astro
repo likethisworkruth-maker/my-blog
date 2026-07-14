@@ -37,27 +37,40 @@ const formClass = variant === 'modal'
 			コメントはまだありません。
 		</div>
 	</div>
+	<nav id="comments-pagination" class={`hidden items-center justify-center gap-3 mb-8 text-sm ${variant === 'reels' ? 'text-gray-300' : 'text-gray-500'}`} aria-label="コメントのページ切り替え">
+		<button type="button" id="comments-prev" class="w-9 h-9 rounded-full border border-current/20 flex items-center justify-center transition-colors hover:text-mint-500 disabled:opacity-30 disabled:cursor-not-allowed" aria-label="前の10件">
+			<span class="material-symbols-outlined text-xl" aria-hidden="true">chevron_left</span>
+		</button>
+		<span id="comments-page-status" class="min-w-16 text-center font-bold">
+			1 / 1
+		</span>
+		<button type="button" id="comments-next" class="w-9 h-9 rounded-full border border-current/20 flex items-center justify-center transition-colors hover:text-mint-500 disabled:opacity-30 disabled:cursor-not-allowed" aria-label="次の10件">
+			<span class="material-symbols-outlined text-xl" aria-hidden="true">chevron_right</span>
+		</button>
+	</nav>
 
 	<!-- Comment Form -->
 	<form id="comment-form" class={formClass}>
 		{variant === 'default' && (
 			<h4 class="text-sm font-bold text-gray-700 mb-4">コメントを投稿する</h4>
 		)}
-		<div class="flex items-center">
-			<div class={`flex-grow flex items-center rounded-full border ${variant === 'reels' ? 'border-gray-700 bg-black/30' : 'border-gray-200 bg-white'} px-4 py-2`}>
-				<input 
-					type="text" 
+		<div class="flex items-end">
+			<div class={`flex-grow flex items-end rounded-3xl border ${variant === 'reels' ? 'border-gray-700 bg-black/30' : 'border-gray-200 bg-white'} px-4 py-2`}>
+				<textarea
 					name="content"
+					rows="1"
 					placeholder="コメントを追加..."
-					class={`w-full bg-transparent focus:outline-none text-sm ${variant === 'reels' ? 'text-white placeholder-gray-500' : 'text-gray-800'}`}
+					class={`min-h-9 max-h-40 w-full resize-none overflow-y-auto bg-transparent py-2 text-sm leading-5 focus:outline-none ${variant === 'reels' ? 'text-white placeholder-gray-500' : 'text-gray-800'}`}
 					required
-				/>
-				<button 
-					type="submit" 
+				></textarea>
+				<button
+					type="submit"
 					id="comment-submit"
-					class={`ml-3 shrink-0 whitespace-nowrap font-bold text-sm disabled:opacity-50 transition-colors ${variant === 'reels' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-500 hover:text-blue-600'}`}
+					class={`mb-0.5 ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${variant === 'reels' ? 'bg-blue-500 hover:bg-blue-400' : 'bg-mint-500 hover:bg-mint-600'}`}
+					aria-label="コメントを投稿"
+					title="コメントを投稿"
 				>
-					送信
+					<span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_upward</span>
 				</button>
 			</div>
 		</div>
@@ -109,14 +122,30 @@ const formClass = variant === 'modal'
 		const variant = section.getAttribute('data-variant');
 		if (!slug) return;
 
+		const commentsList = section.querySelector('#comments-list') as HTMLElement;
+		const form = section.querySelector('#comment-form') as HTMLFormElement;
+		const submitBtn = section.querySelector('#comment-submit') as HTMLButtonElement;
+		const textarea = section.querySelector('textarea[name="content"]') as HTMLTextAreaElement;
+		const pagination = section.querySelector('#comments-pagination') as HTMLElement;
+		const prevButton = section.querySelector('#comments-prev') as HTMLButtonElement;
+		const nextButton = section.querySelector('#comments-next') as HTMLButtonElement;
+		const pageStatus = section.querySelector('#comments-page-status') as HTMLElement;
+		const pageSize = 10;
+		let currentPage = 1;
+		let totalCount = 0;
+
+		const resizeTextarea = () => {
+			if (!textarea) return;
+			textarea.style.height = 'auto';
+			textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+		};
+		textarea?.addEventListener('input', resizeTextarea);
+		resizeTextarea();
+
 		if (!supabase) {
 			// Supabase is not configured, leave empty message
 			return;
 		}
-		const commentsList = section.querySelector('#comments-list');
-		const form = section.querySelector('#comment-form') as HTMLFormElement;
-		const submitBtn = section.querySelector('#comment-submit') as HTMLButtonElement;
-		const emptyEl = section.querySelector('#comments-empty');
 
 		// Render single comment
 		const renderComment = (comment: any, isPending = false) => {
@@ -167,25 +196,70 @@ const formClass = variant === 'modal'
 			return div;
 		};
 
-		// Fetch comments
-		try {
-			const { data: comments, error } = await supabase
-				.from('comments')
-				.select('*')
-				.eq('slug', slug)
-				.order('created_at', { ascending: false });
+		// Fetch paginated comments
+		const updatePagination = () => {
+			const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+			const showPagination = totalCount > pageSize;
+			pagination?.classList.toggle('hidden', !showPagination);
+			pagination?.classList.toggle('flex', showPagination);
+			if (pageStatus) pageStatus.textContent = `${currentPage} / ${totalPages}`;
+			if (prevButton) prevButton.disabled = currentPage <= 1;
+			if (nextButton) nextButton.disabled = currentPage >= totalPages;
+		};
 
-			if (error) throw error;
+		const loadComments = async () => {
+			const from = (currentPage - 1) * pageSize;
+			const to = from + pageSize - 1;
+			commentsList?.setAttribute('aria-busy', 'true');
 
-			if (commentsList) {
-				if (comments.length > 0) {
-					if (emptyEl) emptyEl.remove(); // Remove empty text
-					comments.forEach(c => commentsList.appendChild(renderComment(c)));
+			try {
+				const { data: comments, error, count } = await supabase
+					.from('comments')
+					.select('*', { count: 'exact' })
+					.eq('slug', slug)
+					.order('created_at', { ascending: false })
+					.range(from, to);
+
+				if (error) throw error;
+
+				totalCount = count ?? comments?.length ?? 0;
+				commentsList?.replaceChildren();
+				if (comments?.length) {
+					comments.forEach((comment) => commentsList?.appendChild(renderComment(comment)));
+				} else if (commentsList) {
+					const emptyMessage = document.createElement('div');
+					emptyMessage.id = 'comments-empty';
+					emptyMessage.className = 'text-center text-sm py-8 text-gray-400';
+					emptyMessage.textContent = 'コメントはまだありません。';
+					commentsList.appendChild(emptyMessage);
 				}
+				updatePagination();
+			} catch (err) {
+				console.error('Error fetching comments:', err);
+			} finally {
+				commentsList?.removeAttribute('aria-busy');
 			}
-		} catch (err) {
-			console.error('Error fetching comments:', err);
-		}
+		};
+
+		const changePage = async (page: number) => {
+			currentPage = page;
+			await loadComments();
+			if (variant === 'modal' || variant === 'reels') {
+				commentsList.scrollTop = 0;
+			} else {
+				commentsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		};
+
+		prevButton?.addEventListener('click', () => {
+			if (currentPage > 1) void changePage(currentPage - 1);
+		});
+		nextButton?.addEventListener('click', () => {
+			const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+			if (currentPage < totalPages) void changePage(currentPage + 1);
+		});
+
+		await loadComments();
 
 		// Handle form submission
 		if (form) {
@@ -202,8 +276,7 @@ const formClass = variant === 'modal'
 
 				// Disable form
 				submitBtn.disabled = true;
-				const originalText = submitBtn.innerText;
-				submitBtn.innerText = '...';
+				submitBtn.setAttribute('aria-busy', 'true');
 
 				try {
 					const { error } = await supabase
@@ -214,33 +287,19 @@ const formClass = variant === 'modal'
 
 					if (error) throw error;
 
-					// Success
 					form.reset();
-					
-					// Remove empty state message if exists
-					const emptyEl = section.querySelector('#comments-empty');
-					if (emptyEl) emptyEl.remove();
+					resizeTextarea();
+					currentPage = 1;
+					await loadComments();
+					commentsList.scrollTop = 0;
 
-					// Render as pending and prepend to list
-					const pendingComment = {
-						author_name,
-						content,
-						created_at: new Date().toISOString()
-					};
-					const newEl = renderComment(pendingComment, true);
-					if (commentsList) {
-						commentsList.insertBefore(newEl, commentsList.firstChild);
-						// Scroll to top of list
-						commentsList.scrollTop = 0;
-					}
-					
 				} catch (err) {
 					console.error('Error posting comment:', err);
 					alert('コメントの送信に失敗しました。');
 				} finally {
 					// Enable form
 					submitBtn.disabled = false;
-					submitBtn.innerHTML = originalText;
+					submitBtn.removeAttribute('aria-busy');
 				}
 			});
 		}

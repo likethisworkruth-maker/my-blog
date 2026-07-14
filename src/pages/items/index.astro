@@ -1,49 +1,548 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
-import { SITE_TITLE, SITE_DESCRIPTION } from "../../consts";
+import {
+	SITE_TITLE,
+	SITE_DESCRIPTION,
+} from "../../consts";
 import { UI } from "../../i18n/ja";
 
-const items = await getCollection("items");
-items.sort((a, b) => a.data.order - b.data.order);
+const items =
+	await getCollection(
+		"items",
+	);
+items.sort(
+	(
+		a,
+		b,
+	) =>
+		a
+			.data
+			.order -
+		b
+			.data
+			.order,
+);
+
+const uniqueCategories =
+	[
+		...new Set(
+			items.flatMap(
+				(
+					item,
+				) =>
+					item
+						.data
+						.categories ||
+					[],
+			),
+		),
+	];
+const displayCategories = ["すべて", ...uniqueCategories];
+
+const uniqueAges =
+	[
+		...new Set(
+			items
+				.map(
+					(
+						item,
+					) =>
+						item
+							.data
+							.childAgeMonths,
+				)
+				.filter(
+					(
+						age,
+					) =>
+						age !==
+						undefined,
+				),
+		),
+	].sort(
+		(
+			a,
+			b,
+		) =>
+			a! -
+			b!,
+	);
 ---
 
-<Layout title={`${UI.items.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
-	<div class="px-6 py-8 lg:py-12 max-w-6xl mx-auto">
-		<h1 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-2">
+<Layout
+	title={`${UI.items.pageTitle} | ${SITE_TITLE}`}
+	description={SITE_DESCRIPTION}
+>
+	<div class="px-6 py-8 lg:py-12">
+		<h2 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-6">
 			{UI.items.pageTitle}
-		</h1>
-		<p class="text-sm text-gray-500 mb-8">{UI.items.pageDesc}</p>
+		</h2>
 
-		{items.length === 0 ? (
-			<div class="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-				<span class="material-symbols-outlined text-gray-300 text-5xl mb-4" aria-hidden="true">shopping_bag</span>
-				<p class="text-sm text-gray-500 font-medium">現在、アイテムの紹介記事を準備しています。</p>
+		<!-- Search Bar -->
+		<div class="relative mb-6">
+			<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+			<input type="text" id="item-search" placeholder="アイテムを検索" class="w-full bg-white border border-gray-200 rounded-full py-3 sm:py-4 pl-12 pr-4 text-[0.95rem] focus:outline-none focus:border-mint-500 shadow-sm transition-colors" />
+		</div>
+
+		<div
+			class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between"
+		>
+			<!-- Categories -->
+			<div
+				class="flex gap-2 sm:gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto"
+				id="category-filters"
+			>
+				<button
+					class="category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors border-mint-500 bg-mint-50 text-mint-500 font-bold"
+					data-category="すべて"
+				>
+					すべて
+				</button>
+				<button
+					class="category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50 flex items-center gap-1"
+					data-category="liked"
+				>
+					<span class="material-symbols-outlined text-[1rem]">favorite</span>
+					お気に入り
+				</button>
+				{
+					displayCategories.slice(1).map(
+						(
+							category,
+							index,
+						) => (
+							<button
+								class="category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50"
+								data-category={
+									category
+								}
+							>
+								{
+									category
+								}
+							</button>
+						),
+					)
+				}
 			</div>
-		) : (
-			<div class="grid gap-6 md:grid-cols-2">
-				{items.map((item) => (
-					<a href={`/items/${item.id}/`} class="flex items-center gap-4 bg-white p-6 rounded-2xl hover:shadow-md transition-shadow border border-gray-200 group">
-						<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-mint-50 text-mint-600 flex items-center justify-center shrink-0 border border-mint-100 group-hover:scale-105 transition-transform">
-							<span class="material-symbols-outlined text-3xl sm:text-4xl" aria-hidden="true">{item.data.icon}</span>
-						</div>
-						
-						<div class="flex-grow min-w-0">
-							<div class="flex items-center gap-2 mb-1">
+
+			<!-- Age & Sort -->
+			<div
+				class="flex gap-3 w-full lg:w-auto shrink-0"
+			>
+				<select
+					id="age-filter"
+					class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500"
+				>
+					<option
+						value="all"
+						>すべての対象</option
+					>
+					{
+						uniqueAges.map(
+							(
+								age,
+							) => (
+								<option
+									value={age.toString()}
+								>
+									生後
+									{
+										age
+									}
+									ヶ月向け
+								</option>
+							),
+						)
+					}
+					<option
+						value="none"
+						>月齢未指定</option
+					>
+				</select>
+
+				<select
+					id="sort-order"
+					class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500"
+				>
+					<option
+						value="recommended"
+						>おすすめ順</option
+					>
+					<option
+						value="age-asc"
+						>月齢が低い順</option
+					>
+					<option
+						value="age-desc"
+						>月齢が高い順</option
+					>
+				</select>
+			</div>
+		</div>
+
+		<!-- Item Grid -->
+		<div
+			class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6"
+			id="items-container"
+		>
+			{
+				items.map(
+					(
+						item,
+					) => (
+						<a
+							href={`/items/${item.id}/`}
+							class="item-card flex flex-row items-center gap-4 bg-white p-4 lg:p-6 rounded-2xl hover:bg-gray-50 transition-colors border border-gray-100 shadow-sm"
+							data-categories={(
+								item.data.categories || []
+							).join(",")}
+							data-age={item.data.childAgeMonths ?? "none"}
+							data-order={item.data.order}
+							data-id={item.id}
+						>
+							<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-[1.25rem] sm:rounded-3xl bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 shadow-sm border border-gray-50">
+								<span class="material-symbols-outlined text-3xl sm:text-4xl">
+									{item.data.icon}
+								</span>
+							</div>
+
+							<div class="flex-grow min-w-0 pr-2">
+								<h3 class="text-[1rem] sm:text-[1.1rem] font-bold text-navy-900 truncate">
+									{item.data.title}
+								</h3>
+								<p class="text-[0.8rem] sm:text-[0.85rem] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+									{item.data.description}
+								</p>
 								{item.data.childAgeMonths !== undefined && (
-									<span class="text-xs text-gray-400">生後{item.data.childAgeMonths}ヶ月〜</span>
+									<div class="flex items-center gap-2 mt-1">
+										<span class="text-[0.75rem] sm:text-[0.8rem] text-gray-500 truncate">
+											生後{item.data.childAgeMonths}ヶ月〜
+										</span>
+									</div>
 								)}
 							</div>
-							<h2 class="text-base sm:text-lg font-bold text-navy-900 truncate group-hover:text-mint-600 transition-colors">
-								{item.data.title}
-							</h2>
-							<p class="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2 leading-relaxed">
-								{item.data.description}
-							</p>
-						</div>
-					</a>
-				))}
-			</div>
-		)}
+						</a>
+					),
+				)
+			}
+		</div>
 	</div>
 </Layout>
+
+<script
+>
+	const categoryButtons =
+		document.querySelectorAll(
+			".category-btn",
+		);
+	const ageFilter =
+		document.getElementById(
+			"age-filter",
+		) as HTMLSelectElement;
+	const sortOrder =
+		document.getElementById(
+			"sort-order",
+		) as HTMLSelectElement;
+	const itemsContainer =
+		document.getElementById(
+			"items-container",
+		);
+	const cards =
+		Array.from(
+			document.querySelectorAll(
+				".item-card",
+			),
+		) as HTMLElement[];
+
+	const searchInput =
+		document.getElementById(
+			"item-search",
+		) as HTMLInputElement;
+
+	let currentCategory =
+		"すべて";
+	let currentAge =
+		"all";
+	let currentSort =
+		"recommended";
+	let searchQuery =
+		"";
+
+	function updateView() {
+		// Filter
+		cards.forEach(
+			(
+				card,
+			) => {
+				const titleText = (card.querySelector('h3')?.textContent || '').toLowerCase();
+				const descText = (card.querySelector('p')?.textContent || '').toLowerCase();
+				const searchMatch = !searchQuery || titleText.includes(searchQuery) || descText.includes(searchQuery);
+
+				let categoryMatch = false;
+				if (currentCategory === "すべて") {
+					categoryMatch = true;
+				} else if (currentCategory === "liked") {
+					const id = card.getAttribute("data-id");
+					const isLiked = !!localStorage.getItem(`liked:${encodeURIComponent('items/' + id)}`);
+					categoryMatch = isLiked;
+				} else {
+					categoryMatch = (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
+				}
+
+				const ageMatch =
+					currentAge ===
+						"all" ||
+					card.getAttribute(
+						"data-age",
+					) ===
+						currentAge;
+
+				if (
+					categoryMatch &&
+					ageMatch &&
+					searchMatch
+				) {
+					card.style.display =
+						"flex";
+				} else {
+					card.style.display =
+						"none";
+				}
+			},
+		);
+
+		// Sort
+		const visibleCards =
+			cards.filter(
+				(
+					card,
+				) =>
+					card
+						.style
+						.display !==
+					"none",
+			);
+		const hiddenCards =
+			cards.filter(
+				(
+					card,
+				) =>
+					card
+						.style
+						.display ===
+					"none",
+			);
+
+		visibleCards.sort(
+			(
+				a,
+				b,
+			) => {
+				if (
+					currentSort ===
+					"recommended"
+				) {
+					const numA =
+						parseInt(
+							a.getAttribute(
+								"data-order",
+							) ||
+								"0",
+							10,
+						);
+					const numB =
+						parseInt(
+							b.getAttribute(
+								"data-order",
+							) ||
+								"0",
+							10,
+						);
+					return (
+						numA -
+						numB
+					);
+				} else {
+					const ageA =
+						a.getAttribute(
+							"data-age",
+						);
+					const ageB =
+						b.getAttribute(
+							"data-age",
+						);
+					const valA =
+						ageA ===
+						"none"
+							? Infinity
+							: parseInt(
+									ageA ||
+										"0",
+									10,
+								);
+					const valB =
+						ageB ===
+						"none"
+							? Infinity
+							: parseInt(
+									ageB ||
+										"0",
+									10,
+								);
+
+					if (
+						currentSort ===
+						"age-asc"
+					) {
+						return (
+							valA -
+							valB
+						);
+					} else {
+						// age-desc
+						if (
+							valA ===
+								Infinity &&
+							valB !==
+								Infinity
+						)
+							return 1;
+						if (
+							valB ===
+								Infinity &&
+							valA !==
+								Infinity
+						)
+							return -1;
+						return (
+							valB -
+							valA
+						);
+					}
+				}
+			},
+		);
+
+		// Re-append to DOM in order
+		if (
+			itemsContainer
+		) {
+			visibleCards.forEach(
+				(
+					card,
+				) =>
+					itemsContainer.appendChild(
+						card,
+					),
+			);
+			hiddenCards.forEach(
+				(
+					card,
+				) =>
+					itemsContainer.appendChild(
+						card,
+					),
+			);
+		}
+	}
+
+	categoryButtons.forEach(
+		(
+			button,
+		) => {
+			button.addEventListener(
+				"click",
+				() => {
+					currentCategory =
+						button.getAttribute(
+							"data-category",
+						) ||
+						"すべて";
+
+					// Update button styles
+					categoryButtons.forEach(
+						(
+							btn,
+						) => {
+							btn.classList.remove(
+								"border-mint-500",
+								"bg-mint-50",
+								"text-mint-500",
+								"font-bold",
+							);
+							btn.classList.add(
+								"border-gray-200",
+								"bg-white",
+								"text-gray-500",
+								"font-medium",
+							);
+						},
+					);
+					button.classList.remove(
+						"border-gray-200",
+						"bg-white",
+						"text-gray-500",
+						"font-medium",
+					);
+					button.classList.add(
+						"border-mint-500",
+						"bg-mint-50",
+						"text-mint-500",
+						"font-bold",
+					);
+
+					updateView();
+				},
+			);
+		},
+	);
+
+	ageFilter?.addEventListener(
+		"change",
+		(
+			e,
+		) => {
+			currentAge =
+				(
+					e.target as HTMLSelectElement
+				)
+					.value;
+			updateView();
+		},
+	);
+
+	sortOrder?.addEventListener(
+		"change",
+		(
+			e,
+		) => {
+			currentSort =
+				(
+					e.target as HTMLSelectElement
+				)
+					.value;
+			updateView();
+		},
+	);
+
+	searchInput?.addEventListener(
+		"input",
+		(e) => {
+			searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+			updateView();
+		}
+	);
+</script>
+
+<style
+>
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;
+	}
+	.scrollbar-hide {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+</style>
