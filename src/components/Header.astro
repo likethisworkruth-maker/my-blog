@@ -20,21 +20,20 @@ const currentPath =
 	class="sticky top-0 z-50 w-full bg-white border-b border-gray-100 lg:border-none"
 >
 	<div
-		class="max-w-6xl mx-auto flex items-center justify-between gap-3 px-4 py-4 sm:px-6"
+		class="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
 	>
 		<!-- Logo -->
 		<a
 			href="/"
-			class="flex items-center gap-2 font-bold text-[1.1rem] text-navy-900"
+			class="flex min-w-0 items-center gap-2 justify-self-start whitespace-nowrap font-bold text-[1.1rem] text-navy-900"
 		>
 			{SITE_TITLE}
 		</a>
 
-		<div class="flex shrink-0 items-center gap-2 lg:gap-5">
-			<!-- PC Navigation -->
-			<nav
-				class="hidden lg:flex items-center gap-6 xl:gap-8"
-			>
+		<!-- PC Navigation -->
+		<nav
+			class="hidden items-center gap-6 justify-self-center lg:flex xl:gap-8"
+		>
 			<a
 				href="/"
 				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath === "" ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
@@ -65,14 +64,16 @@ const currentPath =
 			>
 				{UI.headerNav.logs}
 			</a>
-			</nav>
-			{SHOW_NARAIBASE && (
-				<a href="https://naraibase.likethis.work/" class="hidden rounded-full bg-[#1d224b] px-4 py-2 text-sm font-bold text-white transition-colors hover:opacity-90 sm:inline-flex">
-					{UI.headerNav.naraibase}
-				</a>
-			)}
-			<GoogleAuthButton />
-		</div>
+		</nav>
 
+	</div>
+
+	<div class="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-2 sm:right-6">
+		{SHOW_NARAIBASE && (
+			<a href="https://naraibase.likethis.work/" class="hidden rounded-full bg-[#1d224b] px-4 py-2 text-sm font-bold text-white transition-colors hover:opacity-90 sm:inline-flex">
+				{UI.headerNav.naraibase}
+			</a>
+		)}
+		<GoogleAuthButton />
 	</div>
 </header>
