@@ -1,7 +1,8 @@
 ---
-import { getCollection, render } from "astro:content";
+import { getCollection, getEntry, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ActionBar from "../../components/ActionBar.astro";
+import ChecklistRunner from "../../components/ChecklistRunner.astro";
 import Comments from "../../components/Comments.astro";
 import { SITE_TITLE } from "../../consts";
 
@@ -19,6 +20,11 @@ export async function getStaticPaths() {
 
 const { knowhow, prev, next } = Astro.props;
 const { Content } = await render(knowhow);
+const checklistEntry = await getEntry("checklists", knowhow.data.checklistId);
+if (!checklistEntry || checklistEntry.data.status !== "published") {
+	throw new Error("公開中のチェックリスト原本がありません: " + knowhow.data.checklistId);
+}
+const checklist = checklistEntry.data;
 const prevUrl = prev ? `/knowhow/${prev.id}/` : '';
 const nextUrl = next ? `/knowhow/${next.id}/` : '';
 ---
@@ -35,7 +41,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
          data-next={nextUrl}>
 
 		<!-- PC Back Button -->
-		<button onclick="if(this.closest('dialog') && window.closeModal) { window.closeModal(); } else if (window.astroNavigate) { window.astroNavigate('/knowhow'); } else { window.location.href='/knowhow'; }" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
+		<button onclick="window.goBackFromKnowhow?.(this)" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
 			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
 		</button>
 
@@ -46,7 +52,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                 <!-- Main Media Area -->
                 <div class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl" transition:name="knowhow-media">
                     <!-- Mobile Back Button -->
-                    <button onclick="if(this.closest('dialog') && window.closeModal) { window.closeModal(); } else if (window.astroNavigate) { window.astroNavigate('/knowhow'); } else { window.location.href='/knowhow'; }" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors w-10 h-10 flex items-center justify-center cursor-pointer outline-none">
+                    <button onclick="window.goBackFromKnowhow?.(this)" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors w-10 h-10 flex items-center justify-center cursor-pointer outline-none">
                         <span class="material-symbols-outlined">arrow_back_ios_new</span>
                     </button>
 
@@ -74,13 +80,13 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 
                     <!-- Floating Action Bar (Mobile only) -->
                     <div class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
-                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" />
+                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} />
                     </div>
                 </div>
 
                 <!-- Floating Action Bar (PC only) -->
                 <div class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
-                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" />
+                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} />
                 </div>
             </div>
 
@@ -92,6 +98,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                 <div class="flex items-center justify-between pl-4 pr-14 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
 					<div class="flex-grow flex items-stretch justify-center w-full">
 						<button id="tab-btn-desc" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
+						<button id="tab-btn-progress" class="h-14 flex-1 px-4 flex items-center justify-center font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
 						<button id="tab-btn-comments" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">コメント</button>
                     </div>
                     <button class="absolute right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
@@ -106,6 +113,11 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                     <Content />
                 </div>
 
+                <!-- Checklist Progress Content -->
+                <div id="tab-content-progress" class="flex-grow overflow-hidden hidden bg-[#262626] min-w-[320px]">
+                    <ChecklistRunner checklist={checklist} />
+                </div>
+
                 <!-- Comments Content -->
                 <div id="tab-content-comments" class="flex-grow overflow-hidden hidden bg-[#262626] flex-col min-w-[320px]">
                     <Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
@@ -118,20 +130,40 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 <script>
     import { navigate } from 'astro:transitions/client';
 
+	type PanelTab = 'desc' | 'progress' | 'comments';
+
 	// Global toggle function
 	declare global {
 		interface Window {
             astroNavigate?: (url: string) => void;
 			toggleCommentsPanel: () => void;
 			toggleDescPanel: () => void;
+			toggleProgressPanel: () => void;
             toggleInfoPanel: () => void;
-            toggleTab: (tab: 'desc' | 'comments') => void;
-            switchTab: (tab: 'desc' | 'comments') => void;
+            toggleTab: (tab: PanelTab) => void;
+            switchTab: (tab: PanelTab) => void;
+			goBackFromKnowhow: (trigger?: HTMLElement) => void;
             closeModal?: () => void;
 		}
 	}
 
 	window.astroNavigate = navigate;
+	window.goBackFromKnowhow = (trigger) => {
+		if (trigger?.closest('dialog') && window.closeModal) {
+			window.closeModal();
+			return;
+		}
+		let returnUrl = '';
+		try {
+			returnUrl = sessionStorage.getItem('knowhow:return-url') ?? '';
+			sessionStorage.removeItem('knowhow:return-url');
+		} catch {
+			// Session storage may be unavailable in strict privacy modes.
+		}
+		const destination = returnUrl.startsWith('/knowhow') ? returnUrl : '/knowhow/';
+		if (window.astroNavigate) window.astroNavigate(destination);
+		else window.location.href = destination;
+	};
 
 	// Astro replaces the document during client navigation. Carry the wheel/swipe
 	// direction into the incoming document so both transition snapshots use the
@@ -152,41 +184,40 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
         // We bind functions to window dynamically so they fetch the latest DOM elements
         const isMobile = () => window.innerWidth < 1024;
 
-        const setUrlTab = (tab: string | null) => {
+        const setUrlTab = (tab: PanelTab | null) => {
             const url = new URL(window.location.href);
-            if (tab) url.searchParams.set('tab', tab);
-            else url.searchParams.delete('tab');
+			url.searchParams.delete('tab');
+			url.hash = '';
+			if (tab === 'comments') url.searchParams.set('tab', 'comments');
+			if (tab === 'progress') url.hash = 'progress';
             history.replaceState(null, '', url.toString());
         };
 
-        window.switchTab = (tab: 'desc' | 'comments') => {
-            const tabBtnDesc = document.getElementById('tab-btn-desc');
-            const tabBtnComments = document.getElementById('tab-btn-comments');
-            const tabContentDesc = document.getElementById('tab-content-desc');
-            const tabContentComments = document.getElementById('tab-content-comments');
+		const getActiveTab = (): PanelTab => {
+			if (!document.getElementById('tab-content-progress')?.classList.contains('hidden')) return 'progress';
+			if (!document.getElementById('tab-content-comments')?.classList.contains('hidden')) return 'comments';
+			return 'desc';
+		};
 
-            const showDescription = tab === 'desc';
-            tabBtnDesc?.classList.toggle('text-white', showDescription);
-            tabBtnDesc?.classList.toggle('text-gray-400', !showDescription);
-            tabBtnDesc?.classList.toggle('border-white', showDescription);
-            tabBtnDesc?.classList.toggle('border-transparent', !showDescription);
-            tabBtnComments?.classList.toggle('text-white', !showDescription);
-            tabBtnComments?.classList.toggle('text-gray-400', showDescription);
-            tabBtnComments?.classList.toggle('border-white', !showDescription);
-            tabBtnComments?.classList.toggle('border-transparent', showDescription);
+        window.switchTab = (tab: PanelTab) => {
+			const tabs: PanelTab[] = ['desc', 'progress', 'comments'];
+			for (const candidate of tabs) {
+				const active = candidate === tab;
+				const button = document.getElementById('tab-btn-' + candidate);
+				const content = document.getElementById('tab-content-' + candidate);
+				button?.classList.toggle('text-white', active);
+				button?.classList.toggle('text-gray-400', !active);
+				button?.classList.toggle('border-white', active);
+				button?.classList.toggle('border-transparent', !active);
+				content?.classList.toggle('hidden', !active);
+				if (candidate !== 'desc') content?.classList.toggle('flex', active);
+			}
 
-            if (showDescription) {
-                tabContentDesc?.classList.remove('hidden');
-                tabContentComments?.classList.add('hidden');
-                tabContentComments?.classList.remove('flex');
-            } else {
-                tabContentComments?.classList.remove('hidden');
-                tabContentComments?.classList.add('flex');
-                tabContentDesc?.classList.add('hidden');
-
-                const form = tabContentComments?.querySelector('input[type="text"]') as HTMLInputElement;
-                if (form) form.focus();
-            }
+			if (tab === 'comments') {
+				const comments = document.getElementById('tab-content-comments');
+				const form = comments?.querySelector('textarea[name="content"]') as HTMLTextAreaElement | null;
+				window.setTimeout(() => form?.focus(), 150);
+			}
         };
 
         window.toggleInfoPanel = () => {
@@ -209,15 +240,13 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 
             const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
             if (isOpened) {
-                const tabContentDesc = document.getElementById('tab-content-desc');
-                const activeTab = tabContentDesc?.classList.contains('hidden') ? 'comments' : 'desc';
-                setUrlTab(activeTab);
+                setUrlTab(getActiveTab());
             } else {
                 setUrlTab(null);
             }
         };
 
-        window.toggleTab = (tab: 'desc' | 'comments') => {
+        window.toggleTab = (tab: PanelTab) => {
             const infoPanel = document.getElementById('info-panel');
             if (!infoPanel) return;
             const mobile = isMobile();
@@ -243,6 +272,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
         // Backward compatibility for existing buttons
 		window.toggleCommentsPanel = () => window.toggleTab('comments');
 		window.toggleDescPanel = () => window.toggleTab('desc');
+		window.toggleProgressPanel = () => window.toggleTab('progress');
 
 		// Close panel if clicked outside
 		document.addEventListener('click', (e) => {
@@ -252,6 +282,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 				(!infoPanel || !infoPanel.contains(target)) &&
 				!target.closest('button[onclick*="toggleCommentsPanel"]') &&
 				!target.closest('button[onclick*="toggleDescPanel"]') &&
+				!target.closest('button[onclick*="toggleProgressPanel"]') &&
                 !target.closest('button[onclick*="toggleTab"]') &&
                 !target.closest('div[onclick*="toggleDescPanel"]') &&
 				!target.closest('.like-btn')
@@ -348,11 +379,18 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 
 		// Check initial URL
 		const urlParams = new URLSearchParams(window.location.search);
-        const tab = urlParams.get('tab');
-		if (tab === 'comments' || tab === 'desc') {
+		const queryTab = urlParams.get('tab');
+		const tab: PanelTab | null = window.location.hash === '#progress'
+			? 'progress'
+			: queryTab === 'comments'
+				? 'comments'
+				: queryTab === 'desc'
+					? 'desc'
+					: null;
+		if (tab) {
             const infoPanel = document.getElementById('info-panel');
             if (infoPanel) {
-                window.switchTab(tab as 'comments' | 'desc');
+                window.switchTab(tab);
                 if (isMobile()) {
                     infoPanel.classList.remove('translate-y-full');
                 } else {

@@ -1,0 +1,50 @@
+{
+  "checklistId": "family-log",
+  "title": "夫婦共有ログ",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "setup",
+      "label": "共有の準備",
+      "items": [
+        {
+          "id": "choose-app",
+          "label": "共有に使うメモアプリを決める",
+          "defaultPhase": "prepare"
+        },
+        {
+          "id": "invite-partner",
+          "label": "パートナーを共有先へ招待する",
+          "defaultPhase": "prepare"
+        },
+        {
+          "id": "check-permission",
+          "label": "お互いに閲覧・編集できることを確認する",
+          "defaultPhase": "prepare"
+        }
+      ]
+    },
+    {
+      "id": "rules",
+      "label": "運用ルール",
+      "items": [
+        {
+          "id": "decide-sections",
+          "label": "連絡・買い物・対応中の項目を分ける",
+          "defaultPhase": "have"
+        },
+        {
+          "id": "decide-check-time",
+          "label": "毎日確認する時間を決める",
+          "defaultPhase": "have"
+        },
+        {
+          "id": "write-first-entry",
+          "label": "最初の共有事項を1件入力する",
+          "defaultPhase": "have"
+        }
+      ]
+    }
+  ]
+}

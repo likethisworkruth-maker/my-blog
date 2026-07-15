@@ -1,0 +1,50 @@
+{
+  "checklistId": "night-memo",
+  "title": "夜泣き対応メモ",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "setup",
+      "label": "事前準備",
+      "items": [
+        {
+          "id": "choose-device",
+          "label": "記録に使うスマートフォンを決める",
+          "defaultPhase": "prepare"
+        },
+        {
+          "id": "add-shortcut",
+          "label": "記録画面をホーム画面へ追加する",
+          "defaultPhase": "prepare"
+        },
+        {
+          "id": "share-method",
+          "label": "パートナーと記録の共有方法を確認する",
+          "defaultPhase": "prepare"
+        }
+      ]
+    },
+    {
+      "id": "recording",
+      "label": "記録する内容",
+      "items": [
+        {
+          "id": "milk-time",
+          "label": "ミルクや授乳の時刻を記録できるようにする",
+          "defaultPhase": "have"
+        },
+        {
+          "id": "diaper-time",
+          "label": "おむつ替えの時刻を記録できるようにする",
+          "defaultPhase": "have"
+        },
+        {
+          "id": "sleep-time",
+          "label": "寝かしつけと再入眠の時刻を記録できるようにする",
+          "defaultPhase": "have"
+        }
+      ]
+    }
+  ]
+}

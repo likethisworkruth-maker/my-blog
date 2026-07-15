@@ -2,3 +2,6 @@ project_id = "parenting-trial-database"
 
 [functions.submit-naraibase-response]
 verify_jwt = false
+
+[functions.delete-checklist-account]
+verify_jwt = true

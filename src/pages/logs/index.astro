@@ -17,6 +17,40 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 <Layout title={`${UI.logs.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
 
 	<div class="px-6 py-8 lg:py-12">
+		<nav class="mb-6 border-b border-gray-200" aria-label="子育てログの表示切り替え">
+			<div class="flex items-stretch gap-7" role="tablist">
+				<button
+					type="button"
+					role="tab"
+					aria-selected="true"
+					data-list-view="all"
+					class="list-view-tab border-b-2 border-mint-500 px-1 pb-3 text-sm font-bold text-navy-900 transition-colors"
+				>
+					子育てログを探す
+				</button>
+				<button
+					type="button"
+					role="tab"
+					aria-selected="false"
+					data-list-view="my"
+					class="list-view-tab border-b-2 border-transparent px-1 pb-3 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
+				>
+					マイリスト
+				</button>
+			</div>
+		</nav>
+
+		<div class="relative mb-6">
+			<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">search</span>
+			<label for="log-search" class="sr-only">子育てログを検索</label>
+			<input
+				type="search"
+				id="log-search"
+				placeholder="子育てログを検索"
+				class="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-[0.95rem] shadow-sm transition-colors focus:border-mint-500 focus:outline-none sm:py-4"
+			/>
+		</div>
+
 		<div class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between">
 			<!-- Categories -->
 			<div class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto" id="category-filters">
@@ -51,27 +85,82 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 		<div class="flex flex-col gap-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6" id="logs-container">
 			{logs.map((log) => <LogCard log={log} />)}
 		</div>
+		<div id="logs-empty" class="hidden rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
+			<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">favorite</span>
+			<p data-empty-message class="mt-3 text-sm font-bold text-gray-700">お気に入りに追加した子育てログはありません。</p>
+			<button type="button" data-find-content class="mt-4 text-sm font-bold text-mint-600 hover:text-mint-700">
+				子育てログを探す
+			</button>
+		</div>
 	</div>
 </Layout>
 
 <script>
+	const initLogsList = () => {
+	const logsContainer = document.getElementById('logs-container');
+	if (!logsContainer || logsContainer.dataset.listInitialized === 'true') return;
+	logsContainer.dataset.listInitialized = 'true';
+
 	const categoryButtons = document.querySelectorAll('.category-btn');
 	const ageFilter = document.getElementById('age-filter') as HTMLSelectElement;
 	const sortOrder = document.getElementById('sort-order') as HTMLSelectElement;
-	const logsContainer = document.getElementById('logs-container');
+	const searchInput = document.getElementById('log-search') as HTMLInputElement;
 	const cards = Array.from(document.querySelectorAll('.log-card')) as HTMLElement[];
+	const viewTabs = Array.from(document.querySelectorAll<HTMLElement>('[data-list-view]'));
+	const emptyState = document.getElementById('logs-empty');
+	const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
+	const controller = new AbortController();
+	document.addEventListener('astro:before-swap', () => controller.abort(), { once: true, signal: controller.signal });
 
 	let currentCategory = 'すべて';
 	let currentAge = 'all';
 	let currentSort = 'newest';
+	let searchQuery = '';
+	let currentListView: 'all' | 'my' = new URL(window.location.href).searchParams.get('view') === 'my' ? 'my' : 'all';
+
+	const isLiked = (id: string | null) => {
+		if (!id) return false;
+		try {
+			return Boolean(localStorage.getItem(`liked:${encodeURIComponent('logs/' + id)}`));
+		} catch {
+			return false;
+		}
+	};
+
+	const refreshViewTabs = () => {
+		viewTabs.forEach((tab) => {
+			const active = tab.dataset.listView === currentListView;
+			tab.setAttribute('aria-selected', String(active));
+			tab.classList.toggle('border-mint-500', active);
+			tab.classList.toggle('border-transparent', !active);
+			tab.classList.toggle('text-navy-900', active);
+			tab.classList.toggle('font-bold', active);
+			tab.classList.toggle('text-gray-400', !active);
+			tab.classList.toggle('font-medium', !active);
+		});
+	};
+
+	const setListView = (view: 'all' | 'my', pushHistory = true) => {
+		currentListView = view;
+		if (pushHistory) {
+			const url = new URL(window.location.href);
+			if (view === 'my') url.searchParams.set('view', 'my');
+			else url.searchParams.delete('view');
+			history.pushState({ listView: view }, '', url.toString());
+		}
+		refreshViewTabs();
+		updateView();
+	};
 
 	function updateView() {
 		// Filter
 		cards.forEach(card => {
 			const categoryMatch = currentCategory === 'すべて' || (card.getAttribute('data-categories') || '').split(',').includes(currentCategory);
 			const ageMatch = currentAge === 'all' || card.getAttribute('data-age') === currentAge;
+			const searchMatch = !searchQuery || (card.textContent || '').toLowerCase().includes(searchQuery);
+			const viewMatch = currentListView === 'all' || isLiked(card.getAttribute('data-id'));
 
-			if (categoryMatch && ageMatch) {
+			if (categoryMatch && ageMatch && searchMatch && viewMatch) {
 				card.style.display = 'flex';
 			} else {
 				card.style.display = 'none';
@@ -108,6 +197,13 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 			visibleCards.forEach(card => logsContainer.appendChild(card));
 			hiddenCards.forEach(card => logsContainer.appendChild(card));
 		}
+
+		emptyState?.classList.toggle('hidden', visibleCards.length > 0);
+		if (emptyMessage) {
+			emptyMessage.textContent = currentListView === 'my' && !cards.some((card) => isLiked(card.getAttribute('data-id')))
+				? 'お気に入りに追加した子育てログはありません。'
+				: '条件に一致する子育てログはありません。';
+		}
 	}
 
 	categoryButtons.forEach(button => {
@@ -135,6 +231,37 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 		currentSort = (e.target as HTMLSelectElement).value;
 		updateView();
 	});
+
+	searchInput?.addEventListener('input', (e) => {
+		searchQuery = (e.target as HTMLInputElement).value.trim().toLowerCase();
+		updateView();
+	});
+
+	viewTabs.forEach((tab) => {
+		tab.addEventListener('click', () => {
+			setListView(tab.dataset.listView === 'my' ? 'my' : 'all');
+		});
+	});
+	document.querySelector<HTMLElement>('[data-find-content]')?.addEventListener('click', () => setListView('all'));
+	window.addEventListener('popstate', () => {
+		currentListView = new URL(window.location.href).searchParams.get('view') === 'my' ? 'my' : 'all';
+		refreshViewTabs();
+		updateView();
+	}, { signal: controller.signal });
+	window.addEventListener('storage', (event) => {
+		if (event.key?.startsWith('liked:logs%2F')) updateView();
+	}, { signal: controller.signal });
+
+	refreshViewTabs();
+	updateView();
+	};
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initLogsList, { once: true });
+	} else {
+		initLogsList();
+	}
+	document.addEventListener('astro:page-load', initLogsList);
 </script>
 
 <style>

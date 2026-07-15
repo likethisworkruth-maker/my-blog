@@ -84,6 +84,29 @@ const uniqueAges =
 	description={SITE_DESCRIPTION}
 >
 	<div class="px-4 py-8 lg:py-12 max-w-xl mx-auto flex flex-col gap-8">
+		<nav class="border-b border-gray-200" aria-label="チェックリストの表示切り替え">
+			<div class="flex items-stretch gap-7" role="tablist">
+				<button
+					type="button"
+					role="tab"
+					aria-selected="true"
+					data-knowhow-view="all"
+					class="knowhow-view-tab border-b-2 border-mint-500 px-1 pb-3 text-sm font-bold text-navy-900 transition-colors"
+				>
+					チェックリストを探す
+				</button>
+				<button
+					type="button"
+					role="tab"
+					aria-selected="false"
+					data-knowhow-view="my"
+					class="knowhow-view-tab border-b-2 border-transparent px-1 pb-3 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
+				>
+					マイリスト
+				</button>
+			</div>
+		</nav>
+
 		<!-- Search Bar -->
 		<div class="relative mb-2">
 			<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
@@ -101,13 +124,6 @@ const uniqueAges =
 					data-category="すべて"
 				>
 					すべて
-				</button>
-				<button
-					class="category-btn px-4 py-1.5 rounded-full border text-[0.85rem] whitespace-nowrap shrink-0 transition-colors border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50 flex items-center gap-1"
-					data-category="liked"
-				>
-					<span class="material-symbols-outlined text-[1rem]">favorite</span>
-					お気に入り
 				</button>
 				{
 					displayCategories.slice(1).map(
@@ -217,6 +233,7 @@ const uniqueAges =
 									.order
 							}
 							data-id={post.id}
+							data-checklist-id={post.data.checklistId}
 						>
 							<!-- Header Removed -->
 
@@ -255,6 +272,13 @@ const uniqueAges =
 				)
 			}
 		</div>
+		<div id="knowhow-empty" class="hidden rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
+			<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">checklist</span>
+			<p data-empty-message class="mt-3 text-sm font-bold text-gray-700">まだ始めたチェックリストはありません。</p>
+			<button type="button" data-find-checklists class="mt-4 text-sm font-bold text-mint-600 hover:text-mint-700">
+				チェックリストを探す
+			</button>
+		</div>
 	</div>
 
 	<!-- Hidden comments to ensure script is loaded -->
@@ -277,15 +301,27 @@ const uniqueAges =
 
 <script>
 	import { navigate } from 'astro:transitions/client';
+	import {
+		CHECKLIST_STORAGE_KEY,
+		getActiveChecklistRun,
+	} from '../../scripts/checklist-state';
+	import {
+		getChecklistUser,
+		hydrateChecklistRunsFromSupabase,
+		syncAllLocalChecklistRuns,
+	} from '../../scripts/checklist-sync';
+
+	type IndexPanelTab = 'desc' | 'progress' | 'comments';
 
 	declare global {
 		interface Window {
 			openModal: (id: string) => void;
 			toggleCommentsPanel: () => void;
 			toggleDescPanel: () => void;
+			toggleProgressPanel: () => void;
 			toggleInfoPanel: () => void;
-			toggleTab: (tab: 'desc' | 'comments') => void;
-			switchTab: (tab: 'desc' | 'comments') => void;
+			toggleTab: (tab: IndexPanelTab) => void;
+			switchTab: (tab: IndexPanelTab) => void;
 			closeModal?: () => void;
 		}
 	}
@@ -334,6 +370,7 @@ const uniqueAges =
 	// Handle browser back/forward buttons
 	window.addEventListener('popstate', () => {
 		if (window.location.pathname === '/knowhow' || window.location.pathname === '/knowhow/') {
+			syncListViewFromUrl();
 			if (modal && modal.open) {
                 isModalOpenByClick = false;
 				modal.close();
@@ -349,41 +386,40 @@ const uniqueAges =
 
     const isMobile = () => window.innerWidth < 1024;
 
-    const setUrlTab = (tab: string | null) => {
+    const setUrlTab = (tab: IndexPanelTab | null) => {
         const url = new URL(window.location.href);
-        if (tab) url.searchParams.set('tab', tab);
-        else url.searchParams.delete('tab');
+		url.searchParams.delete('tab');
+		url.hash = '';
+		if (tab === 'comments') url.searchParams.set('tab', 'comments');
+		if (tab === 'progress') url.hash = 'progress';
         history.replaceState(null, '', url.toString());
     };
 
-    window.switchTab = (tab: 'desc' | 'comments') => {
-        const tabBtnDesc = document.getElementById('tab-btn-desc');
-        const tabBtnComments = document.getElementById('tab-btn-comments');
-        const tabContentDesc = document.getElementById('tab-content-desc');
-        const tabContentComments = document.getElementById('tab-content-comments');
+	const getActivePanelTab = (): IndexPanelTab => {
+		if (!document.getElementById('tab-content-progress')?.classList.contains('hidden')) return 'progress';
+		if (!document.getElementById('tab-content-comments')?.classList.contains('hidden')) return 'comments';
+		return 'desc';
+	};
 
-            const showDescription = tab === 'desc';
-            tabBtnDesc?.classList.toggle('text-white', showDescription);
-            tabBtnDesc?.classList.toggle('text-gray-400', !showDescription);
-            tabBtnDesc?.classList.toggle('border-white', showDescription);
-            tabBtnDesc?.classList.toggle('border-transparent', !showDescription);
-            tabBtnComments?.classList.toggle('text-white', !showDescription);
-            tabBtnComments?.classList.toggle('text-gray-400', showDescription);
-            tabBtnComments?.classList.toggle('border-white', !showDescription);
-            tabBtnComments?.classList.toggle('border-transparent', showDescription);
+    window.switchTab = (tab: IndexPanelTab) => {
+		const tabs: IndexPanelTab[] = ['desc', 'progress', 'comments'];
+		for (const candidate of tabs) {
+			const active = candidate === tab;
+			const button = document.getElementById('tab-btn-' + candidate);
+			const content = document.getElementById('tab-content-' + candidate);
+			button?.classList.toggle('text-white', active);
+			button?.classList.toggle('text-gray-400', !active);
+			button?.classList.toggle('border-white', active);
+			button?.classList.toggle('border-transparent', !active);
+			content?.classList.toggle('hidden', !active);
+			if (candidate !== 'desc') content?.classList.toggle('flex', active);
+		}
 
-            if (showDescription) {
-                tabContentDesc?.classList.remove('hidden');
-                tabContentComments?.classList.add('hidden');
-                tabContentComments?.classList.remove('flex');
-            } else {
-                tabContentComments?.classList.remove('hidden');
-                tabContentComments?.classList.add('flex');
-                tabContentDesc?.classList.add('hidden');
-
-            const form = tabContentComments?.querySelector('input[type="text"]') as HTMLInputElement;
-            if (form) form.focus();
-        }
+		if (tab === 'comments') {
+			const comments = document.getElementById('tab-content-comments');
+			const form = comments?.querySelector('textarea[name="content"]') as HTMLTextAreaElement | null;
+			window.setTimeout(() => form?.focus(), 150);
+		}
     };
 
     window.toggleInfoPanel = () => {
@@ -405,15 +441,13 @@ const uniqueAges =
 
         const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
         if (isOpened) {
-            const tabContentDesc = document.getElementById('tab-content-desc');
-            const activeTab = tabContentDesc?.classList.contains('hidden') ? 'comments' : 'desc';
-            setUrlTab(activeTab);
+            setUrlTab(getActivePanelTab());
         } else {
             setUrlTab(null);
         }
     };
 
-    window.toggleTab = (tab: 'desc' | 'comments') => {
+    window.toggleTab = (tab: IndexPanelTab) => {
         const infoPanel = document.getElementById('info-panel');
         if (!infoPanel) return;
         const mobile = isMobile();
@@ -436,6 +470,7 @@ const uniqueAges =
 
 	window.toggleCommentsPanel = () => window.toggleTab('comments');
 	window.toggleDescPanel = () => window.toggleTab('desc');
+	window.toggleProgressPanel = () => window.toggleTab('progress');
 
 	// Close panel if clicked outside
 	document.addEventListener('click', (e) => {
@@ -448,6 +483,7 @@ const uniqueAges =
 			(!infoPanel || !infoPanel.contains(target)) &&
 			!target.closest('button[onclick*="toggleCommentsPanel"]') &&
 			!target.closest('button[onclick*="toggleDescPanel"]') &&
+			!target.closest('button[onclick*="toggleProgressPanel"]') &&
             !target.closest('button[onclick*="toggleTab"]') &&
             !target.closest('div[onclick*="toggleDescPanel"]') &&
 			!target.closest('.like-btn')
@@ -470,8 +506,15 @@ const uniqueAges =
 		if (isNavigating) return;
 
 		isNavigating = true;
+		isModalOpenByClick = true;
 		try {
-			await navigate(`/knowhow/${id}/`);
+			try {
+				sessionStorage.setItem('knowhow:return-url', window.location.pathname + window.location.search);
+			} catch {
+				// Session storage may be unavailable in strict privacy modes.
+			}
+			const progressHash = currentListView === 'my' ? '#progress' : '';
+			await navigate('/knowhow/' + id + '/' + progressHash);
 		} catch (err) {
 			console.error(err);
 		} finally {
@@ -583,11 +626,54 @@ const uniqueAges =
 	const knowhowContainer = document.getElementById("knowhow-container");
 	const cards = Array.from(document.querySelectorAll(".knowhow-card")) as HTMLElement[];
 	const searchInput = document.getElementById("knowhow-search") as HTMLInputElement;
+	const viewTabs = Array.from(document.querySelectorAll<HTMLElement>('[data-knowhow-view]'));
+	const emptyState = document.getElementById('knowhow-empty');
+	const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
+	let currentListView: 'all' | 'my' = new URL(window.location.href).searchParams.get('view') === 'my' ? 'my' : 'all';
 
 	let currentCategory = "すべて";
 	let currentAge = "all";
 	let currentSort = "recommended";
 	let searchQuery = "";
+
+	function refreshViewTabs() {
+		for (const tab of viewTabs) {
+			const active = tab.dataset.knowhowView === currentListView;
+			tab.setAttribute('aria-selected', String(active));
+			tab.classList.toggle('border-mint-500', active);
+			tab.classList.toggle('border-transparent', !active);
+			tab.classList.toggle('text-navy-900', active);
+			tab.classList.toggle('font-bold', active);
+			tab.classList.toggle('text-gray-400', !active);
+			tab.classList.toggle('font-medium', !active);
+		}
+	}
+
+	function refreshMyListCount() {
+		const count = cards.filter((card) => {
+			const checklistId = card.dataset.checklistId;
+			return checklistId ? Boolean(getActiveChecklistRun(checklistId)) : false;
+		}).length;
+		return count;
+	}
+
+	function setListView(view: 'all' | 'my', pushHistory = true) {
+		currentListView = view;
+		if (pushHistory) {
+			const url = new URL(window.location.href);
+			if (view === 'my') url.searchParams.set('view', 'my');
+			else url.searchParams.delete('view');
+			url.hash = '';
+			history.pushState({ knowhowView: view }, '', url.toString());
+		}
+		refreshViewTabs();
+		updateView();
+	}
+
+	function syncListViewFromUrl() {
+		const view = new URL(window.location.href).searchParams.get('view') === 'my' ? 'my' : 'all';
+		setListView(view, false);
+	}
 
 	knowhowContainer?.addEventListener('click', (event) => {
 		const target = event.target as HTMLElement;
@@ -616,17 +702,16 @@ const uniqueAges =
 			let categoryMatch = false;
 			if (currentCategory === "すべて") {
 				categoryMatch = true;
-			} else if (currentCategory === "liked") {
-				const id = card.getAttribute("data-id");
-				const isLiked = !!localStorage.getItem(`liked:${encodeURIComponent('knowhow/' + id)}`);
-				categoryMatch = isLiked;
 			} else {
 				categoryMatch = (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
 			}
 
 			const ageMatch = currentAge === "all" || card.getAttribute("data-age") === currentAge;
+			const checklistId = card.dataset.checklistId;
+			const viewMatch = currentListView === 'all'
+				|| Boolean(checklistId && getActiveChecklistRun(checklistId));
 
-			if (categoryMatch && ageMatch && searchMatch) {
+			if (categoryMatch && ageMatch && searchMatch && viewMatch) {
 				card.style.display = "block";
 			} else {
 				card.style.display = "none";
@@ -664,6 +749,14 @@ const uniqueAges =
 			visibleCards.forEach((card) => knowhowContainer.appendChild(card));
 			hiddenCards.forEach((card) => knowhowContainer.appendChild(card));
 		}
+
+		const myCount = refreshMyListCount();
+		emptyState?.classList.toggle('hidden', visibleCards.length > 0);
+		if (emptyMessage) {
+			emptyMessage.textContent = currentListView === 'my' && myCount === 0
+				? 'まだ始めたチェックリストはありません。'
+				: '条件に一致するチェックリストはありません。';
+		}
 	}
 
 	categoryButtons.forEach((button) => {
@@ -696,6 +789,41 @@ const uniqueAges =
 			searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
 			updateView();
 		});
+
+		viewTabs.forEach((tab) => {
+			tab.addEventListener('click', () => {
+				setListView(tab.dataset.knowhowView === 'my' ? 'my' : 'all');
+			});
+		});
+		document.querySelector<HTMLElement>('[data-find-checklists]')?.addEventListener('click', () => {
+			setListView('all');
+		});
+
+		const refreshFromSavedRuns = () => {
+			refreshMyListCount();
+			updateView();
+		};
+		window.addEventListener('checklist-runs-changed', refreshFromSavedRuns);
+		window.addEventListener('storage', (event) => {
+			if (event.key === CHECKLIST_STORAGE_KEY) refreshFromSavedRuns();
+		});
+
+		const hydrateMyList = async () => {
+			try {
+				const user = await getChecklistUser();
+				if (!user) return;
+				await hydrateChecklistRunsFromSupabase(user);
+				await syncAllLocalChecklistRuns(user);
+				refreshFromSavedRuns();
+			} catch (error) {
+				console.error('マイリストを同期できませんでした。', error);
+			}
+		};
+
+		refreshViewTabs();
+		refreshMyListCount();
+		updateView();
+		void hydrateMyList();
 	});
 </script>
 

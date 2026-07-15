@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "validate:checklists": "node scripts/validate-checklists.mjs",
+    "test:checklists": "node --experimental-strip-types tests/checklist-state.test.mjs",
+    "build": "npm run validate:checklists && astro build",
     "postbuild": "node scripts/postbuild.js",
     "preview": "astro preview",
     "astro": "astro"

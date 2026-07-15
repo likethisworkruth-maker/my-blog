@@ -1,6 +1,7 @@
 ---
 title: "夫婦共有ログ"
 description: "夫婦で子育ての状況やタスクを共有。すれ違いを減らします。"
+checklistId: "family-log"
 coverImage: "/images/checklist_sample_jp.png"
 icon: "group"
 isFree: true

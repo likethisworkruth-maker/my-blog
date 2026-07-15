@@ -16,6 +16,7 @@ const likeSlug = `logs/${log.id}`;
 	data-categories={(log.data.categories || []).join(",")}
 	data-age={log.data.childAgeMonths ?? "none"}
 	data-lognumber={log.data.logNumber}
+	data-id={log.id}
 >
 	<div class="flex flex-row-reverse sm:flex-col">
 		<div class="w-[120px] sm:w-full h-auto aspect-video bg-gray-100 shrink-0 relative flex items-center justify-center border-l sm:border-l-0 sm:border-b border-gray-100 overflow-hidden">

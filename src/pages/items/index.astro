@@ -75,6 +75,29 @@ const uniqueAges =
 	description={SITE_DESCRIPTION}
 >
 	<div class="px-6 py-8 lg:py-12">
+		<nav class="mb-6 border-b border-gray-200" aria-label="アイテムの表示切り替え">
+			<div class="flex items-stretch gap-7" role="tablist">
+				<button
+					type="button"
+					role="tab"
+					aria-selected="true"
+					data-list-view="all"
+					class="list-view-tab border-b-2 border-mint-500 px-1 pb-3 text-sm font-bold text-navy-900 transition-colors"
+				>
+					アイテムを探す
+				</button>
+				<button
+					type="button"
+					role="tab"
+					aria-selected="false"
+					data-list-view="my"
+					class="list-view-tab border-b-2 border-transparent px-1 pb-3 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
+				>
+					マイリスト
+				</button>
+			</div>
+		</nav>
+
 		<!-- Search Bar -->
 		<div class="relative mb-6">
 			<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
@@ -94,13 +117,6 @@ const uniqueAges =
 					data-category="すべて"
 				>
 					すべて
-				</button>
-				<button
-					class="category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50 flex items-center gap-1"
-					data-category="liked"
-				>
-					<span class="material-symbols-outlined text-[1rem]">favorite</span>
-					お気に入り
 				</button>
 				{
 					displayCategories.slice(1).map(
@@ -224,11 +240,23 @@ const uniqueAges =
 				)
 			}
 		</div>
+		<div id="items-empty" class="hidden rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
+			<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">favorite</span>
+			<p data-empty-message class="mt-3 text-sm font-bold text-gray-700">お気に入りに追加したアイテムはありません。</p>
+			<button type="button" data-find-content class="mt-4 text-sm font-bold text-mint-600 hover:text-mint-700">
+				アイテムを探す
+			</button>
+		</div>
 	</div>
 </Layout>
 
 <script
 >
+	const initItemsList = () => {
+	const itemsContainer = document.getElementById("items-container");
+	if (!itemsContainer || itemsContainer.dataset.listInitialized === "true") return;
+	itemsContainer.dataset.listInitialized = "true";
+
 	const categoryButtons =
 		document.querySelectorAll(
 			".category-btn",
@@ -241,10 +269,6 @@ const uniqueAges =
 		document.getElementById(
 			"sort-order",
 		) as HTMLSelectElement;
-	const itemsContainer =
-		document.getElementById(
-			"items-container",
-		);
 	const cards =
 		Array.from(
 			document.querySelectorAll(
@@ -265,6 +289,46 @@ const uniqueAges =
 		"recommended";
 	let searchQuery =
 		"";
+	let currentListView: "all" | "my" = new URL(window.location.href).searchParams.get("view") === "my" ? "my" : "all";
+	const viewTabs = Array.from(document.querySelectorAll<HTMLElement>("[data-list-view]"));
+	const emptyState = document.getElementById("items-empty");
+	const emptyMessage = emptyState?.querySelector<HTMLElement>("[data-empty-message]");
+	const controller = new AbortController();
+	document.addEventListener("astro:before-swap", () => controller.abort(), { once: true, signal: controller.signal });
+
+	const isLiked = (id: string | null) => {
+		if (!id) return false;
+		try {
+			return Boolean(localStorage.getItem(`liked:${encodeURIComponent("items/" + id)}`));
+		} catch {
+			return false;
+		}
+	};
+
+	const refreshViewTabs = () => {
+		viewTabs.forEach((tab) => {
+			const active = tab.dataset.listView === currentListView;
+			tab.setAttribute("aria-selected", String(active));
+			tab.classList.toggle("border-mint-500", active);
+			tab.classList.toggle("border-transparent", !active);
+			tab.classList.toggle("text-navy-900", active);
+			tab.classList.toggle("font-bold", active);
+			tab.classList.toggle("text-gray-400", !active);
+			tab.classList.toggle("font-medium", !active);
+		});
+	};
+
+	const setListView = (view: "all" | "my", pushHistory = true) => {
+		currentListView = view;
+		if (pushHistory) {
+			const url = new URL(window.location.href);
+			if (view === "my") url.searchParams.set("view", "my");
+			else url.searchParams.delete("view");
+			history.pushState({ listView: view }, "", url.toString());
+		}
+		refreshViewTabs();
+		updateView();
+	};
 
 	function updateView() {
 		// Filter
@@ -276,16 +340,9 @@ const uniqueAges =
 				const descText = (card.querySelector('p')?.textContent || '').toLowerCase();
 				const searchMatch = !searchQuery || titleText.includes(searchQuery) || descText.includes(searchQuery);
 
-				let categoryMatch = false;
-				if (currentCategory === "すべて") {
-					categoryMatch = true;
-				} else if (currentCategory === "liked") {
-					const id = card.getAttribute("data-id");
-					const isLiked = !!localStorage.getItem(`liked:${encodeURIComponent('items/' + id)}`);
-					categoryMatch = isLiked;
-				} else {
-					categoryMatch = (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
-				}
+				const categoryMatch = currentCategory === "すべて"
+					|| (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
+				const viewMatch = currentListView === "all" || isLiked(card.getAttribute("data-id"));
 
 				const ageMatch =
 					currentAge ===
@@ -298,7 +355,8 @@ const uniqueAges =
 				if (
 					categoryMatch &&
 					ageMatch &&
-					searchMatch
+					searchMatch &&
+					viewMatch
 				) {
 					card.style.display =
 						"flex";
@@ -442,6 +500,13 @@ const uniqueAges =
 					),
 			);
 		}
+
+		emptyState?.classList.toggle("hidden", visibleCards.length > 0);
+		if (emptyMessage) {
+			emptyMessage.textContent = currentListView === "my" && !cards.some((card) => isLiked(card.getAttribute("data-id")))
+				? "お気に入りに追加したアイテムはありません。"
+				: "条件に一致するアイテムはありません。";
+		}
 	}
 
 	categoryButtons.forEach(
@@ -530,6 +595,32 @@ const uniqueAges =
 			updateView();
 		}
 	);
+
+	viewTabs.forEach((tab) => {
+		tab.addEventListener("click", () => {
+			setListView(tab.dataset.listView === "my" ? "my" : "all");
+		});
+	});
+	document.querySelector<HTMLElement>("[data-find-content]")?.addEventListener("click", () => setListView("all"));
+	window.addEventListener("popstate", () => {
+		currentListView = new URL(window.location.href).searchParams.get("view") === "my" ? "my" : "all";
+		refreshViewTabs();
+		updateView();
+	}, { signal: controller.signal });
+	window.addEventListener("storage", (event) => {
+		if (event.key?.startsWith("liked:items%2F")) updateView();
+	}, { signal: controller.signal });
+
+	refreshViewTabs();
+	updateView();
+	};
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", initItemsList, { once: true });
+	} else {
+		initItemsList();
+	}
+	document.addEventListener("astro:page-load", initItemsList);
 </script>
 
 <style
