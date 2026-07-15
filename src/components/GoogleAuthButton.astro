@@ -20,9 +20,19 @@
 			aria-label="アカウントメニュー"
 			aria-expanded="false"
 		>
-			<svg class="h-[22px] w-[22px] fill-current" viewBox="0 0 24 24" aria-hidden="true">
-				<path d="M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4m0 9c-2.67 0-8 1.34-8 4v2c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-2c0-2.66-5.33-4-8-4" />
-			</svg>
+			<img
+				class="h-full w-full rounded-full object-cover"
+				data-google-avatar
+				src=""
+				alt="アカウント"
+				referrerpolicy="no-referrer"
+				style="display: none;"
+			/>
+			<span class="items-center justify-center" data-google-default-icon style="display: flex;">
+				<svg class="h-[22px] w-[22px] fill-current" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4m0 9c-2.67 0-8 1.34-8 4v2c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-2c0-2.66-5.33-4-8-4" />
+				</svg>
+			</span>
 		</button>
 
 		<div class="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg" data-google-account-menu style="display: none;">
@@ -60,6 +70,18 @@
 			const errorMessage = root.querySelector<HTMLElement>('[data-google-auth-error]');
 			const accountTrigger = root.querySelector<HTMLButtonElement>('[data-google-account-trigger]');
 			const accountMenu = root.querySelector<HTMLElement>('[data-google-account-menu]');
+			const avatar = root.querySelector<HTMLImageElement>('[data-google-avatar]');
+			const defaultIcon = root.querySelector<HTMLElement>('[data-google-default-icon]');
+
+			const showDefaultIcon = () => {
+				if (avatar) {
+					avatar.style.display = 'none';
+					avatar.removeAttribute('src');
+				}
+				if (defaultIcon) defaultIcon.style.display = 'flex';
+			};
+
+			avatar?.addEventListener('error', showDefaultIcon);
 
 			const setAccountMenuOpen = (open: boolean) => {
 				if (accountMenu) accountMenu.style.display = open ? 'block' : 'none';
@@ -84,6 +106,18 @@
 				if (signedIn) signedIn.style.display = user ? 'flex' : 'none';
 				if (email) email.textContent = user?.email ?? 'ログイン中';
 				if (signedIn) signedIn.title = user?.email ?? 'Googleアカウントでログイン中';
+
+				const metadata = user?.user_metadata;
+				const avatarUrl = metadata?.avatar_url ?? metadata?.picture;
+				if (avatar && typeof avatarUrl === 'string' && avatarUrl.startsWith('https://')) {
+					avatar.src = avatarUrl;
+					avatar.alt = user?.email ? `${user.email}のプロフィール画像` : 'Googleプロフィール画像';
+					avatar.style.display = 'block';
+					if (defaultIcon) defaultIcon.style.display = 'none';
+				} else {
+					showDefaultIcon();
+				}
+
 				if (!user) setAccountMenuOpen(false);
 			};
 
