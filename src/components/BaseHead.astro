@@ -28,6 +28,8 @@ const imageSrc = typeof image === 'string' ? image : image.src;
 {noindex && <meta name="robots" content="noindex,nofollow" />}
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link
 	rel="alternate"
@@ -36,9 +38,15 @@ const imageSrc = typeof image === 'string' ? image : image.src;
 	href={new URL('rss.xml', Astro.site)}
 />
 <meta name="generator" content={Astro.generator} />
+<meta name="theme-color" content="#41c9b4" />
+<meta name="application-name" content={SITE_TITLE} />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="子育てメモ" />
 
 <Font cssVariable="--font-atkinson" preload />
 <ClientRouter />
+<script src="../scripts/pwa.ts"></script>
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />

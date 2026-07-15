@@ -97,9 +97,9 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
             >
                 <div class="flex items-center justify-between pl-4 pr-14 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
 					<div class="flex-grow flex items-stretch justify-center w-full">
-						<button id="tab-btn-desc" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
-						<button id="tab-btn-progress" class="h-14 flex-1 px-4 flex items-center justify-center font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
-						<button id="tab-btn-comments" class="h-14 flex-1 px-6 flex items-center justify-center font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">コメント</button>
+						<button id="tab-btn-desc" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
+						<button id="tab-btn-progress" class="h-14 flex-1 px-2 sm:px-4 flex items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
+						<button id="tab-btn-comments" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">みんなのコメント</button>
                     </div>
                     <button class="absolute right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
                         <span class="material-symbols-outlined font-light">close</span>
