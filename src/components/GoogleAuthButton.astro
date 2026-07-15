@@ -1,0 +1,123 @@
+<div class="relative shrink-0" data-google-auth>
+	<button
+		type="button"
+		class="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-sm font-bold text-navy-900 shadow-sm transition-colors hover:border-gray-300 hover:bg-gray-50 disabled:cursor-wait disabled:opacity-60 sm:px-4"
+		data-google-login
+		aria-label="Googleでログイン"
+	>
+		<span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm font-bold text-[#4285f4]" aria-hidden="true">G</span>
+		<span class="hidden sm:inline" data-login-label>Googleでログイン</span>
+	</button>
+
+	<div class="hidden h-10 items-center gap-1 rounded-full border border-gray-200 bg-white pl-3 pr-1 shadow-sm" data-google-signed-in>
+		<span class="material-symbols-outlined text-[20px] text-mint-600" aria-hidden="true">account_circle</span>
+		<span class="hidden max-w-36 truncate text-xs font-bold text-navy-900 xl:inline" data-google-email></span>
+		<button
+			type="button"
+			class="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-navy-900 disabled:cursor-wait disabled:opacity-60"
+			data-google-logout
+			aria-label="ログアウト"
+			title="ログアウト"
+		>
+			<span class="material-symbols-outlined text-[19px]" aria-hidden="true">logout</span>
+		</button>
+	</div>
+
+	<p class="absolute right-0 top-full z-50 mt-2 hidden w-64 rounded-lg bg-red-700 px-3 py-2 text-xs leading-relaxed text-white shadow-lg" data-google-auth-error role="status"></p>
+</div>
+
+<script>
+	import { getGoogleUser, signInWithGoogle, signOutGoogleUser } from '../scripts/google-auth';
+	import { getSupabaseClient } from '../scripts/supabase-client';
+
+	function initGoogleAuthButtons() {
+		document.querySelectorAll<HTMLElement>('[data-google-auth]').forEach((root) => {
+			if (root.dataset.initialized) return;
+			root.dataset.initialized = 'true';
+
+			const loginButton = root.querySelector<HTMLButtonElement>('[data-google-login]');
+			const logoutButton = root.querySelector<HTMLButtonElement>('[data-google-logout]');
+			const signedIn = root.querySelector<HTMLElement>('[data-google-signed-in]');
+			const email = root.querySelector<HTMLElement>('[data-google-email]');
+			const loginLabel = root.querySelector<HTMLElement>('[data-login-label]');
+			const errorMessage = root.querySelector<HTMLElement>('[data-google-auth-error]');
+
+			const showError = (message = '') => {
+				if (!errorMessage) return;
+				errorMessage.textContent = message;
+				errorMessage.classList.toggle('hidden', !message);
+			};
+
+			const setBusy = (busy: boolean) => {
+				if (loginButton) loginButton.disabled = busy;
+				if (logoutButton) logoutButton.disabled = busy;
+				if (loginLabel) loginLabel.textContent = busy ? '処理中…' : 'Googleでログイン';
+			};
+
+			const renderUser = (user: Awaited<ReturnType<typeof getGoogleUser>>) => {
+				loginButton?.classList.toggle('hidden', Boolean(user));
+				signedIn?.classList.toggle('hidden', !user);
+				signedIn?.classList.toggle('flex', Boolean(user));
+				if (email) email.textContent = user?.email ?? 'ログイン中';
+				if (signedIn) signedIn.title = user?.email ?? 'Googleアカウントでログイン中';
+			};
+
+			loginButton?.addEventListener('click', async () => {
+				setBusy(true);
+				showError();
+				try {
+					await signInWithGoogle(window.location.href);
+				} catch (error) {
+					console.error(error);
+					showError(error instanceof Error ? error.message : 'Googleログインを開始できませんでした。');
+					setBusy(false);
+				}
+			});
+
+			logoutButton?.addEventListener('click', async () => {
+				setBusy(true);
+				showError();
+				try {
+					await signOutGoogleUser();
+					renderUser(null);
+				} catch (error) {
+					console.error(error);
+					showError('ログアウトできませんでした。時間をおいて再度お試しください。');
+				} finally {
+					setBusy(false);
+				}
+			});
+
+			const supabase = getSupabaseClient();
+			if (!supabase) {
+				if (loginButton) {
+					loginButton.disabled = true;
+					loginButton.title = 'Googleログインは現在利用できません';
+				}
+				return;
+			}
+
+			const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+				renderUser(session?.user ?? null);
+				setBusy(false);
+			});
+
+			const cleanup = () => {
+				authListener.subscription.unsubscribe();
+				document.removeEventListener('astro:before-swap', cleanup);
+			};
+			document.addEventListener('astro:before-swap', cleanup);
+
+			void getGoogleUser()
+				.then(renderUser)
+				.catch((error) => {
+					console.error(error);
+					showError('ログイン状態を確認できませんでした。');
+				})
+				.finally(() => setBusy(false));
+		});
+	}
+
+	document.addEventListener('DOMContentLoaded', initGoogleAuthButtons);
+	document.addEventListener('astro:page-load', initGoogleAuthButtons);
+</script>

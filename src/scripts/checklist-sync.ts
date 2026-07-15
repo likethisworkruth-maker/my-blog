@@ -8,6 +8,7 @@ import {
 	getChecklistRuns,
 	mergeChecklistRuns,
 } from './checklist-state';
+import { getGoogleUser, signInWithGoogle, signOutGoogleUser } from './google-auth';
 import { getSupabaseClient } from './supabase-client';
 
 const statuses = new Set<ChecklistStatus>([
@@ -20,29 +21,17 @@ const phases = new Set<ChecklistPhase>(['have', 'prepare', 'pack_day']);
 const outcomes = new Set<ChecklistOutcome>(['used', 'unused', 'missed', 'remove_next']);
 
 export async function getChecklistUser(): Promise<User | null> {
-	const supabase = getSupabaseClient();
-	if (!supabase) return null;
-	const { data } = await supabase.auth.getSession();
-	return data.session?.user ?? null;
+	return getGoogleUser();
 }
 
 export async function signInToSaveChecklist() {
-	const supabase = getSupabaseClient();
-	if (!supabase) throw new Error('Supabaseの接続情報が設定されていません。');
 	const redirectUrl = new URL(window.location.href);
 	redirectUrl.hash = 'progress';
-	const { error } = await supabase.auth.signInWithOAuth({
-		provider: 'google',
-		options: { redirectTo: redirectUrl.toString() },
-	});
-	if (error) throw error;
+	await signInWithGoogle(redirectUrl.toString());
 }
 
 export async function signOutChecklistUser() {
-	const supabase = getSupabaseClient();
-	if (!supabase) return;
-	const { error } = await supabase.auth.signOut();
-	if (error) throw error;
+	await signOutGoogleUser();
 }
 
 export async function syncChecklistRun(run: ChecklistRun, user?: User | null) {
