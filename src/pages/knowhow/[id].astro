@@ -316,23 +316,35 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
         // Touch swipe
         let touchStartY = 0;
         let touchEndY = 0;
+        let touchMoved = false;
         container.addEventListener('touchstart', (e) => {
             touchStartY = e.touches[0].clientY;
+            touchEndY = touchStartY;
+            touchMoved = false;
         }, { passive: true });
 
         container.addEventListener('touchmove', (e) => {
             touchEndY = e.touches[0].clientY;
+            touchMoved = true;
         }, { passive: true });
 
         container.addEventListener('touchend', (e) => {
             const target = e.target as HTMLElement;
             const infoPanel = document.getElementById('info-panel');
             if (infoPanel && infoPanel.contains(target)) return;
+            if (target.closest('button, a, input, textarea, select, label, [role="button"]')) return;
+            if (!touchMoved) return;
 
             const distance = touchStartY - touchEndY;
             if (distance > 50) navigateTo('next');
             else if (distance < -50) navigateTo('prev');
+
+            touchMoved = false;
         });
+
+        container.addEventListener('touchcancel', () => {
+            touchMoved = false;
+        }, { passive: true });
 
 		// Check initial URL
 		const urlParams = new URLSearchParams(window.location.search);

@@ -482,6 +482,12 @@ const uniqueAges =
 	// Swipe and Wheel Navigation Logic
 	let startY = 0;
 	let endY = 0;
+	let touchMoved = false;
+	let touchTracking = false;
+
+	const isSwipeExcludedTarget = (target: HTMLElement) => Boolean(
+		target.closest('.overflow-y-auto, button, a, input, textarea, select, label, [role="button"]')
+	);
 
 	const navigateToRelative = (direction: 1 | -1) => {
 		const activePostId = wrapper?.dataset.currentPostId || currentPostId;
@@ -508,19 +514,30 @@ const uniqueAges =
 	wrapper?.addEventListener('touchstart', (e) => {
 		// Only trigger swipe if we are not scrolling a comment panel or content area
 		const target = e.target as HTMLElement;
-		if (target.closest('.overflow-y-auto') || target.closest('textarea')) return;
+		if (isSwipeExcludedTarget(target)) {
+			touchTracking = false;
+			return;
+		}
 		startY = e.touches[0].clientY;
+		endY = startY;
+		touchMoved = false;
+		touchTracking = true;
 	}, { passive: true });
 
 	wrapper?.addEventListener('touchmove', (e) => {
+		if (!touchTracking) return;
 		const target = e.target as HTMLElement;
-		if (target.closest('.overflow-y-auto') || target.closest('textarea')) return;
+		if (isSwipeExcludedTarget(target)) return;
 		endY = e.touches[0].clientY;
+		touchMoved = true;
 	}, { passive: true });
 
 	wrapper?.addEventListener('touchend', (e) => {
 		const target = e.target as HTMLElement;
-		if (target.closest('.overflow-y-auto') || target.closest('textarea')) return;
+		const shouldNavigate = touchTracking && touchMoved && !isSwipeExcludedTarget(target);
+		touchTracking = false;
+		touchMoved = false;
+		if (!shouldNavigate) return;
 
 		const distance = startY - endY;
 		if (distance > 50) {
@@ -533,6 +550,13 @@ const uniqueAges =
 		startY = 0;
 		endY = 0;
 	});
+
+	wrapper?.addEventListener('touchcancel', () => {
+		touchTracking = false;
+		touchMoved = false;
+		startY = 0;
+		endY = 0;
+	}, { passive: true });
 
 	// Wheel Event (PC)
 	let wheelTimeout: NodeJS.Timeout | null = null;
