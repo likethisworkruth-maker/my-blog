@@ -9,7 +9,7 @@ const logs = await getCollection('logs');
 logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
 
 const uniqueCategories = [...new Set(logs.flatMap(log => log.data.categories || []))];
-const displayCategories = uniqueCategories.length > 0 ? ['すべて', ...uniqueCategories] : ['すべて', '育児記録', '夫婦共有', '予定・健診', '離乳食'];
+const displayCategories = uniqueCategories.length > 0 ? ['すべて', ...uniqueCategories] : ['すべて', '子育て記録', '夫婦共有', '予定・健診', '離乳食'];
 
 const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(age => age !== undefined))].sort((a, b) => a! - b!);
 ---
@@ -17,8 +17,6 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 <Layout title={`${UI.logs.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
 
 	<div class="px-6 py-8 lg:py-12">
-		<h2 class="text-[1.5rem] lg:text-[2rem] font-bold text-navy-900 mb-6">{UI.logs.pageTitle}</h2>
-
 		<div class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between">
 			<!-- Categories -->
 			<div class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto" id="category-filters">

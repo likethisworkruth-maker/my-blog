@@ -5,7 +5,7 @@ pubDate: 2024-05-12
 problem: "夜中のミルク対応を忘れてしまう"
 createdTool: "夜間対応メモ"
 result: "メモを見て思い出せる回数が増えた"
-categories: ["育児記録"]
+categories: ["子育て記録"]
 childAgeMonths: 1
 ---
 

@@ -1,10 +1,10 @@
 ---
 title: "夫婦共有ログに書く項目と運用ルール"
-description: "夫婦で育児の状況やタスクを共有する際の運用ルール。"
+description: "夫婦で子育ての状況やタスクを共有する際の運用ルール。"
 coverImage: "/images/checklist_sample_jp.png"
 icon: "rule"
 isFree: true
-categories: ["ルール", "0歳育児"]
+categories: ["ルール", "0歳子育て"]
 childAgeMonths: 2
 order: 2
 ---

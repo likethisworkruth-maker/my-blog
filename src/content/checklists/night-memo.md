@@ -4,7 +4,7 @@ description: "夜間対応時のミルクや、おむつのタイミングを記
 coverImage: "/images/checklist_sample_jp.png"
 icon: "description"
 isFree: true
-categories: ["メモ", "0歳育児"]
+categories: ["メモ", "0歳子育て"]
 childAgeMonths: 1
 order: 1
 ---
