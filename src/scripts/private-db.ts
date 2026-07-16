@@ -7,7 +7,7 @@ import {
 } from './checklist-state.ts';
 
 export const PRIVATE_DB_NAME = 'likethis-private';
-export const PRIVATE_DB_VERSION = 1;
+export const PRIVATE_DB_VERSION = 2;
 const LEGACY_MIGRATION_KEY = 'legacy-local-storage-migrated-v1';
 const LOCAL_REVISION_KEY = 'private-data-revision';
 const DEVICE_ID_KEY = 'device-id';
@@ -20,6 +20,14 @@ export interface PrivateSetting<T = unknown> {
 export interface BackupQueueEntry {
 	runId: string;
 	revision: number;
+	updatedAt: string;
+}
+
+export interface AnonymousArticleLike {
+	slug: string;
+	token: string;
+	liked: true;
+	createdAt: string;
 	updatedAt: string;
 }
 
@@ -43,6 +51,10 @@ interface LikeThisPrivateDb extends DBSchema {
 		key: string;
 		value: BackupQueueEntry;
 	};
+	article_likes: {
+		key: string;
+		value: AnonymousArticleLike;
+	};
 }
 
 let databasePromise: Promise<IDBPDatabase<LikeThisPrivateDb>> | undefined;
@@ -55,11 +67,20 @@ function getDatabase() {
 	if (!databasePromise) {
 		databasePromise = openDB<LikeThisPrivateDb>(PRIVATE_DB_NAME, PRIVATE_DB_VERSION, {
 			upgrade(database) {
-				const runs = database.createObjectStore('runs', { keyPath: 'runId' });
-				runs.createIndex('by-checklist', 'checklistId');
-				runs.createIndex('by-updated', 'updatedAt');
-				database.createObjectStore('settings', { keyPath: 'key' });
-				database.createObjectStore('backupQueue', { keyPath: 'runId' });
+				if (!database.objectStoreNames.contains('runs')) {
+					const runs = database.createObjectStore('runs', { keyPath: 'runId' });
+					runs.createIndex('by-checklist', 'checklistId');
+					runs.createIndex('by-updated', 'updatedAt');
+				}
+				if (!database.objectStoreNames.contains('settings')) {
+					database.createObjectStore('settings', { keyPath: 'key' });
+				}
+				if (!database.objectStoreNames.contains('backupQueue')) {
+					database.createObjectStore('backupQueue', { keyPath: 'runId' });
+				}
+				if (!database.objectStoreNames.contains('article_likes')) {
+					database.createObjectStore('article_likes', { keyPath: 'slug' });
+				}
 			},
 		});
 	}
@@ -141,6 +162,26 @@ export async function setPrivateSetting<T>(key: string, value: T) {
 export async function getPrivateSetting<T>(key: string): Promise<T | undefined> {
 	await initializePrivateDb();
 	return readSetting<T>(key);
+}
+
+export async function getAnonymousArticleLike(slug: string) {
+	const database = await getDatabase();
+	return database.get('article_likes', slug);
+}
+
+export async function getAnonymousArticleLikes() {
+	const database = await getDatabase();
+	return database.getAll('article_likes');
+}
+
+export async function saveAnonymousArticleLike(value: AnonymousArticleLike) {
+	const database = await getDatabase();
+	await database.put('article_likes', value);
+}
+
+export async function deleteAnonymousArticleLike(slug: string) {
+	const database = await getDatabase();
+	await database.delete('article_likes', slug);
 }
 
 export async function migrateLegacyChecklistData(storage?: Storage) {

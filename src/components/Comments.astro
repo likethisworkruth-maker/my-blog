@@ -30,10 +30,8 @@ const formClass = variant === 'modal'
 		</h3>
 	)}
 
-	<!-- Comments List -->
 	<div id="comments-list" class={listClass}>
-		<!-- Comments will be injected here -->
-		<div class={`text-center text-sm py-8 ${variant === 'reels' ? 'text-gray-400' : 'text-gray-400'}`} id="comments-empty">
+		<div class="text-center text-sm py-8 text-gray-400" id="comments-empty">
 			コメントはまだありません。
 		</div>
 	</div>
@@ -41,19 +39,20 @@ const formClass = variant === 'modal'
 		<button type="button" id="comments-prev" class="w-9 h-9 rounded-full border border-current/20 flex items-center justify-center transition-colors hover:text-mint-500 disabled:opacity-30 disabled:cursor-not-allowed" aria-label="前の10件">
 			<span class="material-symbols-outlined text-xl" aria-hidden="true">chevron_left</span>
 		</button>
-		<span id="comments-page-status" class="min-w-16 text-center font-bold">
-			1 / 1
-		</span>
+		<span id="comments-page-status" class="min-w-16 text-center font-bold">1 / 1</span>
 		<button type="button" id="comments-next" class="w-9 h-9 rounded-full border border-current/20 flex items-center justify-center transition-colors hover:text-mint-500 disabled:opacity-30 disabled:cursor-not-allowed" aria-label="次の10件">
 			<span class="material-symbols-outlined text-xl" aria-hidden="true">chevron_right</span>
 		</button>
 	</nav>
 
-	<!-- Comment Form -->
 	<form id="comment-form" class={formClass}>
-		<p class={`mb-4 rounded-xl border p-3 text-xs leading-5 ${variant === 'reels' ? 'border-amber-400/20 bg-amber-400/10 text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
-			このコメントは公開されます。氏名、連絡先、病院名などの個人情報は入力しないでください。
+		<p class={`mb-2 rounded-xl border p-3 text-xs leading-5 ${variant === 'reels' ? 'border-amber-400/20 bg-amber-400/10 text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+			氏名、連絡先、病院名などの個人情報は入力しないでください。
 		</p>
+		<p data-comment-policy class={`mb-4 text-xs leading-5 ${variant === 'reels' ? 'text-gray-300' : 'text-gray-600'}`}>
+			未ログインのコメントは、運営による確認後に掲載されます。
+		</p>
+		<p data-comment-feedback class="mb-4 hidden rounded-lg px-3 py-2 text-xs leading-5" role="status" aria-live="polite"></p>
 		{variant === 'default' && (
 			<h4 class="text-sm font-bold text-gray-700 mb-4">コメントを投稿する</h4>
 		)}
@@ -62,6 +61,7 @@ const formClass = variant === 'modal'
 				<textarea
 					name="content"
 					rows="1"
+					maxlength="1000"
 					placeholder="コメントを追加..."
 					class={`min-h-9 max-h-40 w-full resize-none overflow-y-auto bg-transparent py-2 text-sm leading-5 focus:outline-none ${variant === 'reels' ? 'text-white placeholder-gray-500' : 'text-gray-800'}`}
 					required
@@ -77,62 +77,64 @@ const formClass = variant === 'modal'
 				</button>
 			</div>
 		</div>
-		<input type="hidden" name="author" value="匿名ままさん" />
 	</form>
 </div>
 
 <script>
-	import { createClient } from '@supabase/supabase-js';
+	import { getSupabaseClient } from '../scripts/supabase-client';
 
-	// Format date nicely
-	const formatDate = (dateString: string) => {
-		const date = new Date(dateString);
-		return new Intl.DateTimeFormat('ja-JP', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		}).format(date);
-	};
-
-	// Escape HTML to prevent XSS
-	const escapeHtml = (unsafe: string) => {
-		return unsafe
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;")
-			.replace(/'/g, "&#039;");
-	};
-
-	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-	
-	let supabase: ReturnType<typeof createClient> | null = null;
-	if (supabaseUrl && supabaseAnonKey) {
-		if (!(window as any).__supabaseClient) {
-			(window as any).__supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-		}
-		supabase = (window as any).__supabaseClient;
+	interface PublicComment {
+		id: string;
+		slug: string;
+		author_name: string;
+		content: string;
+		created_at: string;
+		is_mine: boolean;
 	}
 
-	const initCommentSection = async (section: HTMLElement) => {
-		if (section.hasAttribute('data-initialized')) return;
-		section.setAttribute('data-initialized', 'true');
+	interface CommentsPayload {
+		comments?: unknown;
+		total_count?: unknown;
+	}
 
-		const slug = section.getAttribute('data-slug');
-		const variant = section.getAttribute('data-variant');
+	const formatDate = (dateString: string) => new Intl.DateTimeFormat('ja-JP', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+	}).format(new Date(dateString));
+
+	const isPublicComment = (value: unknown): value is PublicComment => {
+		if (!value || typeof value !== 'object') return false;
+		const comment = value as Partial<PublicComment>;
+		return typeof comment.id === 'string'
+			&& typeof comment.slug === 'string'
+			&& typeof comment.author_name === 'string'
+			&& typeof comment.content === 'string'
+			&& typeof comment.created_at === 'string'
+			&& typeof comment.is_mine === 'boolean';
+	};
+
+	const initCommentSection = async (section: HTMLElement) => {
+		if (section.dataset.initialized === 'true') return;
+		section.dataset.initialized = 'true';
+
+		const slug = section.dataset.slug;
+		const variant = section.dataset.variant;
 		if (!slug) return;
 
-		const commentsList = section.querySelector('#comments-list') as HTMLElement;
-		const form = section.querySelector('#comment-form') as HTMLFormElement;
-		const submitBtn = section.querySelector('#comment-submit') as HTMLButtonElement;
-		const textarea = section.querySelector('textarea[name="content"]') as HTMLTextAreaElement;
-		const pagination = section.querySelector('#comments-pagination') as HTMLElement;
-		const prevButton = section.querySelector('#comments-prev') as HTMLButtonElement;
-		const nextButton = section.querySelector('#comments-next') as HTMLButtonElement;
-		const pageStatus = section.querySelector('#comments-page-status') as HTMLElement;
+		const supabase = getSupabaseClient();
+		const commentsList = section.querySelector<HTMLElement>('#comments-list');
+		const form = section.querySelector<HTMLFormElement>('#comment-form');
+		const submitButton = section.querySelector<HTMLButtonElement>('#comment-submit');
+		const textarea = section.querySelector<HTMLTextAreaElement>('textarea[name="content"]');
+		const pagination = section.querySelector<HTMLElement>('#comments-pagination');
+		const previousButton = section.querySelector<HTMLButtonElement>('#comments-prev');
+		const nextButton = section.querySelector<HTMLButtonElement>('#comments-next');
+		const pageStatus = section.querySelector<HTMLElement>('#comments-page-status');
+		const policy = section.querySelector<HTMLElement>('[data-comment-policy]');
+		const feedback = section.querySelector<HTMLElement>('[data-comment-feedback]');
 		const pageSize = 10;
 		let currentPage = 1;
 		let totalCount = 0;
@@ -145,116 +147,133 @@ const formClass = variant === 'modal'
 		textarea?.addEventListener('input', resizeTextarea);
 		resizeTextarea();
 
-		if (!supabase) {
-			// Supabase is not configured, leave empty message
+		const setFeedback = (message = '', failed = false) => {
+			if (!feedback) return;
+			feedback.textContent = message;
+			feedback.classList.toggle('hidden', !message);
+			feedback.classList.toggle('bg-red-100', failed);
+			feedback.classList.toggle('text-red-800', failed);
+			feedback.classList.toggle('bg-mint-50', Boolean(message) && !failed);
+			feedback.classList.toggle('text-mint-700', Boolean(message) && !failed);
+		};
+
+		if (!supabase || !commentsList) {
+			if (submitButton) submitButton.disabled = true;
+			setFeedback('コメント機能は現在利用できません。', true);
 			return;
 		}
 
-		// Render single comment
-		const renderComment = (comment: any, isPending = false) => {
-			const div = document.createElement('div');
-			const isReels = variant === 'reels';
-			
-			div.className = isReels 
-				? `bg-transparent p-2 relative flex gap-3 ${isPending ? 'opacity-60' : ''}`
-				: `bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm relative ${isPending ? 'opacity-60' : ''}`;
-			
-			// Simple fallback for empty names
-			const authorName = comment.author_name?.trim() ? comment.author_name : '名無しさん';
-			
-			// Replace newlines with <br> after escaping
-			const contentHtml = escapeHtml(comment.content).replace(/\n/g, '<br/>');
-
-			const pendingBadge = isPending 
-				? `<div class="absolute top-4 right-4 bg-gray-100 text-gray-500 text-[0.65rem] px-2 py-1 rounded-full font-bold">待機中</div>`
-				: '';
-
-			if (isReels) {
-				div.innerHTML = `
-					${pendingBadge}
-					<div class="flex-grow">
-						<div class="flex items-baseline gap-2 mb-1">
-							<span class="font-bold text-white text-[0.85rem]">${escapeHtml(authorName)}</span>
-							<span class="text-[0.7rem] text-gray-500">${isPending ? '送信完了' : formatDate(comment.created_at)}</span>
-						</div>
-						<div class="text-[0.85rem] text-gray-200 leading-relaxed">
-							${contentHtml}
-						</div>
-					</div>
-				`;
-			} else {
-				div.innerHTML = `
-					${pendingBadge}
-					<div class="flex justify-between items-start mb-2">
-						<div class="font-bold text-gray-700 text-[0.8rem] sm:text-sm">
-							${escapeHtml(authorName)}
-						</div>
-						<div class="text-[0.65rem] text-gray-400">${isPending ? '送信完了' : formatDate(comment.created_at)}</div>
-					</div>
-					<div class="text-[0.85rem] sm:text-sm text-gray-600 leading-relaxed">
-						${contentHtml}
-					</div>
-				`;
-			}
-			return div;
-		};
-
-		// Fetch paginated comments
 		const updatePagination = () => {
 			const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 			const showPagination = totalCount > pageSize;
 			pagination?.classList.toggle('hidden', !showPagination);
 			pagination?.classList.toggle('flex', showPagination);
 			if (pageStatus) pageStatus.textContent = `${currentPage} / ${totalPages}`;
-			if (prevButton) prevButton.disabled = currentPage <= 1;
+			if (previousButton) previousButton.disabled = currentPage <= 1;
 			if (nextButton) nextButton.disabled = currentPage >= totalPages;
 		};
 
 		const loadComments = async () => {
-			const from = (currentPage - 1) * pageSize;
-			const to = from + pageSize - 1;
-			commentsList?.setAttribute('aria-busy', 'true');
-
+			commentsList.setAttribute('aria-busy', 'true');
 			try {
-				const { data: comments, error, count } = await supabase
-					.from('comments')
-					.select('*', { count: 'exact' })
-					.eq('slug', slug)
-					.order('created_at', { ascending: false })
-					.range(from, to);
-
+				const { data, error } = await supabase.rpc('get_approved_comments', {
+					p_slug: slug,
+					p_limit: pageSize,
+					p_offset: (currentPage - 1) * pageSize,
+				});
 				if (error) throw error;
+				const payload = data && typeof data === 'object' ? data as CommentsPayload : {};
+				const comments = Array.isArray(payload.comments)
+					? payload.comments.filter(isPublicComment)
+					: [];
+				totalCount = typeof payload.total_count === 'number' ? payload.total_count : comments.length;
+				commentsList.replaceChildren();
 
-				totalCount = count ?? comments?.length ?? 0;
-				commentsList?.replaceChildren();
-				if (comments?.length) {
-					comments.forEach((comment) => commentsList?.appendChild(renderComment(comment)));
-				} else if (commentsList) {
-					const emptyMessage = document.createElement('div');
-					emptyMessage.id = 'comments-empty';
-					emptyMessage.className = 'text-center text-sm py-8 text-gray-400';
-					emptyMessage.textContent = 'コメントはまだありません。';
-					commentsList.appendChild(emptyMessage);
+				if (comments.length === 0) {
+					const empty = document.createElement('div');
+					empty.id = 'comments-empty';
+					empty.className = 'text-center text-sm py-8 text-gray-400';
+					empty.textContent = 'コメントはまだありません。';
+					commentsList.appendChild(empty);
+				} else {
+					comments.forEach((comment) => {
+						const card = document.createElement('article');
+						const reels = variant === 'reels';
+						card.className = reels
+							? 'bg-transparent p-2 relative flex gap-3'
+							: 'bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm relative';
+
+						const header = document.createElement('div');
+						header.className = 'mb-2 flex items-start justify-between gap-3';
+						const identity = document.createElement('div');
+						const author = document.createElement('p');
+						author.className = reels ? 'font-bold text-white text-[0.85rem]' : 'font-bold text-gray-700 text-[0.8rem] sm:text-sm';
+						author.textContent = '匿名さん';
+						const date = document.createElement('p');
+						date.className = reels ? 'text-[0.7rem] text-gray-500' : 'text-[0.65rem] text-gray-400';
+						date.textContent = formatDate(comment.created_at);
+						identity.append(author, date);
+						header.appendChild(identity);
+
+						if (comment.is_mine) {
+							const deleteButton = document.createElement('button');
+							deleteButton.type = 'button';
+							deleteButton.className = reels
+								? 'shrink-0 text-xs font-bold text-gray-400 hover:text-red-300 disabled:opacity-40'
+								: 'shrink-0 text-xs font-bold text-gray-400 hover:text-red-600 disabled:opacity-40';
+							deleteButton.textContent = '削除';
+							deleteButton.addEventListener('click', async () => {
+								if (!window.confirm('このコメントを削除しますか？')) return;
+								deleteButton.disabled = true;
+								try {
+									const { data: deleted, error: deleteError } = await supabase.rpc('delete_my_comment', {
+										p_comment_id: comment.id,
+									});
+									if (deleteError) throw deleteError;
+									if (deleted !== true) throw new Error('コメントを削除する権限がありません。');
+									setFeedback('コメントを削除しました。');
+									totalCount = Math.max(0, totalCount - 1);
+									currentPage = Math.min(currentPage, Math.max(1, Math.ceil(totalCount / pageSize)));
+									await loadComments();
+								} catch (error) {
+									console.error('Error deleting comment:', error);
+									setFeedback('コメントを削除できませんでした。', true);
+								} finally {
+									deleteButton.disabled = false;
+								}
+							});
+							header.appendChild(deleteButton);
+						}
+
+						const content = document.createElement('p');
+						content.className = reels
+							? 'whitespace-pre-wrap text-[0.85rem] text-gray-200 leading-relaxed'
+							: 'whitespace-pre-wrap text-[0.85rem] sm:text-sm text-gray-600 leading-relaxed';
+						content.textContent = comment.content;
+						const body = document.createElement('div');
+						body.className = 'min-w-0 flex-grow';
+						body.append(header, content);
+						card.appendChild(body);
+						commentsList.appendChild(card);
+					});
 				}
 				updatePagination();
-			} catch (err) {
-				console.error('Error fetching comments:', err);
+			} catch (error) {
+				console.error('Error fetching comments:', error);
+				setFeedback('コメントを読み込めませんでした。', true);
 			} finally {
-				commentsList?.removeAttribute('aria-busy');
+				commentsList.removeAttribute('aria-busy');
 			}
 		};
 
 		const changePage = async (page: number) => {
 			currentPage = page;
 			await loadComments();
-			if (variant === 'modal' || variant === 'reels') {
-				commentsList.scrollTop = 0;
-			} else {
-				commentsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			}
+			if (variant === 'modal' || variant === 'reels') commentsList.scrollTop = 0;
+			else commentsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		};
 
-		prevButton?.addEventListener('click', () => {
+		previousButton?.addEventListener('click', () => {
 			if (currentPage > 1) void changePage(currentPage - 1);
 		});
 		nextButton?.addEventListener('click', () => {
@@ -262,50 +281,62 @@ const formClass = variant === 'modal'
 			if (currentPage < totalPages) void changePage(currentPage + 1);
 		});
 
-		await loadComments();
+		form?.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			if (!submitButton || submitButton.disabled) return;
+			const formData = new FormData(form);
+			const content = String(formData.get('content') ?? '').trim();
+			if (!content) return;
 
-		// Handle form submission
-		if (form) {
-			form.addEventListener('submit', async (e) => {
-				e.preventDefault();
-				if (submitBtn.disabled) return;
-
-				const formData = new FormData(form);
-				let author_name = (formData.get('author') as string)?.trim();
-				const content = (formData.get('content') as string)?.trim();
-
-				if (!content) return;
-				if (!author_name) author_name = '名無しさん';
-
-				// Disable form
-				submitBtn.disabled = true;
-				submitBtn.setAttribute('aria-busy', 'true');
-
-				try {
-					const { error } = await supabase
-						.from('comments')
-						.insert([
-							{ slug, author_name, content } as never
-						]);
-
-					if (error) throw error;
-
-					form.reset();
-					resizeTextarea();
+			submitButton.disabled = true;
+			submitButton.setAttribute('aria-busy', 'true');
+			setFeedback();
+			try {
+				const { data, error } = await supabase.rpc('submit_comment', {
+					p_slug: slug,
+					p_content: content,
+				});
+				if (error) throw error;
+				const result = data && typeof data === 'object' ? data as { status?: unknown } : {};
+				form.reset();
+				resizeTextarea();
+				if (result.status === 'approved') {
+					setFeedback('コメントを投稿しました。');
 					currentPage = 1;
 					await loadComments();
 					commentsList.scrollTop = 0;
-
-				} catch (err) {
-					console.error('Error posting comment:', err);
-					alert('コメントの送信に失敗しました。');
-				} finally {
-					// Enable form
-					submitBtn.disabled = false;
-					submitBtn.removeAttribute('aria-busy');
+				} else {
+					setFeedback('コメントを送信しました。運営による確認後に掲載されます。');
 				}
-			});
-		}
+			} catch (error) {
+				console.error('Error posting comment:', error);
+				setFeedback('コメントの送信に失敗しました。', true);
+			} finally {
+				submitButton.disabled = false;
+				submitButton.removeAttribute('aria-busy');
+			}
+		});
+
+		const updatePolicy = (loggedIn: boolean) => {
+			if (!policy) return;
+			policy.textContent = loggedIn
+				? 'Googleログイン中のコメントは投稿後すぐ掲載され、自分で削除できます。Googleの氏名やメールアドレスは公開しません。'
+				: '未ログインのコメントは、運営による確認後に掲載されます。投稿後の削除はできません。';
+		};
+
+		const { data: sessionData } = await supabase.auth.getSession();
+		updatePolicy(Boolean(sessionData.session?.user));
+		await loadComments();
+		const authSubscription = supabase.auth.onAuthStateChange((_event, session) => {
+			updatePolicy(Boolean(session?.user));
+			window.setTimeout(() => void loadComments(), 0);
+		}).data.subscription;
+
+		const cleanup = () => {
+			authSubscription.unsubscribe();
+			document.removeEventListener('astro:before-swap', cleanup);
+		};
+		document.addEventListener('astro:before-swap', cleanup);
 	};
 
 	const initComments = () => {
@@ -314,7 +345,6 @@ const formClass = variant === 'modal'
 		});
 	};
 
-	// Initialize
 	document.addEventListener('DOMContentLoaded', initComments);
 	document.addEventListener('astro:page-load', initComments);
 </script>

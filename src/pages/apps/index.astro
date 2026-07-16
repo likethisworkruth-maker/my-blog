@@ -254,6 +254,9 @@ const uniqueAges =
 
 <script
 >
+	import { getLikedArticleSlugs } from '../../scripts/article-likes';
+	import { getSupabaseClient } from '../../scripts/supabase-client';
+
 	const initAppsList = () => {
 	const appsContainer = document.getElementById("apps-container");
 	if (!appsContainer || appsContainer.dataset.listInitialized === "true") return;
@@ -296,15 +299,21 @@ const uniqueAges =
 	const emptyState = document.getElementById("apps-empty");
 	const emptyMessage = emptyState?.querySelector<HTMLElement>("[data-empty-message]");
 	const controller = new AbortController();
-	document.addEventListener("astro:before-swap", () => controller.abort(), { once: true, signal: controller.signal });
 
-	const isLiked = (id: string | null) => {
-		if (!id) return false;
+	let likedSlugs = new Set<string>();
+	const articleSlugs = cards.flatMap((card) => {
+		const id = card.getAttribute("data-id");
+		return id ? [`apps/${id}`] : [];
+	});
+	const isLiked = (id: string | null) => Boolean(id && likedSlugs.has(`apps/${id}`));
+	const refreshLikedSlugs = async () => {
 		try {
-			return Boolean(localStorage.getItem(`liked:${encodeURIComponent("apps/" + id)}`));
-		} catch {
-			return false;
+			likedSlugs = await getLikedArticleSlugs(articleSlugs);
+		} catch (error) {
+			console.error("Error fetching liked apps:", error);
+			likedSlugs = new Set();
 		}
+		updateView();
 	};
 
 	const refreshViewTabs = () => {
@@ -609,12 +618,21 @@ const uniqueAges =
 		refreshViewTabs();
 		updateView();
 	}, { signal: controller.signal });
-	window.addEventListener("storage", (event) => {
-		if (event.key?.startsWith("liked:apps%2F")) updateView();
-	}, { signal: controller.signal });
+	window.addEventListener("article-like-changed", () => void refreshLikedSlugs(), { signal: controller.signal });
+	const supabase = getSupabaseClient();
+	const authSubscription = supabase?.auth.onAuthStateChange(() => {
+		window.setTimeout(() => void refreshLikedSlugs(), 0);
+	}).data.subscription;
+	const cleanup = () => {
+		authSubscription?.unsubscribe();
+		controller.abort();
+		document.removeEventListener("astro:before-swap", cleanup);
+	};
+	document.addEventListener("astro:before-swap", cleanup);
 
 	refreshViewTabs();
 	updateView();
+	void refreshLikedSlugs();
 	};
 
 	if (document.readyState === "loading") {

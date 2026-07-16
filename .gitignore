@@ -7,11 +7,16 @@ dist/
 node_modules/
 
 # logs
+*.log
+dev_error.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# temporary investigation files
+temp_astro*/
+test-sync/
 
 # environment variables
 .env

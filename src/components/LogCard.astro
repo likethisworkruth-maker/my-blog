@@ -70,48 +70,34 @@ const likeSlug = `logs/${log.id}`;
 </a>
 
 <script>
-	import { createClient } from "@supabase/supabase-js";
-
-	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+	import { getLikedArticleSlugs } from '../scripts/article-likes';
+	import { getSupabaseClient } from '../scripts/supabase-client';
 
 	const initLogLikeCounts = async () => {
 		const countElements = Array.from(
-			document.querySelectorAll<HTMLElement>("[data-log-like-slug]:not([data-like-count-initialized])"),
+			document.querySelectorAll<HTMLElement>("[data-log-like-slug]"),
 		);
 		if (countElements.length === 0) return;
 
 		const elementsBySlug = new Map<string, HTMLElement[]>();
 		countElements.forEach((element) => {
-			element.dataset.likeCountInitialized = "true";
 			const slug = element.dataset.logLikeSlug;
 			if (!slug) return;
-
-			if (localStorage.getItem(`liked:${encodeURIComponent(slug)}`)) {
-				const display = element.closest<HTMLElement>("[data-log-like-display]");
-				display?.querySelector(".log-like-icon-empty")?.classList.add("opacity-0");
-				display?.querySelector(".log-like-icon-filled")?.classList.remove("opacity-0");
-				element.classList.add("text-pink-500");
-			}
-
 			const elements = elementsBySlug.get(slug) ?? [];
 			elements.push(element);
 			elementsBySlug.set(slug, elements);
 		});
 
-		if (!supabaseUrl || !supabaseAnonKey || elementsBySlug.size === 0) return;
-
-		if (!(window as any).__supabaseClient) {
-			(window as any).__supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-		}
-		const supabase = (window as any).__supabaseClient;
+		const supabase = getSupabaseClient();
+		if (!supabase || elementsBySlug.size === 0) return;
 
 		try {
 			const slugs = Array.from(elementsBySlug.keys());
-			const { data, error } = await supabase
-				.from("likes")
-				.select("slug, like_count")
-				.in("slug", slugs);
+			const [likedSlugs, response] = await Promise.all([
+				getLikedArticleSlugs(slugs),
+				supabase.from("likes").select("slug, like_count").in("slug", slugs),
+			]);
+			const { data, error } = response;
 			if (error) throw error;
 
 			const counts = new Map<string, number>();
@@ -122,6 +108,10 @@ const likeSlug = `logs/${log.id}`;
 				const count = String(counts.get(slug) ?? 0);
 				elements.forEach((element) => {
 					element.textContent = count;
+					const display = element.closest<HTMLElement>("[data-log-like-display]");
+					display?.querySelector(".log-like-icon-empty")?.classList.toggle("opacity-0", likedSlugs.has(slug));
+					display?.querySelector(".log-like-icon-filled")?.classList.toggle("opacity-0", !likedSlugs.has(slug));
+					element.classList.toggle("text-pink-500", likedSlugs.has(slug));
 				});
 			});
 		} catch (error) {
@@ -130,10 +120,34 @@ const likeSlug = `logs/${log.id}`;
 	};
 
 	const runLogLikeCounts = () => void initLogLikeCounts();
+	const installLogLikeListeners = () => {
+		if (document.documentElement.dataset.logLikeListeners === 'true') return;
+		document.documentElement.dataset.logLikeListeners = 'true';
+		const controller = new AbortController();
+		window.addEventListener('article-like-changed', runLogLikeCounts, { signal: controller.signal });
+		const supabase = getSupabaseClient();
+		const authSubscription = supabase?.auth.onAuthStateChange(() => {
+			window.setTimeout(runLogLikeCounts, 0);
+		}).data.subscription;
+		const cleanup = () => {
+			controller.abort();
+			authSubscription?.unsubscribe();
+			delete document.documentElement.dataset.logLikeListeners;
+			document.removeEventListener('astro:before-swap', cleanup);
+		};
+		document.addEventListener('astro:before-swap', cleanup);
+	};
 	if (document.readyState === "loading") {
-		document.addEventListener("DOMContentLoaded", runLogLikeCounts, { once: true });
+		document.addEventListener("DOMContentLoaded", () => {
+			installLogLikeListeners();
+			runLogLikeCounts();
+		}, { once: true });
 	} else {
+		installLogLikeListeners();
 		runLogLikeCounts();
 	}
-	document.addEventListener("astro:page-load", runLogLikeCounts);
+	document.addEventListener("astro:page-load", () => {
+		installLogLikeListeners();
+		runLogLikeCounts();
+	});
 </script>

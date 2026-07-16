@@ -98,6 +98,9 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 </Layout>
 
 <script>
+	import { getLikedArticleSlugs } from '../../scripts/article-likes';
+	import { getSupabaseClient } from '../../scripts/supabase-client';
+
 	const initLogsList = () => {
 	const logsContainer = document.getElementById('logs-container');
 	if (!logsContainer || logsContainer.dataset.listInitialized === 'true') return;
@@ -112,7 +115,6 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 	const emptyState = document.getElementById('logs-empty');
 	const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
 	const controller = new AbortController();
-	document.addEventListener('astro:before-swap', () => controller.abort(), { once: true, signal: controller.signal });
 
 	let currentCategory = 'すべて';
 	let currentAge = 'all';
@@ -120,13 +122,20 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 	let searchQuery = '';
 	let currentListView: 'all' | 'my' = new URL(window.location.href).searchParams.get('view') === 'my' ? 'my' : 'all';
 
-	const isLiked = (id: string | null) => {
-		if (!id) return false;
+	let likedSlugs = new Set<string>();
+	const articleSlugs = cards.flatMap((card) => {
+		const id = card.getAttribute('data-id');
+		return id ? [`logs/${id}`] : [];
+	});
+	const isLiked = (id: string | null) => Boolean(id && likedSlugs.has(`logs/${id}`));
+	const refreshLikedSlugs = async () => {
 		try {
-			return Boolean(localStorage.getItem(`liked:${encodeURIComponent('logs/' + id)}`));
-		} catch {
-			return false;
+			likedSlugs = await getLikedArticleSlugs(articleSlugs);
+		} catch (error) {
+			console.error('Error fetching liked logs:', error);
+			likedSlugs = new Set();
 		}
+		updateView();
 	};
 
 	const refreshViewTabs = () => {
@@ -250,12 +259,21 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 		refreshViewTabs();
 		updateView();
 	}, { signal: controller.signal });
-	window.addEventListener('storage', (event) => {
-		if (event.key?.startsWith('liked:logs%2F')) updateView();
-	}, { signal: controller.signal });
+	window.addEventListener('article-like-changed', () => void refreshLikedSlugs(), { signal: controller.signal });
+	const supabase = getSupabaseClient();
+	const authSubscription = supabase?.auth.onAuthStateChange(() => {
+		window.setTimeout(() => void refreshLikedSlugs(), 0);
+	}).data.subscription;
+	const cleanup = () => {
+		authSubscription?.unsubscribe();
+		controller.abort();
+		document.removeEventListener('astro:before-swap', cleanup);
+	};
+	document.addEventListener('astro:before-swap', cleanup);
 
 	refreshViewTabs();
 	updateView();
+	void refreshLikedSlugs();
 	};
 
 	if (document.readyState === 'loading') {

@@ -21,14 +21,14 @@ import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
 
 				<h3 class="mt-8 text-lg font-bold text-navy-900">取り扱う情報</h3>
 				<ul class="mt-3 list-disc space-y-2 pl-6">
-					<li><strong class="text-navy-900">コメント：</strong>コメント本文、対象ページ、投稿日時</li>
-					<li><strong class="text-navy-900">いいね：</strong>対象ページと合計数、ブラウザーに保存するいいね済みの状態</li>
+					<li><strong class="text-navy-900">コメント：</strong>コメント本文、対象ページ、投稿日時、ログイン投稿の場合は認証ユーザーID</li>
+					<li><strong class="text-navy-900">いいね：</strong>対象ページと合計数、ログイン利用者の認証ユーザーID、未ログイン利用者の取り下げ用トークンのハッシュ</li>
 					<li><strong class="text-navy-900">Googleログイン：</strong>認証に必要な識別情報、メールアドレス、プロフィール画像URL</li>
 					<li><strong class="text-navy-900">端末内の非公開データ：</strong>開始したチェックリスト、進捗、自分で追加・非表示にした項目、並び順、メモ</li>
 					<li><strong class="text-navy-900">アクセス情報：</strong>Cookie等を利用してGoogle Analyticsが取得する閲覧ページ、参照元、利用環境などの情報</li>
 					<li><strong class="text-navy-900">お問い合わせ：</strong>利用者が送信した内容と、返信に必要な情報</li>
 				</ul>
-				<p class="mt-4">コメントの投稿にアカウント、氏名、メールアドレスの登録は求めません。コメントには、ご本人やお子さまなどを特定できる情報を入力しないでください。</p>
+				<p class="mt-4">コメントの投稿にアカウント、氏名、メールアドレスの登録は求めません。未ログインのコメントは運営確認後に掲載され、Googleログイン中のコメントは投稿後すぐ掲載されます。Googleの氏名やメールアドレスはコメントとして公開しません。</p>
 
 				<h3 class="mt-8 text-lg font-bold text-navy-900">利用目的</h3>
 				<ul class="mt-3 list-disc space-y-2 pl-6">
@@ -40,10 +40,10 @@ import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
 
 				<h3 class="mt-8 text-lg font-bold text-navy-900">端末保存と外部サービス</h3>
 				<p class="mt-3">
-					当サイトは、アクセス解析にGoogle Analytics、Google認証と公開コメント・公開いいねの保存にSupabaseを利用しています。いいね済みの状態はブラウザーのローカルストレージに保存します。
+					当サイトは、アクセス解析にGoogle Analytics、Google認証と公開コメント・公開いいねの保存にSupabaseを利用しています。未ログイン時のいいね取り下げ用トークンはこの端末のIndexedDBへ保存し、生のトークンはSupabaseへ保存しません。Googleログイン中のいいね状態はSupabaseの認証ユーザーIDで判定します。
 				</p>
 				<p class="mt-3">
-					チェックリストの進捗、自分で追加・非表示にした項目、並び順、非公開メモは、この端末のIndexedDBへ保存します。これらの非公開データは、Supabase、Google Analyticsその他の運営者のデータベースへ送信しません。
+					チェックリストの進捗、自分で追加・非表示にした項目、並び順、非公開メモは、この端末のIndexedDBへ保存します。これらの非公開データは、Supabase、Google Analyticsその他の運営者のデータベースへ送信しません。匿名いいねの取り下げ用トークンはチェックリストのGoogle Driveバックアップ対象に含めません。
 				</p>
 				<p class="mt-3">
 					Googleログインを選択すると、ログインと同時にGoogle Driveのアプリ専用非表示領域へのアクセス許可を求めます。ログイン中は、非公開データを同じGoogleアカウントのアプリ専用領域へバックアップします。要求する権限はアプリ専用データに限定され、通常のDriveファイルを読み取る権限は要求しません。
@@ -57,7 +57,7 @@ import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
 					端末内のチェックリストデータは、チェックリストの「マイリスト」にある「この端末のチェックリストデータを削除」から削除できます。Google Drive側のバックアップは、Googleログイン中に更新・復元できます。ブラウザーのサイトデータ削除でも端末保存データを削除できます。
 				</p>
 				<p class="mt-3">
-					コメントの削除や情報の取り扱いに関するご相談は、対象ページと該当内容を添えて、運営者の<a class="font-bold text-mint-600 underline underline-offset-4" href="https://note.com/alert_weasel3202" target="_blank" rel="noopener noreferrer">note</a>からご連絡ください。
+					Googleログイン中に投稿したコメントは、投稿した本人が画面から削除できます。未ログインで投稿したコメントの削除や情報の取り扱いに関するご相談は、対象ページと該当内容を添えて、運営者の<a class="font-bold text-mint-600 underline underline-offset-4" href="https://note.com/alert_weasel3202" target="_blank" rel="noopener noreferrer">note</a>からご連絡ください。
 				</p>
 			</section>
 

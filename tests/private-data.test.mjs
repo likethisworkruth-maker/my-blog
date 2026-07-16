@@ -17,6 +17,14 @@ import {
 } from '../src/scripts/private-db.ts';
 import { validateDriveBackupPayload } from '../src/scripts/drive-backup.ts';
 import { assertDriveAccountMatches } from '../src/scripts/drive-authorization.ts';
+import { createAnonymousLikeToken } from '../src/scripts/article-likes.ts';
+import {
+	PRIVATE_DB_VERSION,
+	deleteAnonymousArticleLike,
+	getAnonymousArticleLike,
+	getAnonymousArticleLikes,
+	saveAnonymousArticleLike,
+} from '../src/scripts/private-db.ts';
 
 const template = {
 	checklistId: 'private-test',
@@ -59,6 +67,37 @@ test('IndexedDBへ保存し、未完了の最新runを優先して取得する',
 	assert.equal((await getActivePrivateChecklistRun(template.checklistId))?.runId, active.runId);
 	assert.equal((await getActivePrivateChecklistRun(template.checklistId))?.note, '端末だけのテストメモ');
 	assert.ok((await getPrivateDataRevision()) >= 2);
+});
+
+test('IndexedDB v2で匿名いいね資格情報をチェックリストと分離して保存する', async () => {
+	assert.equal(PRIVATE_DB_VERSION, 2);
+	const now = new Date().toISOString();
+	await saveAnonymousArticleLike({
+		slug: 'knowhow/private-test',
+		token: 'anonymous-test-token-that-is-long-enough-0001',
+		liked: true,
+		createdAt: now,
+		updatedAt: now,
+	});
+	assert.equal((await getAnonymousArticleLike('knowhow/private-test'))?.liked, true);
+
+	await clearPrivateChecklistData();
+	assert.equal((await getAnonymousArticleLike('knowhow/private-test'))?.token, 'anonymous-test-token-that-is-long-enough-0001');
+	assert.deepEqual(await getPrivateChecklistRuns(), []);
+
+	await deleteAnonymousArticleLike('knowhow/private-test');
+	assert.deepEqual(await getAnonymousArticleLikes(), []);
+});
+
+test('匿名いいねトークンはWeb Crypto由来の32バイトをBase64URL化する', () => {
+	const token = createAnonymousLikeToken({
+		getRandomValues(array) {
+			for (let index = 0; index < array.length; index += 1) array[index] = index;
+			return array;
+		},
+	});
+	assert.equal(token.length, 43);
+	assert.match(token, /^[a-zA-Z0-9_-]+$/);
 });
 
 test('DriveバックアップJSONを検証し、不正なデータを拒否する', async () => {

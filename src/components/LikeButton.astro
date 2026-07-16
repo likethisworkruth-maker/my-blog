@@ -7,12 +7,15 @@ interface Props {
 const { slug, variant = 'large' } = Astro.props;
 
 // Disabled state for pages without a slug
-const disabledAttr = slug ? {} : { disabled: true };
+const disabledAttr = { disabled: true };
 ---
 
 {variant === 'large' && (
 	<button
+		type="button"
 		data-slug={slug}
+		aria-pressed="false"
+		aria-label="いいね"
 		class="like-btn group relative flex items-center gap-2 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
 		{...disabledAttr}
 	>
@@ -26,7 +29,10 @@ const disabledAttr = slug ? {} : { disabled: true };
 
 {variant === 'compact' && (
 	<button
+		type="button"
 		data-slug={slug}
+		aria-pressed="false"
+		aria-label="いいね"
 		class="like-btn group relative flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
 		{...disabledAttr}
 	>
@@ -40,7 +46,10 @@ const disabledAttr = slug ? {} : { disabled: true };
 
 {variant === 'footer' && (
 	<button
+		type="button"
 		data-slug={slug}
+		aria-pressed="false"
+		aria-label="いいね"
 		class="like-btn group relative flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium text-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 		{...disabledAttr}
 	>
@@ -54,7 +63,10 @@ const disabledAttr = slug ? {} : { disabled: true };
 
 {variant === 'reels' && (
 	<button
+		type="button"
 		data-slug={slug}
+		aria-pressed="false"
+		aria-label="いいね"
 		class="like-btn group relative flex flex-col items-center gap-1 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
 		{...disabledAttr}
 	>
@@ -67,57 +79,64 @@ const disabledAttr = slug ? {} : { disabled: true };
 )}
 
 <script>
-	import { createClient } from '@supabase/supabase-js';
+	import {
+		getCurrentArticleLikeState,
+		notifyArticleLikeChanged,
+		setArticleLikeState,
+		type ArticleLikeState,
+	} from '../scripts/article-likes';
+	import { getSupabaseClient } from '../scripts/supabase-client';
 
-	// Initialize Supabase client
-	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-	
-	let supabase: any = null;
-	if (supabaseUrl && supabaseAnonKey) {
-		if (!(window as any).__supabaseClient) {
-			(window as any).__supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-		}
-		supabase = (window as any).__supabaseClient;
-	}
+	const showLikeError = (message: string) => {
+		const existing = document.querySelector<HTMLElement>('[data-like-error-toast]');
+		existing?.remove();
+		const toast = document.createElement('p');
+		toast.dataset.likeErrorToast = 'true';
+		toast.setAttribute('role', 'status');
+		toast.className = 'fixed bottom-20 left-1/2 z-[100] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-lg bg-red-700 px-4 py-3 text-sm text-white shadow-lg';
+		toast.textContent = message;
+		document.body.appendChild(toast);
+		window.setTimeout(() => toast.remove(), 5_000);
+	};
 
-	// Initialize like buttons (support View Transitions if Astro uses it)
 	const initLikes = () => {
-		// Group buttons by slug
-		const buttonsBySlug: Record<string, Element[]> = {};
-		document.querySelectorAll('.like-btn').forEach((btn) => {
+		const buttonsBySlug: Record<string, HTMLButtonElement[]> = {};
+		document.querySelectorAll<HTMLButtonElement>('.like-btn').forEach((btn) => {
 			if (btn.hasAttribute('data-initialized')) return;
 			btn.setAttribute('data-initialized', 'true');
-			
 			const slug = btn.getAttribute('data-slug');
 			if (!slug) return;
-			
 			if (!buttonsBySlug[slug]) buttonsBySlug[slug] = [];
 			buttonsBySlug[slug].push(btn);
 		});
 
-		Object.entries(buttonsBySlug).forEach(async ([slug, btns]) => {
-			const updateAllCountText = (text: string) => {
-				btns.forEach(b => {
-					const countSpan = b.querySelector('.like-count');
-					if (countSpan) countSpan.textContent = text;
+		Object.entries(buttonsBySlug).forEach(([slug, buttons]) => {
+			let state: ArticleLikeState | null = null;
+			let busy = false;
+
+			const updateCount = (count: number) => {
+				buttons.forEach((button) => {
+					const countSpan = button.querySelector('.like-count');
+					if (countSpan) countSpan.textContent = String(count);
 				});
 			};
 
-			const setAllLikedUI = (isLiked: boolean) => {
-				btns.forEach(b => {
-					const countSpan = b.querySelector('.like-count');
-					const iconEmpty = b.querySelector('.icon-empty');
-					const iconFilled = b.querySelector('.icon-filled');
-					
+			const setLikedUi = (isLiked: boolean) => {
+				buttons.forEach((button) => {
+					const countSpan = button.querySelector('.like-count');
+					const iconEmpty = button.querySelector('.icon-empty');
+					const iconFilled = button.querySelector('.icon-filled');
+					button.setAttribute('aria-pressed', String(isLiked));
+					button.setAttribute('aria-label', isLiked ? 'いいねを取り消す' : 'いいね');
+					button.title = isLiked ? 'いいねを取り消す' : 'いいね';
 					if (isLiked) {
-						b.classList.add('liked', 'text-pink-500');
-						if (b.classList.contains('bg-white')) {
-							b.classList.add('border-pink-200', 'bg-pink-50');
+						button.classList.add('liked', 'text-pink-500');
+						if (button.classList.contains('bg-white')) {
+							button.classList.add('border-pink-200', 'bg-pink-50');
 						}
 						iconEmpty?.classList.add('opacity-0');
 						iconFilled?.classList.remove('opacity-0');
-						if (b.querySelector('.icon-empty')?.classList.contains('text-white')) {
+						if (iconEmpty?.classList.contains('text-white')) {
 							countSpan?.classList.remove('text-white');
 							countSpan?.classList.add('text-pink-500');
 						} else {
@@ -125,10 +144,10 @@ const disabledAttr = slug ? {} : { disabled: true };
 							countSpan?.classList.add('text-pink-500');
 						}
 					} else {
-						b.classList.remove('liked', 'border-pink-200', 'bg-pink-50', 'text-pink-500');
+						button.classList.remove('liked', 'border-pink-200', 'bg-pink-50', 'text-pink-500');
 						iconEmpty?.classList.remove('opacity-0');
 						iconFilled?.classList.add('opacity-0');
-						if (b.querySelector('.icon-empty')?.classList.contains('text-white')) {
+						if (iconEmpty?.classList.contains('text-white')) {
 							countSpan?.classList.remove('text-pink-500');
 							countSpan?.classList.add('text-white');
 						} else {
@@ -138,110 +157,68 @@ const disabledAttr = slug ? {} : { disabled: true };
 				});
 			};
 
-			// Check local storage for liked status
-			const hasLiked = localStorage.getItem(`liked:${encodeURIComponent(slug)}`);
-			if (hasLiked) {
-				setAllLikedUI(true);
-			}
-			
-			if (!supabase) {
-				updateAllCountText('0');
-				return;
-			}
+			const setLoading = (loading: boolean) => {
+				busy = loading;
+				buttons.forEach((button) => {
+					button.disabled = loading || !state;
+					button.toggleAttribute('data-loading', loading);
+				});
+			};
 
-			// Fetch initial count
-			try {
-				const { data, error } = await supabase
-					.from('likes')
-					.select('like_count')
-					.eq('slug', slug)
-					.maybeSingle();
-					
-				if (data) {
-					updateAllCountText(data.like_count.toString());
-				} else {
-					updateAllCountText('0');
+			const render = (next: ArticleLikeState) => {
+				state = next;
+				updateCount(next.likeCount);
+				setLikedUi(next.liked);
+			};
+
+			const refresh = async () => {
+				setLoading(true);
+				try {
+					render(await getCurrentArticleLikeState(slug));
+				} catch (error) {
+					console.error('Error fetching like state:', error);
+					updateCount(0);
+					setLikedUi(false);
+					showLikeError('いいねの状態を確認できませんでした。');
+				} finally {
+					setLoading(false);
 				}
-			} catch (err) {
-				console.error('Error fetching likes:', err);
-				updateAllCountText('0');
-			}
+			};
 
-			const storageKey = `liked:${encodeURIComponent(slug)}`;
-
-			// Handle click on ANY of the buttons for this slug
-			btns.forEach(btn => {
-				btn.addEventListener('click', async () => {
-					if (btn.hasAttribute('data-loading')) {
-						return;
-					}
-					
-					const isCurrentlyLiked = !!localStorage.getItem(storageKey);
-					
-					// Set loading on all
-					btns.forEach(b => b.setAttribute('data-loading', 'true'));
-					
-					const currentCount = parseInt(btn.querySelector('.like-count')?.textContent || '0');
-
-					if (isCurrentlyLiked) {
-						// UN-LIKE (Cancel)
-						const newCount = Math.max(0, currentCount - 1);
-						updateAllCountText(newCount.toString());
-						setAllLikedUI(false);
-						localStorage.removeItem(storageKey);
-
-						if (supabase) {
-							try {
-								const { data, error } = await supabase.rpc('decrement_likes', { slug_text: slug });
-								if (error) throw error;
-								if (data !== null) {
-									updateAllCountText(data.toString()); // Update with actual DB count
-								}
-							} catch (err) {
-								console.error('Error updating likes (decrement):', err);
-								// Revert on failure
-								updateAllCountText(currentCount.toString());
-								setAllLikedUI(true);
-								localStorage.setItem(storageKey, 'true');
-							}
+			buttons.forEach((button) => {
+				button.addEventListener('click', async () => {
+					if (busy || !state) return;
+					setLoading(true);
+					try {
+						const next = await setArticleLikeState(slug, !state.liked);
+						render(next);
+						notifyArticleLikeChanged(next);
+						if (next.liked) {
+							button.classList.add('scale-110');
+							window.setTimeout(() => button.classList.remove('scale-110'), 150);
 						}
-					} else {
-						// LIKE
-						updateAllCountText((currentCount + 1).toString());
-						setAllLikedUI(true);
-						localStorage.setItem(storageKey, 'true');
-						
-						// Pop animation class only on clicked button
-						btn.classList.add('scale-110');
-						setTimeout(() => {
-							btn.classList.remove('scale-110');
-						}, 150);
-
-						if (supabase) {
-							try {
-								const { data, error } = await supabase.rpc('increment_likes', { slug_text: slug });
-								if (error) throw error;
-								if (data !== null) {
-									updateAllCountText(data.toString()); // Update with actual DB count
-								}
-							} catch (err) {
-								console.error('Error updating likes (increment):', err);
-								// Revert on failure
-								updateAllCountText(currentCount.toString());
-								setAllLikedUI(false);
-								localStorage.removeItem(storageKey);
-							}
-						}
+					} catch (error) {
+						console.error('Error updating like:', error);
+						showLikeError('いいねを更新できませんでした。時間をおいて再度お試しください。');
+					} finally {
+						setLoading(false);
 					}
-					
-					btns.forEach(b => b.removeAttribute('data-loading'));
 				});
 			});
+
+			const supabase = getSupabaseClient();
+			const authSubscription = supabase?.auth.onAuthStateChange(() => {
+				window.setTimeout(() => void refresh(), 0);
+			}).data.subscription;
+			const cleanup = () => {
+				authSubscription?.unsubscribe();
+				document.removeEventListener('astro:before-swap', cleanup);
+			};
+			document.addEventListener('astro:before-swap', cleanup);
+			void refresh();
 		});
 	};
 
-	// Run on DOM loaded
 	document.addEventListener('DOMContentLoaded', initLikes);
-	// Support for Astro View Transitions if enabled
 	document.addEventListener('astro:page-load', initLikes);
 </script>
