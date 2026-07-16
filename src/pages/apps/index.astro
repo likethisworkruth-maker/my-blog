@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
+import RikutsuBackLink from "../../components/RikutsuBackLink.astro";
 import {
 	SITE_TITLE,
 	SITE_DESCRIPTION,
@@ -75,6 +76,7 @@ const uniqueAges =
 	description={SITE_DESCRIPTION}
 >
 	<div class="px-6 py-8 lg:py-12">
+		<div class="mb-6"><RikutsuBackLink label="アプリ" /></div>
 		<nav class="mb-6 border-b border-gray-200" aria-label="アプリの表示切り替え">
 			<div class="flex items-stretch gap-7" role="tablist">
 				<button

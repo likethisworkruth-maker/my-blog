@@ -1,0 +1,96 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import LogCard from '../../components/LogCard.astro';
+import { SITE_TITLE } from '../../consts';
+
+const apps = (await getCollection('apps'))
+	.sort((a, b) => a.data.order - b.data.order)
+	.slice(0, 3);
+const items = (await getCollection('items'))
+	.filter((item) => item.data.published)
+	.sort((a, b) => a.data.order - b.data.order)
+	.slice(0, 3);
+const logs = (await getCollection('logs'))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3);
+---
+
+<Layout
+	title={`理屈さんち | ${SITE_TITLE}`}
+	description="サイト運営者が実際に使ったアプリ、アイテム、育児の記録をまとめています。"
+>
+	<section class="px-6 py-10 lg:py-16">
+		<div class="mx-auto max-w-6xl">
+			<p class="text-sm font-bold text-mint-600">実体験の記録</p>
+			<h1 class="mt-2 text-3xl font-bold text-navy-900">理屈さんち</h1>
+			<p class="mt-4 max-w-3xl text-sm leading-7 text-gray-600">
+				サイト運営者が実際に使ったアプリ、アイテム、育児の記録をまとめています。おすすめだけでなく、面倒だった点や続かなかった理由もそのまま残しています。
+			</p>
+
+			<div class="mt-10 grid gap-4 sm:grid-cols-3">
+				<a href="/apps/" class="rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:border-mint-500 hover:bg-gray-50">
+					<span class="material-symbols-outlined text-3xl text-mint-500" aria-hidden="true">apps</span>
+					<h2 class="mt-3 text-lg font-bold text-navy-900">アプリ</h2>
+					<p class="mt-2 text-xs leading-6 text-gray-600">実際に使ったアプリやサービス、その組み合わせ方。</p>
+				</a>
+				<a href="/items/" class="rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:border-mint-500 hover:bg-gray-50">
+					<span class="material-symbols-outlined text-3xl text-mint-500" aria-hidden="true">toys_and_games</span>
+					<h2 class="mt-3 text-lg font-bold text-navy-900">アイテム</h2>
+					<p class="mt-2 text-xs leading-6 text-gray-600">困りごとを軽くするために試した育児アイテム。</p>
+				</a>
+				<a href="/logs/" class="rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:border-mint-500 hover:bg-gray-50">
+					<span class="material-symbols-outlined text-3xl text-mint-500" aria-hidden="true">auto_stories</span>
+					<h2 class="mt-3 text-lg font-bold text-navy-900">育児ログ</h2>
+					<p class="mt-2 text-xs leading-6 text-gray-600">困ったこと、試したこと、その後どうなったかの記録。</p>
+				</a>
+			</div>
+		</div>
+	</section>
+
+	{apps.length > 0 && (
+		<section class="border-t border-gray-100 px-6 py-10">
+			<div class="mx-auto max-w-6xl">
+				<div class="mb-6 flex items-center justify-between">
+					<h2 class="text-lg font-bold text-navy-900">アプリの新着</h2>
+					<a href="/apps/" class="text-xs font-bold text-mint-600 hover:underline">すべて見る</a>
+				</div>
+				<div class="grid gap-4 lg:grid-cols-2">
+					{apps.map((app) => (
+						<a href={`/apps/${app.id}/`} class="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:bg-gray-50 lg:p-6">
+							<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.25rem] border border-gray-50 bg-orange-50 text-orange-400">
+								<span class="material-symbols-outlined text-3xl" aria-hidden="true">{app.data.icon}</span>
+							</div>
+							<div class="min-w-0"><h3 class="truncate font-bold text-navy-900">{app.data.title}</h3><p class="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-500">{app.data.description}</p></div>
+						</a>
+					))}
+				</div>
+			</div>
+		</section>
+	)}
+
+	{items.length > 0 && (
+		<section class="border-t border-gray-100 px-6 py-10">
+			<div class="mx-auto max-w-6xl">
+				<div class="mb-6 flex items-center justify-between"><h2 class="text-lg font-bold text-navy-900">アイテムの新着</h2><a href="/items/" class="text-xs font-bold text-mint-600 hover:underline">すべて見る</a></div>
+				<div class="grid gap-4 lg:grid-cols-2">
+					{items.map((item) => (
+						<a href={`/items/${item.id}/`} class="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:bg-gray-50 lg:p-6">
+							<div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.25rem] border border-gray-50 bg-orange-50 text-orange-400"><span class="material-symbols-outlined text-3xl" aria-hidden="true">{item.data.icon}</span></div>
+							<div class="min-w-0"><h3 class="truncate font-bold text-navy-900">{item.data.title}</h3><p class="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-500">{item.data.description}</p></div>
+						</a>
+					))}
+				</div>
+			</div>
+		</section>
+	)}
+
+	{logs.length > 0 && (
+		<section class="border-t border-gray-100 bg-gray-50/20 px-6 py-10">
+			<div class="mx-auto max-w-6xl">
+				<div class="mb-6 flex items-center justify-between"><h2 class="text-lg font-bold text-navy-900">育児ログの新着</h2><a href="/logs/" class="text-xs font-bold text-mint-600 hover:underline">すべて見る</a></div>
+				<div class="flex flex-col gap-0 md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-3">{logs.map((log) => <LogCard log={log} />)}</div>
+			</div>
+		</section>
+	)}
+</Layout>

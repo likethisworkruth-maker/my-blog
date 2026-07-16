@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 export async function GET() {
   const knowhow = await getCollection('knowhow');
   const apps = await getCollection('apps');
-  const items = await getCollection('items');
+  const items = (await getCollection('items')).filter((item) => item.data.published);
 
   const searchIndex = [
     ...knowhow.map((item) => ({
@@ -11,7 +11,7 @@ export async function GET() {
       title: item.data.title,
       description: item.data.description,
       url: `/knowhow/${item.id}/`,
-      type: 'チェクリスト',
+      type: 'チェックリスト',
       icon: item.data.icon || 'checklist',
     })),
     ...apps.map((app) => ({

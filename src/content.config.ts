@@ -84,6 +84,7 @@ const items = defineCollection({
 		actionText: z.string().optional(),
 		actionUrl: z.string().optional(),
 		coverImage: z.string().optional(),
+		published: z.boolean().default(true),
 	}),
 });
 

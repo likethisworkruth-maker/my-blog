@@ -15,213 +15,272 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 >
 	<script is:inline type="application/json" data-checklist-template set:html={templateJson}></script>
 
-	<div data-checklist-active>
-		<ul data-checklist-items class="space-y-2"></ul>
+	<p data-checklist-loading class="py-10 text-center text-sm text-gray-400">端末の保存データを読み込んでいます…</p>
 
-		<p data-run-message class="mt-3 min-h-5 text-center text-sm text-gray-300" aria-live="polite"></p>
+	<div data-checklist-missing class="hidden rounded-2xl border border-white/10 bg-white/5 p-5 text-center">
+		<span class="material-symbols-outlined text-4xl text-gray-400" aria-hidden="true">playlist_add</span>
+		<h2 class="mt-3 font-bold text-white">まだ開始されていません</h2>
+		<p class="mt-2 text-sm leading-6 text-gray-400">この端末にチェックリストを作成すると、進捗を保存できます。</p>
+		<button type="button" data-create-run class="mt-5 rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">
+			このリストを始める
+		</button>
+	</div>
 
-		<div class="mt-8 border-t border-white/10 pt-6">
-			<div data-auth-signed-out>
-				<button type="button" data-google-save class="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 px-5 py-3 font-bold text-white hover:bg-white/10 active:scale-[0.99]">
-					<span class="material-symbols-outlined" aria-hidden="true">cloud_upload</span>
-					Googleアカウントへ保存
-				</button>
-				<p class="mt-2 text-center text-xs leading-relaxed text-gray-400">別の端末でも続きから確認できます。</p>
+	<div data-checklist-active class="hidden">
+		<div class="mb-5 flex items-center justify-between gap-4">
+			<div>
+				<p data-progress-count class="text-sm font-bold text-white"></p>
+				<p class="mt-1 text-xs text-gray-400">チェック内容はこの端末に保存されます。</p>
 			</div>
-			<div data-auth-signed-in class="hidden rounded-xl bg-white/5 p-4">
-				<div class="flex items-center justify-between gap-3">
-					<div class="min-w-0">
-						<p class="text-sm font-bold text-white">Googleへ保存中</p>
-						<p data-auth-email class="truncate text-xs text-gray-400"></p>
-					</div>
-					<span class="material-symbols-outlined text-mint-300" aria-hidden="true">cloud_done</span>
-				</div>
-				<button type="button" data-sign-out class="mt-3 text-xs text-gray-400 underline hover:text-white">ログアウト</button>
-			</div>
+			<button type="button" data-complete-run class="shrink-0 rounded-full border border-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/10"></button>
 		</div>
 
+		<ul data-checklist-items class="space-y-2"></ul>
+
+		<form data-add-item class="mt-5 flex items-center gap-2">
+			<label class="sr-only" for={`custom-item-${checklist.checklistId}`}>項目を追加</label>
+			<input id={`custom-item-${checklist.checklistId}`} name="label" maxlength="120" autocomplete="off" placeholder="自分用の項目を追加" class="min-w-0 flex-1 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-mint-400 focus:outline-none" />
+			<button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint-500 text-white hover:bg-mint-600" aria-label="項目を追加">
+				<span class="material-symbols-outlined" aria-hidden="true">add</span>
+			</button>
+		</form>
+
+		<details data-hidden-items class="mt-5 hidden rounded-xl border border-white/10 bg-white/5 p-4">
+			<summary class="cursor-pointer text-sm font-bold text-gray-300">非表示にした項目</summary>
+			<ul data-hidden-list class="mt-3 space-y-2"></ul>
+		</details>
+
+		<p data-save-state class="mt-5 min-h-5 text-center text-xs text-gray-400" aria-live="polite">端末に保存済み</p>
 	</div>
+
+	<p data-run-message class="mt-3 min-h-5 text-center text-sm text-red-300" aria-live="assertive"></p>
 </section>
 
 <script>
 	import {
+		type ChecklistRun,
 		type ChecklistRunItem,
 		type ChecklistTemplate,
 		createChecklistRun,
-		getActiveChecklistRun,
-		saveChecklistRun,
+		createUuid,
+		getChecklistProgress,
 	} from '../scripts/checklist-state';
 	import {
-		getChecklistUser,
-		hydrateChecklistRunsFromSupabase,
-		signInToSaveChecklist,
-		signOutChecklistUser,
-		syncAllLocalChecklistRuns,
-		syncChecklistRun,
-	} from '../scripts/checklist-sync';
-	import { getSupabaseClient } from '../scripts/supabase-client';
+		getActivePrivateChecklistRun,
+		initializePrivateDb,
+		savePrivateChecklistRun,
+	} from '../scripts/private-db';
 
 	function initChecklistRunners() {
 		document.querySelectorAll<HTMLElement>('.checklist-runner').forEach((root) => {
 			if (root.dataset.initialized) return;
 			root.dataset.initialized = 'true';
-
-			const source = root.querySelector<HTMLScriptElement>('[data-checklist-template]');
-			if (!source?.textContent) return;
-			const template = JSON.parse(source.textContent) as ChecklistTemplate;
-			const itemsContainer = root.querySelector<HTMLElement>('[data-checklist-items]');
-			const runMessage = root.querySelector<HTMLElement>('[data-run-message]');
-			let run = getActiveChecklistRun(template.checklistId);
-			let draftRun = run ?? createChecklistRun(template);
-			let currentUser: Awaited<ReturnType<typeof getChecklistUser>> = null;
-			let cloudTimer: ReturnType<typeof setTimeout> | undefined;
-
-			const setMessage = (message: string, isError = false) => {
-				if (!runMessage) return;
-				runMessage.textContent = message;
-				runMessage.classList.toggle('text-red-300', isError);
-				runMessage.classList.toggle('text-gray-300', !isError);
-			};
-
-			const scheduleCloudSync = () => {
-				if (!run || !currentUser) return;
-				if (cloudTimer) clearTimeout(cloudTimer);
-				cloudTimer = setTimeout(async () => {
-					if (!run || !currentUser) return;
-					try {
-						await syncChecklistRun(run, currentUser);
-					} catch (error) {
-						console.error(error);
-						setMessage('Googleと同期できませんでした。再接続後に保存します。', true);
-					}
-				}, 700);
-			};
-
-			const persist = (shouldRender = true) => {
-				if (!run) return;
-				run.updatedAt = new Date().toISOString();
-				saveChecklistRun(run);
-				scheduleCloudSync();
-				if (shouldRender) render();
-			};
-
-			const markRunEdited = () => {
-				if (!run) return;
-				if (run.status !== 'in_progress') {
-					run.status = 'in_progress';
-					run.preparedAt = undefined;
-					run.reviewStartedAt = undefined;
-					run.completedAt = undefined;
-					run.items.forEach((item) => { item.outcome = undefined; });
-				}
-			};
-
-			const renderItem = (item: ChecklistRunItem) => {
-				const row = document.createElement('li');
-				row.className = 'rounded-xl border border-white/10 bg-white/5 p-3';
-
-				const label = document.createElement('label');
-				label.className = 'flex cursor-pointer items-start gap-3';
-				const checkbox = document.createElement('input');
-				checkbox.type = 'checkbox';
-				checkbox.checked = item.checked;
-				checkbox.className = 'mt-0.5 h-5 w-5 shrink-0 accent-emerald-400';
-				checkbox.setAttribute('aria-label', item.label);
-				checkbox.addEventListener('change', () => {
-					if (!run) run = draftRun;
-					item.checked = checkbox.checked;
-					item.checkedAt = item.checked ? new Date().toISOString() : undefined;
-					markRunEdited();
-					persist();
-				});
-
-				const text = document.createElement('span');
-				text.className = 'min-w-0 flex-1 text-sm font-medium leading-relaxed text-white';
-				text.textContent = item.label;
-				if (item.checked) text.classList.add('text-gray-400', 'line-through');
-
-				label.append(checkbox, text);
-				row.append(label);
-				return row;
-			};
-
-			const renderItems = () => {
-				if (!itemsContainer) return;
-				const displayedRun = run ?? draftRun;
-				itemsContainer.replaceChildren();
-				displayedRun.items
-					.slice()
-					.sort((a, b) => a.order - b.order)
-					.forEach((item) => itemsContainer.append(renderItem(item)));
-			};
-
-			const renderAuth = () => {
-				root.querySelector<HTMLElement>('[data-auth-signed-out]')?.classList.toggle('hidden', Boolean(currentUser));
-				root.querySelector<HTMLElement>('[data-auth-signed-in]')?.classList.toggle('hidden', !currentUser);
-				const email = root.querySelector<HTMLElement>('[data-auth-email]');
-				if (email) email.textContent = currentUser?.email ?? '';
-			};
-
-			const render = () => {
-				renderAuth();
-				renderItems();
-			};
-
-			root.querySelector<HTMLButtonElement>('[data-google-save]')?.addEventListener('click', async () => {
-				try {
-					if (run) saveChecklistRun(run);
-					setMessage('Googleログインへ移動します。');
-					await signInToSaveChecklist();
-				} catch (error) {
-					console.error(error);
-					setMessage(error instanceof Error ? error.message : 'Googleログインを開始できませんでした。', true);
-				}
-			});
-
-			root.querySelector<HTMLButtonElement>('[data-sign-out]')?.addEventListener('click', async () => {
-				try {
-					await signOutChecklistUser();
-					currentUser = null;
-					renderAuth();
-				} catch (error) {
-					console.error(error);
-					setMessage('ログアウトできませんでした。', true);
-				}
-			});
-
-			const initializeAuth = async () => {
-				try {
-					currentUser = await getChecklistUser();
-					if (currentUser) {
-						await hydrateChecklistRunsFromSupabase(currentUser);
-						run = getActiveChecklistRun(template.checklistId);
-						if (run) draftRun = run;
-						await syncAllLocalChecklistRuns(currentUser);
-					}
-				} catch (error) {
-					console.error(error);
-					setMessage('Googleと同期できませんでした。', true);
-				}
-				render();
-			};
-
-			const supabase = getSupabaseClient();
-			supabase?.auth.onAuthStateChange((_event, session) => {
-				currentUser = session?.user ?? null;
-				renderAuth();
-			});
-
-			window.addEventListener('storage', (event) => {
-				if (event.key !== 'likethis:checklist-runs:v1') return;
-				run = getActiveChecklistRun(template.checklistId);
-				if (run) draftRun = run;
-				else draftRun = createChecklistRun(template);
-				render();
-			});
-
-			render();
-			void initializeAuth();
+			void initializeRunner(root);
 		});
+	}
+
+	async function initializeRunner(root: HTMLElement) {
+		const source = root.querySelector<HTMLScriptElement>('[data-checklist-template]');
+		if (!source?.textContent) return;
+		const template = JSON.parse(source.textContent) as ChecklistTemplate;
+		const loading = root.querySelector<HTMLElement>('[data-checklist-loading]');
+		const missing = root.querySelector<HTMLElement>('[data-checklist-missing]');
+		const active = root.querySelector<HTMLElement>('[data-checklist-active]');
+		const itemsContainer = root.querySelector<HTMLElement>('[data-checklist-items]');
+		const hiddenContainer = root.querySelector<HTMLDetailsElement>('[data-hidden-items]');
+		const hiddenList = root.querySelector<HTMLElement>('[data-hidden-list]');
+		const progressCount = root.querySelector<HTMLElement>('[data-progress-count]');
+		const saveState = root.querySelector<HTMLElement>('[data-save-state]');
+		const runMessage = root.querySelector<HTMLElement>('[data-run-message]');
+		const completeButton = root.querySelector<HTMLButtonElement>('[data-complete-run]');
+		let run: ChecklistRun | null = null;
+		let saveChain = Promise.resolve();
+
+		const showError = (message: string) => {
+			if (runMessage) runMessage.textContent = message;
+		};
+
+		const setSaveState = (message: string, failed = false) => {
+			if (!saveState) return;
+			saveState.textContent = message;
+			saveState.classList.toggle('text-red-300', failed);
+			saveState.classList.toggle('text-gray-400', !failed);
+		};
+
+		const persist = (renderAfter = true) => {
+			if (!run) return;
+			setSaveState('保存中…');
+			saveChain = saveChain.then(async () => {
+				if (!run) return;
+				const saved = await savePrivateChecklistRun(run);
+				Object.assign(run, saved);
+				setSaveState('端末に保存済み');
+				if (renderAfter) render();
+			}).catch(() => {
+				setSaveState('保存に失敗しました', true);
+			});
+		};
+
+		const markEdited = (item?: ChecklistRunItem) => {
+			if (!run) return;
+			const now = new Date().toISOString();
+			if (item) item.updatedAt = now;
+			if (run.status !== 'in_progress') {
+				run.status = 'in_progress';
+				run.preparedAt = undefined;
+				run.reviewStartedAt = undefined;
+				run.completedAt = undefined;
+			}
+		};
+
+		const moveItem = (item: ChecklistRunItem, direction: -1 | 1) => {
+			if (!run) return;
+			const visible = run.items.filter((candidate) => !candidate.hidden).sort((a, b) => a.order - b.order);
+			const index = visible.findIndex((candidate) => candidate.id === item.id);
+			const target = visible[index + direction];
+			if (!target) return;
+			const order = item.order;
+			item.order = target.order;
+			target.order = order;
+			markEdited(item);
+			target.updatedAt = item.updatedAt;
+			persist();
+		};
+
+		const createIconButton = (icon: string, label: string, onClick: () => void) => {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-white/10 hover:text-white';
+			button.setAttribute('aria-label', label);
+			const symbol = document.createElement('span');
+			symbol.className = 'material-symbols-outlined text-lg';
+			symbol.setAttribute('aria-hidden', 'true');
+			symbol.textContent = icon;
+			button.append(symbol);
+			button.addEventListener('click', onClick);
+			return button;
+		};
+
+		const renderItem = (item: ChecklistRunItem) => {
+			const row = document.createElement('li');
+			row.className = 'flex items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-3';
+			const label = document.createElement('label');
+			label.className = 'flex min-w-0 flex-1 cursor-pointer items-start gap-3';
+			const checkbox = document.createElement('input');
+			checkbox.type = 'checkbox';
+			checkbox.checked = item.checked;
+			checkbox.className = 'mt-0.5 h-5 w-5 shrink-0 accent-emerald-400';
+			checkbox.setAttribute('aria-label', item.label);
+			checkbox.addEventListener('change', () => {
+				item.checked = checkbox.checked;
+				item.checkedAt = item.checked ? new Date().toISOString() : undefined;
+				markEdited(item);
+				persist();
+			});
+			const text = document.createElement('span');
+			text.className = 'min-w-0 flex-1 text-sm font-medium leading-relaxed text-white';
+			text.textContent = item.label;
+			if (item.checked) text.classList.add('text-gray-400', 'line-through');
+			label.append(checkbox, text);
+			const actions = document.createElement('div');
+			actions.className = 'flex shrink-0 items-center';
+			actions.append(
+				createIconButton('arrow_upward', `${item.label}を上へ移動`, () => moveItem(item, -1)),
+				createIconButton('arrow_downward', `${item.label}を下へ移動`, () => moveItem(item, 1)),
+				createIconButton('visibility_off', `${item.label}を非表示`, () => {
+					item.hidden = true;
+					markEdited(item);
+					persist();
+				}),
+			);
+			row.append(label, actions);
+			return row;
+		};
+
+		const renderHiddenItem = (item: ChecklistRunItem) => {
+			const row = document.createElement('li');
+			row.className = 'flex items-center justify-between gap-3 text-sm text-gray-400';
+			const text = document.createElement('span');
+			text.className = 'min-w-0 truncate';
+			text.textContent = item.label;
+			const restore = document.createElement('button');
+			restore.type = 'button';
+			restore.className = 'shrink-0 text-xs font-bold text-mint-300 hover:text-mint-200';
+			restore.textContent = '戻す';
+			restore.addEventListener('click', () => {
+				item.hidden = false;
+				markEdited(item);
+				persist();
+			});
+			row.append(text, restore);
+			return row;
+		};
+
+		const render = () => {
+			loading?.classList.add('hidden');
+			missing?.classList.toggle('hidden', Boolean(run));
+			active?.classList.toggle('hidden', !run);
+			if (!run) return;
+			const visible = run.items.filter((item) => !item.hidden).sort((a, b) => a.order - b.order);
+			const hidden = run.items.filter((item) => item.hidden).sort((a, b) => a.order - b.order);
+			itemsContainer?.replaceChildren(...visible.map(renderItem));
+			hiddenList?.replaceChildren(...hidden.map(renderHiddenItem));
+			hiddenContainer?.classList.toggle('hidden', hidden.length === 0);
+			const progress = getChecklistProgress(run);
+			if (progressCount) progressCount.textContent = `${progress.completed} / ${progress.total}件完了（${progress.percent}%）`;
+			if (completeButton) completeButton.textContent = run.status === 'completed' ? '実行中に戻す' : '完了にする';
+		};
+
+		root.querySelector<HTMLButtonElement>('[data-create-run]')?.addEventListener('click', async () => {
+			run = createChecklistRun(template);
+			try {
+				await savePrivateChecklistRun(run);
+				window.dispatchEvent(new CustomEvent('checklist-run-ready', { detail: { checklistId: template.checklistId } }));
+				render();
+			} catch {
+				run = null;
+				showError('端末への保存を開始できませんでした。');
+			}
+		});
+
+		root.querySelector<HTMLFormElement>('[data-add-item]')?.addEventListener('submit', (event) => {
+			event.preventDefault();
+			if (!run) return;
+			const form = event.currentTarget as HTMLFormElement;
+			const input = form.elements.namedItem('label') as HTMLInputElement | null;
+			const label = input?.value.trim() ?? '';
+			if (!label || !input) return;
+			const now = new Date().toISOString();
+			run.items.push({
+				id: createUuid(), itemKey: `custom-${createUuid()}`, groupId: 'custom', groupLabel: '自分用',
+				label, origin: 'custom', phase: 'prepare', order: run.items.length, checked: false,
+				hidden: false, note: '', updatedAt: now,
+			});
+			input.value = '';
+			markEdited();
+			persist();
+		});
+
+		completeButton?.addEventListener('click', () => {
+			if (!run) return;
+			if (run.status === 'completed') {
+				run.status = 'in_progress';
+				run.completedAt = undefined;
+			} else {
+				run.status = 'completed';
+				run.completedAt = new Date().toISOString();
+			}
+			persist();
+		});
+
+		try {
+			await initializePrivateDb();
+			run = await getActivePrivateChecklistRun(template.checklistId);
+			render();
+		} catch {
+			loading?.classList.add('hidden');
+			showError('このブラウザーでは端末の保存データを読み込めませんでした。');
+		}
 	}
 
 	document.addEventListener('DOMContentLoaded', initChecklistRunners);

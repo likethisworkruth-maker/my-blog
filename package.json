@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "astro dev",
     "validate:checklists": "node scripts/validate-checklists.mjs",
-    "test:checklists": "node --experimental-strip-types tests/checklist-state.test.mjs",
+    "test": "node --experimental-strip-types --test tests/checklist-state.test.mjs tests/private-data.test.mjs tests/site-contract.test.mjs",
+    "test:checklists": "npm test",
     "build": "npm run validate:checklists && astro build",
     "postbuild": "node scripts/postbuild.js",
     "preview": "astro preview",
@@ -23,12 +24,14 @@
     "@supabase/supabase-js": "^2.110.1",
     "@tailwindcss/vite": "^4.3.2",
     "astro": "^7.0.6",
+    "idb": "^8.0.3",
     "material-symbols": "^0.45.5",
     "sharp": "^0.35.0",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3"
   },
   "devDependencies": {
+    "fake-indexeddb": "^6.2.5",
     "workbox-build": "^7.4.1"
   }
 }

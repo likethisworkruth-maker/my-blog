@@ -110,7 +110,7 @@ const uniqueAges =
 		<!-- Search Bar -->
 		<div class="relative mb-2">
 			<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-			<input type="text" id="knowhow-search" placeholder="チェクリストを検索" class="w-full bg-white border border-gray-200 rounded-full py-3 pl-12 pr-4 text-[0.95rem] focus:outline-none focus:border-mint-500 shadow-sm transition-colors" />
+			<input type="text" id="knowhow-search" placeholder="チェックリストを検索" class="w-full bg-white border border-gray-200 rounded-full py-3 pl-12 pr-4 text-[0.95rem] focus:outline-none focus:border-mint-500 shadow-sm transition-colors" />
 		</div>
 
 		<div class="flex flex-col gap-4 mb-4">
@@ -279,6 +279,9 @@ const uniqueAges =
 				チェックリストを探す
 			</button>
 		</div>
+		<div data-private-list-controls class="mt-8 hidden border-t border-gray-100 pt-6 text-right">
+			<button type="button" data-delete-device-data class="text-xs font-bold text-red-500 underline underline-offset-4 hover:text-red-600">この端末のチェックリストデータを削除</button>
+		</div>
 	</div>
 
 	<!-- Hidden comments to ensure script is loaded -->
@@ -302,16 +305,12 @@ const uniqueAges =
 <script>
 	import { navigate } from 'astro:transitions/client';
 	import {
-		CHECKLIST_STORAGE_KEY,
-		getActiveChecklistRun,
-	} from '../../scripts/checklist-state';
-	import {
-		getChecklistUser,
-		hydrateChecklistRunsFromSupabase,
-		syncAllLocalChecklistRuns,
-	} from '../../scripts/checklist-sync';
+		clearPrivateChecklistData,
+		getPrivateChecklistRuns,
+		initializePrivateDb,
+	} from '../../scripts/private-db';
 
-	type IndexPanelTab = 'desc' | 'progress' | 'comments';
+	type IndexPanelTab = 'desc' | 'progress' | 'comments' | 'memo';
 
 	declare global {
 		interface Window {
@@ -513,8 +512,8 @@ const uniqueAges =
 			} catch {
 				// Session storage may be unavailable in strict privacy modes.
 			}
-			const progressHash = currentListView === 'my' ? '#progress' : '';
-			await navigate('/knowhow/' + id + '/' + progressHash);
+			const privateLocation = currentListView === 'my' ? '?mode=my#progress' : '';
+			await navigate('/knowhow/' + id + '/' + privateLocation);
 		} catch (err) {
 			console.error(err);
 		} finally {
@@ -630,6 +629,7 @@ const uniqueAges =
 	const emptyState = document.getElementById('knowhow-empty');
 	const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
 	let currentListView: 'all' | 'my' = new URL(window.location.href).searchParams.get('view') === 'my' ? 'my' : 'all';
+	let startedChecklistIds = new Set<string>();
 
 	let currentCategory = "すべて";
 	let currentAge = "all";
@@ -647,13 +647,11 @@ const uniqueAges =
 			tab.classList.toggle('text-gray-400', !active);
 			tab.classList.toggle('font-medium', !active);
 		}
+		document.querySelector<HTMLElement>('[data-private-list-controls]')?.classList.toggle('hidden', currentListView !== 'my');
 	}
 
 	function refreshMyListCount() {
-		const count = cards.filter((card) => {
-			const checklistId = card.dataset.checklistId;
-			return checklistId ? Boolean(getActiveChecklistRun(checklistId)) : false;
-		}).length;
+		const count = cards.filter((card) => startedChecklistIds.has(card.dataset.checklistId ?? '')).length;
 		return count;
 	}
 
@@ -709,7 +707,7 @@ const uniqueAges =
 			const ageMatch = currentAge === "all" || card.getAttribute("data-age") === currentAge;
 			const checklistId = card.dataset.checklistId;
 			const viewMatch = currentListView === 'all'
-				|| Boolean(checklistId && getActiveChecklistRun(checklistId));
+				|| Boolean(checklistId && startedChecklistIds.has(checklistId));
 
 			if (categoryMatch && ageMatch && searchMatch && viewMatch) {
 				card.style.display = "block";
@@ -798,32 +796,28 @@ const uniqueAges =
 		document.querySelector<HTMLElement>('[data-find-checklists]')?.addEventListener('click', () => {
 			setListView('all');
 		});
+		document.querySelector<HTMLButtonElement>('[data-delete-device-data]')?.addEventListener('click', async () => {
+			if (!window.confirm('この端末に保存した進捗とメモをすべて削除します。元に戻せません。削除しますか？')) return;
+			await clearPrivateChecklistData();
+			await refreshFromSavedRuns();
+		});
 
-		const refreshFromSavedRuns = () => {
+		const refreshFromSavedRuns = async () => {
+			const runs = await getPrivateChecklistRuns();
+			startedChecklistIds = new Set(runs.map((run) => run.checklistId));
 			refreshMyListCount();
 			updateView();
 		};
-		window.addEventListener('checklist-runs-changed', refreshFromSavedRuns);
-		window.addEventListener('storage', (event) => {
-			if (event.key === CHECKLIST_STORAGE_KEY) refreshFromSavedRuns();
-		});
-
-		const hydrateMyList = async () => {
-			try {
-				const user = await getChecklistUser();
-				if (!user) return;
-				await hydrateChecklistRunsFromSupabase(user);
-				await syncAllLocalChecklistRuns(user);
-				refreshFromSavedRuns();
-			} catch (error) {
-				console.error('マイリストを同期できませんでした。', error);
-			}
-		};
+		window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns());
 
 		refreshViewTabs();
 		refreshMyListCount();
 		updateView();
-		void hydrateMyList();
+		void initializePrivateDb().then(refreshFromSavedRuns).catch(() => {
+			if (emptyMessage && currentListView === 'my') {
+				emptyMessage.textContent = 'このブラウザーではマイリストを読み込めませんでした。';
+			}
+		});
 	});
 </script>
 

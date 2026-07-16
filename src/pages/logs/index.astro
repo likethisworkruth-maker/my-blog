@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import LogCard from '../../components/LogCard.astro';
+import RikutsuBackLink from '../../components/RikutsuBackLink.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { UI } from '../../i18n/ja';
 
@@ -17,6 +18,7 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 <Layout title={`${UI.logs.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
 
 	<div class="px-6 py-8 lg:py-12">
+		<div class="mb-6"><RikutsuBackLink label="育児ログ" /></div>
 		<nav class="mb-6 border-b border-gray-200" aria-label="子育てログの表示切り替え">
 			<div class="flex items-stretch gap-7" role="tablist">
 				<button

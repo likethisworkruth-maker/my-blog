@@ -1,0 +1,108 @@
+---
+import DriveBackupControls from './DriveBackupControls.astro';
+
+interface Props {
+	checklistId: string;
+}
+
+const { checklistId } = Astro.props;
+---
+
+<section class="private-note h-full overflow-y-auto bg-[#262626] p-4 text-gray-100 sm:p-6" data-private-note data-checklist-id={checklistId}>
+	<label for={`private-note-${checklistId}`} class="text-base font-bold text-white">このチェックリストのメモ</label>
+	<p class="mt-2 text-xs leading-5 text-gray-400">この端末に保存されます。Googleログイン中は、同じアカウントのDriveにもバックアップされます。</p>
+	<p class="mt-2 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs leading-5 text-amber-100">
+		氏名、住所、病院名、病歴などの個人情報は入力しないでください。
+	</p>
+	<textarea
+		id={`private-note-${checklistId}`}
+		data-note-input
+		maxlength="3000"
+		rows="10"
+		disabled
+		class="mt-4 w-full resize-y rounded-2xl border border-white/15 bg-white/5 p-4 text-sm leading-6 text-white placeholder:text-gray-500 focus:border-mint-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+		placeholder="気づいたことや、次回確認したいことを入力"
+	></textarea>
+	<div class="mt-2 flex items-center justify-between gap-3 text-xs">
+		<p data-note-save-state class="text-gray-400" aria-live="polite">開始したチェックリストで利用できます</p>
+		<p data-note-count class="text-gray-500">0 / 3000</p>
+	</div>
+	<DriveBackupControls />
+</section>
+
+<script>
+	import {
+		getActivePrivateChecklistRun,
+		initializePrivateDb,
+		savePrivateChecklistRun,
+	} from '../scripts/private-db';
+
+	function initPrivateNotes() {
+		document.querySelectorAll<HTMLElement>('[data-private-note]').forEach((root) => {
+			if (root.dataset.initialized) return;
+			root.dataset.initialized = 'true';
+			void initializePrivateNote(root);
+		});
+	}
+
+	async function initializePrivateNote(root: HTMLElement) {
+		const checklistId = root.dataset.checklistId;
+		const input = root.querySelector<HTMLTextAreaElement>('[data-note-input]');
+		const state = root.querySelector<HTMLElement>('[data-note-save-state]');
+		const count = root.querySelector<HTMLElement>('[data-note-count]');
+		if (!checklistId || !input) return;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		let loadSequence = 0;
+
+		const setState = (message: string, failed = false) => {
+			if (!state) return;
+			state.textContent = message;
+			state.classList.toggle('text-red-300', failed);
+			state.classList.toggle('text-gray-400', !failed);
+		};
+		const refreshCount = () => {
+			if (count) count.textContent = `${input.value.length} / 3000`;
+		};
+		const loadRun = async () => {
+			const sequence = ++loadSequence;
+			try {
+				await initializePrivateDb();
+				const run = await getActivePrivateChecklistRun(checklistId);
+				if (sequence !== loadSequence) return;
+				input.disabled = !run;
+				input.value = run?.note ?? '';
+				setState(run ? '端末に保存済み' : '開始したチェックリストで利用できます');
+				refreshCount();
+			} catch {
+				input.disabled = true;
+				setState('端末の保存データを読み込めませんでした', true);
+			}
+		};
+
+		input.addEventListener('input', () => {
+			refreshCount();
+			setState('保存中…');
+			if (timer) clearTimeout(timer);
+			timer = setTimeout(async () => {
+				try {
+					const run = await getActivePrivateChecklistRun(checklistId);
+					if (!run) return;
+					run.note = input.value;
+					await savePrivateChecklistRun(run);
+					setState('端末に保存済み');
+				} catch {
+					setState('保存に失敗しました', true);
+				}
+			}, 400);
+		});
+
+		window.addEventListener('checklist-run-ready', () => void loadRun());
+		window.addEventListener('checklist-runs-changed', () => {
+			if (document.activeElement !== input) void loadRun();
+		});
+		await loadRun();
+	}
+
+	document.addEventListener('DOMContentLoaded', initPrivateNotes);
+	document.addEventListener('astro:page-load', initPrivateNotes);
+</script>

@@ -13,6 +13,9 @@ const currentPath =
 	pathname.slice(
 		1,
 	);
+const isRikutsuPath = ["rikutsu", "apps", "items", "logs"].some((path) =>
+	currentPath.startsWith(path),
+);
 const today =
 	new Date();
 ---
@@ -43,25 +46,11 @@ const today =
 		</a>
 
 		<a
-			href="/apps/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("apps") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+			href="/rikutsu/"
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${isRikutsuPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
 		>
-			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("apps") ? "material-symbols-filled" : ""}`} aria-hidden="true">apps</span>
-			<span>{UI.footerNav.apps}</span>
-		</a>
-		<a
-			href="/items/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("items") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
-		>
-			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("items") ? "material-symbols-filled" : ""}`} aria-hidden="true">toys_and_games</span>
-			<span>{UI.footerNav.items}</span>
-		</a>
-		<a
-			href="/logs/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("logs") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
-		>
-			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("logs") ? "material-symbols-filled" : ""}`} aria-hidden="true">auto_stories</span>
-			<span>{UI.footerNav.logs}</span>
+			<span class={`material-symbols-outlined text-2xl ${isRikutsuPath ? "material-symbols-filled" : ""}`} aria-hidden="true">family_home</span>
+			<span>{UI.footerNav.rikutsu}</span>
 		</a>
 	</div>
 </footer>

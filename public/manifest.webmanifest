@@ -37,9 +37,14 @@
       "url": "/knowhow/"
     },
     {
-      "name": "子育てログ",
-      "short_name": "子育てログ",
-      "url": "/logs/"
+      "name": "続きから使う",
+      "short_name": "マイリスト",
+      "url": "/knowhow/?view=my"
+    },
+    {
+      "name": "理屈さんち",
+      "short_name": "理屈さんち",
+      "url": "/rikutsu/"
     }
   ]
 }

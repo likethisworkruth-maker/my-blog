@@ -1,4 +1,5 @@
 import type { User } from '@supabase/supabase-js';
+import { DRIVE_APPDATA_SCOPE } from './drive-authorization';
 import { getSupabaseClient } from './supabase-client';
 
 export async function getGoogleUser(): Promise<User | null> {
@@ -16,7 +17,14 @@ export async function signInWithGoogle(redirectTo = window.location.href) {
 
 	const { error } = await supabase.auth.signInWithOAuth({
 		provider: 'google',
-		options: { redirectTo },
+		options: {
+			redirectTo,
+			scopes: DRIVE_APPDATA_SCOPE,
+			queryParams: {
+				include_granted_scopes: 'true',
+				prompt: 'consent',
+			},
+		},
 	});
 	if (error) throw error;
 }

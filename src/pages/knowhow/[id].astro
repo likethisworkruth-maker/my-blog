@@ -3,6 +3,7 @@ import { getCollection, getEntry, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ActionBar from "../../components/ActionBar.astro";
 import ChecklistRunner from "../../components/ChecklistRunner.astro";
+import ChecklistPrivateNote from "../../components/ChecklistPrivateNote.astro";
 import Comments from "../../components/Comments.astro";
 import { SITE_TITLE } from "../../consts";
 
@@ -96,10 +97,11 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                 class="fixed lg:relative bottom-0 left-0 w-full h-[65dvh] lg:h-full lg:w-0 bg-[#262626] z-50 lg:z-10 transform translate-y-full lg:translate-y-0 transition-all duration-300 ease-out flex flex-col shadow-2xl lg:shadow-xl rounded-t-3xl lg:rounded-xl overflow-hidden opacity-100 lg:opacity-0 lg:ml-0"
             >
                 <div class="flex items-center justify-between pl-4 pr-14 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
-					<div class="flex-grow flex items-stretch justify-center w-full">
-						<button id="tab-btn-desc" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
-						<button id="tab-btn-progress" class="h-14 flex-1 px-2 sm:px-4 flex items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
-						<button id="tab-btn-comments" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">みんなのコメント</button>
+					<div class="flex-grow flex items-stretch justify-center w-full" role="tablist" aria-label="チェックリストの詳細">
+						<button id="tab-btn-desc" role="tab" aria-selected="true" aria-controls="tab-content-desc" tabindex="0" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
+						<button id="tab-btn-progress" role="tab" aria-selected="false" aria-controls="tab-content-progress" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
+						<button id="tab-btn-comments" role="tab" aria-selected="false" aria-controls="tab-content-comments" tabindex="-1" data-public-tab class="flex h-14 flex-1 px-2 sm:px-6 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">みんなのコメント</button>
+						<button id="tab-btn-memo" role="tab" aria-selected="false" aria-controls="tab-content-memo" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-memo" onclick="if(window.toggleTab) window.toggleTab('memo')">メモ</button>
                     </div>
                     <button class="absolute right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
                         <span class="material-symbols-outlined font-light">close</span>
@@ -107,21 +109,27 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                 </div>
 
                 <!-- Description Content -->
-                <div id="tab-content-desc" class="flex-grow overflow-y-auto p-4 sm:p-6 content-area bg-[#262626] text-gray-100 overscroll-contain min-w-[320px]">
+				<div id="tab-content-desc" role="tabpanel" aria-labelledby="tab-btn-desc" class="flex-grow overflow-y-auto p-4 sm:p-6 content-area bg-[#262626] text-gray-100 overscroll-contain min-w-[320px]">
                     <h1 class="text-[1.25rem] font-bold text-white leading-snug mb-4">{knowhow.data.title}</h1>
                     <p class="text-[0.95rem] text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">{knowhow.data.description}</p>
-                    <Content />
-                </div>
+					<Content />
+					<button type="button" data-public-only data-start-checklist class="mt-7 w-full rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">このチェックリストを始める</button>
+					<a data-private-only href={`/knowhow/${knowhow.id}/?tab=comments`} class="mt-7 hidden text-sm font-bold text-mint-300 underline underline-offset-4">みんなのコメントを見る</a>
+				</div>
 
                 <!-- Checklist Progress Content -->
-                <div id="tab-content-progress" class="flex-grow overflow-hidden hidden bg-[#262626] min-w-[320px]">
+				<div id="tab-content-progress" role="tabpanel" aria-labelledby="tab-btn-progress" hidden class="flex-grow overflow-hidden hidden bg-[#262626] min-w-[320px]">
                     <ChecklistRunner checklist={checklist} />
                 </div>
 
                 <!-- Comments Content -->
-                <div id="tab-content-comments" class="flex-grow overflow-hidden hidden bg-[#262626] flex-col min-w-[320px]">
-                    <Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
-                </div>
+				<div id="tab-content-comments" role="tabpanel" aria-labelledby="tab-btn-comments" hidden class="flex-grow overflow-hidden hidden bg-[#262626] flex-col min-w-[320px]">
+					<Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
+				</div>
+
+				<div id="tab-content-memo" role="tabpanel" aria-labelledby="tab-btn-memo" hidden class="flex-grow overflow-hidden hidden bg-[#262626] min-w-[320px]">
+					<ChecklistPrivateNote checklistId={checklist.checklistId} />
+				</div>
             </div>
 		</div>
 	</div>
@@ -129,8 +137,15 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 
 <script>
     import { navigate } from 'astro:transitions/client';
+	import { createChecklistRun, type ChecklistTemplate } from '../../scripts/checklist-state';
+	import {
+		getActivePrivateChecklistRun,
+		initializePrivateDb,
+		savePrivateChecklistRun,
+	} from '../../scripts/private-db';
 
-	type PanelTab = 'desc' | 'progress' | 'comments';
+	type PanelTab = 'desc' | 'progress' | 'comments' | 'memo';
+	type DetailMode = 'public' | 'private';
 
 	// Global toggle function
 	declare global {
@@ -139,6 +154,8 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 			toggleCommentsPanel: () => void;
 			toggleDescPanel: () => void;
 			toggleProgressPanel: () => void;
+			toggleMemoPanel: () => void;
+			startChecklist: () => Promise<void>;
             toggleInfoPanel: () => void;
             toggleTab: (tab: PanelTab) => void;
             switchTab: (tab: PanelTab) => void;
@@ -183,42 +200,81 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 
         // We bind functions to window dynamically so they fetch the latest DOM elements
         const isMobile = () => window.innerWidth < 1024;
+		let currentMode: DetailMode = new URL(window.location.href).searchParams.get('mode') === 'my' ? 'private' : 'public';
+		const tabsByMode: Record<DetailMode, PanelTab[]> = {
+			public: ['desc', 'comments'],
+			private: ['desc', 'progress', 'memo'],
+		};
 
         const setUrlTab = (tab: PanelTab | null) => {
             const url = new URL(window.location.href);
 			url.searchParams.delete('tab');
 			url.hash = '';
-			if (tab === 'comments') url.searchParams.set('tab', 'comments');
-			if (tab === 'progress') url.hash = 'progress';
-            history.replaceState(null, '', url.toString());
+			if (currentMode === 'private') {
+				url.searchParams.set('mode', 'my');
+				if (tab === 'progress') url.hash = 'progress';
+				if (tab === 'memo') url.hash = 'memo';
+			} else {
+				url.searchParams.delete('mode');
+				if (tab === 'comments') url.searchParams.set('tab', 'comments');
+			}
+			if (url.toString() !== window.location.href) history.pushState(null, '', url.toString());
         };
 
 		const getActiveTab = (): PanelTab => {
 			if (!document.getElementById('tab-content-progress')?.classList.contains('hidden')) return 'progress';
 			if (!document.getElementById('tab-content-comments')?.classList.contains('hidden')) return 'comments';
+			if (!document.getElementById('tab-content-memo')?.classList.contains('hidden')) return 'memo';
 			return 'desc';
 		};
 
         window.switchTab = (tab: PanelTab) => {
-			const tabs: PanelTab[] = ['desc', 'progress', 'comments'];
+			const allowedTabs = tabsByMode[currentMode];
+			const resolvedTab = allowedTabs.includes(tab) ? tab : 'desc';
+			const tabs: PanelTab[] = ['desc', 'progress', 'comments', 'memo'];
 			for (const candidate of tabs) {
-				const active = candidate === tab;
-				const button = document.getElementById('tab-btn-' + candidate);
-				const content = document.getElementById('tab-content-' + candidate);
+				const active = candidate === resolvedTab;
+				const button = document.getElementById('tab-btn-' + candidate) as HTMLButtonElement | null;
+				const content = document.getElementById('tab-content-' + candidate) as HTMLElement | null;
 				button?.classList.toggle('text-white', active);
 				button?.classList.toggle('text-gray-400', !active);
 				button?.classList.toggle('border-white', active);
 				button?.classList.toggle('border-transparent', !active);
+				button?.setAttribute('aria-selected', String(active));
+				if (button) button.tabIndex = active ? 0 : -1;
 				content?.classList.toggle('hidden', !active);
+				if (content) content.hidden = !active;
 				if (candidate !== 'desc') content?.classList.toggle('flex', active);
 			}
 
-			if (tab === 'comments') {
+			if (resolvedTab === 'comments') {
 				const comments = document.getElementById('tab-content-comments');
 				const form = comments?.querySelector('textarea[name="content"]') as HTMLTextAreaElement | null;
 				window.setTimeout(() => form?.focus(), 150);
 			}
         };
+
+		const applyModeUi = () => {
+			const isPrivate = currentMode === 'private';
+			document.querySelectorAll<HTMLElement>('[data-public-tab]').forEach((element) => {
+				element.classList.toggle('hidden', isPrivate);
+				element.classList.toggle('flex', !isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-private-tab]').forEach((element) => {
+				element.classList.toggle('hidden', !isPrivate);
+				element.classList.toggle('flex', isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-public-actions]').forEach((element) => {
+				element.classList.toggle('hidden', isPrivate);
+				element.classList.toggle('contents', !isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-private-actions]').forEach((element) => {
+				element.classList.toggle('hidden', !isPrivate);
+				element.classList.toggle('contents', isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-public-only]').forEach((element) => element.classList.toggle('hidden', isPrivate));
+			document.querySelectorAll<HTMLElement>('[data-private-only]').forEach((element) => element.classList.toggle('hidden', !isPrivate));
+		};
 
         window.toggleInfoPanel = () => {
             const infoPanel = document.getElementById('info-panel');
@@ -273,6 +329,33 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 		window.toggleCommentsPanel = () => window.toggleTab('comments');
 		window.toggleDescPanel = () => window.toggleTab('desc');
 		window.toggleProgressPanel = () => window.toggleTab('progress');
+		window.toggleMemoPanel = () => window.toggleTab('memo');
+
+		let startingChecklist = false;
+		window.startChecklist = async () => {
+			if (startingChecklist) return;
+			startingChecklist = true;
+			try {
+				const templateSource = container.querySelector<HTMLScriptElement>('[data-checklist-template]');
+				if (!templateSource?.textContent) throw new Error('template-missing');
+				const template = JSON.parse(templateSource.textContent) as ChecklistTemplate;
+				await initializePrivateDb();
+				const existing = await getActivePrivateChecklistRun(template.checklistId);
+				if (!existing) await savePrivateChecklistRun(createChecklistRun(template));
+				const destination = new URL(window.location.href);
+				destination.search = '';
+				destination.searchParams.set('mode', 'my');
+				destination.hash = 'progress';
+				await navigate(destination.pathname + destination.search + destination.hash);
+			} catch {
+				window.alert('チェックリストを開始できませんでした。端末の保存設定をご確認ください。');
+			} finally {
+				startingChecklist = false;
+			}
+		};
+		container.querySelectorAll<HTMLButtonElement>('[data-start-checklist]').forEach((button) => {
+			button.addEventListener('click', () => void window.startChecklist());
+		});
 
 		// Close panel if clicked outside
 		document.addEventListener('click', (e) => {
@@ -283,6 +366,8 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 				!target.closest('button[onclick*="toggleCommentsPanel"]') &&
 				!target.closest('button[onclick*="toggleDescPanel"]') &&
 				!target.closest('button[onclick*="toggleProgressPanel"]') &&
+				!target.closest('button[onclick*="toggleMemoPanel"]') &&
+				!target.closest('button[onclick*="startChecklist"]') &&
                 !target.closest('button[onclick*="toggleTab"]') &&
                 !target.closest('div[onclick*="toggleDescPanel"]') &&
 				!target.closest('.like-btn')
@@ -377,28 +462,46 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
             touchMoved = false;
         }, { passive: true });
 
-		// Check initial URL
-		const urlParams = new URLSearchParams(window.location.search);
-		const queryTab = urlParams.get('tab');
-		const tab: PanelTab | null = window.location.hash === '#progress'
-			? 'progress'
-			: queryTab === 'comments'
-				? 'comments'
-				: queryTab === 'desc'
-					? 'desc'
-					: null;
-		if (tab) {
-            const infoPanel = document.getElementById('info-panel');
-            if (infoPanel) {
-                window.switchTab(tab);
-                if (isMobile()) {
-                    infoPanel.classList.remove('translate-y-full');
-                } else {
-                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-                }
-            }
-		}
+		const syncDetailStateFromUrl = () => {
+			const url = new URL(window.location.href);
+			currentMode = url.searchParams.get('mode') === 'my' ? 'private' : 'public';
+			applyModeUi();
+			const tab: PanelTab = currentMode === 'private'
+				? url.hash === '#memo' ? 'memo' : url.hash === '#progress' ? 'progress' : 'desc'
+				: url.searchParams.get('tab') === 'comments' ? 'comments' : 'desc';
+			window.switchTab(tab);
+			const shouldOpen = currentMode === 'private' || url.searchParams.has('tab') || Boolean(url.hash);
+			const infoPanel = document.getElementById('info-panel');
+			if (infoPanel && shouldOpen) {
+				if (isMobile()) {
+					infoPanel.classList.remove('translate-y-full');
+				} else {
+					infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+					infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+				}
+			}
+		};
+
+		const tabList = container.querySelector<HTMLElement>('[role="tablist"]');
+		tabList?.addEventListener('keydown', (event) => {
+			if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+			const buttons = tabsByMode[currentMode]
+				.map((tab) => document.getElementById(`tab-btn-${tab}`) as HTMLButtonElement | null)
+				.filter((button): button is HTMLButtonElement => Boolean(button));
+			if (buttons.length === 0) return;
+			const currentIndex = Math.max(0, buttons.indexOf(document.activeElement as HTMLButtonElement));
+			let nextIndex = currentIndex;
+			if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % buttons.length;
+			if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+			if (event.key === 'Home') nextIndex = 0;
+			if (event.key === 'End') nextIndex = buttons.length - 1;
+			event.preventDefault();
+			buttons[nextIndex].focus();
+			window.toggleTab(buttons[nextIndex].id.replace('tab-btn-', '') as PanelTab);
+		});
+		window.addEventListener('popstate', syncDetailStateFromUrl);
+		window.addEventListener('hashchange', syncDetailStateFromUrl);
+		syncDetailStateFromUrl();
 	}
 
 	document.addEventListener('DOMContentLoaded', initReels);

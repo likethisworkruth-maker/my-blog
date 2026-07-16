@@ -18,7 +18,6 @@ export default defineConfig({
           '/403/',
           '/answer/',
           '/results/',
-          '/items/',
           '/naraibase/answer/',
           '/problems/',
           '/methods/',

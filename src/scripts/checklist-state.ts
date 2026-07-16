@@ -48,6 +48,7 @@ export interface ChecklistRunItem {
 	hidden: boolean;
 	note: string;
 	outcome?: ChecklistOutcome;
+	updatedAt: string;
 }
 
 export interface ChecklistRun {
@@ -56,11 +57,14 @@ export interface ChecklistRun {
 	templateVersion: number;
 	status: ChecklistStatus;
 	items: ChecklistRunItem[];
+	note: string;
+	createdAt: string;
 	startedAt: string;
 	preparedAt?: string;
 	reviewStartedAt?: string;
 	completedAt?: string;
 	updatedAt: string;
+	revision: number;
 }
 
 interface ChecklistStore {
@@ -243,9 +247,13 @@ export function createChecklistRun(template: ChecklistTemplate): ChecklistRun {
 			checked: false,
 			hidden: false,
 			note: '',
+			updatedAt: now,
 		}))),
+		note: '',
+		createdAt: now,
 		startedAt: now,
 		updatedAt: now,
+		revision: 0,
 	};
 }
 
@@ -256,6 +264,7 @@ export function resetChecklistRun(run: ChecklistRun, template: ChecklistTemplate
 		runId: run.runId,
 		startedAt: run.startedAt,
 		updatedAt: new Date().toISOString(),
+		revision: run.revision,
 	};
 }
 
@@ -273,12 +282,16 @@ export function duplicateChecklistRun(run: ChecklistRun): ChecklistRun {
 			checkedAt: undefined,
 			note: item.note,
 			outcome: undefined,
+			updatedAt: now,
 		})),
+		note: '',
+		createdAt: now,
 		startedAt: now,
 		preparedAt: undefined,
 		reviewStartedAt: undefined,
 		completedAt: undefined,
 		updatedAt: now,
+		revision: 0,
 	};
 }
 

@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import LikeButton from '../../components/LikeButton.astro';
 import ActionBar from '../../components/ActionBar.astro';
 import Comments from '../../components/Comments.astro';
+import RikutsuBackLink from '../../components/RikutsuBackLink.astro';
 import { SITE_TITLE } from '../../consts';
 import { UI } from '../../i18n/ja';
 
@@ -20,6 +21,7 @@ const { Content } = await render(log);
 ---
 
 <Layout title={`${log.data.title} | ${SITE_TITLE}`} description={log.data.problem || ''} image={log.data.coverImage}>
+	<div class="mx-auto max-w-5xl px-6 pt-5"><RikutsuBackLink label="育児ログ" /></div>
 	<!-- Top Image Area (Full width on mobile, rounded on PC) -->
 	<div class="w-full max-w-5xl mx-auto lg:mt-8 lg:px-6">
 		<div class="w-full aspect-video lg:rounded-2xl bg-gray-100 flex items-center justify-center overflow-hidden border-b lg:border border-gray-200">
