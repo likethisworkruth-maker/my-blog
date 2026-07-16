@@ -7,6 +7,7 @@ import {
 	PRIVATE_DB_NAME,
 	clearPrivateChecklistData,
 	deletePrivateChecklistRun,
+	deletePrivateChecklistRunsByChecklistId,
 	getActivePrivateChecklistRun,
 	getBackupQueue,
 	getPrivateChecklistRuns,
@@ -163,6 +164,23 @@ test('run削除もrevisionを進めてDrive反映待ちにする', async () => {
 	await deletePrivateChecklistRun(run.runId);
 	assert.equal(await getPrivateDataRevision(), before + 1);
 	assert.equal((await getBackupQueue()).some((entry) => entry.runId === run.runId), true);
+});
+
+test('マイリストからの削除は同じチェックリストの全履歴を削除する', async () => {
+	await clearPrivateChecklistData();
+	const first = createChecklistRun(template);
+	const second = duplicateChecklistRun(first);
+	const other = createChecklistRun({ ...template, checklistId: 'other-checklist' });
+	await savePrivateChecklistRun(first);
+	await savePrivateChecklistRun(second);
+	await savePrivateChecklistRun(other);
+	const before = await getPrivateDataRevision();
+	assert.equal(await deletePrivateChecklistRunsByChecklistId(template.checklistId), 2);
+	assert.deepEqual((await getPrivateChecklistRuns()).map((run) => run.checklistId), ['other-checklist']);
+	assert.equal(await getPrivateDataRevision(), before + 1);
+	const queued = await getBackupQueue();
+	assert.equal(queued.some((entry) => entry.runId === first.runId), true);
+	assert.equal(queued.some((entry) => entry.runId === second.runId), true);
 });
 
 test('端末データの削除でrunとrevisionを消す', async () => {

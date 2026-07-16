@@ -46,16 +46,17 @@ const formClass = variant === 'modal'
 	</nav>
 
 	<form id="comment-form" class={formClass}>
-		<p class={`mb-2 rounded-xl border p-3 text-xs leading-5 ${variant === 'reels' ? 'border-amber-400/20 bg-amber-400/10 text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
-			氏名、連絡先、病院名などの個人情報は入力しないでください。
-		</p>
-		<p data-comment-policy class={`mb-4 text-xs leading-5 ${variant === 'reels' ? 'text-gray-300' : 'text-gray-600'}`}>
-			未ログインのコメントは、運営による確認後に掲載されます。
-		</p>
-		<p data-comment-feedback class="mb-4 hidden rounded-lg px-3 py-2 text-xs leading-5" role="status" aria-live="polite"></p>
-		{variant === 'default' && (
-			<h4 class="text-sm font-bold text-gray-700 mb-4">コメントを投稿する</h4>
-		)}
+		<p data-comment-feedback class="mb-3 hidden whitespace-pre-line rounded-lg px-3 py-2 text-xs leading-5" role="status" aria-live="polite"></p>
+		<details data-comment-info class={`group mb-3 text-xs leading-5 ${variant === 'reels' ? 'text-gray-300' : 'text-gray-600'}`}>
+			<summary class="flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
+				<span aria-hidden="true" class={variant === 'reels' ? 'text-mint-300' : 'text-mint-600'}>ⓘ</span>
+				<span>公開コメントです。個人情報は入力しないでください</span>
+			</summary>
+			<div class={`mt-2 rounded-xl border p-3 ${variant === 'reels' ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+				<p>氏名、連絡先、病院名などは入力しないでください。</p>
+				<p data-anonymous-comment-info class="mt-2">未ログイン投稿は運営確認後に公開され、投稿後は削除できません。</p>
+			</div>
+		</details>
 		<div class="flex items-end">
 			<div class={`flex-grow flex items-end rounded-3xl border ${variant === 'reels' ? 'border-gray-700 bg-black/30' : 'border-gray-200 bg-white'} px-4 py-2`}>
 				<textarea
@@ -78,6 +79,20 @@ const formClass = variant === 'modal'
 			</div>
 		</div>
 	</form>
+
+	<dialog data-comment-confirm class="comment-confirm-dialog w-[calc(100%_-_2rem)] max-w-sm rounded-2xl border-0 bg-white p-0 text-navy-900 shadow-2xl">
+		<div class="p-6">
+			<h3 class="text-base font-bold">コメントを送信しますか？</h3>
+			<p class="mt-4 whitespace-pre-line text-sm leading-6 text-gray-600">コメントに氏名、連絡先、病院名などの
+個人情報が含まれていないか確認してください。</p>
+			<p class="mt-4 whitespace-pre-line text-sm leading-6 text-gray-600">未ログインで投稿したコメントは、
+運営確認後に公開され、投稿後は削除できません。</p>
+			<div class="mt-6 flex justify-end gap-2">
+				<button type="button" data-comment-confirm-back class="rounded-full border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">入力に戻る</button>
+				<button type="button" data-comment-confirm-send class="rounded-full bg-mint-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-mint-600 disabled:cursor-not-allowed disabled:opacity-40">確認して送信</button>
+			</div>
+		</div>
+	</dialog>
 </div>
 
 <script>
@@ -133,11 +148,16 @@ const formClass = variant === 'modal'
 		const previousButton = section.querySelector<HTMLButtonElement>('#comments-prev');
 		const nextButton = section.querySelector<HTMLButtonElement>('#comments-next');
 		const pageStatus = section.querySelector<HTMLElement>('#comments-page-status');
-		const policy = section.querySelector<HTMLElement>('[data-comment-policy]');
+		const anonymousInfo = section.querySelector<HTMLElement>('[data-anonymous-comment-info]');
 		const feedback = section.querySelector<HTMLElement>('[data-comment-feedback]');
+		const confirmDialog = section.querySelector<HTMLDialogElement>('[data-comment-confirm]');
+		const confirmBack = section.querySelector<HTMLButtonElement>('[data-comment-confirm-back]');
+		const confirmSend = section.querySelector<HTMLButtonElement>('[data-comment-confirm-send]');
 		const pageSize = 10;
 		let currentPage = 1;
 		let totalCount = 0;
+		let loggedIn = false;
+		let pendingContent = '';
 
 		const resizeTextarea = () => {
 			if (!textarea) return;
@@ -281,15 +301,11 @@ const formClass = variant === 'modal'
 			if (currentPage < totalPages) void changePage(currentPage + 1);
 		});
 
-		form?.addEventListener('submit', async (event) => {
-			event.preventDefault();
-			if (!submitButton || submitButton.disabled) return;
-			const formData = new FormData(form);
-			const content = String(formData.get('content') ?? '').trim();
-			if (!content) return;
-
+		const submitComment = async (content: string, anonymous: boolean) => {
+			if (!submitButton) return;
 			submitButton.disabled = true;
 			submitButton.setAttribute('aria-busy', 'true');
+			if (confirmSend) confirmSend.disabled = true;
 			setFeedback();
 			try {
 				const { data, error } = await supabase.rpc('submit_comment', {
@@ -298,7 +314,7 @@ const formClass = variant === 'modal'
 				});
 				if (error) throw error;
 				const result = data && typeof data === 'object' ? data as { status?: unknown } : {};
-				form.reset();
+				form?.reset();
 				resizeTextarea();
 				if (result.status === 'approved') {
 					setFeedback('コメントを投稿しました。');
@@ -306,7 +322,9 @@ const formClass = variant === 'modal'
 					await loadComments();
 					commentsList.scrollTop = 0;
 				} else {
-					setFeedback('コメントを送信しました。運営による確認後に掲載されます。');
+					setFeedback(anonymous
+						? 'コメントを受け付けました。\n運営による確認後に掲載されます。'
+						: 'コメントを送信しました。運営による確認後に掲載されます。');
 				}
 			} catch (error) {
 				console.error('Error posting comment:', error);
@@ -314,14 +332,49 @@ const formClass = variant === 'modal'
 			} finally {
 				submitButton.disabled = false;
 				submitButton.removeAttribute('aria-busy');
+				if (confirmSend) confirmSend.disabled = false;
 			}
+		};
+
+		form?.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			if (!submitButton || submitButton.disabled) return;
+			const formData = new FormData(form);
+			const content = String(formData.get('content') ?? '').trim();
+			if (!content) return;
+
+			if (!loggedIn && confirmDialog) {
+				pendingContent = content;
+				confirmDialog.showModal();
+				return;
+			}
+			await submitComment(content, false);
 		});
 
-		const updatePolicy = (loggedIn: boolean) => {
-			if (!policy) return;
-			policy.textContent = loggedIn
-				? 'Googleログイン中のコメントは投稿後すぐ掲載され、自分で削除できます。Googleの氏名やメールアドレスは公開しません。'
-				: '未ログインのコメントは、運営による確認後に掲載されます。投稿後の削除はできません。';
+		const returnToInput = () => {
+			pendingContent = '';
+			confirmDialog?.close();
+			window.setTimeout(() => textarea?.focus(), 0);
+		};
+		confirmBack?.addEventListener('click', returnToInput);
+		confirmDialog?.addEventListener('cancel', (event) => {
+			event.preventDefault();
+			returnToInput();
+		});
+		confirmSend?.addEventListener('click', async () => {
+			const content = pendingContent;
+			if (!content) {
+				returnToInput();
+				return;
+			}
+			pendingContent = '';
+			confirmDialog?.close();
+			await submitComment(content, true);
+		});
+
+		const updatePolicy = (authenticated: boolean) => {
+			loggedIn = authenticated;
+			anonymousInfo?.classList.toggle('hidden', authenticated);
 		};
 
 		const { data: sessionData } = await supabase.auth.getSession();
@@ -341,12 +394,15 @@ const formClass = variant === 'modal'
 
 	const initComments = () => {
 		document.querySelectorAll<HTMLElement>('[data-slug][data-variant]').forEach((section) => {
+			const panel = section.closest<HTMLElement>('[role="tabpanel"]');
+			if (panel && (panel.hidden || panel.classList.contains('hidden'))) return;
 			void initCommentSection(section);
 		});
 	};
 
 	document.addEventListener('DOMContentLoaded', initComments);
 	document.addEventListener('astro:page-load', initComments);
+	document.addEventListener('comments:activate', initComments);
 </script>
 
 <style>
@@ -356,5 +412,8 @@ const formClass = variant === 'modal'
 	.scrollbar-hide {
 		-ms-overflow-style: none;
 		scrollbar-width: none;
+	}
+	.comment-confirm-dialog::backdrop {
+		background: rgb(0 0 0 / 0.55);
 	}
 </style>

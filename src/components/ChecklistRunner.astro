@@ -27,30 +27,43 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 	</div>
 
 	<div data-checklist-active class="hidden">
-		<div class="mb-5 flex items-center justify-between gap-4">
-			<div>
-				<p data-progress-count class="text-sm font-bold text-white"></p>
-				<p class="mt-1 text-xs text-gray-400">チェック内容はこの端末に保存されます。</p>
-			</div>
-			<button type="button" data-complete-run class="shrink-0 rounded-full border border-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/10"></button>
+		<p data-review-guidance class="mb-4 hidden rounded-xl border border-mint-300/20 bg-mint-300/10 p-3 text-xs leading-5 text-mint-100">
+			実際に使った結果を項目ごとに選んでください。回答はこの端末とDriveバックアップにだけ保存されます。
+		</p>
+
+		<div data-view-toolbar class="mb-6 flex justify-end">
+			<button type="button" data-edit-checklist class="inline-flex items-center gap-2 rounded-xl border border-slate-400 px-4 py-2.5 text-sm font-bold text-slate-200 transition-colors hover:border-white hover:text-white">
+				<span class="material-symbols-outlined text-xl" aria-hidden="true">edit</span>
+				編集
+			</button>
 		</div>
 
-		<ul data-checklist-items class="space-y-2"></ul>
+		<div data-edit-toolbar class="mb-6 hidden">
+			<span class="inline-flex rounded-xl border border-mint-400 px-4 py-2 text-sm font-bold text-mint-300">編集中</span>
+		</div>
 
-		<form data-add-item class="mt-5 flex items-center gap-2">
+		<ul data-checklist-items class="space-y-3"></ul>
+
+		<form data-add-item class="mt-6 hidden items-center gap-2">
 			<label class="sr-only" for={`custom-item-${checklist.checklistId}`}>項目を追加</label>
-			<input id={`custom-item-${checklist.checklistId}`} name="label" maxlength="120" autocomplete="off" placeholder="自分用の項目を追加" class="min-w-0 flex-1 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-mint-400 focus:outline-none" />
-			<button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint-500 text-white hover:bg-mint-600" aria-label="項目を追加">
+			<input id={`custom-item-${checklist.checklistId}`} name="label" maxlength="120" autocomplete="off" placeholder="新しい項目を入力" class="min-w-0 flex-1 rounded-full border border-white/20 bg-transparent px-5 py-3 text-sm text-white placeholder:text-slate-500 focus:border-mint-400 focus:outline-none" />
+			<button type="submit" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mint-400 text-white transition-colors hover:bg-mint-500" aria-label="項目を追加">
 				<span class="material-symbols-outlined" aria-hidden="true">add</span>
 			</button>
 		</form>
 
-		<details data-hidden-items class="mt-5 hidden rounded-xl border border-white/10 bg-white/5 p-4">
-			<summary class="cursor-pointer text-sm font-bold text-gray-300">非表示にした項目</summary>
-			<ul data-hidden-list class="mt-3 space-y-2"></ul>
-		</details>
+		<div data-edit-footer class="-mx-4 mt-8 hidden border-t border-white/10 px-4 pt-6 sm:-mx-6 sm:px-6">
+			<div class="grid grid-cols-2 gap-3">
+				<button type="button" data-cancel-edit class="rounded-xl border border-slate-400 px-4 py-3 text-sm font-bold text-slate-300 transition-colors hover:border-white hover:text-white">キャンセル</button>
+				<button type="button" data-save-edit class="rounded-xl bg-mint-400 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-mint-500 disabled:cursor-wait disabled:opacity-60">変更を保存</button>
+			</div>
+			<button type="button" data-delete-list class="mx-auto mt-6 flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-400 transition-colors hover:text-red-300">
+				<span class="material-symbols-outlined" aria-hidden="true">delete</span>
+				このリストを削除
+			</button>
+		</div>
 
-		<p data-save-state class="mt-5 min-h-5 text-center text-xs text-gray-400" aria-live="polite">端末に保存済み</p>
+		<p data-save-state class="mt-5 hidden text-center text-xs text-gray-400" aria-live="polite"></p>
 	</div>
 
 	<p data-run-message class="mt-3 min-h-5 text-center text-sm text-red-300" aria-live="assertive"></p>
@@ -63,7 +76,6 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		type ChecklistTemplate,
 		createChecklistRun,
 		createUuid,
-		getChecklistProgress,
 	} from '../scripts/checklist-state';
 	import {
 		getActivePrivateChecklistRun,
@@ -87,14 +99,23 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		const missing = root.querySelector<HTMLElement>('[data-checklist-missing]');
 		const active = root.querySelector<HTMLElement>('[data-checklist-active]');
 		const itemsContainer = root.querySelector<HTMLElement>('[data-checklist-items]');
-		const hiddenContainer = root.querySelector<HTMLDetailsElement>('[data-hidden-items]');
-		const hiddenList = root.querySelector<HTMLElement>('[data-hidden-list]');
-		const progressCount = root.querySelector<HTMLElement>('[data-progress-count]');
 		const saveState = root.querySelector<HTMLElement>('[data-save-state]');
 		const runMessage = root.querySelector<HTMLElement>('[data-run-message]');
-		const completeButton = root.querySelector<HTMLButtonElement>('[data-complete-run]');
+		const reviewGuidance = root.querySelector<HTMLElement>('[data-review-guidance]');
+		const addItemForm = root.querySelector<HTMLFormElement>('[data-add-item]');
+		const viewToolbar = root.querySelector<HTMLElement>('[data-view-toolbar]');
+		const editToolbar = root.querySelector<HTMLElement>('[data-edit-toolbar]');
+		const editFooter = root.querySelector<HTMLElement>('[data-edit-footer]');
+		const editButton = root.querySelector<HTMLButtonElement>('[data-edit-checklist]');
+		const cancelButton = root.querySelector<HTMLButtonElement>('[data-cancel-edit]');
+		const saveButton = root.querySelector<HTMLButtonElement>('[data-save-edit]');
+		const deleteListButton = root.querySelector<HTMLButtonElement>('[data-delete-list]');
+		const addItemInput = addItemForm?.elements.namedItem('label') as HTMLInputElement | null;
 		let run: ChecklistRun | null = null;
-		let saveChain = Promise.resolve();
+		let editing = false;
+		let editSnapshot: ChecklistRun | null = null;
+		let saveChain: Promise<boolean> = Promise.resolve(true);
+		const cloneRun = (value: ChecklistRun) => structuredClone(value);
 
 		const showError = (message: string) => {
 			if (runMessage) runMessage.textContent = message;
@@ -103,22 +124,25 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		const setSaveState = (message: string, failed = false) => {
 			if (!saveState) return;
 			saveState.textContent = message;
+			saveState.classList.toggle('hidden', !message);
 			saveState.classList.toggle('text-red-300', failed);
 			saveState.classList.toggle('text-gray-400', !failed);
 		};
 
 		const persist = (renderAfter = true) => {
-			if (!run) return;
-			setSaveState('保存中…');
+			if (!run) return Promise.resolve(false);
 			saveChain = saveChain.then(async () => {
-				if (!run) return;
+				if (!run) return false;
 				const saved = await savePrivateChecklistRun(run);
 				Object.assign(run, saved);
-				setSaveState('端末に保存済み');
+				setSaveState('');
 				if (renderAfter) render();
+				return true;
 			}).catch(() => {
 				setSaveState('保存に失敗しました', true);
+				return false;
 			});
+			return saveChain;
 		};
 
 		const markEdited = (item?: ChecklistRunItem) => {
@@ -133,24 +157,235 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			}
 		};
 
-		const moveItem = (item: ChecklistRunItem, direction: -1 | 1) => {
-			if (!run) return;
-			const visible = run.items.filter((candidate) => !candidate.hidden).sort((a, b) => a.order - b.order);
-			const index = visible.findIndex((candidate) => candidate.id === item.id);
-			const target = visible[index + direction];
-			if (!target) return;
-			const order = item.order;
-			item.order = target.order;
-			target.order = order;
-			markEdited(item);
-			target.updatedAt = item.updatedAt;
-			persist();
+		const syncItemOrderFromDom = () => {
+			if (!run || !itemsContainer) return;
+			const orderedIds = Array.from(
+				itemsContainer.querySelectorAll<HTMLElement>('[data-checklist-item-id]'),
+			).map((row) => row.dataset.checklistItemId).filter((id): id is string => Boolean(id));
+			const now = new Date().toISOString();
+			orderedIds.forEach((id, order) => {
+				const item = run?.items.find((candidate) => candidate.id === id);
+				if (!item) return;
+				item.order = order;
+				item.updatedAt = now;
+			});
+			run.items
+				.filter((item) => item.hidden)
+				.sort((a, b) => a.order - b.order)
+				.forEach((item, index) => { item.order = orderedIds.length + index; });
+			markEdited();
 		};
 
-		const createIconButton = (icon: string, label: string, onClick: () => void) => {
+		const captureItemPositions = () => {
+			const positions = new Map<HTMLElement, number>();
+			itemsContainer?.querySelectorAll<HTMLElement>('[data-checklist-item-id]').forEach((itemRow) => {
+				positions.set(itemRow, itemRow.getBoundingClientRect().top);
+			});
+			return positions;
+		};
+
+		const animateItemReorder = (positions: Map<HTMLElement, number>, draggedRow?: HTMLElement) => {
+			itemsContainer?.querySelectorAll<HTMLElement>('[data-checklist-item-id]').forEach((itemRow) => {
+				if (itemRow === draggedRow) return;
+				const previousTop = positions.get(itemRow);
+				if (previousTop === undefined) return;
+				itemRow.getAnimations().forEach((animation) => animation.cancel());
+				const delta = previousTop - itemRow.getBoundingClientRect().top;
+				if (Math.abs(delta) < 1) return;
+				itemRow.animate(
+					[
+						{ transform: `translateY(${delta}px)` },
+						{ transform: 'translateY(0)' },
+					],
+					{ duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+				);
+			});
+		};
+
+		const createDragHandle = (item: ChecklistRunItem, row: HTMLElement) => {
 			const button = document.createElement('button');
 			button.type = 'button';
-			button.className = 'flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-white/10 hover:text-white';
+			button.className = 'checklist-drag-handle flex h-10 w-10 shrink-0 touch-none cursor-grab items-center justify-center rounded-full text-slate-400 hover:bg-white/10 hover:text-white active:cursor-grabbing';
+			button.setAttribute('aria-label', `${item.label}をドラッグして並べ替え`);
+			button.title = 'ドラッグして並べ替え';
+			const symbol = document.createElement('span');
+			symbol.className = 'material-symbols-outlined text-2xl';
+			symbol.setAttribute('aria-hidden', 'true');
+			symbol.textContent = 'drag_indicator';
+			button.append(symbol);
+
+			let dragging = false;
+			let previousUserSelect = '';
+			let dragFrame = 0;
+			let pendingY: number | null = null;
+			let indicatorTarget: HTMLElement | null = null;
+			let indicatorBefore: boolean | null = null;
+			let grabOffsetY = 0;
+			let dragTranslateY = 0;
+			let activePointerId: number | null = null;
+			let dragListeners: AbortController | null = null;
+
+			const followPointer = (clientY: number) => {
+				const naturalTop = row.getBoundingClientRect().top - dragTranslateY;
+				dragTranslateY = clientY - grabOffsetY - naturalTop;
+				row.style.translate = `0 ${dragTranslateY}px`;
+			};
+
+			const clearDropIndicator = () => {
+				if (indicatorTarget) indicatorTarget.style.boxShadow = '';
+				indicatorTarget = null;
+				indicatorBefore = null;
+			};
+
+			const showDropIndicator = (target: HTMLElement, insertBefore: boolean) => {
+				if (indicatorTarget === target && indicatorBefore === insertBefore) return;
+				clearDropIndicator();
+				indicatorTarget = target;
+				indicatorBefore = insertBefore;
+				target.style.boxShadow = insertBefore
+					? '0 -2px 0 rgb(45 212 191)'
+					: '0 2px 0 rgb(45 212 191)';
+			};
+
+			const updateDragPosition = () => {
+				dragFrame = 0;
+				const pointY = pendingY;
+				pendingY = null;
+				if (!dragging || pointY === null || !itemsContainer) return;
+
+				const runnerBounds = root.getBoundingClientRect();
+				const edgeSize = 56;
+				if (pointY < runnerBounds.top + edgeSize) {
+					root.scrollTop -= Math.ceil((runnerBounds.top + edgeSize - pointY) / 5);
+				} else if (pointY > runnerBounds.bottom - edgeSize) {
+					root.scrollTop += Math.ceil((pointY - (runnerBounds.bottom - edgeSize)) / 5);
+				}
+				followPointer(pointY);
+
+				const candidateRows = Array.from(itemsContainer.children)
+					.filter((candidate): candidate is HTMLElement => (
+						candidate instanceof HTMLElement && candidate !== row
+					));
+				if (candidateRows.length === 0) {
+					clearDropIndicator();
+					return;
+				}
+
+				let target = candidateRows.find((candidate) => {
+					const bounds = candidate.getBoundingClientRect();
+					return pointY < bounds.top + bounds.height / 2;
+				});
+				let insertBefore = true;
+				if (!target) {
+					target = candidateRows[candidateRows.length - 1];
+					insertBefore = false;
+				}
+				showDropIndicator(target, insertBefore);
+
+				const alreadyPlaced = insertBefore
+					? row.nextElementSibling === target
+					: row.previousElementSibling === target;
+				if (alreadyPlaced) return;
+
+				const positions = captureItemPositions();
+				if (insertBefore) target.before(row);
+				else target.after(row);
+				animateItemReorder(positions, row);
+				followPointer(pointY);
+			};
+
+			const finishDrag = (event?: PointerEvent) => {
+				if (!dragging) return;
+				if (event && activePointerId !== null && event.pointerId !== activePointerId) return;
+				dragging = false;
+				dragListeners?.abort();
+				dragListeners = null;
+				if (dragFrame) cancelAnimationFrame(dragFrame);
+				dragFrame = 0;
+				pendingY = null;
+				activePointerId = null;
+				document.body.style.userSelect = previousUserSelect;
+				const draggedTop = row.getBoundingClientRect().top;
+				row.style.translate = '';
+				dragTranslateY = 0;
+				const settleDistance = draggedTop - row.getBoundingClientRect().top;
+				row.classList.remove('checklist-item-dragging');
+				button.classList.remove('text-mint-300', 'bg-white/10');
+				clearDropIndicator();
+				syncItemOrderFromDom();
+				if (Math.abs(settleDistance) >= 1) {
+					row.animate(
+						[
+							{ transform: `translateY(${settleDistance}px)` },
+							{ transform: 'translateY(0)' },
+						],
+						{ duration: 140, easing: 'ease-out' },
+					);
+				}
+			};
+
+			const handleWindowPointerMove = (event: PointerEvent) => {
+				if (!dragging || event.pointerId !== activePointerId) return;
+				if (event.pointerType === 'mouse' && event.buttons === 0) {
+					finishDrag(event);
+					return;
+				}
+				pendingY = event.clientY;
+				if (!dragFrame) dragFrame = requestAnimationFrame(updateDragPosition);
+			};
+
+			const handleWindowPointerEnd = (event: PointerEvent) => finishDrag(event);
+			const handleAbortedDrag = () => finishDrag();
+
+			button.addEventListener('pointerdown', (event) => {
+				if (event.pointerType === 'mouse' && event.button !== 0) return;
+				event.preventDefault();
+				dragListeners?.abort();
+				dragListeners = new AbortController();
+				const { signal } = dragListeners;
+				dragging = true;
+				activePointerId = event.pointerId;
+				previousUserSelect = document.body.style.userSelect;
+				document.body.style.userSelect = 'none';
+				grabOffsetY = event.clientY - row.getBoundingClientRect().top;
+				dragTranslateY = 0;
+				row.classList.add('checklist-item-dragging');
+				button.classList.add('text-mint-300', 'bg-white/10');
+				window.addEventListener('pointermove', handleWindowPointerMove, {
+					capture: true,
+					passive: true,
+					signal,
+				});
+				window.addEventListener('pointerup', handleWindowPointerEnd, { capture: true, signal });
+				window.addEventListener('pointercancel', handleWindowPointerEnd, { capture: true, signal });
+				window.addEventListener('blur', handleAbortedDrag, { signal });
+				document.addEventListener('astro:before-swap', handleAbortedDrag, { signal });
+			});
+			button.addEventListener('keydown', (event) => {
+				if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+				event.preventDefault();
+				const rows = Array.from(
+					itemsContainer?.querySelectorAll<HTMLElement>('[data-checklist-item-id]') ?? [],
+				);
+				const index = rows.indexOf(row);
+				const target = rows[index + (event.key === 'ArrowUp' ? -1 : 1)];
+				if (!target) return;
+				const positions = captureItemPositions();
+				if (event.key === 'ArrowUp') target.before(row);
+				else target.after(row);
+				animateItemReorder(positions);
+				syncItemOrderFromDom();
+				button.focus();
+			});
+			return button;
+		};
+
+		const createIconButton = (icon: string, label: string, onClick: () => void, danger = false) => {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = danger
+				? 'flex h-9 w-9 items-center justify-center rounded-full text-red-400 hover:bg-red-400/10 hover:text-red-300'
+				: 'flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-white/10 hover:text-white';
 			button.setAttribute('aria-label', label);
 			const symbol = document.createElement('span');
 			symbol.className = 'material-symbols-outlined text-lg';
@@ -163,56 +398,112 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 
 		const renderItem = (item: ChecklistRunItem) => {
 			const row = document.createElement('li');
-			row.className = 'flex items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-3';
-			const label = document.createElement('label');
-			label.className = 'flex min-w-0 flex-1 cursor-pointer items-start gap-3';
+			row.dataset.checklistItemId = item.id;
+			row.className = editing
+				? 'checklist-item-row relative flex items-center gap-2 rounded-xl py-1'
+				: 'rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-5';
+			const main = document.createElement('div');
+			main.className = editing ? 'contents' : 'flex items-center';
+			const isReviewMode = run?.status === 'review_pending' || run?.status === 'completed';
+			const label = document.createElement(editing ? 'div' : 'label');
+			label.className = editing
+				? 'flex min-w-0 flex-1 items-center'
+				: 'flex min-w-0 flex-1 cursor-pointer items-center gap-4';
 			const checkbox = document.createElement('input');
 			checkbox.type = 'checkbox';
 			checkbox.checked = item.checked;
-			checkbox.className = 'mt-0.5 h-5 w-5 shrink-0 accent-emerald-400';
+			checkbox.disabled = isReviewMode;
+			checkbox.className = 'h-6 w-6 shrink-0 accent-emerald-400';
 			checkbox.setAttribute('aria-label', item.label);
 			checkbox.addEventListener('change', () => {
 				item.checked = checkbox.checked;
 				item.checkedAt = item.checked ? new Date().toISOString() : undefined;
 				markEdited(item);
-				persist();
+				if (editing) render();
+				else void persist();
 			});
-			const text = document.createElement('span');
-			text.className = 'min-w-0 flex-1 text-sm font-medium leading-relaxed text-white';
-			text.textContent = item.label;
-			if (item.checked) text.classList.add('text-gray-400', 'line-through');
-			label.append(checkbox, text);
-			const actions = document.createElement('div');
-			actions.className = 'flex shrink-0 items-center';
-			actions.append(
-				createIconButton('arrow_upward', `${item.label}を上へ移動`, () => moveItem(item, -1)),
-				createIconButton('arrow_downward', `${item.label}を下へ移動`, () => moveItem(item, 1)),
-				createIconButton('visibility_off', `${item.label}を非表示`, () => {
-					item.hidden = true;
+			let text: HTMLElement;
+			if (editing) {
+				const editor = document.createElement('textarea');
+				editor.rows = 1;
+				editor.maxLength = 120;
+				editor.value = item.label;
+				editor.dataset.itemEditor = item.id;
+				editor.setAttribute('aria-label', 'チェックリスト項目名');
+				editor.className = 'min-h-12 min-w-0 flex-1 resize-none overflow-hidden rounded-xl border border-white/20 bg-transparent px-4 py-3 text-sm font-bold leading-relaxed text-white focus:border-mint-400 focus:outline-none';
+				const resizeEditor = () => {
+					editor.style.height = 'auto';
+					editor.style.height = `${editor.scrollHeight}px`;
+				};
+				editor.addEventListener('input', () => {
+					item.label = editor.value;
+					editor.classList.toggle('border-red-400', !editor.value.trim());
 					markEdited(item);
-					persist();
-				}),
+					resizeEditor();
+				});
+				editor.addEventListener('keydown', (event) => {
+					if (event.key === 'Enter') event.preventDefault();
+				});
+				requestAnimationFrame(resizeEditor);
+				text = editor;
+			} else {
+				const displayText = document.createElement('span');
+				displayText.className = 'min-w-0 flex-1 text-base font-bold leading-relaxed text-white';
+				displayText.textContent = item.label;
+				if (item.checked) displayText.classList.add('text-gray-400', 'line-through');
+				text = displayText;
+			}
+			if (editing) label.append(text);
+			else label.append(checkbox, text);
+			const actions = document.createElement('div');
+			actions.className = 'flex shrink-0 items-center gap-1';
+			actions.classList.toggle('hidden', isReviewMode || !editing);
+			actions.append(
+				createIconButton('delete', `${item.label}を削除`, () => {
+					if (!run) return;
+					if (!window.confirm(`「${item.label}」を削除しますか？`)) return;
+					run.items = run.items.filter((candidate) => candidate.id !== item.id);
+					run.items.forEach((candidate, index) => { candidate.order = index; });
+					markEdited();
+					render();
+				}, true),
+				createDragHandle(item, row),
 			);
-			row.append(label, actions);
-			return row;
-		};
-
-		const renderHiddenItem = (item: ChecklistRunItem) => {
-			const row = document.createElement('li');
-			row.className = 'flex items-center justify-between gap-3 text-sm text-gray-400';
-			const text = document.createElement('span');
-			text.className = 'min-w-0 truncate';
-			text.textContent = item.label;
-			const restore = document.createElement('button');
-			restore.type = 'button';
-			restore.className = 'shrink-0 text-xs font-bold text-mint-300 hover:text-mint-200';
-			restore.textContent = '戻す';
-			restore.addEventListener('click', () => {
-				item.hidden = false;
-				markEdited(item);
-				persist();
-			});
-			row.append(text, restore);
+			main.append(label, actions);
+			row.append(main);
+			if (isReviewMode) {
+				const review = document.createElement('label');
+				review.className = 'mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs text-gray-300';
+				const prompt = document.createElement('span');
+				prompt.textContent = '実際の結果';
+				const select = document.createElement('select');
+				select.className = 'max-w-[70%] rounded-lg border border-white/15 bg-[#343434] px-2 py-1.5 text-xs text-white focus:border-mint-400 focus:outline-none disabled:opacity-60';
+				select.disabled = run?.status === 'completed';
+				const outcomes = [
+					['', '選択してください'],
+					['used', '実際に使った'],
+					['unused', '持っていったが使わなかった'],
+					['missed', '持たずに困った'],
+					['remove_next', '次回はいらない'],
+				];
+				if (item.origin === 'custom') outcomes.push(['custom_helpful', '自分で追加して役立った']);
+				for (const [value, text] of outcomes) {
+					const option = document.createElement('option');
+					option.value = value;
+					option.textContent = text;
+					option.selected = item.outcome === value || (!item.outcome && value === '');
+					select.append(option);
+				}
+				select.addEventListener('change', () => {
+					item.outcome = select.value
+						? select.value as ChecklistRunItem['outcome']
+						: undefined;
+					item.updatedAt = new Date().toISOString();
+					persist(false);
+				});
+				review.append(prompt, select);
+				row.append(review);
+			}
 			return row;
 		};
 
@@ -222,14 +513,64 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			active?.classList.toggle('hidden', !run);
 			if (!run) return;
 			const visible = run.items.filter((item) => !item.hidden).sort((a, b) => a.order - b.order);
-			const hidden = run.items.filter((item) => item.hidden).sort((a, b) => a.order - b.order);
 			itemsContainer?.replaceChildren(...visible.map(renderItem));
-			hiddenList?.replaceChildren(...hidden.map(renderHiddenItem));
-			hiddenContainer?.classList.toggle('hidden', hidden.length === 0);
-			const progress = getChecklistProgress(run);
-			if (progressCount) progressCount.textContent = `${progress.completed} / ${progress.total}件完了（${progress.percent}%）`;
-			if (completeButton) completeButton.textContent = run.status === 'completed' ? '実行中に戻す' : '完了にする';
+			const reviewLocked = run.status === 'review_pending' || run.status === 'completed';
+			viewToolbar?.classList.toggle('hidden', editing || reviewLocked);
+			editToolbar?.classList.toggle('hidden', !editing || reviewLocked);
+			editFooter?.classList.toggle('hidden', !editing || reviewLocked);
+			addItemForm?.classList.toggle('hidden', !editing || reviewLocked);
+			addItemForm?.classList.toggle('flex', editing && !reviewLocked);
+			reviewGuidance?.classList.toggle('hidden', run.status !== 'review_pending');
 		};
+
+		editButton?.addEventListener('click', () => {
+			if (!run) return;
+			if (addItemInput) addItemInput.value = '';
+			editSnapshot = cloneRun(run);
+			editing = true;
+			render();
+		});
+
+		cancelButton?.addEventListener('click', () => {
+			if (!editSnapshot) return;
+			run = cloneRun(editSnapshot);
+			if (addItemInput) addItemInput.value = '';
+			editSnapshot = null;
+			editing = false;
+			setSaveState('');
+			render();
+		});
+
+		saveButton?.addEventListener('click', async () => {
+			if (!run) return;
+			const invalidItem = run.items.find((item) => !item.hidden && !item.label.trim());
+			if (invalidItem) {
+				showError('項目名を入力してください。');
+				const editor = root.querySelector<HTMLTextAreaElement>(
+					`[data-item-editor="${CSS.escape(invalidItem.id)}"]`,
+				);
+				editor?.classList.add('border-red-400');
+				editor?.focus();
+				return;
+			}
+			run.items.forEach((item) => {
+				item.label = item.label.replace(/[\r\n]+/g, ' ').trim();
+			});
+			showError('');
+			saveButton.disabled = true;
+			const saved = await persist(false);
+			saveButton.disabled = false;
+			if (!saved) return;
+			if (addItemInput) addItemInput.value = '';
+			editSnapshot = null;
+			editing = false;
+			render();
+		});
+
+		deleteListButton?.addEventListener('click', () => {
+			const target = window as Window & { removeChecklistFromMyList?: () => void | Promise<void> };
+			void target.removeChecklistFromMyList?.();
+		});
 
 		root.querySelector<HTMLButtonElement>('[data-create-run]')?.addEventListener('click', async () => {
 			run = createChecklistRun(template);
@@ -243,7 +584,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			}
 		});
 
-		root.querySelector<HTMLFormElement>('[data-add-item]')?.addEventListener('submit', (event) => {
+		addItemForm?.addEventListener('submit', (event) => {
 			event.preventDefault();
 			if (!run) return;
 			const form = event.currentTarget as HTMLFormElement;
@@ -258,19 +599,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			});
 			input.value = '';
 			markEdited();
-			persist();
-		});
-
-		completeButton?.addEventListener('click', () => {
-			if (!run) return;
-			if (run.status === 'completed') {
-				run.status = 'in_progress';
-				run.completedAt = undefined;
-			} else {
-				run.status = 'completed';
-				run.completedAt = new Date().toISOString();
-			}
-			persist();
+			render();
 		});
 
 		try {
@@ -286,3 +615,33 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 	document.addEventListener('DOMContentLoaded', initChecklistRunners);
 	document.addEventListener('astro:page-load', initChecklistRunners);
 </script>
+
+<style>
+	.checklist-runner {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+
+	.checklist-runner::-webkit-scrollbar {
+		display: none;
+	}
+
+	.checklist-runner :global(.checklist-item-row) {
+		transition:
+			background-color 140ms ease,
+			box-shadow 140ms ease;
+		will-change: transform, translate;
+	}
+
+	.checklist-runner :global(.checklist-item-dragging) {
+		z-index: 20;
+		background: rgb(52 52 52 / 0.96);
+		box-shadow: 0 14px 30px rgb(0 0 0 / 0.4);
+	}
+
+	.checklist-runner :global(.checklist-item-dragging),
+	.checklist-runner :global(.checklist-item-dragging *) {
+		cursor: grabbing !important;
+	}
+
+</style>

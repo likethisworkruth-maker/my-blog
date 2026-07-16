@@ -1,6 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import {
 	CHECKLIST_STORAGE_KEY,
+	type ChecklistOutcome,
 	type ChecklistRun,
 	type ChecklistRunItem,
 	readChecklistStore,
@@ -91,6 +92,16 @@ function isValidDate(value: unknown): value is string {
 	return typeof value === 'string' && !Number.isNaN(Date.parse(value));
 }
 
+function normalizeChecklistOutcome(value: unknown): ChecklistOutcome | undefined {
+	return value === 'used'
+		|| value === 'unused'
+		|| value === 'missed'
+		|| value === 'remove_next'
+		|| value === 'custom_helpful'
+		? value
+		: undefined;
+}
+
 export function normalizeChecklistRun(value: unknown): ChecklistRun | null {
 	if (!value || typeof value !== 'object') return null;
 	const candidate = value as Partial<ChecklistRun>;
@@ -125,7 +136,7 @@ export function normalizeChecklistRun(value: unknown): ChecklistRun | null {
 			checkedAt: isValidDate(source.checkedAt) ? source.checkedAt : undefined,
 			hidden: Boolean(source.hidden),
 			note: typeof source.note === 'string' ? source.note : '',
-			outcome: source.outcome,
+			outcome: normalizeChecklistOutcome(source.outcome),
 			updatedAt: isValidDate(source.updatedAt) ? source.updatedAt : runUpdatedAt,
 		}];
 	});
@@ -325,6 +336,32 @@ export async function deletePrivateChecklistRun(runId: string) {
 	});
 	await transaction.done;
 	notifyChecklistChange(run?.checklistId);
+}
+
+export async function deletePrivateChecklistRunsByChecklistId(checklistId: string) {
+	await initializePrivateDb();
+	const database = await getDatabase();
+	const runs = (await database.getAllFromIndex('runs', 'by-checklist', checklistId))
+		.map(normalizeChecklistRun)
+		.filter((run): run is ChecklistRun => Boolean(run));
+	if (runs.length === 0) return 0;
+
+	const transaction = database.transaction(['runs', 'backupQueue', 'settings'], 'readwrite');
+	const revisionSetting = await transaction.objectStore('settings').get(LOCAL_REVISION_KEY);
+	const localRevision = typeof revisionSetting?.value === 'number' ? revisionSetting.value + 1 : 1;
+	const updatedAt = new Date().toISOString();
+	for (const run of runs) {
+		await transaction.objectStore('runs').delete(run.runId);
+		await transaction.objectStore('backupQueue').put({
+			runId: run.runId,
+			revision: localRevision,
+			updatedAt,
+		});
+	}
+	await transaction.objectStore('settings').put({ key: LOCAL_REVISION_KEY, value: localRevision });
+	await transaction.done;
+	notifyChecklistChange(checklistId);
+	return runs.length;
 }
 
 export async function clearPrivateChecklistData() {

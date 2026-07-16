@@ -1,0 +1,10 @@
+---
+import KnowhowIndexPage from '../../../../components/KnowhowIndexPage.astro';
+
+export function getStaticPaths() {
+	const scenes = ['outing', 'medical', 'daily', 'travel', 'nursery', 'disaster'];
+	return scenes.map((scene) => ({ params: { scene } }));
+}
+---
+
+<KnowhowIndexPage />

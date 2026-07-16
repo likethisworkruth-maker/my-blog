@@ -1,0 +1,584 @@
+---
+import { getEntry, render } from "astro:content";
+import Layout from "../layouts/Layout.astro";
+import ActionBar from "./ActionBar.astro";
+import ChecklistRunner from "./ChecklistRunner.astro";
+import ChecklistPrivateNote from "./ChecklistPrivateNote.astro";
+import Comments from "./Comments.astro";
+import { SITE_TITLE } from "../consts";
+
+const { knowhow, prev, next } = Astro.props;
+const { Content } = await render(knowhow);
+const checklistEntry = await getEntry("checklists", knowhow.data.checklistId);
+if (!checklistEntry || checklistEntry.data.status !== "published") {
+	throw new Error("公開中のチェックリスト原本がありません: " + knowhow.data.checklistId);
+}
+const checklist = checklistEntry.data;
+const prevUrl = prev ? `/knowhow/${prev.id}/` : '';
+const nextUrl = next ? `/knowhow/${next.id}/` : '';
+---
+
+<Layout
+	title={`${knowhow.data.title} | ${SITE_TITLE}`}
+	description={knowhow.data.description}
+	image={knowhow.data.coverImage}
+    fullScreen={true}
+>
+	<div class="relative w-full h-[100dvh] bg-[#111315] flex items-center justify-center overflow-hidden"
+         id="knowhow-modal-container"
+		 data-knowhow-id={knowhow.id}
+		 data-checklist-id={checklist.checklistId}
+         data-prev={prevUrl}
+         data-next={nextUrl}>
+
+		<!-- PC Back Button -->
+		<button onclick="window.goBackFromKnowhow?.(this)" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
+			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
+		</button>
+
+		<div class="flex flex-row items-stretch justify-center h-[100dvh] lg:h-[85dvh] lg:max-h-[900px] w-full max-w-[1200px] mx-auto lg:py-6 relative transition-all duration-300" id="main-content-wrapper">
+
+            <!-- Media + ActionBar Container -->
+            <div class="flex flex-row items-end h-full shrink-0 relative transition-all duration-300 w-full lg:w-auto justify-center">
+                <!-- Main Media Area -->
+                <div class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl" transition:name="knowhow-media">
+                    <!-- Mobile Back Button -->
+                    <button onclick="window.goBackFromKnowhow?.(this)" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors w-10 h-10 flex items-center justify-center cursor-pointer outline-none">
+                        <span class="material-symbols-outlined">arrow_back_ios_new</span>
+                    </button>
+
+                    {knowhow.data.coverImage ? (
+                        <img
+                            src={knowhow.data.coverImage}
+                            alt={knowhow.data.title}
+                            class="w-full h-full object-contain pointer-events-none"
+                        />
+                    ) : (
+                        <div class="w-full h-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-gray-700 text-5xl">image</span>
+                        </div>
+                    )}
+
+                    <!-- Floating Caption (Bottom Left) -->
+                    <div class="absolute bottom-0 left-0 w-full p-4 lg:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none pb-8 lg:pb-6 z-10">
+                        <div class="pointer-events-auto cursor-pointer" onclick="if(window.toggleDescPanel) window.toggleDescPanel()">
+                            <h1 class="text-white font-bold text-lg mb-2 drop-shadow-md leading-snug pr-16">{knowhow.data.title}</h1>
+                            <div class="text-white/90 text-sm drop-shadow-md prose prose-invert prose-sm max-w-none pr-16 line-clamp-2" id="caption-content">
+                                <Content />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Action Bar (Mobile only) -->
+                    <div class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
+                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} />
+                    </div>
+                </div>
+
+                <!-- Floating Action Bar (PC only) -->
+                <div class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
+                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} />
+                </div>
+            </div>
+
+            <!-- Unified Info Panel -->
+            <div
+                id="info-panel"
+                class="fixed lg:relative bottom-0 left-0 w-full h-[65dvh] lg:h-full lg:w-0 bg-[#262626] z-50 lg:z-10 transform translate-y-full lg:translate-y-0 transition-all duration-300 ease-out flex flex-col shadow-2xl lg:shadow-xl rounded-t-3xl lg:rounded-xl overflow-hidden opacity-100 lg:opacity-0 lg:ml-0"
+            >
+                <div class="flex items-center justify-between pl-4 pr-14 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
+					<div class="flex-grow flex items-stretch justify-center w-full" role="tablist" aria-label="チェックリストの詳細">
+						<button id="tab-btn-desc" role="tab" aria-selected="true" aria-controls="tab-content-desc" tabindex="0" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
+						<button id="tab-btn-progress" role="tab" aria-selected="false" aria-controls="tab-content-progress" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
+						<button id="tab-btn-comments" role="tab" aria-selected="false" aria-controls="tab-content-comments" tabindex="-1" data-public-tab class="flex h-14 flex-1 px-2 sm:px-6 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">みんなのコメント</button>
+						<button id="tab-btn-memo" role="tab" aria-selected="false" aria-controls="tab-content-memo" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-memo" onclick="if(window.toggleTab) window.toggleTab('memo')">メモ</button>
+                    </div>
+                    <button class="absolute right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
+                        <span class="material-symbols-outlined font-light">close</span>
+                    </button>
+                </div>
+
+                <!-- Description Content -->
+				<div id="tab-content-desc" role="tabpanel" aria-labelledby="tab-btn-desc" class="flex-grow overflow-y-auto p-4 sm:p-6 content-area bg-[#262626] text-gray-100 overscroll-contain min-w-[320px]">
+                    <h1 class="text-[1.25rem] font-bold text-white leading-snug mb-4">{knowhow.data.title}</h1>
+                    <p class="text-[0.95rem] text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">{knowhow.data.description}</p>
+					<Content />
+					<button type="button" data-public-only data-start-checklist class="mt-7 w-full rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">このチェックリストを始める</button>
+					<a data-private-only href={`/knowhow/${knowhow.id}/comments/`} class="mt-7 hidden text-sm font-bold text-mint-300 underline underline-offset-4">みんなのコメントを見る</a>
+				</div>
+
+                <!-- Checklist Progress Content -->
+				<div id="tab-content-progress" role="tabpanel" aria-labelledby="tab-btn-progress" hidden class="flex-grow overflow-hidden hidden bg-[#262626] min-w-[320px]">
+                    <ChecklistRunner checklist={checklist} />
+                </div>
+
+                <!-- Comments Content -->
+				<div id="tab-content-comments" role="tabpanel" aria-labelledby="tab-btn-comments" hidden class="flex-grow overflow-hidden hidden bg-[#262626] flex-col min-w-[320px]">
+					<Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
+				</div>
+
+				<div id="tab-content-memo" role="tabpanel" aria-labelledby="tab-btn-memo" hidden class="flex-grow overflow-hidden hidden bg-[#262626] min-w-[320px]">
+					<ChecklistPrivateNote checklistId={checklist.checklistId} />
+				</div>
+            </div>
+		</div>
+	</div>
+</Layout>
+
+<script>
+    import { navigate } from 'astro:transitions/client';
+	import { createChecklistRun, type ChecklistTemplate } from '../scripts/checklist-state';
+	import {
+		deletePrivateChecklistRunsByChecklistId,
+		getActivePrivateChecklistRun,
+		initializePrivateDb,
+		savePrivateChecklistRun,
+	} from '../scripts/private-db';
+
+	type PanelTab = 'desc' | 'progress' | 'comments' | 'memo';
+	type DetailMode = 'public' | 'private';
+
+	// Global toggle function
+	declare global {
+		interface Window {
+            astroNavigate?: (url: string) => void;
+			toggleCommentsPanel: () => void;
+			toggleDescPanel: () => void;
+			toggleProgressPanel: () => void;
+			toggleMemoPanel: () => void;
+			startChecklist: () => Promise<void>;
+			removeChecklistFromMyList: () => Promise<void>;
+            toggleInfoPanel: () => void;
+            toggleTab: (tab: PanelTab) => void;
+            switchTab: (tab: PanelTab) => void;
+			goBackFromKnowhow: (trigger?: HTMLElement) => void;
+            closeModal?: () => void;
+		}
+	}
+
+	window.astroNavigate = navigate;
+	window.goBackFromKnowhow = (trigger) => {
+		if (trigger?.closest('dialog') && window.closeModal) {
+			window.closeModal();
+			return;
+		}
+		let returnUrl = '';
+		try {
+			returnUrl = sessionStorage.getItem('knowhow:return-url') ?? '';
+			sessionStorage.removeItem('knowhow:return-url');
+		} catch {
+			// Session storage may be unavailable in strict privacy modes.
+		}
+		const destination = returnUrl.startsWith('/knowhow') ? returnUrl : '/knowhow/';
+		if (window.astroNavigate) window.astroNavigate(destination);
+		else window.location.href = destination;
+	};
+
+	// Astro replaces the document during client navigation. Carry the wheel/swipe
+	// direction into the incoming document so both transition snapshots use the
+	// same vertical animation instead of falling back to an instant swap.
+	document.addEventListener('astro:before-swap', (event) => {
+		const direction = document.documentElement.dataset.scrollDirection;
+		const transitionEvent = event as Event & { newDocument: Document };
+		if (direction && transitionEvent.newDocument) {
+			transitionEvent.newDocument.documentElement.dataset.scrollDirection = direction;
+		}
+	});
+
+	function initReels() {
+		const container = document.getElementById('knowhow-modal-container');
+		if (!container || container.dataset.reelsInitialized) return;
+		container.dataset.reelsInitialized = 'true';
+
+        // We bind functions to window dynamically so they fetch the latest DOM elements
+        const isMobile = () => window.innerWidth < 1024;
+		const detailBasePath = `/knowhow/${container.dataset.knowhowId}/`;
+		const readDetailRoute = () => {
+			const segments = window.location.pathname.split('/').filter(Boolean);
+			const knowhowIndex = segments.indexOf('knowhow');
+			const suffix = knowhowIndex >= 0 ? segments.slice(knowhowIndex + 2) : [];
+			const mode: DetailMode = suffix[0] === 'my' ? 'private' : 'public';
+			const tabSegment = mode === 'private' ? suffix[1] : suffix[0];
+			const tab: PanelTab = tabSegment === 'progress'
+				? 'progress'
+				: tabSegment === 'memo'
+					? 'memo'
+					: tabSegment === 'comments'
+						? 'comments'
+						: 'desc';
+			return { mode, tab, shouldOpen: Boolean(tabSegment) };
+		};
+		let currentMode: DetailMode = readDetailRoute().mode;
+		const tabsByMode: Record<DetailMode, PanelTab[]> = {
+			public: ['desc', 'comments'],
+			private: ['desc', 'progress', 'memo'],
+		};
+
+		const setUrlTab = (tab: PanelTab | null) => {
+			let path = detailBasePath;
+			if (currentMode === 'private') {
+				path += 'my/';
+				if (tab) path += `${tab === 'desc' ? 'description' : tab}/`;
+			} else if (tab) {
+				path += `${tab === 'desc' ? 'description' : tab}/`;
+			}
+			if (path !== window.location.pathname) history.pushState(null, '', path);
+		};
+
+		const getActiveTab = (): PanelTab => {
+			if (!document.getElementById('tab-content-progress')?.classList.contains('hidden')) return 'progress';
+			if (!document.getElementById('tab-content-comments')?.classList.contains('hidden')) return 'comments';
+			if (!document.getElementById('tab-content-memo')?.classList.contains('hidden')) return 'memo';
+			return 'desc';
+		};
+
+        window.switchTab = (tab: PanelTab) => {
+			const allowedTabs = tabsByMode[currentMode];
+			const resolvedTab = allowedTabs.includes(tab) ? tab : 'desc';
+			const tabs: PanelTab[] = ['desc', 'progress', 'comments', 'memo'];
+			for (const candidate of tabs) {
+				const active = candidate === resolvedTab;
+				const button = document.getElementById('tab-btn-' + candidate) as HTMLButtonElement | null;
+				const content = document.getElementById('tab-content-' + candidate) as HTMLElement | null;
+				button?.classList.toggle('text-white', active);
+				button?.classList.toggle('text-gray-400', !active);
+				button?.classList.toggle('border-white', active);
+				button?.classList.toggle('border-transparent', !active);
+				button?.setAttribute('aria-selected', String(active));
+				if (button) button.tabIndex = active ? 0 : -1;
+				content?.classList.toggle('hidden', !active);
+				if (content) content.hidden = !active;
+				if (candidate !== 'desc') content?.classList.toggle('flex', active);
+			}
+
+			if (resolvedTab === 'comments') {
+				document.dispatchEvent(new CustomEvent('comments:activate'));
+				const comments = document.getElementById('tab-content-comments');
+				const form = comments?.querySelector('textarea[name="content"]') as HTMLTextAreaElement | null;
+				window.setTimeout(() => form?.focus(), 150);
+			}
+        };
+
+		const applyModeUi = () => {
+			const isPrivate = currentMode === 'private';
+			document.querySelectorAll<HTMLElement>('[data-public-tab]').forEach((element) => {
+				element.classList.toggle('hidden', isPrivate);
+				element.classList.toggle('flex', !isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-private-tab]').forEach((element) => {
+				element.classList.toggle('hidden', !isPrivate);
+				element.classList.toggle('flex', isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-public-actions]').forEach((element) => {
+				element.classList.toggle('hidden', isPrivate);
+				element.classList.toggle('contents', !isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-private-actions]').forEach((element) => {
+				element.classList.toggle('hidden', !isPrivate);
+				element.classList.toggle('contents', isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-public-only]').forEach((element) => element.classList.toggle('hidden', isPrivate));
+			document.querySelectorAll<HTMLElement>('[data-private-only]').forEach((element) => element.classList.toggle('hidden', !isPrivate));
+		};
+
+        window.toggleInfoPanel = () => {
+            const infoPanel = document.getElementById('info-panel');
+            if (!infoPanel) return;
+            const mobile = isMobile();
+
+            if (mobile) {
+                infoPanel.classList.toggle('translate-y-full');
+            } else {
+                // PC: Toggle width and opacity
+                if (infoPanel.classList.contains('lg:w-0')) {
+                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                } else {
+                    infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+            }
+
+            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+            if (isOpened) {
+                setUrlTab(getActiveTab());
+            } else {
+                setUrlTab(null);
+            }
+        };
+
+        window.toggleTab = (tab: PanelTab) => {
+            const infoPanel = document.getElementById('info-panel');
+            if (!infoPanel) return;
+            const mobile = isMobile();
+            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+
+			if (isOpened) {
+                // Switch if already open
+                window.switchTab(tab);
+                setUrlTab(tab);
+            } else {
+                // Open and switch
+                window.switchTab(tab);
+                if (mobile) {
+                    infoPanel.classList.remove('translate-y-full');
+                } else {
+                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+                setUrlTab(tab);
+            }
+        };
+
+        // Backward compatibility for existing buttons
+		window.toggleCommentsPanel = () => window.toggleTab('comments');
+		window.toggleDescPanel = () => window.toggleTab('desc');
+		window.toggleProgressPanel = () => window.toggleTab('progress');
+		window.toggleMemoPanel = () => window.toggleTab('memo');
+
+		let removingChecklist = false;
+		window.removeChecklistFromMyList = async () => {
+			if (removingChecklist || currentMode !== 'private') return;
+			const checklistId = container.dataset.checklistId;
+			if (!checklistId) return;
+			if (!window.confirm('このチェックリストをマイリストから削除しますか？\n保存した進捗とメモも削除されます。')) return;
+			removingChecklist = true;
+			container.querySelectorAll<HTMLButtonElement>('[data-private-action-trigger]').forEach((button) => {
+				button.disabled = true;
+			});
+			try {
+				await deletePrivateChecklistRunsByChecklistId(checklistId);
+				await navigate('/knowhow/my/');
+			} catch {
+				window.alert('マイリストから削除できませんでした。もう一度お試しください。');
+				removingChecklist = false;
+				container.querySelectorAll<HTMLButtonElement>('[data-private-action-trigger]').forEach((button) => {
+					button.disabled = false;
+				});
+			}
+		};
+
+		let startingChecklist = false;
+		window.startChecklist = async () => {
+			if (startingChecklist) return;
+			startingChecklist = true;
+			try {
+				const templateSource = container.querySelector<HTMLScriptElement>('[data-checklist-template]');
+				if (!templateSource?.textContent) throw new Error('template-missing');
+				const template = JSON.parse(templateSource.textContent) as ChecklistTemplate;
+				await initializePrivateDb();
+				const existing = await getActivePrivateChecklistRun(template.checklistId);
+				if (!existing) await savePrivateChecklistRun(createChecklistRun(template));
+				await navigate(`${detailBasePath}my/progress/`);
+			} catch {
+				window.alert('チェックリストを開始できませんでした。端末の保存設定をご確認ください。');
+			} finally {
+				startingChecklist = false;
+			}
+		};
+		container.querySelectorAll<HTMLButtonElement>('[data-start-checklist]').forEach((button) => {
+			button.addEventListener('click', () => void window.startChecklist());
+		});
+
+		// Close panel if clicked outside
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+			if (container && container.contains(target) &&
+				(!infoPanel || !infoPanel.contains(target)) &&
+				!target.closest('button[onclick*="toggleCommentsPanel"]') &&
+				!target.closest('button[onclick*="toggleDescPanel"]') &&
+				!target.closest('button[onclick*="toggleProgressPanel"]') &&
+				!target.closest('button[onclick*="toggleMemoPanel"]') &&
+				!target.closest('button[onclick*="startChecklist"]') &&
+				!target.closest('[data-panel-trigger]') &&
+				!target.closest('[data-private-action-trigger]') &&
+                !target.closest('button[onclick*="toggleTab"]') &&
+                !target.closest('div[onclick*="toggleDescPanel"]') &&
+				!target.closest('.like-btn')
+			) {
+				if (infoPanel) {
+					if (isMobile()) infoPanel.classList.add('translate-y-full');
+					else {
+                        infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                        infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                    }
+				}
+				setUrlTab(null);
+			}
+		});
+
+        // Navigation logic for standalone page (wheel/swipe)
+        let isNavigating = false;
+        const navigateTo = (direction: 'next' | 'prev') => {
+            if (isNavigating) return;
+            // Only navigate if we're not inside index.astro's modal
+            if (document.getElementById('post-modal')) return;
+
+            const url = container.getAttribute(`data-${direction}`);
+            if (url) {
+                isNavigating = true;
+                // AstroのView Transitions用にスクロール方向を記録
+                document.documentElement.dataset.scrollDirection = direction;
+
+                // navigate() を使用してSPA遷移
+				navigate(url);
+            }
+        };
+
+		let wheelLocked = false;
+        const handleScrollEvent = (deltaY: number, target: HTMLElement) => {
+            const infoPanel = document.getElementById('info-panel');
+            if (infoPanel && infoPanel.contains(target)) return false;
+
+			if (wheelLocked || deltaY === 0) return false;
+			if (deltaY > 0) {
+				navigateTo('next');
+				return true;
+			} else {
+				navigateTo('prev');
+				return true;
+			}
+        };
+
+        container.addEventListener('wheel', (e) => {
+            const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+            // If scrolling inside panel, ignore
+            if (infoPanel && infoPanel.contains(target)) return;
+
+			const navigated = handleScrollEvent(e.deltaY, target);
+			if (navigated) {
+				wheelLocked = true;
+				setTimeout(() => { wheelLocked = false; }, 700);
+			}
+        }, { passive: true });
+
+        // Touch swipe
+        let touchStartY = 0;
+        let touchEndY = 0;
+        let touchMoved = false;
+        container.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+            touchEndY = touchStartY;
+            touchMoved = false;
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            touchEndY = e.touches[0].clientY;
+            touchMoved = true;
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            const target = e.target as HTMLElement;
+            const infoPanel = document.getElementById('info-panel');
+            if (infoPanel && infoPanel.contains(target)) return;
+            if (target.closest('button, a, input, textarea, select, label, [role="button"]')) return;
+            if (!touchMoved) return;
+
+            const distance = touchStartY - touchEndY;
+            if (distance > 50) navigateTo('next');
+            else if (distance < -50) navigateTo('prev');
+
+            touchMoved = false;
+        });
+
+        container.addEventListener('touchcancel', () => {
+            touchMoved = false;
+        }, { passive: true });
+
+		const syncDetailStateFromUrl = () => {
+			const route = readDetailRoute();
+			currentMode = route.mode;
+			applyModeUi();
+			window.switchTab(route.tab);
+			const infoPanel = document.getElementById('info-panel');
+			if (infoPanel && route.shouldOpen) {
+				if (isMobile()) {
+					infoPanel.classList.remove('translate-y-full');
+				} else {
+					infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+					infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+				}
+			}
+		};
+
+		const tabList = container.querySelector<HTMLElement>('[role="tablist"]');
+		tabList?.addEventListener('keydown', (event) => {
+			if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+			const buttons = tabsByMode[currentMode]
+				.map((tab) => document.getElementById(`tab-btn-${tab}`) as HTMLButtonElement | null)
+				.filter((button): button is HTMLButtonElement => Boolean(button));
+			if (buttons.length === 0) return;
+			const currentIndex = Math.max(0, buttons.indexOf(document.activeElement as HTMLButtonElement));
+			let nextIndex = currentIndex;
+			if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % buttons.length;
+			if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+			if (event.key === 'Home') nextIndex = 0;
+			if (event.key === 'End') nextIndex = buttons.length - 1;
+			event.preventDefault();
+			buttons[nextIndex].focus();
+			window.toggleTab(buttons[nextIndex].id.replace('tab-btn-', '') as PanelTab);
+		});
+		window.addEventListener('popstate', syncDetailStateFromUrl);
+		syncDetailStateFromUrl();
+	}
+
+	document.addEventListener('DOMContentLoaded', initReels);
+	document.addEventListener('astro:page-load', () => {
+		// Keep the direction through the view-transition snapshot, then clean it up.
+		setTimeout(() => {
+			document.documentElement.removeAttribute('data-scroll-direction');
+		}, 500);
+        initReels();
+    });
+</script>
+
+<style is:global>
+	#caption-content h3, .content-area h3 { font-weight: bold; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.2rem; }
+	#caption-content p, .content-area p { margin-bottom: 0.5rem; }
+	#caption-content a, .content-area a { color: #60a5fa; text-decoration: underline; }
+
+    /* Keep the surrounding UI fixed and animate only the media region. */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+		animation: none;
+	}
+
+	::view-transition-group(knowhow-media) {
+		animation-duration: 0.45s;
+		animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+		overflow: hidden;
+	}
+
+    html[data-scroll-direction="next"]::view-transition-old(knowhow-media) {
+        animation: slideUpOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+    html[data-scroll-direction="next"]::view-transition-new(knowhow-media) {
+        animation: slideUpIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    html[data-scroll-direction="prev"]::view-transition-old(knowhow-media) {
+        animation: slideDownOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+    html[data-scroll-direction="prev"]::view-transition-new(knowhow-media) {
+        animation: slideDownIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes slideUpOut {
+        from { transform: translateY(0); }
+        to { transform: translateY(-100%); }
+    }
+    @keyframes slideUpIn {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    @keyframes slideDownOut {
+        from { transform: translateY(0); }
+        to { transform: translateY(100%); }
+    }
+    @keyframes slideDownIn {
+        from { transform: translateY(-100%); }
+        to { transform: translateY(0); }
+    }
+</style>

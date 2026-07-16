@@ -12,7 +12,8 @@ export type ChecklistOutcome =
 	| 'used'
 	| 'unused'
 	| 'missed'
-	| 'remove_next';
+	| 'remove_next'
+	| 'custom_helpful';
 
 export interface ChecklistTemplateItem {
 	id: string;
@@ -318,4 +319,41 @@ export function getChecklistStatusLabel(status: ChecklistStatus) {
 		default:
 			return '実行中';
 	}
+}
+
+export function getChecklistActionLabel(status: ChecklistStatus) {
+	switch (status) {
+		case 'prepared':
+			return '振り返る';
+		case 'review_pending':
+			return '結果を保存';
+		case 'completed':
+			return '次回用に複製';
+		default:
+			return '準備完了にする';
+	}
+}
+
+export function advanceChecklistRun(
+	run: ChecklistRun,
+	now = new Date().toISOString(),
+): { advanced: boolean; missingOutcomeCount: number } {
+	if (run.status === 'in_progress') {
+		run.status = 'prepared';
+		run.preparedAt = now;
+		return { advanced: true, missingOutcomeCount: 0 };
+	}
+	if (run.status === 'prepared') {
+		run.status = 'review_pending';
+		run.reviewStartedAt = now;
+		return { advanced: true, missingOutcomeCount: 0 };
+	}
+	if (run.status === 'review_pending') {
+		const missingOutcomeCount = run.items.filter((item) => !item.hidden && !item.outcome).length;
+		if (missingOutcomeCount > 0) return { advanced: false, missingOutcomeCount };
+		run.status = 'completed';
+		run.completedAt = now;
+		return { advanced: true, missingOutcomeCount: 0 };
+	}
+	return { advanced: false, missingOutcomeCount: 0 };
 }

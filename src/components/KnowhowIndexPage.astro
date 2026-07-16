@@ -1,0 +1,803 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "../layouts/Layout.astro";
+import ActionBar from "./ActionBar.astro";
+import {
+	SITE_TITLE,
+	SITE_DESCRIPTION,
+} from "../consts";
+import { UI } from "../i18n/ja";
+
+const knowhow =
+	await getCollection(
+		"knowhow",
+	);
+knowhow.sort(
+	(a, b) => a.data.timelineOrder - b.data.timelineOrder,
+);
+
+const knowhowWithContent = await Promise.all(
+	knowhow.map(async (post) => ({
+		post,
+		Content: (await render(post)).Content,
+	})),
+);
+
+const phases = [
+	{ id: "all", label: "すべて" },
+	{ id: "pregnancy", label: "妊娠中" },
+	{ id: "0-3", label: "0〜3か月" },
+	{ id: "4-6", label: "4〜6か月" },
+	{ id: "7-11", label: "7〜11か月" },
+	{ id: "1-plus", label: "1歳〜" },
+] as const;
+
+const scenes = [
+	{ label: "おでかけ", icon: "stroller" },
+	{ label: "病院・健診", icon: "medical_services" },
+	{ label: "毎日の準備", icon: "inventory_2" },
+	{ label: "帰省・旅行", icon: "luggage" },
+	{ label: "保育園", icon: "school" },
+	{ label: "防災", icon: "health_and_safety" },
+] as const;
+---
+
+<Layout
+	title={`${UI.knowhow.pageTitle} | ${SITE_TITLE}`}
+	description={SITE_DESCRIPTION}
+>
+	<div class="mx-auto flex max-w-xl flex-col gap-6 px-4 py-6 lg:py-10">
+		<nav class="border-b border-gray-200" aria-label="チェックリストの表示切り替え">
+			<div class="grid grid-cols-2" role="tablist">
+				<button
+					type="button"
+					role="tab"
+					aria-selected="true"
+					data-knowhow-view="discover"
+					class="knowhow-view-tab border-b-[3px] border-mint-500 px-2 pb-3 text-sm font-bold text-navy-900 transition-colors"
+				>
+					チェックリストを探す
+				</button>
+				<button
+					type="button"
+					role="tab"
+					aria-selected="false"
+					data-knowhow-view="my"
+					class="knowhow-view-tab border-b-[3px] border-transparent px-2 pb-3 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
+				>
+					マイリスト
+				</button>
+			</div>
+		</nav>
+
+		<section aria-label="時期による絞り込み">
+			<div
+				id="phase-navigation"
+				class="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2"
+				role="list"
+			>
+				{
+					phases.map((phase, index) => (
+						<button
+							type="button"
+							role="listitem"
+							data-phase={phase.id}
+							aria-pressed={index === 0 ? "true" : "false"}
+							class:list={[
+								"phase-button shrink-0 snap-center whitespace-nowrap rounded-full border px-4 py-2 text-sm transition-colors",
+								index === 0
+									? "border-mint-500 bg-mint-50 font-bold text-mint-700"
+									: "border-gray-200 bg-white font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700",
+							]}
+						>
+							{phase.label}
+						</button>
+					))
+				}
+			</div>
+		</section>
+
+		<section aria-label="場面による絞り込み">
+			<div
+				id="scene-navigation"
+				class="scrollbar-hide -mx-4 grid snap-x snap-mandatory grid-cols-[repeat(3,10.5rem)] grid-rows-2 gap-2 overflow-x-auto px-4 pb-2"
+				role="list"
+			>
+				{
+					scenes.map((scene) => (
+						<button
+							type="button"
+							role="listitem"
+							data-scene={scene.label}
+							aria-pressed="false"
+							class="scene-button flex snap-center items-center gap-2 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left text-xs font-bold text-gray-600 transition-colors hover:border-mint-300 hover:bg-mint-50"
+						>
+							<span class="material-symbols-outlined text-xl text-mint-600" aria-hidden="true">{scene.icon}</span>
+							<span>{scene.label}</span>
+						</button>
+					))
+				}
+			</div>
+		</section>
+
+		<!-- Feed Container -->
+		<div
+			class="flex flex-col gap-10"
+			id="knowhow-container"
+		>
+			{
+				knowhowWithContent.map(
+					(
+						{ post, Content },
+					) => (
+						<article
+							class="knowhow-card bg-white rounded-xl lg:border border-gray-200 lg:shadow-sm overflow-hidden"
+							data-phases={post.data.phases.join(",")}
+							data-scenes={post.data.scenes.join(",")}
+							data-timeline-order={post.data.timelineOrder}
+							data-id={post.id}
+							data-checklist-id={post.data.checklistId}
+						>
+							<!-- Header Removed -->
+
+							<!-- Main Image -->
+							<div class="w-full bg-gray-50 flex items-center justify-center cursor-pointer border-y border-gray-100" onclick={`if(window.openModal) window.openModal('${post.id}')`}>
+								{post.data.coverImage ? (
+									<img src={post.data.coverImage} alt={post.data.title} class="w-full h-auto object-contain max-h-[85vh] bg-gray-50" />
+								) : (
+									<div class="w-full h-64 flex items-center justify-center">
+										<span class="material-symbols-outlined text-gray-300 text-5xl">image</span>
+									</div>
+								)}
+							</div>
+
+							<!-- Action Bar -->
+							<div class="px-4">
+								<ActionBar slug={`knowhow/${post.id}`} variant="feed" />
+							</div>
+
+							<!-- Caption -->
+							<div class="px-4 pb-4">
+								<p class="text-[0.9rem] text-navy-900 leading-snug">
+									<span class="font-bold mr-1">{SITE_TITLE}</span>
+									<span>{post.data.title}</span>
+								</p>
+								<p class="knowhow-summary text-[0.85rem] text-gray-600 mt-1 line-clamp-2 leading-relaxed" set:text={post.data.description}></p>
+								<div class="knowhow-inline-content hidden mt-4 pt-4 border-t border-gray-100 text-[0.9rem] text-gray-700 leading-relaxed">
+									<Content />
+								</div>
+								<button class="knowhow-expand-button text-gray-400 text-[0.85rem] mt-1.5 hover:text-gray-600" type="button" aria-expanded="false">
+									続きを読む...
+								</button>
+							</div>
+						</article>
+					),
+				)
+			}
+		</div>
+		<div id="knowhow-empty" class="hidden rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
+			<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">checklist</span>
+			<p data-empty-message class="mt-3 text-sm font-bold text-gray-700">まだ始めたチェックリストはありません。</p>
+			<button type="button" data-find-checklists class="mt-4 text-sm font-bold text-mint-600 hover:text-mint-700">
+				チェックリストを探す
+			</button>
+		</div>
+	</div>
+
+	<!-- Modal (Reels Fullscreen Viewer) -->
+	<dialog id="post-modal" class="bg-[#111315] w-full h-full max-w-none max-h-none m-0 p-0 border-none outline-none">
+		<div class="relative w-full h-full flex flex-col items-center justify-center mx-auto overflow-hidden">
+			<div id="modal-content-wrapper" class="w-full flex justify-center items-center h-full">
+				<div id="loading-spinner" class="flex flex-col items-center gap-3 text-white">
+					<span class="material-symbols-outlined animate-spin text-4xl">progress_activity</span>
+					<span class="text-sm">読み込み中...</span>
+				</div>
+			</div>
+		</div>
+	</dialog>
+</Layout>
+
+<script>
+	import { navigate } from 'astro:transitions/client';
+	import {
+		getPrivateSetting,
+		getPrivateChecklistRuns,
+		initializePrivateDb,
+		setPrivateSetting,
+	} from '../scripts/private-db';
+
+	type IndexPanelTab = 'desc' | 'progress' | 'comments' | 'memo';
+
+	declare global {
+		interface Window {
+			openModal: (id: string) => void;
+			toggleCommentsPanel: () => void;
+			toggleDescPanel: () => void;
+			toggleProgressPanel: () => void;
+			toggleInfoPanel: () => void;
+			toggleTab: (tab: IndexPanelTab) => void;
+			switchTab: (tab: IndexPanelTab) => void;
+			closeModal?: () => void;
+		}
+	}
+
+	document.addEventListener('astro:page-load', () => {
+		// Modal Logic
+		const modal = document.getElementById('post-modal') as HTMLDialogElement;
+		const wrapper = document.getElementById('modal-content-wrapper');
+
+		if (!modal) return;
+		if (modal.dataset.knowhowModalInitialized) return;
+		modal.dataset.knowhowModalInitialized = 'true';
+		const unlockPageScroll = () => {
+			document.documentElement.classList.remove('overflow-hidden');
+			document.body.classList.remove('overflow-hidden');
+		};
+		modal.addEventListener('close', unlockPageScroll);
+
+		let isModalOpenByClick = false;
+
+	function closeModal() {
+		if (modal && modal.open) {
+			modal.close();
+			unlockPageScroll();
+			// If we opened it via click (pushState), go back in history to clean it up
+			if (isModalOpenByClick && window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
+				history.back();
+			} else if (window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
+                // If it was direct load or something else, replace state
+				history.replaceState(null, '', '/knowhow');
+			}
+            isModalOpenByClick = false;
+		}
+	}
+	window.closeModal = closeModal;
+
+
+	if (modal) {
+		modal.addEventListener('click', (e) => {
+			if (e.target === modal) {
+				closeModal();
+			}
+		});
+	}
+
+	// Handle browser back/forward buttons
+	window.addEventListener('popstate', () => {
+		const segments = window.location.pathname.split('/').filter(Boolean);
+		const isListRoute = segments[0] === 'knowhow'
+			&& (segments.length === 1 || ['my', 'phase', 'scene'].includes(segments[1]));
+		if (isListRoute) {
+			syncListViewFromUrl();
+			if (modal && modal.open) {
+                isModalOpenByClick = false;
+				modal.close();
+			}
+		} else if (segments[0] === 'knowhow') {
+			const id = segments[1];
+            if (id && (!modal || !modal.open)) {
+                // User navigated forward to a post, open the modal
+				window.openModal(id);
+			}
+		}
+	});
+
+    const isMobile = () => window.innerWidth < 1024;
+
+	const setUrlTab = (tab: IndexPanelTab | null) => {
+		if (!currentPostId) return;
+		let path = `/knowhow/${currentPostId}/`;
+		if (currentListView === 'my') {
+			path += 'my/';
+			if (tab) path += `${tab === 'desc' ? 'description' : tab}/`;
+		} else if (tab) {
+			path += `${tab === 'desc' ? 'description' : tab}/`;
+		}
+		history.replaceState(null, '', path);
+    };
+
+	const getActivePanelTab = (): IndexPanelTab => {
+		if (!document.getElementById('tab-content-progress')?.classList.contains('hidden')) return 'progress';
+		if (!document.getElementById('tab-content-comments')?.classList.contains('hidden')) return 'comments';
+		return 'desc';
+	};
+
+    window.switchTab = (tab: IndexPanelTab) => {
+		const tabs: IndexPanelTab[] = ['desc', 'progress', 'comments'];
+		for (const candidate of tabs) {
+			const active = candidate === tab;
+			const button = document.getElementById('tab-btn-' + candidate);
+			const content = document.getElementById('tab-content-' + candidate);
+			button?.classList.toggle('text-white', active);
+			button?.classList.toggle('text-gray-400', !active);
+			button?.classList.toggle('border-white', active);
+			button?.classList.toggle('border-transparent', !active);
+			content?.classList.toggle('hidden', !active);
+			if (candidate !== 'desc') content?.classList.toggle('flex', active);
+		}
+
+		if (tab === 'comments') {
+			const comments = document.getElementById('tab-content-comments');
+			const form = comments?.querySelector('textarea[name="content"]') as HTMLTextAreaElement | null;
+			window.setTimeout(() => form?.focus(), 150);
+		}
+    };
+
+    window.toggleInfoPanel = () => {
+        const infoPanel = document.getElementById('info-panel');
+        if (!infoPanel) return;
+        const mobile = isMobile();
+
+        if (mobile) {
+            infoPanel.classList.toggle('translate-y-full');
+        } else {
+            if (infoPanel.classList.contains('lg:w-0')) {
+                infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+            } else {
+                infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+            }
+        }
+
+        const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+        if (isOpened) {
+            setUrlTab(getActivePanelTab());
+        } else {
+            setUrlTab(null);
+        }
+    };
+
+    window.toggleTab = (tab: IndexPanelTab) => {
+        const infoPanel = document.getElementById('info-panel');
+        if (!infoPanel) return;
+        const mobile = isMobile();
+        const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+
+        if (isOpened) {
+            window.switchTab(tab);
+            setUrlTab(tab);
+        } else {
+            window.switchTab(tab);
+            if (mobile) {
+                infoPanel.classList.remove('translate-y-full');
+            } else {
+                infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+            }
+            setUrlTab(tab);
+        }
+    };
+
+	window.toggleCommentsPanel = () => window.toggleTab('comments');
+	window.toggleDescPanel = () => window.toggleTab('desc');
+	window.toggleProgressPanel = () => window.toggleTab('progress');
+
+	// Close panel if clicked outside
+	document.addEventListener('click', (e) => {
+		const target = e.target as HTMLElement;
+		const container = document.getElementById('knowhow-modal-container');
+        const infoPanel = document.getElementById('info-panel');
+
+		if (container &&
+			container.contains(target) &&
+			(!infoPanel || !infoPanel.contains(target)) &&
+			!target.closest('button[onclick*="toggleCommentsPanel"]') &&
+			!target.closest('button[onclick*="toggleDescPanel"]') &&
+			!target.closest('button[onclick*="toggleProgressPanel"]') &&
+            !target.closest('button[onclick*="toggleTab"]') &&
+            !target.closest('div[onclick*="toggleDescPanel"]') &&
+			!target.closest('.like-btn')
+		) {
+            if (infoPanel) {
+                if (isMobile()) infoPanel.classList.add('translate-y-full');
+                else {
+                    infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+                    infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+                }
+            }
+            setUrlTab(null);
+		}
+	});
+
+	let currentPostId = '';
+	let isNavigating = false;
+
+	window.openModal = async function(id: string) {
+		if (isNavigating) return;
+
+		isNavigating = true;
+		isModalOpenByClick = true;
+		try {
+			try {
+				sessionStorage.setItem('knowhow:return-url', window.location.pathname);
+			} catch {
+				// Session storage may be unavailable in strict privacy modes.
+			}
+			const destination = currentListView === 'my'
+				? `/knowhow/${id}/my/progress/`
+				: `/knowhow/${id}/`;
+			await navigate(destination);
+		} catch (err) {
+			console.error(err);
+		} finally {
+			isNavigating = false;
+		}
+	};
+
+	// Swipe and Wheel Navigation Logic
+	let startY = 0;
+	let endY = 0;
+	let touchMoved = false;
+	let touchTracking = false;
+
+	const isSwipeExcludedTarget = (target: HTMLElement) => Boolean(
+		target.closest('.overflow-y-auto, button, a, input, textarea, select, label, [role="button"]')
+	);
+
+	const navigateToRelative = (direction: 1 | -1) => {
+		const activePostId = wrapper?.dataset.currentPostId || currentPostId;
+		if (isNavigating || !activePostId) return;
+
+		// Find currently visible cards in the DOM to determine the order
+		const visibleCards = Array.from(document.querySelectorAll(".knowhow-card")).filter(card => (card as HTMLElement).style.display !== "none");
+		if (visibleCards.length === 0) return;
+
+		// Find index of current post
+		const currentIndex = visibleCards.findIndex(card => card.getAttribute('data-id') === activePostId);
+
+		if (currentIndex !== -1) {
+			const targetIndex = currentIndex + direction;
+			if (targetIndex >= 0 && targetIndex < visibleCards.length) {
+				const targetCard = visibleCards[targetIndex];
+				const targetId = targetCard.getAttribute('data-id');
+				if (targetId) window.openModal(targetId);
+			}
+		}
+	};
+
+	// Touch Events (Mobile)
+	wrapper?.addEventListener('touchstart', (e) => {
+		// Only trigger swipe if we are not scrolling a comment panel or content area
+		const target = e.target as HTMLElement;
+		if (isSwipeExcludedTarget(target)) {
+			touchTracking = false;
+			return;
+		}
+		startY = e.touches[0].clientY;
+		endY = startY;
+		touchMoved = false;
+		touchTracking = true;
+	}, { passive: true });
+
+	wrapper?.addEventListener('touchmove', (e) => {
+		if (!touchTracking) return;
+		const target = e.target as HTMLElement;
+		if (isSwipeExcludedTarget(target)) return;
+		endY = e.touches[0].clientY;
+		touchMoved = true;
+	}, { passive: true });
+
+	wrapper?.addEventListener('touchend', (e) => {
+		const target = e.target as HTMLElement;
+		const shouldNavigate = touchTracking && touchMoved && !isSwipeExcludedTarget(target);
+		touchTracking = false;
+		touchMoved = false;
+		if (!shouldNavigate) return;
+
+		const distance = startY - endY;
+		if (distance > 50) {
+			// Swipe up -> Next
+			navigateToRelative(1);
+		} else if (distance < -50) {
+			// Swipe down -> Prev
+			navigateToRelative(-1);
+		}
+		startY = 0;
+		endY = 0;
+	});
+
+	wrapper?.addEventListener('touchcancel', () => {
+		touchTracking = false;
+		touchMoved = false;
+		startY = 0;
+		endY = 0;
+	}, { passive: true });
+
+	// Wheel Event (PC)
+	let wheelTimeout: NodeJS.Timeout | null = null;
+	wrapper?.addEventListener('wheel', (e) => {
+		const target = e.target as HTMLElement;
+		if (target.closest('.overflow-y-auto') || target.closest('textarea')) return;
+
+		// Debounce wheel events to prevent double navigation
+		if (wheelTimeout) return;
+
+		if (e.deltaY > 0) {
+			navigateToRelative(1);
+			wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
+		} else if (e.deltaY < 0) {
+			navigateToRelative(-1);
+			wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
+		}
+	}, { passive: true });
+
+	type ListView = 'discover' | 'my';
+	type PhaseFilter = 'all' | 'pregnancy' | '0-3' | '4-6' | '7-11' | '1-plus';
+	type SceneFilter = 'all' | 'おでかけ' | '病院・健診' | '毎日の準備' | '帰省・旅行' | '保育園' | '防災';
+
+	const PHASE_SETTING_KEY = 'knowhow-selected-phase';
+	const validPhases = new Set<PhaseFilter>(['all', 'pregnancy', '0-3', '4-6', '7-11', '1-plus']);
+	const validScenes = new Set<SceneFilter>(['all', 'おでかけ', '病院・健診', '毎日の準備', '帰省・旅行', '保育園', '防災']);
+	const sceneSlugByLabel: Record<Exclude<SceneFilter, 'all'>, string> = {
+		'おでかけ': 'outing',
+		'病院・健診': 'medical',
+		'毎日の準備': 'daily',
+		'帰省・旅行': 'travel',
+		'保育園': 'nursery',
+		'防災': 'disaster',
+	};
+	const sceneLabelBySlug = new Map<string, SceneFilter>(
+		Object.entries(sceneSlugByLabel).map(([label, slug]) => [slug, label as SceneFilter]),
+	);
+	const knowhowContainer = document.getElementById('knowhow-container');
+	const cards = Array.from(document.querySelectorAll<HTMLElement>('.knowhow-card'));
+	const viewTabs = Array.from(document.querySelectorAll<HTMLElement>('[data-knowhow-view]'));
+	const phaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-phase]'));
+	const sceneButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-scene]'));
+	const phaseNavigation = document.getElementById('phase-navigation');
+	const sceneNavigation = document.getElementById('scene-navigation');
+	const emptyState = document.getElementById('knowhow-empty');
+	const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
+	const readListRoute = () => {
+		const segments = window.location.pathname.split('/').filter(Boolean);
+		const suffix = segments[0] === 'knowhow' ? segments.slice(1) : [];
+		let offset = 0;
+		const view: ListView = suffix[0] === 'my' ? 'my' : 'discover';
+		if (view === 'my') offset = 1;
+		let phase: PhaseFilter = 'all';
+		let scene: SceneFilter = 'all';
+		if (suffix[offset] === 'phase' && validPhases.has(suffix[offset + 1] as PhaseFilter)) {
+			phase = suffix[offset + 1] as PhaseFilter;
+			offset += 2;
+		}
+		if (suffix[offset] === 'scene') {
+			scene = sceneLabelBySlug.get(suffix[offset + 1]) ?? 'all';
+		}
+		return { view, phase, scene, hasPhase: phase !== 'all' };
+	};
+	const initialRoute = readListRoute();
+	const hasInitialPhase = initialRoute.hasPhase;
+	let currentListView: ListView = initialRoute.view;
+	let currentPhase: PhaseFilter = initialRoute.phase;
+	let currentScene: SceneFilter = initialRoute.scene;
+	let startedChecklistIds = new Set<string>();
+
+	function updateUrl(pushHistory = false) {
+		const segments = ['knowhow'];
+		if (currentListView === 'my') segments.push('my');
+		if (currentPhase !== 'all') segments.push('phase', currentPhase);
+		if (currentScene !== 'all') segments.push('scene', sceneSlugByLabel[currentScene]);
+		const path = `/${segments.join('/')}/`;
+		const state = { knowhowView: currentListView, phase: currentPhase, scene: currentScene };
+		if (pushHistory) history.pushState(state, '', path);
+		else history.replaceState(state, '', path);
+	}
+
+	function refreshViewTabs() {
+		for (const tab of viewTabs) {
+			const active = tab.dataset.knowhowView === currentListView;
+			tab.setAttribute('aria-selected', String(active));
+			tab.classList.toggle('border-mint-500', active);
+			tab.classList.toggle('border-transparent', !active);
+			tab.classList.toggle('text-navy-900', active);
+			tab.classList.toggle('font-bold', active);
+			tab.classList.toggle('text-gray-400', !active);
+			tab.classList.toggle('font-medium', !active);
+		}
+		document.querySelector<HTMLElement>('[data-private-list-controls]')?.classList.toggle('hidden', currentListView !== 'my');
+	}
+
+	function scrollActivePhaseIntoView(behavior: ScrollBehavior = 'smooth') {
+		const active = phaseButtons.find((button) => button.dataset.phase === currentPhase);
+		if (!active || !phaseNavigation) return;
+		const target = active;
+		const left = target.offsetLeft - (phaseNavigation.clientWidth - target.clientWidth) / 2;
+		phaseNavigation.scrollTo({ left: Math.max(0, left), behavior });
+	}
+
+	function refreshPhaseButtons() {
+		for (const button of phaseButtons) {
+			const active = button.dataset.phase === currentPhase;
+			button.setAttribute('aria-pressed', String(active));
+			button.classList.toggle('border-mint-500', active);
+			button.classList.toggle('bg-mint-50', active);
+			button.classList.toggle('font-bold', active);
+			button.classList.toggle('text-mint-700', active);
+			button.classList.toggle('border-gray-200', !active);
+			button.classList.toggle('bg-white', !active);
+			button.classList.toggle('font-medium', !active);
+			button.classList.toggle('text-gray-500', !active);
+		}
+		window.requestAnimationFrame(() => scrollActivePhaseIntoView());
+	}
+
+	function refreshSceneButtons() {
+		for (const button of sceneButtons) {
+			const active = button.dataset.scene === currentScene;
+			button.setAttribute('aria-pressed', String(active));
+			button.classList.toggle('border-mint-500', active);
+			button.classList.toggle('bg-mint-50', active);
+			button.classList.toggle('text-mint-700', active);
+			button.classList.toggle('border-gray-200', !active);
+			button.classList.toggle('bg-white', !active);
+			button.classList.toggle('text-gray-600', !active);
+		}
+		const active = sceneButtons.find((button) => button.dataset.scene === currentScene);
+		if (active && sceneNavigation) {
+			window.requestAnimationFrame(() => {
+				const left = active.offsetLeft - (sceneNavigation.clientWidth - active.clientWidth) / 2;
+				sceneNavigation.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+			});
+		}
+	}
+
+	function setListView(view: ListView, pushHistory = true) {
+		currentListView = view;
+		refreshViewTabs();
+		updateView();
+		updateUrl(pushHistory);
+	}
+
+	function setPhase(phase: PhaseFilter, pushHistory = true, persist = true) {
+		currentPhase = phase;
+		refreshPhaseButtons();
+		updateView();
+		updateUrl(pushHistory);
+		if (persist) void setPrivateSetting(PHASE_SETTING_KEY, phase).catch(() => undefined);
+	}
+
+	function setScene(scene: SceneFilter, pushHistory = true) {
+		currentScene = scene;
+		refreshSceneButtons();
+		updateView();
+		updateUrl(pushHistory);
+	}
+
+	function syncListViewFromUrl() {
+		const route = readListRoute();
+		currentListView = route.view;
+		currentPhase = route.phase;
+		currentScene = route.scene;
+		refreshViewTabs();
+		refreshPhaseButtons();
+		refreshSceneButtons();
+		updateView();
+	}
+
+	knowhowContainer?.addEventListener('click', (event) => {
+		const target = event.target as HTMLElement;
+		const button = target.closest('.knowhow-expand-button') as HTMLButtonElement | null;
+		if (!button) return;
+
+		const card = button.closest('.knowhow-card');
+		const summary = card?.querySelector('.knowhow-summary');
+		const content = card?.querySelector('.knowhow-inline-content');
+		if (!summary || !content) return;
+
+		const willExpand = content.classList.contains('hidden');
+		content.classList.toggle('hidden', !willExpand);
+		summary.classList.toggle('line-clamp-2', !willExpand);
+		button.setAttribute('aria-expanded', String(willExpand));
+		button.textContent = willExpand ? '閉じる' : '続きを読む...';
+	});
+
+	function updateView() {
+		cards.forEach((card) => {
+			const phaseMatch = currentPhase === 'all'
+				|| (card.dataset.phases ?? '').split(',').includes(currentPhase);
+			const sceneMatch = currentScene === 'all'
+				|| (card.dataset.scenes ?? '').split(',').includes(currentScene);
+			const checklistId = card.dataset.checklistId;
+			const viewMatch = currentListView === 'discover'
+				|| Boolean(checklistId && startedChecklistIds.has(checklistId));
+			card.style.display = phaseMatch && sceneMatch && viewMatch ? 'block' : 'none';
+		});
+
+		const visibleCards = cards
+			.filter((card) => card.style.display !== 'none')
+			.sort((a, b) => Number(a.dataset.timelineOrder ?? 0) - Number(b.dataset.timelineOrder ?? 0));
+		const hiddenCards = cards.filter((card) => card.style.display === 'none');
+		if (knowhowContainer) {
+			visibleCards.forEach((card) => knowhowContainer.appendChild(card));
+			hiddenCards.forEach((card) => knowhowContainer.appendChild(card));
+		}
+
+		const myCount = cards.filter((card) => startedChecklistIds.has(card.dataset.checklistId ?? '')).length;
+		emptyState?.classList.toggle('hidden', visibleCards.length > 0);
+		if (emptyMessage) {
+			emptyMessage.textContent = currentListView === 'my' && myCount === 0
+				? 'まだ始めたチェックリストはありません。'
+				: '条件に一致するチェックリストはありません。';
+		}
+	}
+
+	phaseButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const phase = button.dataset.phase as PhaseFilter;
+			if (validPhases.has(phase)) setPhase(phase);
+		});
+	});
+	sceneButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const scene = button.dataset.scene as SceneFilter;
+			if (validScenes.has(scene)) setScene(currentScene === scene ? 'all' : scene);
+		});
+	});
+	viewTabs.forEach((tab) => {
+		tab.addEventListener('click', () => {
+			setListView(tab.dataset.knowhowView === 'my' ? 'my' : 'discover');
+		});
+	});
+	document.querySelector<HTMLElement>('[data-find-checklists]')?.addEventListener('click', () => {
+		setListView('discover');
+	});
+	const refreshFromSavedRuns = async () => {
+		const runs = await getPrivateChecklistRuns();
+		startedChecklistIds = new Set(runs.map((run) => run.checklistId));
+		updateView();
+	};
+	window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns());
+
+	refreshViewTabs();
+	refreshPhaseButtons();
+	refreshSceneButtons();
+	updateView();
+	updateUrl(false);
+	void initializePrivateDb().then(async () => {
+		if (!hasInitialPhase) {
+			const savedPhase = await getPrivateSetting<PhaseFilter>(PHASE_SETTING_KEY);
+			if (savedPhase && validPhases.has(savedPhase)) {
+				setPhase(savedPhase, false, false);
+			}
+		}
+		await refreshFromSavedRuns();
+	}).catch(() => {
+		if (emptyMessage && currentListView === 'my') {
+			emptyMessage.textContent = 'このブラウザーではマイリストを読み込めませんでした。';
+		}
+	});
+	});
+</script>
+
+<style>
+	.knowhow-inline-content :global(h3) {
+		font-size: 1rem;
+		font-weight: 700;
+		margin: 1.25rem 0 0.35rem;
+		color: #172554;
+	}
+	.knowhow-inline-content :global(h3:first-child) {
+		margin-top: 0;
+	}
+	.knowhow-inline-content :global(p) {
+		margin-bottom: 0.75rem;
+	}
+	.knowhow-inline-content :global(ol),
+	.knowhow-inline-content :global(ul) {
+		margin: 0.5rem 0 0.75rem 1.25rem;
+	}
+	.knowhow-inline-content :global(ol) { list-style: decimal; }
+	.knowhow-inline-content :global(ul) { list-style: disc; }
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;
+	}
+	.scrollbar-hide {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+
+	dialog::backdrop {
+		background: rgba(0, 0, 0, 0.85);
+	}
+</style>

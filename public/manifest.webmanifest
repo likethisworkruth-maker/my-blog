@@ -39,7 +39,7 @@
     {
       "name": "続きから使う",
       "short_name": "マイリスト",
-      "url": "/knowhow/?view=my"
+      "url": "/knowhow/my/"
     },
     {
       "name": "理屈さんち",

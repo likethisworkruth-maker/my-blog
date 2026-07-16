@@ -7,6 +7,9 @@ icon: "group"
 isFree: true
 categories: ["テンプレ", "0歳子育て"]
 childAgeMonths: 2
+phases: ["pregnancy", "0-3", "4-6", "7-11", "1-plus"]
+scenes: ["毎日の準備"]
+timelineOrder: 20
 order: 2
 ---
 

@@ -23,13 +23,17 @@ Googleログイン + Drive同意 ──► Supabase Auth OAuth
 
 private文字列をSupabase、Analytics、URL、DOM属性、consoleへ送らない。Service Workerは静的ビルド成果物だけをCacheStorageへ保存し、IndexedDBやDriveアクセストークンには触れない。
 
+一覧で選択した育児時期は`settings["knowhow-selected-phase"]`へ保存する。子どもの生年月日や個人情報は取得しない。この設定は端末内だけで利用し、Driveバックアップ対象の`runs`には含めない。
+
+準備完了後の振り返り結果は各run項目のoutcomeとして保存する。個別の振り返り内容は公開画面やSupabaseへ送らず、他の進捗・メモと同じく端末と利用者自身のDriveバックアップだけで扱う。
+
 ## 旧データ移行
 
 - 移行元: `localStorage["likethis:checklist-runs:v1"]`
 - IndexedDBの初期化時に、スキーマ検証できたrunだけを一方向に移行する。
 - IndexedDBへのtransaction完了後にMigration済み設定を保存する。
 - 旧キーは1リリース分の読み取りfallbackとして残す。
-- 利用者が「この端末のチェックリストデータを削除」を実行した場合だけ、IndexedDBのrun・queueと旧キーを削除する。
+- 利用者がブラウザーのサイトデータを削除した場合、IndexedDBのrun・queueと旧キーも削除される。
 
 旧Supabaseテーブル（`checklist_runs`、`checklist_run_items`、`checklist_item_feedback`）は今回削除しない。クライアントからのprivateデータ書き込み・読み戻しコードだけを停止した。テーブル削除やRLS変更は、移行実績を確認した別Migrationで行う。
 
@@ -60,12 +64,12 @@ Googleのprovider tokenはSupabaseが自動更新しない。今回はprovider r
 
 - 未ログインでも開始、編集、再読み込み復元ができる。
 - 公開URLでは「説明・みんなのコメント」だけが表示される。
-- `?mode=my#progress`では「説明・進捗・メモ」だけが表示される。
+- `/knowhow/{id}/my/progress/`では「説明・進捗・メモ」だけが表示される。
 - privateメモの固有文字列がSupabase・Analyticsのrequest payloadへ含まれない。
 - オフライン中に進捗とメモを更新でき、オンライン復帰後も端末データが残る。
 - Googleログイン画面でログインと`drive.appdata`の同意が一度に行われる。
 - ログイン直後の初回アップロード、復元、競合3択、provider token期限切れ後の再ログインを確認する。
-- Drive障害時にも「端末に保存済み」とDriveエラーを混同しない。
+- Drive障害時にも端末保存の成否とDriveエラーを混同しない。
 - 端末データ削除後に旧localStorageからデータが復活しない。
 
 ## ロールバック
