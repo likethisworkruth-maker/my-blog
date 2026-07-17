@@ -1,10 +1,10 @@
 {
   "id": "/",
-  "name": "子育ての困りごとメモ",
-  "short_name": "子育てメモ",
+  "name": "子育てチェックリスト",
+  "short_name": "子育てチェック",
   "description": "初めての子育てで直面した困りごとと、その対策や試行錯誤をまとめています。",
   "lang": "ja",
-  "start_url": "/",
+  "start_url": "/knowhow/my/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -34,16 +34,16 @@
     {
       "name": "チェックリスト",
       "short_name": "チェックリスト",
-      "url": "/knowhow/"
+      "url": "/"
     },
     {
-      "name": "続きから使う",
+      "name": "マイリスト",
       "short_name": "マイリスト",
       "url": "/knowhow/my/"
     },
     {
-      "name": "理屈さんち",
-      "short_name": "理屈さんち",
+      "name": "運営のおうち",
+      "short_name": "運営のおうち",
       "url": "/rikutsu/"
     }
   ]

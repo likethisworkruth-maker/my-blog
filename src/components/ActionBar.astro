@@ -14,12 +14,6 @@ const showShare = !slug.startsWith('knowhow/');
 
 {variant === 'reels' ? (
 	<div class="flex flex-col items-center gap-6">
-		<div data-private-actions class="hidden">
-			<button data-private-action-trigger class="relative flex flex-col items-center text-red-200 transition-colors hover:text-red-100 active:scale-95" onclick="if(window.removeChecklistFromMyList) window.removeChecklistFromMyList()" aria-label="マイリストから削除">
-				<span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">delete</span>
-				<span class="mt-1 text-[0.75rem] font-medium drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">削除</span>
-			</button>
-		</div>
 		<LikeButton slug={slug} variant="reels" />
 		<div data-public-actions class="contents">
 			<button

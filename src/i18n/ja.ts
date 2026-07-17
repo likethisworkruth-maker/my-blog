@@ -1,15 +1,15 @@
 export const UI = {
 	headerNav: {
-		home: "ホーム",
 		knowhow: "チェックリスト",
-		rikutsu: "理屈さんち",
+		myList: "マイリスト",
+		rikutsu: "運営のおうち",
 		naraibase: "Naraibase",
 		about: "このサイトについて",
 	},
 	footerNav: {
-		home: "ホーム",
 		knowhow: "チェックリスト",
-		rikutsu: "理屈さんち",
+		myList: "マイリスト",
+		rikutsu: "運営のおうち",
 		naraibase: "Naraibase",
 		about: "このサイトについて",
 	},

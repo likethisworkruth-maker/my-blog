@@ -32,7 +32,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
          data-next={nextUrl}>
 
 		<!-- PC Back Button -->
-		<button onclick="window.goBackFromKnowhow?.(this)" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
+		<button data-media-ui onclick="window.goBackFromKnowhow?.(this)" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
 			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
 		</button>
 
@@ -41,10 +41,10 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
             <!-- Media + ActionBar Container -->
             <div class="flex flex-row items-end h-full shrink-0 relative transition-all duration-300 w-full lg:w-auto justify-center">
                 <!-- Main Media Area -->
-                <div class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl" transition:name="knowhow-media">
+                <div id="knowhow-media-area" class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl" transition:name="knowhow-media">
                     <!-- Mobile Back Button -->
-                    <button onclick="window.goBackFromKnowhow?.(this)" class="lg:hidden absolute top-4 left-4 z-50 text-white hover:text-gray-300 transition-colors w-10 h-10 flex items-center justify-center cursor-pointer outline-none">
-                        <span class="material-symbols-outlined">arrow_back_ios_new</span>
+                    <button data-media-ui onclick="window.goBackFromKnowhow?.(this)" class="lg:hidden absolute top-4 left-4 z-50 flex h-10 w-10 cursor-pointer items-center justify-center text-white outline-none transition-colors hover:text-gray-200 active:scale-95" aria-label="チェックリスト一覧へ戻る">
+                        <span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">arrow_back_ios_new</span>
                     </button>
 
                     {knowhow.data.coverImage ? (
@@ -60,7 +60,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                     )}
 
                     <!-- Floating Caption (Bottom Left) -->
-                    <div class="absolute bottom-0 left-0 w-full p-4 lg:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none pb-8 lg:pb-6 z-10">
+                    <div data-media-ui class="absolute bottom-0 left-0 w-full p-4 lg:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none pb-8 lg:pb-6 z-10">
                         <div class="pointer-events-auto cursor-pointer" onclick="if(window.toggleDescPanel) window.toggleDescPanel()">
                             <h1 class="text-white font-bold text-lg mb-2 drop-shadow-md leading-snug pr-16">{knowhow.data.title}</h1>
                             <div class="text-white/90 text-sm drop-shadow-md prose prose-invert prose-sm max-w-none pr-16 line-clamp-2" id="caption-content">
@@ -70,13 +70,13 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                     </div>
 
                     <!-- Floating Action Bar (Mobile only) -->
-                    <div class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
+                    <div data-media-ui class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
                         <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} />
                     </div>
                 </div>
 
                 <!-- Floating Action Bar (PC only) -->
-                <div class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
+                <div data-media-ui class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
                     <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} />
                 </div>
             </div>
@@ -84,16 +84,16 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
             <!-- Unified Info Panel -->
             <div
                 id="info-panel"
-                class="fixed lg:relative bottom-0 left-0 w-full h-[65dvh] lg:h-full lg:w-0 bg-[#262626] z-50 lg:z-10 transform translate-y-full lg:translate-y-0 transition-all duration-300 ease-out flex flex-col shadow-2xl lg:shadow-xl rounded-t-3xl lg:rounded-xl overflow-hidden opacity-100 lg:opacity-0 lg:ml-0"
+                class="fixed inset-0 h-[100dvh] w-full bg-[#262626] z-[60] transform translate-y-full transition-all duration-300 ease-out flex flex-col overflow-hidden opacity-100 shadow-2xl pb-[env(safe-area-inset-bottom)] lg:relative lg:inset-auto lg:h-full lg:w-0 lg:z-10 lg:translate-y-0 lg:rounded-xl lg:pb-0 lg:opacity-0 lg:ml-0 lg:shadow-xl"
             >
-                <div class="flex items-center justify-between pl-4 pr-14 py-0 border-b border-gray-600 shrink-0 bg-[#343434] min-w-[320px]">
+                <div class="relative flex items-center justify-between border-b border-gray-600 bg-[#343434] pl-4 pr-14 pt-[env(safe-area-inset-top)] shrink-0 min-w-[320px] lg:pt-0">
 					<div class="flex-grow flex items-stretch justify-center w-full" role="tablist" aria-label="チェックリストの詳細">
 						<button id="tab-btn-desc" role="tab" aria-selected="true" aria-controls="tab-content-desc" tabindex="0" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
 						<button id="tab-btn-progress" role="tab" aria-selected="false" aria-controls="tab-content-progress" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
 						<button id="tab-btn-comments" role="tab" aria-selected="false" aria-controls="tab-content-comments" tabindex="-1" data-public-tab class="flex h-14 flex-1 px-2 sm:px-6 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">みんなのコメント</button>
 						<button id="tab-btn-memo" role="tab" aria-selected="false" aria-controls="tab-content-memo" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-memo" onclick="if(window.toggleTab) window.toggleTab('memo')">メモ</button>
                     </div>
-                    <button class="absolute right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()">
+                    <button class="absolute bottom-4 right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()" aria-label="詳細パネルを閉じる">
                         <span class="material-symbols-outlined font-light">close</span>
                     </button>
                 </div>
@@ -192,6 +192,13 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 
         // We bind functions to window dynamically so they fetch the latest DOM elements
         const isMobile = () => window.innerWidth < 1024;
+		const mediaArea = document.getElementById('knowhow-media-area');
+		mediaArea?.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement;
+			if (target.closest('[data-media-ui], button, a, input, textarea, select, label, [role="button"]')) return;
+			const hidden = container.dataset.mediaChromeHidden === 'true';
+			container.dataset.mediaChromeHidden = String(!hidden);
+		});
 		const detailBasePath = `/knowhow/${container.dataset.knowhowId}/`;
 		const readDetailRoute = () => {
 			const segments = window.location.pathname.split('/').filter(Boolean);
@@ -535,6 +542,16 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 </script>
 
 <style is:global>
+	#knowhow-modal-container [data-media-ui] {
+		transition: opacity 180ms ease, visibility 180ms ease;
+	}
+
+	#knowhow-modal-container[data-media-chrome-hidden="true"] [data-media-ui] {
+		visibility: hidden;
+		pointer-events: none;
+		opacity: 0;
+	}
+
 	#caption-content h3, .content-area h3 { font-weight: bold; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.2rem; }
 	#caption-content p, .content-area p { margin-bottom: 0.5rem; }
 	#caption-content a, .content-area a { color: #60a5fa; text-decoration: underline; }

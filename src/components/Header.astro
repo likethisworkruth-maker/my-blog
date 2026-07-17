@@ -14,6 +14,11 @@ const currentPath =
 	pathname.slice(
 		1,
 	);
+const pathSegments = pathname.split("/").filter(Boolean);
+const isMyListPath = pathSegments[0] === "knowhow" && (
+	pathSegments[1] === "my" || pathSegments[2] === "my"
+);
+const isChecklistPath = (pathname === "/" || pathSegments[0] === "knowhow") && !isMyListPath;
 const isRikutsuPath = ["rikutsu", "apps", "items", "logs"].some((path) =>
 	currentPath.startsWith(path),
 );
@@ -39,15 +44,15 @@ const isRikutsuPath = ["rikutsu", "apps", "items", "logs"].some((path) =>
 		>
 			<a
 				href="/"
-				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath === "" ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
-			>
-				{UI.headerNav.home}
-			</a>
-			<a
-				href="/knowhow/"
-				class={`font-bold transition-colors pb-1 border-b-2 ${currentPath.startsWith("knowhow") ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+				class={`font-bold transition-colors pb-1 border-b-2 ${isChecklistPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
 				{UI.headerNav.knowhow}
+			</a>
+			<a
+				href="/knowhow/my/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${isMyListPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{UI.headerNav.myList}
 			</a>
 			<a
 				href="/rikutsu/"

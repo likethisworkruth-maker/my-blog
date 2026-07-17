@@ -1,10 +1,11 @@
 ---
 import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
+import { SITE_TITLE } from '../consts';
 ---
 
 <TrialStaticLayout
-	title="このサイトについて | 子育ての困りごとメモ"
-	description="子育ての困りごとメモの目的、掲載方針について説明します。"
+	title={"このサイトについて | " + SITE_TITLE}
+	description={SITE_TITLE + "の目的、掲載方針について説明します。"}
 >
 	<article class="mx-auto max-w-3xl px-6 py-12 lg:py-20">
 		<header class="border-b border-gray-200 pb-8">
@@ -21,6 +22,24 @@ import TrialStaticLayout from '../layouts/TrialStaticLayout.astro';
 					子育て中の保護者の方を対象としています。
 					「予定共有」「子育て記録」「持ち物管理」など、日々の具体的な困りごとに対し、実際にどんな対策を試したかをまとめています。
 				</p>
+			</section>
+
+			<section>
+				<h2 class="text-xl font-bold text-navy-900">サイトの構成</h2>
+				<div class="mt-4 grid gap-3 sm:grid-cols-3">
+					<a href="/" class="rounded-2xl border border-gray-200 p-4 transition-colors hover:border-mint-400 hover:bg-mint-50">
+						<strong class="text-navy-900">チェックリスト</strong>
+						<span class="mt-1 block text-xs leading-6 text-gray-600">公開リストを探して使い始めます。</span>
+					</a>
+					<a href="/knowhow/my/" class="rounded-2xl border border-gray-200 p-4 transition-colors hover:border-mint-400 hover:bg-mint-50">
+						<strong class="text-navy-900">マイリスト</strong>
+						<span class="mt-1 block text-xs leading-6 text-gray-600">使用中・作成済みのリストを開きます。</span>
+					</a>
+					<a href="/rikutsu/" class="rounded-2xl border border-gray-200 p-4 transition-colors hover:border-mint-400 hover:bg-mint-50">
+						<strong class="text-navy-900">運営のおうち</strong>
+						<span class="mt-1 block text-xs leading-6 text-gray-600">実体験の記事や記録をまとめています。</span>
+					</a>
+				</div>
 			</section>
 
 			<section>

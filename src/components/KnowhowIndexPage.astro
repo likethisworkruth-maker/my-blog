@@ -40,35 +40,38 @@ const scenes = [
 	{ label: "保育園", icon: "school" },
 	{ label: "防災", icon: "health_and_safety" },
 ] as const;
+const isRootPage = Astro.url.pathname === "/";
 ---
 
 <Layout
-	title={`${UI.knowhow.pageTitle} | ${SITE_TITLE}`}
+	title={isRootPage ? SITE_TITLE : `${UI.knowhow.pageTitle} | ${SITE_TITLE}`}
 	description={SITE_DESCRIPTION}
 >
 	<div class="mx-auto flex max-w-xl flex-col gap-6 px-4 py-6 lg:py-10">
-		<nav class="border-b border-gray-200" aria-label="チェックリストの表示切り替え">
-			<div class="grid grid-cols-2" role="tablist">
+		<div class="flex justify-center" role="group" aria-label="チェックリストの表示形式">
+			<div class="inline-grid grid-cols-2 overflow-hidden rounded-full border border-gray-400 bg-white shadow-sm">
 				<button
 					type="button"
-					role="tab"
-					aria-selected="true"
-					data-knowhow-view="discover"
-					class="knowhow-view-tab border-b-[3px] border-mint-500 px-2 pb-3 text-sm font-bold text-navy-900 transition-colors"
+					data-display-mode-option="list"
+					aria-label="リスト表示"
+					aria-pressed="false"
+					class="flex h-12 min-w-[94px] items-center justify-center gap-1.5 border-r border-gray-400 bg-white px-4 text-navy-900 transition-colors hover:bg-gray-50 active:bg-gray-100"
 				>
-					チェックリストを探す
+					<span data-mode-check class="material-symbols-outlined hidden text-xl" aria-hidden="true">check</span>
+					<span class="material-symbols-outlined text-[1.8rem]" aria-hidden="true">view_headline</span>
 				</button>
 				<button
 					type="button"
-					role="tab"
-					aria-selected="false"
-					data-knowhow-view="my"
-					class="knowhow-view-tab border-b-[3px] border-transparent px-2 pb-3 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
+					data-display-mode-option="gallery"
+					aria-label="画像表示"
+					aria-pressed="true"
+					class="flex h-12 min-w-[94px] items-center justify-center gap-1.5 bg-mint-100 px-4 text-navy-900 transition-colors hover:bg-mint-50 active:bg-mint-200"
 				>
-					マイリスト
+					<span data-mode-check class="material-symbols-outlined text-xl" aria-hidden="true">check</span>
+					<span class="material-symbols-outlined text-[1.8rem]" aria-hidden="true">grid_view</span>
 				</button>
 			</div>
-		</nav>
+		</div>
 
 		<section aria-label="時期による絞り込み">
 			<div
@@ -124,6 +127,7 @@ const scenes = [
 		<div
 			class="flex flex-col gap-10"
 			id="knowhow-container"
+			data-display-mode="gallery"
 		>
 			{
 				knowhowWithContent.map(
@@ -138,6 +142,7 @@ const scenes = [
 							data-id={post.id}
 							data-checklist-id={post.data.checklistId}
 						>
+							<div class="knowhow-gallery-view">
 							<!-- Header Removed -->
 
 							<!-- Main Image -->
@@ -170,6 +175,26 @@ const scenes = [
 									続きを読む...
 								</button>
 							</div>
+							</div>
+
+							<button
+								type="button"
+								class="knowhow-list-view w-full text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+								data-open-checklist={post.id}
+								aria-label={post.data.title + "を開く"}
+							>
+								<div class="min-w-0 flex-1 px-4 py-4">
+									<h2 class="text-[0.95rem] font-bold leading-snug text-navy-900">{post.data.title}</h2>
+									<p class="mt-2 line-clamp-2 text-[0.8rem] leading-relaxed text-gray-600" set:text={post.data.description}></p>
+								</div>
+								<div class="flex h-[104px] w-[120px] shrink-0 items-center justify-center overflow-hidden border-l border-gray-100 bg-gray-50">
+									{post.data.coverImage ? (
+										<img src={post.data.coverImage} alt="" class="h-full w-full object-cover object-top" />
+									) : (
+										<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">image</span>
+									)}
+								</div>
+							</button>
 						</article>
 					),
 				)
@@ -178,9 +203,9 @@ const scenes = [
 		<div id="knowhow-empty" class="hidden rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
 			<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">checklist</span>
 			<p data-empty-message class="mt-3 text-sm font-bold text-gray-700">まだ始めたチェックリストはありません。</p>
-			<button type="button" data-find-checklists class="mt-4 text-sm font-bold text-mint-600 hover:text-mint-700">
+			<a href="/" class="mt-4 inline-block text-sm font-bold text-mint-600 hover:text-mint-700">
 				チェックリストを探す
-			</button>
+			</a>
 		</div>
 	</div>
 
@@ -207,6 +232,8 @@ const scenes = [
 	} from '../scripts/private-db';
 
 	type IndexPanelTab = 'desc' | 'progress' | 'comments' | 'memo';
+	type DisplayMode = 'gallery' | 'list';
+	const DISPLAY_MODE_SETTING_KEY = 'knowhow-display-mode';
 
 	declare global {
 		interface Window {
@@ -265,8 +292,10 @@ const scenes = [
 	// Handle browser back/forward buttons
 	window.addEventListener('popstate', () => {
 		const segments = window.location.pathname.split('/').filter(Boolean);
-		const isListRoute = segments[0] === 'knowhow'
-			&& (segments.length === 1 || ['my', 'phase', 'scene'].includes(segments[1]));
+		const isListRoute = segments.length === 0 || (
+			segments[0] === 'knowhow'
+			&& (segments.length === 1 || ['my', 'phase', 'scene'].includes(segments[1]))
+		);
 		if (isListRoute) {
 			syncListViewFromUrl();
 			if (modal && modal.open) {
@@ -542,7 +571,7 @@ const scenes = [
 	);
 	const knowhowContainer = document.getElementById('knowhow-container');
 	const cards = Array.from(document.querySelectorAll<HTMLElement>('.knowhow-card'));
-	const viewTabs = Array.from(document.querySelectorAll<HTMLElement>('[data-knowhow-view]'));
+	const displayModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-display-mode-option]'));
 	const phaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-phase]'));
 	const sceneButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-scene]'));
 	const phaseNavigation = document.getElementById('phase-navigation');
@@ -567,10 +596,12 @@ const scenes = [
 		return { view, phase, scene, hasPhase: phase !== 'all' };
 	};
 	const initialRoute = readListRoute();
+	const discoverRootPath = window.location.pathname === '/' ? '/' : '/knowhow/';
 	const hasInitialPhase = initialRoute.hasPhase;
 	let currentListView: ListView = initialRoute.view;
 	let currentPhase: PhaseFilter = initialRoute.phase;
 	let currentScene: SceneFilter = initialRoute.scene;
+	let currentDisplayMode: DisplayMode = 'gallery';
 	let startedChecklistIds = new Set<string>();
 
 	function updateUrl(pushHistory = false) {
@@ -578,24 +609,15 @@ const scenes = [
 		if (currentListView === 'my') segments.push('my');
 		if (currentPhase !== 'all') segments.push('phase', currentPhase);
 		if (currentScene !== 'all') segments.push('scene', sceneSlugByLabel[currentScene]);
-		const path = `/${segments.join('/')}/`;
+		const path = currentListView === 'discover'
+			&& currentPhase === 'all'
+			&& currentScene === 'all'
+			&& discoverRootPath === '/'
+				? '/'
+				: `/${segments.join('/')}/`;
 		const state = { knowhowView: currentListView, phase: currentPhase, scene: currentScene };
 		if (pushHistory) history.pushState(state, '', path);
 		else history.replaceState(state, '', path);
-	}
-
-	function refreshViewTabs() {
-		for (const tab of viewTabs) {
-			const active = tab.dataset.knowhowView === currentListView;
-			tab.setAttribute('aria-selected', String(active));
-			tab.classList.toggle('border-mint-500', active);
-			tab.classList.toggle('border-transparent', !active);
-			tab.classList.toggle('text-navy-900', active);
-			tab.classList.toggle('font-bold', active);
-			tab.classList.toggle('text-gray-400', !active);
-			tab.classList.toggle('font-medium', !active);
-		}
-		document.querySelector<HTMLElement>('[data-private-list-controls]')?.classList.toggle('hidden', currentListView !== 'my');
 	}
 
 	function scrollActivePhaseIntoView(behavior: ScrollBehavior = 'smooth') {
@@ -604,6 +626,23 @@ const scenes = [
 		const target = active;
 		const left = target.offsetLeft - (phaseNavigation.clientWidth - target.clientWidth) / 2;
 		phaseNavigation.scrollTo({ left: Math.max(0, left), behavior });
+	}
+
+	function refreshDisplayMode() {
+		if (knowhowContainer) knowhowContainer.dataset.displayMode = currentDisplayMode;
+		for (const button of displayModeButtons) {
+			const active = button.dataset.displayModeOption === currentDisplayMode;
+			button.setAttribute('aria-pressed', String(active));
+			button.classList.toggle('bg-mint-100', active);
+			button.classList.toggle('bg-white', !active);
+			button.querySelector<HTMLElement>('[data-mode-check]')?.classList.toggle('hidden', !active);
+		}
+	}
+
+	function setDisplayMode(mode: DisplayMode, persist = true) {
+		currentDisplayMode = mode;
+		refreshDisplayMode();
+		if (persist) void setPrivateSetting(DISPLAY_MODE_SETTING_KEY, mode).catch(() => undefined);
 	}
 
 	function refreshPhaseButtons() {
@@ -642,13 +681,6 @@ const scenes = [
 		}
 	}
 
-	function setListView(view: ListView, pushHistory = true) {
-		currentListView = view;
-		refreshViewTabs();
-		updateView();
-		updateUrl(pushHistory);
-	}
-
 	function setPhase(phase: PhaseFilter, pushHistory = true, persist = true) {
 		currentPhase = phase;
 		refreshPhaseButtons();
@@ -669,7 +701,6 @@ const scenes = [
 		currentListView = route.view;
 		currentPhase = route.phase;
 		currentScene = route.scene;
-		refreshViewTabs();
 		refreshPhaseButtons();
 		refreshSceneButtons();
 		updateView();
@@ -677,6 +708,11 @@ const scenes = [
 
 	knowhowContainer?.addEventListener('click', (event) => {
 		const target = event.target as HTMLElement;
+		const openButton = target.closest<HTMLElement>('[data-open-checklist]');
+		if (openButton?.dataset.openChecklist) {
+			window.openModal(openButton.dataset.openChecklist);
+			return;
+		}
 		const button = target.closest('.knowhow-expand-button') as HTMLButtonElement | null;
 		if (!button) return;
 
@@ -734,13 +770,11 @@ const scenes = [
 			if (validScenes.has(scene)) setScene(currentScene === scene ? 'all' : scene);
 		});
 	});
-	viewTabs.forEach((tab) => {
-		tab.addEventListener('click', () => {
-			setListView(tab.dataset.knowhowView === 'my' ? 'my' : 'discover');
+	displayModeButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const mode = button.dataset.displayModeOption;
+			if (mode === 'gallery' || mode === 'list') setDisplayMode(mode);
 		});
-	});
-	document.querySelector<HTMLElement>('[data-find-checklists]')?.addEventListener('click', () => {
-		setListView('discover');
 	});
 	const refreshFromSavedRuns = async () => {
 		const runs = await getPrivateChecklistRuns();
@@ -749,12 +783,16 @@ const scenes = [
 	};
 	window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns());
 
-	refreshViewTabs();
 	refreshPhaseButtons();
 	refreshSceneButtons();
+	refreshDisplayMode();
 	updateView();
 	updateUrl(false);
 	void initializePrivateDb().then(async () => {
+		const savedDisplayMode = await getPrivateSetting<DisplayMode>(DISPLAY_MODE_SETTING_KEY);
+		if (savedDisplayMode === 'gallery' || savedDisplayMode === 'list') {
+			setDisplayMode(savedDisplayMode, false);
+		}
 		if (!hasInitialPhase) {
 			const savedPhase = await getPrivateSetting<PhaseFilter>(PHASE_SETTING_KEY);
 			if (savedPhase && validPhases.has(savedPhase)) {
@@ -771,6 +809,31 @@ const scenes = [
 </script>
 
 <style>
+	.knowhow-list-view {
+		display: none;
+	}
+
+	#knowhow-container[data-display-mode="list"] {
+		gap: 0;
+	}
+
+	#knowhow-container[data-display-mode="list"] .knowhow-card {
+		border: 0;
+		border-bottom: 1px solid rgb(243 244 246);
+		border-radius: 0;
+		box-shadow: none;
+	}
+
+	#knowhow-container[data-display-mode="list"] .knowhow-gallery-view {
+		display: none;
+	}
+
+	#knowhow-container[data-display-mode="list"] .knowhow-list-view {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+	}
+
 	.knowhow-inline-content :global(h3) {
 		font-size: 1rem;
 		font-weight: 700;

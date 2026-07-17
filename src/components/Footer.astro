@@ -13,6 +13,11 @@ const currentPath =
 	pathname.slice(
 		1,
 	);
+const pathSegments = pathname.split("/").filter(Boolean);
+const isMyListPath = pathSegments[0] === "knowhow" && (
+	pathSegments[1] === "my" || pathSegments[2] === "my"
+);
+const isChecklistPath = (pathname === "/" || pathSegments[0] === "knowhow") && !isMyListPath;
 const isRikutsuPath = ["rikutsu", "apps", "items", "logs"].some((path) =>
 	currentPath.startsWith(path),
 );
@@ -32,17 +37,17 @@ const today =
 	>
 		<a
 			href="/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath === "" ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${isChecklistPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
 		>
-			<span class={`material-symbols-outlined text-2xl ${currentPath === "" ? "material-symbols-filled" : ""}`} aria-hidden="true">home</span>
-			<span>{UI.footerNav.home}</span>
+			<span class={`material-symbols-outlined text-2xl ${isChecklistPath ? "material-symbols-filled" : ""}`} aria-hidden="true">checklist</span>
+			<span>{UI.footerNav.knowhow}</span>
 		</a>
 		<a
-			href="/knowhow/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${currentPath.startsWith("knowhow") ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+			href="/knowhow/my/"
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${isMyListPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
 		>
-			<span class={`material-symbols-outlined text-2xl ${currentPath.startsWith("knowhow") ? "material-symbols-filled" : ""}`} aria-hidden="true">lightbulb</span>
-			<span>{UI.footerNav.knowhow}</span>
+			<span class={`material-symbols-outlined text-2xl ${isMyListPath ? "material-symbols-filled" : ""}`} aria-hidden="true">playlist_add_check</span>
+			<span>{UI.footerNav.myList}</span>
 		</a>
 
 		<a
