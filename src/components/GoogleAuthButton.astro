@@ -190,7 +190,6 @@
 				.then(renderUser)
 				.catch((error) => {
 					console.error(error);
-					showError('ログイン状態を確認できませんでした。');
 				})
 				.finally(() => setBusy(false));
 		});

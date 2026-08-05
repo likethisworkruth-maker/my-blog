@@ -8,13 +8,8 @@ import {
 } from "../consts";
 import { UI } from "../i18n/ja";
 
-const knowhow =
-	await getCollection(
-		"knowhow",
-	);
-knowhow.sort(
-	(a, b) => a.data.timelineOrder - b.data.timelineOrder,
-);
+const knowhow = await getCollection("knowhow");
+knowhow.sort((a, b) => a.data.timelineOrder - b.data.timelineOrder);
 
 const knowhowWithContent = await Promise.all(
 	knowhow.map(async (post) => ({
@@ -26,10 +21,10 @@ const knowhowWithContent = await Promise.all(
 const phases = [
 	{ id: "all", label: "すべて" },
 	{ id: "pregnancy", label: "妊娠中" },
-	{ id: "0-3", label: "0〜3か月" },
-	{ id: "4-6", label: "4〜6か月" },
-	{ id: "7-11", label: "7〜11か月" },
-	{ id: "1-plus", label: "1歳〜" },
+	{ id: "0-3m", label: "0〜3か月" },
+	{ id: "4-6m", label: "4〜6か月" },
+	{ id: "7-11m", label: "7〜11か月" },
+	{ id: "1y-plus", label: "1歳〜" },
 ] as const;
 
 const scenes = [
@@ -47,27 +42,27 @@ const isRootPage = Astro.url.pathname === "/";
 	title={isRootPage ? SITE_TITLE : `${UI.knowhow.pageTitle} | ${SITE_TITLE}`}
 	description={SITE_DESCRIPTION}
 >
-	<div class="mx-auto flex max-w-xl flex-col gap-6 px-4 py-6 lg:py-10">
+	<div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 lg:py-10">
 		<div class="flex justify-center" role="group" aria-label="チェックリストの表示形式">
 			<div class="inline-grid grid-cols-2 overflow-hidden rounded-full border border-gray-400 bg-white shadow-sm">
 				<button
 					type="button"
-					data-display-mode-option="list"
+					data-display-mode-option="headline_view"
 					aria-label="リスト表示"
-					aria-pressed="false"
-					class="flex h-12 min-w-[94px] items-center justify-center gap-1.5 border-r border-gray-400 bg-white px-4 text-navy-900 transition-colors hover:bg-gray-50 active:bg-gray-100"
+					aria-pressed="true"
+					class="flex h-12 min-w-[94px] items-center justify-center gap-1.5 bg-mint-100 border-r border-gray-400 px-4 text-navy-900 transition-colors hover:bg-gray-50 active:bg-gray-100"
 				>
-					<span data-mode-check class="material-symbols-outlined hidden text-xl" aria-hidden="true">check</span>
+					<span data-mode-check class="material-symbols-outlined text-xl" aria-hidden="true">check</span>
 					<span class="material-symbols-outlined text-[1.8rem]" aria-hidden="true">view_headline</span>
 				</button>
 				<button
 					type="button"
-					data-display-mode-option="gallery"
+					data-display-mode-option="grid_view"
 					aria-label="画像表示"
-					aria-pressed="true"
-					class="flex h-12 min-w-[94px] items-center justify-center gap-1.5 bg-mint-100 px-4 text-navy-900 transition-colors hover:bg-mint-50 active:bg-mint-200"
+					aria-pressed="false"
+					class="flex h-12 min-w-[94px] items-center justify-center gap-1.5 bg-white px-4 text-navy-900 transition-colors hover:bg-mint-50 active:bg-mint-200"
 				>
-					<span data-mode-check class="material-symbols-outlined text-xl" aria-hidden="true">check</span>
+					<span data-mode-check class="material-symbols-outlined hidden text-xl" aria-hidden="true">check</span>
 					<span class="material-symbols-outlined text-[1.8rem]" aria-hidden="true">grid_view</span>
 				</button>
 			</div>
@@ -127,7 +122,7 @@ const isRootPage = Astro.url.pathname === "/";
 		<div
 			class="flex flex-col gap-10"
 			id="knowhow-container"
-			data-display-mode="gallery"
+			data-display-mode="headline_view"
 		>
 			{
 				knowhowWithContent.map(
@@ -232,7 +227,7 @@ const isRootPage = Astro.url.pathname === "/";
 	} from '../scripts/private-db';
 
 	type IndexPanelTab = 'desc' | 'progress' | 'comments' | 'memo';
-	type DisplayMode = 'gallery' | 'list';
+	type DisplayMode = 'headline_view' | 'grid_view';
 	const DISPLAY_MODE_SETTING_KEY = 'knowhow-display-mode';
 
 	declare global {
@@ -264,547 +259,574 @@ const isRootPage = Astro.url.pathname === "/";
 
 		let isModalOpenByClick = false;
 
-	function closeModal() {
-		if (modal && modal.open) {
-			modal.close();
-			unlockPageScroll();
-			// If we opened it via click (pushState), go back in history to clean it up
-			if (isModalOpenByClick && window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
-				history.back();
-			} else if (window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
-                // If it was direct load or something else, replace state
-				history.replaceState(null, '', '/knowhow');
-			}
-            isModalOpenByClick = false;
-		}
-	}
-	window.closeModal = closeModal;
-
-
-	if (modal) {
-		modal.addEventListener('click', (e) => {
-			if (e.target === modal) {
-				closeModal();
-			}
-		});
-	}
-
-	// Handle browser back/forward buttons
-	window.addEventListener('popstate', () => {
-		const segments = window.location.pathname.split('/').filter(Boolean);
-		const isListRoute = segments.length === 0 || (
-			segments[0] === 'knowhow'
-			&& (segments.length === 1 || ['my', 'phase', 'scene'].includes(segments[1]))
-		);
-		if (isListRoute) {
-			syncListViewFromUrl();
+		function closeModal() {
 			if (modal && modal.open) {
-                isModalOpenByClick = false;
 				modal.close();
-			}
-		} else if (segments[0] === 'knowhow') {
-			const id = segments[1];
-            if (id && (!modal || !modal.open)) {
-                // User navigated forward to a post, open the modal
-				window.openModal(id);
-			}
-		}
-	});
-
-    const isMobile = () => window.innerWidth < 1024;
-
-	const setUrlTab = (tab: IndexPanelTab | null) => {
-		if (!currentPostId) return;
-		let path = `/knowhow/${currentPostId}/`;
-		if (currentListView === 'my') {
-			path += 'my/';
-			if (tab) path += `${tab === 'desc' ? 'description' : tab}/`;
-		} else if (tab) {
-			path += `${tab === 'desc' ? 'description' : tab}/`;
-		}
-		history.replaceState(null, '', path);
-    };
-
-	const getActivePanelTab = (): IndexPanelTab => {
-		if (!document.getElementById('tab-content-progress')?.classList.contains('hidden')) return 'progress';
-		if (!document.getElementById('tab-content-comments')?.classList.contains('hidden')) return 'comments';
-		return 'desc';
-	};
-
-    window.switchTab = (tab: IndexPanelTab) => {
-		const tabs: IndexPanelTab[] = ['desc', 'progress', 'comments'];
-		for (const candidate of tabs) {
-			const active = candidate === tab;
-			const button = document.getElementById('tab-btn-' + candidate);
-			const content = document.getElementById('tab-content-' + candidate);
-			button?.classList.toggle('text-white', active);
-			button?.classList.toggle('text-gray-400', !active);
-			button?.classList.toggle('border-white', active);
-			button?.classList.toggle('border-transparent', !active);
-			content?.classList.toggle('hidden', !active);
-			if (candidate !== 'desc') content?.classList.toggle('flex', active);
-		}
-
-		if (tab === 'comments') {
-			const comments = document.getElementById('tab-content-comments');
-			const form = comments?.querySelector('textarea[name="content"]') as HTMLTextAreaElement | null;
-			window.setTimeout(() => form?.focus(), 150);
-		}
-    };
-
-    window.toggleInfoPanel = () => {
-        const infoPanel = document.getElementById('info-panel');
-        if (!infoPanel) return;
-        const mobile = isMobile();
-
-        if (mobile) {
-            infoPanel.classList.toggle('translate-y-full');
-        } else {
-            if (infoPanel.classList.contains('lg:w-0')) {
-                infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-            } else {
-                infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-            }
-        }
-
-        const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
-        if (isOpened) {
-            setUrlTab(getActivePanelTab());
-        } else {
-            setUrlTab(null);
-        }
-    };
-
-    window.toggleTab = (tab: IndexPanelTab) => {
-        const infoPanel = document.getElementById('info-panel');
-        if (!infoPanel) return;
-        const mobile = isMobile();
-        const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
-
-        if (isOpened) {
-            window.switchTab(tab);
-            setUrlTab(tab);
-        } else {
-            window.switchTab(tab);
-            if (mobile) {
-                infoPanel.classList.remove('translate-y-full');
-            } else {
-                infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-            }
-            setUrlTab(tab);
-        }
-    };
-
-	window.toggleCommentsPanel = () => window.toggleTab('comments');
-	window.toggleDescPanel = () => window.toggleTab('desc');
-	window.toggleProgressPanel = () => window.toggleTab('progress');
-
-	// Close panel if clicked outside
-	document.addEventListener('click', (e) => {
-		const target = e.target as HTMLElement;
-		const container = document.getElementById('knowhow-modal-container');
-        const infoPanel = document.getElementById('info-panel');
-
-		if (container &&
-			container.contains(target) &&
-			(!infoPanel || !infoPanel.contains(target)) &&
-			!target.closest('button[onclick*="toggleCommentsPanel"]') &&
-			!target.closest('button[onclick*="toggleDescPanel"]') &&
-			!target.closest('button[onclick*="toggleProgressPanel"]') &&
-            !target.closest('button[onclick*="toggleTab"]') &&
-            !target.closest('div[onclick*="toggleDescPanel"]') &&
-			!target.closest('.like-btn')
-		) {
-            if (infoPanel) {
-                if (isMobile()) infoPanel.classList.add('translate-y-full');
-                else {
-                    infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                    infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-                }
-            }
-            setUrlTab(null);
-		}
-	});
-
-	let currentPostId = '';
-	let isNavigating = false;
-
-	window.openModal = async function(id: string) {
-		if (isNavigating) return;
-
-		isNavigating = true;
-		isModalOpenByClick = true;
-		try {
-			try {
-				sessionStorage.setItem('knowhow:return-url', window.location.pathname);
-			} catch {
-				// Session storage may be unavailable in strict privacy modes.
-			}
-			const destination = currentListView === 'my'
-				? `/knowhow/${id}/my/progress/`
-				: `/knowhow/${id}/`;
-			await navigate(destination);
-		} catch (err) {
-			console.error(err);
-		} finally {
-			isNavigating = false;
-		}
-	};
-
-	// Swipe and Wheel Navigation Logic
-	let startY = 0;
-	let endY = 0;
-	let touchMoved = false;
-	let touchTracking = false;
-
-	const isSwipeExcludedTarget = (target: HTMLElement) => Boolean(
-		target.closest('.overflow-y-auto, button, a, input, textarea, select, label, [role="button"]')
-	);
-
-	const navigateToRelative = (direction: 1 | -1) => {
-		const activePostId = wrapper?.dataset.currentPostId || currentPostId;
-		if (isNavigating || !activePostId) return;
-
-		// Find currently visible cards in the DOM to determine the order
-		const visibleCards = Array.from(document.querySelectorAll(".knowhow-card")).filter(card => (card as HTMLElement).style.display !== "none");
-		if (visibleCards.length === 0) return;
-
-		// Find index of current post
-		const currentIndex = visibleCards.findIndex(card => card.getAttribute('data-id') === activePostId);
-
-		if (currentIndex !== -1) {
-			const targetIndex = currentIndex + direction;
-			if (targetIndex >= 0 && targetIndex < visibleCards.length) {
-				const targetCard = visibleCards[targetIndex];
-				const targetId = targetCard.getAttribute('data-id');
-				if (targetId) window.openModal(targetId);
+				unlockPageScroll();
+				// If we opened it via click (pushState), go back in history to clean it up
+				if (isModalOpenByClick && window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
+					history.back();
+				} else if (window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
+					// If it was direct load or something else, replace state
+					history.replaceState(null, '', '/knowhow');
+				}
+				isModalOpenByClick = false;
 			}
 		}
-	};
+		window.closeModal = closeModal;
 
-	// Touch Events (Mobile)
-	wrapper?.addEventListener('touchstart', (e) => {
-		// Only trigger swipe if we are not scrolling a comment panel or content area
-		const target = e.target as HTMLElement;
-		if (isSwipeExcludedTarget(target)) {
-			touchTracking = false;
-			return;
-		}
-		startY = e.touches[0].clientY;
-		endY = startY;
-		touchMoved = false;
-		touchTracking = true;
-	}, { passive: true });
-
-	wrapper?.addEventListener('touchmove', (e) => {
-		if (!touchTracking) return;
-		const target = e.target as HTMLElement;
-		if (isSwipeExcludedTarget(target)) return;
-		endY = e.touches[0].clientY;
-		touchMoved = true;
-	}, { passive: true });
-
-	wrapper?.addEventListener('touchend', (e) => {
-		const target = e.target as HTMLElement;
-		const shouldNavigate = touchTracking && touchMoved && !isSwipeExcludedTarget(target);
-		touchTracking = false;
-		touchMoved = false;
-		if (!shouldNavigate) return;
-
-		const distance = startY - endY;
-		if (distance > 50) {
-			// Swipe up -> Next
-			navigateToRelative(1);
-		} else if (distance < -50) {
-			// Swipe down -> Prev
-			navigateToRelative(-1);
-		}
-		startY = 0;
-		endY = 0;
-	});
-
-	wrapper?.addEventListener('touchcancel', () => {
-		touchTracking = false;
-		touchMoved = false;
-		startY = 0;
-		endY = 0;
-	}, { passive: true });
-
-	// Wheel Event (PC)
-	let wheelTimeout: NodeJS.Timeout | null = null;
-	wrapper?.addEventListener('wheel', (e) => {
-		const target = e.target as HTMLElement;
-		if (target.closest('.overflow-y-auto') || target.closest('textarea')) return;
-
-		// Debounce wheel events to prevent double navigation
-		if (wheelTimeout) return;
-
-		if (e.deltaY > 0) {
-			navigateToRelative(1);
-			wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
-		} else if (e.deltaY < 0) {
-			navigateToRelative(-1);
-			wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
-		}
-	}, { passive: true });
-
-	type ListView = 'discover' | 'my';
-	type PhaseFilter = 'all' | 'pregnancy' | '0-3' | '4-6' | '7-11' | '1-plus';
-	type SceneFilter = 'all' | 'おでかけ' | '病院・健診' | '毎日の準備' | '帰省・旅行' | '保育園' | '防災';
-
-	const PHASE_SETTING_KEY = 'knowhow-selected-phase';
-	const validPhases = new Set<PhaseFilter>(['all', 'pregnancy', '0-3', '4-6', '7-11', '1-plus']);
-	const validScenes = new Set<SceneFilter>(['all', 'おでかけ', '病院・健診', '毎日の準備', '帰省・旅行', '保育園', '防災']);
-	const sceneSlugByLabel: Record<Exclude<SceneFilter, 'all'>, string> = {
-		'おでかけ': 'outing',
-		'病院・健診': 'medical',
-		'毎日の準備': 'daily',
-		'帰省・旅行': 'travel',
-		'保育園': 'nursery',
-		'防災': 'disaster',
-	};
-	const sceneLabelBySlug = new Map<string, SceneFilter>(
-		Object.entries(sceneSlugByLabel).map(([label, slug]) => [slug, label as SceneFilter]),
-	);
-	const knowhowContainer = document.getElementById('knowhow-container');
-	const cards = Array.from(document.querySelectorAll<HTMLElement>('.knowhow-card'));
-	const displayModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-display-mode-option]'));
-	const phaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-phase]'));
-	const sceneButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-scene]'));
-	const phaseNavigation = document.getElementById('phase-navigation');
-	const sceneNavigation = document.getElementById('scene-navigation');
-	const emptyState = document.getElementById('knowhow-empty');
-	const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
-	const readListRoute = () => {
-		const segments = window.location.pathname.split('/').filter(Boolean);
-		const suffix = segments[0] === 'knowhow' ? segments.slice(1) : [];
-		let offset = 0;
-		const view: ListView = suffix[0] === 'my' ? 'my' : 'discover';
-		if (view === 'my') offset = 1;
-		let phase: PhaseFilter = 'all';
-		let scene: SceneFilter = 'all';
-		if (suffix[offset] === 'phase' && validPhases.has(suffix[offset + 1] as PhaseFilter)) {
-			phase = suffix[offset + 1] as PhaseFilter;
-			offset += 2;
-		}
-		if (suffix[offset] === 'scene') {
-			scene = sceneLabelBySlug.get(suffix[offset + 1]) ?? 'all';
-		}
-		return { view, phase, scene, hasPhase: phase !== 'all' };
-	};
-	const initialRoute = readListRoute();
-	const discoverRootPath = window.location.pathname === '/' ? '/' : '/knowhow/';
-	const hasInitialPhase = initialRoute.hasPhase;
-	let currentListView: ListView = initialRoute.view;
-	let currentPhase: PhaseFilter = initialRoute.phase;
-	let currentScene: SceneFilter = initialRoute.scene;
-	let currentDisplayMode: DisplayMode = 'gallery';
-	let startedChecklistIds = new Set<string>();
-
-	function updateUrl(pushHistory = false) {
-		const segments = ['knowhow'];
-		if (currentListView === 'my') segments.push('my');
-		if (currentPhase !== 'all') segments.push('phase', currentPhase);
-		if (currentScene !== 'all') segments.push('scene', sceneSlugByLabel[currentScene]);
-		const path = currentListView === 'discover'
-			&& currentPhase === 'all'
-			&& currentScene === 'all'
-			&& discoverRootPath === '/'
-				? '/'
-				: `/${segments.join('/')}/`;
-		const state = { knowhowView: currentListView, phase: currentPhase, scene: currentScene };
-		if (pushHistory) history.pushState(state, '', path);
-		else history.replaceState(state, '', path);
-	}
-
-	function scrollActivePhaseIntoView(behavior: ScrollBehavior = 'smooth') {
-		const active = phaseButtons.find((button) => button.dataset.phase === currentPhase);
-		if (!active || !phaseNavigation) return;
-		const target = active;
-		const left = target.offsetLeft - (phaseNavigation.clientWidth - target.clientWidth) / 2;
-		phaseNavigation.scrollTo({ left: Math.max(0, left), behavior });
-	}
-
-	function refreshDisplayMode() {
-		if (knowhowContainer) knowhowContainer.dataset.displayMode = currentDisplayMode;
-		for (const button of displayModeButtons) {
-			const active = button.dataset.displayModeOption === currentDisplayMode;
-			button.setAttribute('aria-pressed', String(active));
-			button.classList.toggle('bg-mint-100', active);
-			button.classList.toggle('bg-white', !active);
-			button.querySelector<HTMLElement>('[data-mode-check]')?.classList.toggle('hidden', !active);
-		}
-	}
-
-	function setDisplayMode(mode: DisplayMode, persist = true) {
-		currentDisplayMode = mode;
-		refreshDisplayMode();
-		if (persist) void setPrivateSetting(DISPLAY_MODE_SETTING_KEY, mode).catch(() => undefined);
-	}
-
-	function refreshPhaseButtons() {
-		for (const button of phaseButtons) {
-			const active = button.dataset.phase === currentPhase;
-			button.setAttribute('aria-pressed', String(active));
-			button.classList.toggle('border-mint-500', active);
-			button.classList.toggle('bg-mint-50', active);
-			button.classList.toggle('font-bold', active);
-			button.classList.toggle('text-mint-700', active);
-			button.classList.toggle('border-gray-200', !active);
-			button.classList.toggle('bg-white', !active);
-			button.classList.toggle('font-medium', !active);
-			button.classList.toggle('text-gray-500', !active);
-		}
-		window.requestAnimationFrame(() => scrollActivePhaseIntoView());
-	}
-
-	function refreshSceneButtons() {
-		for (const button of sceneButtons) {
-			const active = button.dataset.scene === currentScene;
-			button.setAttribute('aria-pressed', String(active));
-			button.classList.toggle('border-mint-500', active);
-			button.classList.toggle('bg-mint-50', active);
-			button.classList.toggle('text-mint-700', active);
-			button.classList.toggle('border-gray-200', !active);
-			button.classList.toggle('bg-white', !active);
-			button.classList.toggle('text-gray-600', !active);
-		}
-		const active = sceneButtons.find((button) => button.dataset.scene === currentScene);
-		if (active && sceneNavigation) {
-			window.requestAnimationFrame(() => {
-				const left = active.offsetLeft - (sceneNavigation.clientWidth - active.clientWidth) / 2;
-				sceneNavigation.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+		if (modal) {
+			modal.addEventListener('click', (e) => {
+				if (e.target === modal) {
+					closeModal();
+				}
 			});
 		}
-	}
 
-	function setPhase(phase: PhaseFilter, pushHistory = true, persist = true) {
-		currentPhase = phase;
-		refreshPhaseButtons();
-		updateView();
-		updateUrl(pushHistory);
-		if (persist) void setPrivateSetting(PHASE_SETTING_KEY, phase).catch(() => undefined);
-	}
-
-	function setScene(scene: SceneFilter, pushHistory = true) {
-		currentScene = scene;
-		refreshSceneButtons();
-		updateView();
-		updateUrl(pushHistory);
-	}
-
-	function syncListViewFromUrl() {
-		const route = readListRoute();
-		currentListView = route.view;
-		currentPhase = route.phase;
-		currentScene = route.scene;
-		refreshPhaseButtons();
-		refreshSceneButtons();
-		updateView();
-	}
-
-	knowhowContainer?.addEventListener('click', (event) => {
-		const target = event.target as HTMLElement;
-		const openButton = target.closest<HTMLElement>('[data-open-checklist]');
-		if (openButton?.dataset.openChecklist) {
-			window.openModal(openButton.dataset.openChecklist);
-			return;
-		}
-		const button = target.closest('.knowhow-expand-button') as HTMLButtonElement | null;
-		if (!button) return;
-
-		const card = button.closest('.knowhow-card');
-		const summary = card?.querySelector('.knowhow-summary');
-		const content = card?.querySelector('.knowhow-inline-content');
-		if (!summary || !content) return;
-
-		const willExpand = content.classList.contains('hidden');
-		content.classList.toggle('hidden', !willExpand);
-		summary.classList.toggle('line-clamp-2', !willExpand);
-		button.setAttribute('aria-expanded', String(willExpand));
-		button.textContent = willExpand ? '閉じる' : '続きを読む...';
-	});
-
-	function updateView() {
-		cards.forEach((card) => {
-			const phaseMatch = currentPhase === 'all'
-				|| (card.dataset.phases ?? '').split(',').includes(currentPhase);
-			const sceneMatch = currentScene === 'all'
-				|| (card.dataset.scenes ?? '').split(',').includes(currentScene);
-			const checklistId = card.dataset.checklistId;
-			const viewMatch = currentListView === 'discover'
-				|| Boolean(checklistId && startedChecklistIds.has(checklistId));
-			card.style.display = phaseMatch && sceneMatch && viewMatch ? 'block' : 'none';
+		// Handle browser back/forward buttons
+		window.addEventListener('popstate', () => {
+			const segments = window.location.pathname.split('/').filter(Boolean);
+			const isListRoute = segments.length === 0 || (
+				segments[0] === 'knowhow'
+				&& (segments.length === 1 || ['my', 'phase', 'scene'].includes(segments[1]))
+			);
+			if (isListRoute) {
+				syncListViewFromUrl();
+				if (modal && modal.open) {
+					isModalOpenByClick = false;
+					modal.close();
+				}
+			} else if (segments[0] === 'knowhow') {
+				const id = segments[1];
+				if (id && (!modal || !modal.open)) {
+					// User navigated forward to a post, open the modal
+					window.openModal(id);
+				}
+			}
 		});
 
-		const visibleCards = cards
-			.filter((card) => card.style.display !== 'none')
-			.sort((a, b) => Number(a.dataset.timelineOrder ?? 0) - Number(b.dataset.timelineOrder ?? 0));
-		const hiddenCards = cards.filter((card) => card.style.display === 'none');
-		if (knowhowContainer) {
-			visibleCards.forEach((card) => knowhowContainer.appendChild(card));
-			hiddenCards.forEach((card) => knowhowContainer.appendChild(card));
+		const isMobile = () => window.innerWidth < 1024;
+
+		const setUrlTab = (tab: IndexPanelTab | null) => {
+			if (!currentPostId) return;
+			let path = `/knowhow/${currentPostId}/`;
+			if (currentListView === 'my') {
+				path += 'my/';
+				if (tab) path += `${tab === 'desc' ? 'description' : tab}/`;
+			} else if (tab) {
+				path += `${tab === 'desc' ? 'description' : tab}/`;
+			}
+			history.replaceState(null, '', path);
+		};
+
+		const getActivePanelTab = (): IndexPanelTab => {
+			if (!document.getElementById('tab-content-progress')?.classList.contains('hidden')) return 'progress';
+			if (!document.getElementById('tab-content-comments')?.classList.contains('hidden')) return 'comments';
+			return 'desc';
+		};
+
+		window.switchTab = (tab: IndexPanelTab) => {
+			const tabs: IndexPanelTab[] = ['desc', 'progress', 'comments'];
+			for (const candidate of tabs) {
+				const active = candidate === tab;
+				const button = document.getElementById('tab-btn-' + candidate);
+				const content = document.getElementById('tab-content-' + candidate);
+				button?.classList.toggle('text-white', active);
+				button?.classList.toggle('text-gray-400', !active);
+				button?.classList.toggle('border-white', active);
+				button?.classList.toggle('border-transparent', !active);
+				content?.classList.toggle('hidden', !active);
+				if (candidate !== 'desc') content?.classList.toggle('flex', active);
+			}
+
+			if (tab === 'comments') {
+				const comments = document.getElementById('tab-content-comments');
+				const form = comments?.querySelector('textarea[name="content"]') as HTMLTextAreaElement | null;
+				window.setTimeout(() => form?.focus(), 150);
+			}
+		};
+
+		window.toggleInfoPanel = () => {
+			const infoPanel = document.getElementById('info-panel');
+			if (!infoPanel) return;
+			const mobile = isMobile();
+
+			if (mobile) {
+				infoPanel.classList.toggle('translate-y-full');
+			} else {
+				if (infoPanel.classList.contains('lg:w-0')) {
+					infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+					infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+				} else {
+					infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+					infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+				}
+			}
+
+			const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+			if (isOpened) {
+				setUrlTab(getActivePanelTab());
+			} else {
+				setUrlTab(null);
+			}
+		};
+
+		window.toggleTab = (tab: IndexPanelTab) => {
+			const infoPanel = document.getElementById('info-panel');
+			if (!infoPanel) return;
+			const mobile = isMobile();
+			const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
+
+			if (isOpened) {
+				window.switchTab(tab);
+				setUrlTab(tab);
+			} else {
+				window.switchTab(tab);
+				if (mobile) {
+					infoPanel.classList.remove('translate-y-full');
+				} else {
+					infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+					infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+				}
+				setUrlTab(tab);
+			}
+		};
+
+		window.toggleCommentsPanel = () => window.toggleTab('comments');
+		window.toggleDescPanel = () => window.toggleTab('desc');
+		window.toggleProgressPanel = () => window.toggleTab('progress');
+
+		// Close panel if clicked outside
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+			const container = document.getElementById('knowhow-modal-container');
+			const infoPanel = document.getElementById('info-panel');
+
+			if (container &&
+				container.contains(target) &&
+				(!infoPanel || !infoPanel.contains(target)) &&
+				!target.closest('button[onclick*="toggleCommentsPanel"]') &&
+				!target.closest('button[onclick*="toggleDescPanel"]') &&
+				!target.closest('button[onclick*="toggleProgressPanel"]') &&
+				!target.closest('button[onclick*="toggleTab"]') &&
+				!target.closest('div[onclick*="toggleDescPanel"]') &&
+				!target.closest('.like-btn')
+			) {
+				if (infoPanel) {
+					if (isMobile()) infoPanel.classList.add('translate-y-full');
+					else {
+						infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+						infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+					}
+				}
+				setUrlTab(null);
+			}
+		});
+
+		let currentPostId = '';
+		let isNavigating = false;
+
+		window.openModal = async function(id: string) {
+			if (isNavigating) return;
+
+			isNavigating = true;
+			isModalOpenByClick = true;
+			try {
+				try {
+					sessionStorage.setItem('knowhow:return-url', window.location.pathname);
+				} catch {
+					// Session storage may be unavailable in strict privacy modes.
+				}
+				const destination = currentListView === 'my'
+					? `/knowhow/${id}/my/progress/`
+					: `/knowhow/${id}/`;
+				await navigate(destination);
+			} catch (err) {
+				console.error(err);
+			} finally {
+				isNavigating = false;
+			}
+		};
+
+		// Swipe and Wheel Navigation Logic
+		let startY = 0;
+		let endY = 0;
+		let touchMoved = false;
+		let touchTracking = false;
+
+		const isSwipeExcludedTarget = (target: HTMLElement) => Boolean(
+			target.closest('.overflow-y-auto, button, a, input, textarea, select, label, [role="button"]')
+		);
+
+		const navigateToRelative = (direction: 1 | -1) => {
+			const activePostId = wrapper?.dataset.currentPostId || currentPostId;
+			if (isNavigating || !activePostId) return;
+
+			// Find currently visible cards in the DOM to determine the order
+			const visibleCards = Array.from(document.querySelectorAll(".knowhow-card")).filter(card => (card as HTMLElement).style.display !== "none");
+			if (visibleCards.length === 0) return;
+
+			// Find index of current post
+			const currentIndex = visibleCards.findIndex(card => card.getAttribute('data-id') === activePostId);
+
+			if (currentIndex !== -1) {
+				const targetIndex = currentIndex + direction;
+				if (targetIndex >= 0 && targetIndex < visibleCards.length) {
+					const targetCard = visibleCards[targetIndex];
+					const targetId = targetCard.getAttribute('data-id');
+					if (targetId) window.openModal(targetId);
+				}
+			}
+		};
+
+		// Touch Events (Mobile)
+		wrapper?.addEventListener('touchstart', (e) => {
+			const target = e.target as HTMLElement;
+			if (isSwipeExcludedTarget(target)) {
+				touchTracking = false;
+				return;
+			}
+			startY = e.touches[0].clientY;
+			endY = startY;
+			touchMoved = false;
+			touchTracking = true;
+		}, { passive: true });
+
+		wrapper?.addEventListener('touchmove', (e) => {
+			if (!touchTracking) return;
+			const target = e.target as HTMLElement;
+			if (isSwipeExcludedTarget(target)) return;
+			endY = e.touches[0].clientY;
+			touchMoved = true;
+		}, { passive: true });
+
+		wrapper?.addEventListener('touchend', (e) => {
+			const target = e.target as HTMLElement;
+			const shouldNavigate = touchTracking && touchMoved && !isSwipeExcludedTarget(target);
+			touchTracking = false;
+			touchMoved = false;
+			if (!shouldNavigate) return;
+
+			const distance = startY - endY;
+			if (distance > 50) {
+				navigateToRelative(1);
+			} else if (distance < -50) {
+				navigateToRelative(-1);
+			}
+			startY = 0;
+			endY = 0;
+		});
+
+		wrapper?.addEventListener('touchcancel', () => {
+			touchTracking = false;
+			touchMoved = false;
+			startY = 0;
+			endY = 0;
+		}, { passive: true });
+
+		// Wheel Event (PC)
+		let wheelTimeout: NodeJS.Timeout | null = null;
+		wrapper?.addEventListener('wheel', (e) => {
+			const target = e.target as HTMLElement;
+			if (target.closest('.overflow-y-auto') || target.closest('textarea')) return;
+
+			if (wheelTimeout) return;
+
+			if (e.deltaY > 0) {
+				navigateToRelative(1);
+				wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
+			} else if (e.deltaY < 0) {
+				navigateToRelative(-1);
+				wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
+			}
+		}, { passive: true });
+
+		type ListView = 'discover' | 'my';
+		type PhaseFilter = 'all' | 'pregnancy' | '0-3m' | '4-6m' | '7-11m' | '1y-plus';
+		type SceneFilter = 'all' | 'おでかけ' | '病院・健診' | '毎日の準備' | '帰省・旅行' | '保育園' | '防災';
+
+		const PHASE_SETTING_KEY = 'knowhow-selected-phase';
+		const validPhases = new Set<PhaseFilter>(['all', 'pregnancy', '0-3m', '4-6m', '7-11m', '1y-plus']);
+		const validScenes = new Set<SceneFilter>(['all', 'おでかけ', '病院・健診', '毎日の準備', '帰省・旅行', '保育園', '防災']);
+		const sceneSlugByLabel: Record<Exclude<SceneFilter, 'all'>, string> = {
+			'おでかけ': 'outing',
+			'病院・健診': 'medical',
+			'毎日の準備': 'daily',
+			'帰省・旅行': 'travel',
+			'保育園': 'nursery',
+			'防災': 'disaster',
+		};
+		const sceneLabelBySlug = new Map<string, SceneFilter>(
+			Object.entries(sceneSlugByLabel).map(([label, slug]) => [slug, label as SceneFilter]),
+		);
+		const knowhowContainer = document.getElementById('knowhow-container');
+		const cards = Array.from(document.querySelectorAll<HTMLElement>('.knowhow-card'));
+		const displayModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-display-mode-option]'));
+		const phaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-phase]'));
+		const sceneButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-scene]'));
+		const phaseNavigation = document.getElementById('phase-navigation');
+		const sceneNavigation = document.getElementById('scene-navigation');
+		const emptyState = document.getElementById('knowhow-empty');
+		const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
+
+		const getModeFromUrl = (): DisplayMode | null => {
+			const params = new URLSearchParams(window.location.search);
+			const mode = params.get('mode') || params.get('view_mode');
+			if (mode === 'grid_view' || mode === 'grid' || mode === 'gallery') return 'grid_view';
+			if (mode === 'headline_view' || mode === 'headline' || mode === 'list') return 'headline_view';
+			return null;
+		};
+
+		const readListRoute = () => {
+			const segments = window.location.pathname.split('/').filter(Boolean);
+			const suffix = segments[0] === 'knowhow' ? segments.slice(1) : [];
+			let offset = 0;
+			const view: ListView = suffix[0] === 'my' ? 'my' : 'discover';
+			if (view === 'my') offset = 1;
+			let phase: PhaseFilter = 'all';
+			let scene: SceneFilter = 'all';
+			if (suffix[offset] === 'phase' && validPhases.has(suffix[offset + 1] as PhaseFilter)) {
+				phase = suffix[offset + 1] as PhaseFilter;
+				offset += 2;
+			}
+			if (suffix[offset] === 'scene') {
+				scene = sceneLabelBySlug.get(suffix[offset + 1]) ?? 'all';
+			}
+			return { view, phase, scene, hasPhase: phase !== 'all' };
+		};
+		const initialRoute = readListRoute();
+		const initialModeFromUrl = getModeFromUrl();
+		const discoverRootPath = window.location.pathname === '/' ? '/' : '/knowhow/';
+		const hasInitialPhase = initialRoute.hasPhase;
+		let currentListView: ListView = initialRoute.view;
+		let currentPhase: PhaseFilter = initialRoute.phase;
+		let currentScene: SceneFilter = initialRoute.scene;
+		let currentDisplayMode: DisplayMode = initialModeFromUrl || 'headline_view';
+		let startedChecklistIds = new Set<string>();
+
+		function updateUrl(pushHistory = false) {
+			const segments = ['knowhow'];
+			if (currentListView === 'my') segments.push('my');
+			if (currentPhase !== 'all') segments.push('phase', currentPhase);
+			if (currentScene !== 'all') segments.push('scene', sceneSlugByLabel[currentScene]);
+			let path = currentListView === 'discover'
+				&& currentPhase === 'all'
+				&& currentScene === 'all'
+				&& discoverRootPath === '/'
+					? '/'
+					: `/${segments.join('/')}/`;
+			
+			const params = new URLSearchParams(window.location.search);
+			if (currentDisplayMode === 'grid_view') {
+				params.set('mode', 'grid_view');
+				params.delete('view_mode');
+			} else if (params.has('mode') || params.has('view_mode')) {
+				params.set('mode', 'headline_view');
+				params.delete('view_mode');
+			}
+			const queryString = params.toString();
+			if (queryString) {
+				path += `?${queryString}`;
+			}
+
+			const state = { knowhowView: currentListView, phase: currentPhase, scene: currentScene, displayMode: currentDisplayMode };
+			if (pushHistory) history.pushState(state, '', path);
+			else history.replaceState(state, '', path);
 		}
 
-		const myCount = cards.filter((card) => startedChecklistIds.has(card.dataset.checklistId ?? '')).length;
-		emptyState?.classList.toggle('hidden', visibleCards.length > 0);
-		if (emptyMessage) {
-			emptyMessage.textContent = currentListView === 'my' && myCount === 0
-				? 'まだ始めたチェックリストはありません。'
-				: '条件に一致するチェックリストはありません。';
+		function scrollActivePhaseIntoView(behavior: ScrollBehavior = 'smooth') {
+			const active = phaseButtons.find((button) => button.dataset.phase === currentPhase);
+			if (!active || !phaseNavigation) return;
+			const target = active;
+			const left = target.offsetLeft - (phaseNavigation.clientWidth - target.clientWidth) / 2;
+			phaseNavigation.scrollTo({ left: Math.max(0, left), behavior });
 		}
-	}
 
-	phaseButtons.forEach((button) => {
-		button.addEventListener('click', () => {
-			const phase = button.dataset.phase as PhaseFilter;
-			if (validPhases.has(phase)) setPhase(phase);
-		});
-	});
-	sceneButtons.forEach((button) => {
-		button.addEventListener('click', () => {
-			const scene = button.dataset.scene as SceneFilter;
-			if (validScenes.has(scene)) setScene(currentScene === scene ? 'all' : scene);
-		});
-	});
-	displayModeButtons.forEach((button) => {
-		button.addEventListener('click', () => {
-			const mode = button.dataset.displayModeOption;
-			if (mode === 'gallery' || mode === 'list') setDisplayMode(mode);
-		});
-	});
-	const refreshFromSavedRuns = async () => {
-		const runs = await getPrivateChecklistRuns();
-		startedChecklistIds = new Set(runs.map((run) => run.checklistId));
-		updateView();
-	};
-	window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns());
-
-	refreshPhaseButtons();
-	refreshSceneButtons();
-	refreshDisplayMode();
-	updateView();
-	updateUrl(false);
-	void initializePrivateDb().then(async () => {
-		const savedDisplayMode = await getPrivateSetting<DisplayMode>(DISPLAY_MODE_SETTING_KEY);
-		if (savedDisplayMode === 'gallery' || savedDisplayMode === 'list') {
-			setDisplayMode(savedDisplayMode, false);
-		}
-		if (!hasInitialPhase) {
-			const savedPhase = await getPrivateSetting<PhaseFilter>(PHASE_SETTING_KEY);
-			if (savedPhase && validPhases.has(savedPhase)) {
-				setPhase(savedPhase, false, false);
+		function refreshDisplayMode() {
+			if (knowhowContainer) knowhowContainer.dataset.displayMode = currentDisplayMode;
+			for (const button of displayModeButtons) {
+				const active = button.dataset.displayModeOption === currentDisplayMode;
+				button.setAttribute('aria-pressed', String(active));
+				button.classList.toggle('bg-mint-100', active);
+				button.classList.toggle('bg-white', !active);
+				button.querySelector<HTMLElement>('[data-mode-check]')?.classList.toggle('hidden', !active);
 			}
 		}
-		await refreshFromSavedRuns();
-	}).catch(() => {
-		if (emptyMessage && currentListView === 'my') {
-			emptyMessage.textContent = 'このブラウザーではマイリストを読み込めませんでした。';
+
+		function setDisplayMode(mode: DisplayMode, pushHistory = true, persist = true) {
+			currentDisplayMode = mode;
+			refreshDisplayMode();
+			updateUrl(pushHistory);
+			if (persist) void setPrivateSetting(DISPLAY_MODE_SETTING_KEY, mode).catch(() => undefined);
 		}
-	});
+
+		function refreshPhaseButtons() {
+			for (const button of phaseButtons) {
+				const active = button.dataset.phase === currentPhase;
+				button.setAttribute('aria-pressed', String(active));
+				button.classList.toggle('border-mint-500', active);
+				button.classList.toggle('bg-mint-50', active);
+				button.classList.toggle('font-bold', active);
+				button.classList.toggle('text-mint-700', active);
+				button.classList.toggle('border-gray-200', !active);
+				button.classList.toggle('bg-white', !active);
+				button.classList.toggle('font-medium', !active);
+				button.classList.toggle('text-gray-500', !active);
+			}
+			window.requestAnimationFrame(() => scrollActivePhaseIntoView());
+		}
+
+		function refreshSceneButtons() {
+			for (const button of sceneButtons) {
+				const active = button.dataset.scene === currentScene;
+				button.setAttribute('aria-pressed', String(active));
+				button.classList.toggle('border-mint-500', active);
+				button.classList.toggle('bg-mint-50', active);
+				button.classList.toggle('text-mint-700', active);
+				button.classList.toggle('border-gray-200', !active);
+				button.classList.toggle('bg-white', !active);
+				button.classList.toggle('text-gray-600', !active);
+			}
+			const active = sceneButtons.find((button) => button.dataset.scene === currentScene);
+			if (active && sceneNavigation) {
+				window.requestAnimationFrame(() => {
+					const left = active.offsetLeft - (sceneNavigation.clientWidth - active.clientWidth) / 2;
+					sceneNavigation.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+				});
+			}
+		}
+
+		function setPhase(phase: PhaseFilter, pushHistory = true, persist = true) {
+			currentPhase = phase;
+			refreshPhaseButtons();
+			updateView();
+			updateUrl(pushHistory);
+			if (persist) void setPrivateSetting(PHASE_SETTING_KEY, phase).catch(() => undefined);
+		}
+
+		function setScene(scene: SceneFilter, pushHistory = true) {
+			currentScene = scene;
+			refreshSceneButtons();
+			updateView();
+			updateUrl(pushHistory);
+		}
+
+		function syncListViewFromUrl() {
+			const route = readListRoute();
+			currentListView = route.view;
+			currentPhase = route.phase;
+			currentScene = route.scene;
+			const urlMode = getModeFromUrl();
+			if (urlMode) {
+				currentDisplayMode = urlMode;
+				refreshDisplayMode();
+			}
+			refreshPhaseButtons();
+			refreshSceneButtons();
+			updateView();
+		}
+
+		knowhowContainer?.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement;
+			const openButton = target.closest<HTMLElement>('[data-open-checklist]');
+			if (openButton?.dataset.openChecklist) {
+				window.openModal(openButton.dataset.openChecklist);
+				return;
+			}
+			const button = target.closest('.knowhow-expand-button') as HTMLButtonElement | null;
+			if (!button) return;
+
+			const card = button.closest('.knowhow-card');
+			const summary = card?.querySelector('.knowhow-summary');
+			const content = card?.querySelector('.knowhow-inline-content');
+			if (!summary || !content) return;
+
+			const willExpand = content.classList.contains('hidden');
+			content.classList.toggle('hidden', !willExpand);
+			summary.classList.toggle('line-clamp-2', !willExpand);
+			button.setAttribute('aria-expanded', String(willExpand));
+			button.textContent = willExpand ? '閉じる' : '続きを読む...';
+		});
+
+		function updateView() {
+			cards.forEach((card) => {
+				const phaseMatch = currentPhase === 'all'
+					|| (card.dataset.phases ?? '').split(',').includes(currentPhase);
+				const sceneMatch = currentScene === 'all'
+					|| (card.dataset.scenes ?? '').split(',').includes(currentScene);
+				const checklistId = card.dataset.checklistId;
+				const viewMatch = currentListView === 'discover'
+					|| Boolean(checklistId && startedChecklistIds.has(checklistId));
+				card.style.display = phaseMatch && sceneMatch && viewMatch ? 'block' : 'none';
+			});
+
+			const visibleCards = cards
+				.filter((card) => card.style.display !== 'none')
+				.sort((a, b) => Number(a.dataset.timelineOrder ?? 0) - Number(b.dataset.timelineOrder ?? 0));
+			const hiddenCards = cards.filter((card) => card.style.display === 'none');
+			if (knowhowContainer) {
+				visibleCards.forEach((card) => knowhowContainer.appendChild(card));
+				hiddenCards.forEach((card) => knowhowContainer.appendChild(card));
+			}
+
+			const myCount = cards.filter((card) => startedChecklistIds.has(card.dataset.checklistId ?? '')).length;
+			emptyState?.classList.toggle('hidden', visibleCards.length > 0);
+			if (emptyMessage) {
+				emptyMessage.textContent = currentListView === 'my' && myCount === 0
+					? 'まだ始めたチェックリストはありません。'
+					: '条件に一致するチェックリストはありません。';
+			}
+		}
+
+		phaseButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				const phase = button.dataset.phase as PhaseFilter;
+				if (validPhases.has(phase)) setPhase(phase);
+			});
+		});
+		sceneButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				const scene = button.dataset.scene as SceneFilter;
+				if (validScenes.has(scene)) setScene(currentScene === scene ? 'all' : scene);
+			});
+		});
+		displayModeButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				const mode = button.dataset.displayModeOption as DisplayMode;
+				if (mode === 'grid_view' || mode === 'headline_view') setDisplayMode(mode, true);
+			});
+		});
+		const refreshFromSavedRuns = async () => {
+			const runs = await getPrivateChecklistRuns();
+			startedChecklistIds = new Set(runs.map((run) => run.checklistId));
+			updateView();
+		};
+		window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns());
+
+		refreshPhaseButtons();
+		refreshSceneButtons();
+		refreshDisplayMode();
+		updateView();
+		updateUrl(false);
+		void initializePrivateDb().then(async () => {
+			if (!initialModeFromUrl) {
+				const savedDisplayMode = await getPrivateSetting<DisplayMode>(DISPLAY_MODE_SETTING_KEY);
+				if (savedDisplayMode === 'grid_view' || savedDisplayMode === 'headline_view') {
+					setDisplayMode(savedDisplayMode, false, false);
+				}
+			}
+			if (!hasInitialPhase) {
+				const savedPhase = await getPrivateSetting<PhaseFilter>(PHASE_SETTING_KEY);
+				if (savedPhase && validPhases.has(savedPhase)) {
+					setPhase(savedPhase, false, false);
+				}
+			}
+			await refreshFromSavedRuns();
+		}).catch(() => {
+			if (emptyMessage && currentListView === 'my') {
+				emptyMessage.textContent = 'このブラウザーではマイリストを読み込めませんでした。';
+			}
+		});
 	});
 </script>
 
@@ -813,22 +835,44 @@ const isRootPage = Astro.url.pathname === "/";
 		display: none;
 	}
 
-	#knowhow-container[data-display-mode="list"] {
+	#knowhow-container[data-display-mode="grid_view"] {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+
+	@media (min-width: 640px) {
+		#knowhow-container[data-display-mode="grid_view"] {
+			gap: 1.25rem;
+		}
+	}
+
+	#knowhow-container[data-display-mode="grid_view"] .knowhow-list-view {
+		display: none;
+	}
+
+	#knowhow-container[data-display-mode="grid_view"] .knowhow-gallery-view {
+		display: block;
+	}
+
+	#knowhow-container[data-display-mode="headline_view"] {
+		display: flex;
+		flex-direction: column;
 		gap: 0;
 	}
 
-	#knowhow-container[data-display-mode="list"] .knowhow-card {
+	#knowhow-container[data-display-mode="headline_view"] .knowhow-card {
 		border: 0;
 		border-bottom: 1px solid rgb(243 244 246);
 		border-radius: 0;
 		box-shadow: none;
 	}
 
-	#knowhow-container[data-display-mode="list"] .knowhow-gallery-view {
+	#knowhow-container[data-display-mode="headline_view"] .knowhow-gallery-view {
 		display: none;
 	}
 
-	#knowhow-container[data-display-mode="list"] .knowhow-list-view {
+	#knowhow-container[data-display-mode="headline_view"] .knowhow-list-view {
 		display: flex;
 		flex-direction: row;
 		align-items: stretch;

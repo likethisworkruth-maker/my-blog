@@ -7,7 +7,7 @@ icon: "description"
 isFree: true
 categories: ["メモ", "0歳子育て"]
 childAgeMonths: 1
-phases: ["0-3", "4-6", "7-11", "1-plus"]
+phases: ["0-3m", "4-6m", "7-11m", "1y-plus"]
 scenes: ["毎日の準備"]
 timelineOrder: 10
 order: 1

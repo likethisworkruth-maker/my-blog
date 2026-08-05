@@ -18,7 +18,7 @@ const isMyListPath = pathSegments[0] === "knowhow" && (
 	pathSegments[1] === "my" || pathSegments[2] === "my"
 );
 const isChecklistPath = (pathname === "/" || pathSegments[0] === "knowhow") && !isMyListPath;
-const isRikutsuPath = ["rikutsu", "apps", "items", "logs"].some((path) =>
+const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 	currentPath.startsWith(path),
 );
 const today =
@@ -39,7 +39,7 @@ const today =
 			href="/"
 			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${isChecklistPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
 		>
-			<span class={`material-symbols-outlined text-2xl ${isChecklistPath ? "material-symbols-filled" : ""}`} aria-hidden="true">checklist</span>
+			<span class={`material-symbols-outlined text-2xl ${isChecklistPath ? "material-symbols-filled" : ""}`} aria-hidden="true">search</span>
 			<span>{UI.footerNav.knowhow}</span>
 		</a>
 		<a
@@ -51,10 +51,10 @@ const today =
 		</a>
 
 		<a
-			href="/rikutsu/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${isRikutsuPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+			href="/recommend/"
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${isRecommendPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
 		>
-			<span class={`material-symbols-outlined text-2xl ${isRikutsuPath ? "material-symbols-filled" : ""}`} aria-hidden="true">family_home</span>
+			<span class={`material-symbols-outlined text-2xl ${isRecommendPath ? "material-symbols-filled" : ""}`} aria-hidden="true">thumb_up</span>
 			<span>{UI.footerNav.rikutsu}</span>
 		</a>
 	</div>

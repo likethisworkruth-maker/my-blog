@@ -96,7 +96,7 @@ const formClass = variant === 'modal'
 </div>
 
 <script>
-	import { getSupabaseClient } from '../scripts/supabase-client';
+	import { checkSupabaseHealth, getSupabaseClient } from '../scripts/supabase-client';
 
 	interface PublicComment {
 		id: string;
@@ -139,7 +139,6 @@ const formClass = variant === 'modal'
 		const variant = section.dataset.variant;
 		if (!slug) return;
 
-		const supabase = getSupabaseClient();
 		const commentsList = section.querySelector<HTMLElement>('#comments-list');
 		const form = section.querySelector<HTMLFormElement>('#comment-form');
 		const submitButton = section.querySelector<HTMLButtonElement>('#comment-submit');
@@ -177,6 +176,14 @@ const formClass = variant === 'modal'
 			feedback.classList.toggle('text-mint-700', Boolean(message) && !failed);
 		};
 
+		const isHealthy = await checkSupabaseHealth();
+		if (!isHealthy) {
+			if (submitButton) submitButton.disabled = true;
+			setFeedback('コメント機能は現在利用できません。', true);
+			return;
+		}
+
+		const supabase = getSupabaseClient();
 		if (!supabase || !commentsList) {
 			if (submitButton) submitButton.disabled = true;
 			setFeedback('コメント機能は現在利用できません。', true);

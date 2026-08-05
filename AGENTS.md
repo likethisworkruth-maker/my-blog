@@ -1,7 +1,7 @@
 ## Development
 
-When starting the dev server, run `npm run dev`.
-（※Windows環境では `astro dev --background` が安定しない場合があるため、通常のフォアグラウンド起動を推奨します）
+When starting the dev server, do not launch it automatically in the background. Instead, propose the command (`npm run dev`) to the user so they can execute it manually in their own terminal/PowerShell window.
+（※Windows環境ではAI側のバックグラウンド起動でプロセスが自動停止するため、AIは自分でコマンドを実行せず、ユーザーにターミナルで手動実行してもらうようコマンドを提示すること）
 
 ## Documentation
 

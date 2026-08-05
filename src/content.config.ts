@@ -27,7 +27,7 @@ const knowhow = defineCollection({
 		isFree: z.boolean().default(true),
 		categories: z.array(z.string()).optional(),
 		childAgeMonths: z.number().optional(),
-		phases: z.array(z.enum(['pregnancy', '0-3', '4-6', '7-11', '1-plus'])).min(1),
+		phases: z.array(z.enum(['pregnancy', '0-3m', '4-6m', '7-11m', '1y-plus'])).min(1),
 		scenes: z.array(z.enum(['おでかけ', '病院・健診', '毎日の準備', '帰省・旅行', '保育園', '防災'])).min(1),
 		timelineOrder: z.number().int().nonnegative(),
 		order: z.number().default(0), // For sorting tools

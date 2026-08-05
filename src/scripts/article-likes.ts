@@ -4,7 +4,7 @@ import {
 	getAnonymousArticleLikes,
 	saveAnonymousArticleLike,
 } from './private-db.ts';
-import { getSupabaseClient } from './supabase-client.ts';
+import { checkSupabaseHealth, getSupabaseClient, isConnectionError, markSupabaseUnavailable } from './supabase-client.ts';
 
 export interface ArticleLikeState {
 	slug: string;
@@ -30,23 +30,43 @@ function normalizeLikeResult(value: unknown, slug: string): ArticleLikeState {
 }
 
 async function getSession() {
+	const isHealthy = await checkSupabaseHealth();
+	if (!isHealthy) throw new Error('いいね機能は現在利用できません。');
 	const supabase = getSupabaseClient();
 	if (!supabase) throw new Error('いいね機能は現在利用できません。');
-	const { data, error } = await supabase.auth.getSession();
-	if (error) throw error;
-	return { supabase, session: data.session };
+	try {
+		const { data, error } = await supabase.auth.getSession();
+		if (error) {
+			if (isConnectionError(error)) markSupabaseUnavailable();
+			throw error;
+		}
+		return { supabase, session: data.session };
+	} catch (err) {
+		if (isConnectionError(err)) markSupabaseUnavailable();
+		throw err;
+	}
 }
 
 async function getPublicLikeCount(slug: string) {
+	const isHealthy = await checkSupabaseHealth();
+	if (!isHealthy) return 0;
 	const supabase = getSupabaseClient();
-	if (!supabase) throw new Error('いいね機能は現在利用できません。');
-	const { data, error } = await supabase
-		.from('likes')
-		.select('like_count')
-		.eq('slug', slug)
-		.maybeSingle();
-	if (error) throw error;
-	return typeof data?.like_count === 'number' ? Math.max(0, data.like_count) : 0;
+	if (!supabase) return 0;
+	try {
+		const { data, error } = await supabase
+			.from('likes')
+			.select('like_count')
+			.eq('slug', slug)
+			.maybeSingle();
+		if (error) {
+			if (isConnectionError(error)) markSupabaseUnavailable();
+			return 0;
+		}
+		return typeof data?.like_count === 'number' ? Math.max(0, data.like_count) : 0;
+	} catch (err) {
+		if (isConnectionError(err)) markSupabaseUnavailable();
+		return 0;
+	}
 }
 
 export function createAnonymousLikeToken(randomSource: Pick<Crypto, 'getRandomValues'> = crypto) {
@@ -74,20 +94,88 @@ async function claimAnonymousLike(
 }
 
 export async function getCurrentArticleLikeState(slug: string): Promise<ArticleLikeState> {
-	const { supabase, session } = await getSession();
-	if (session?.user) {
+	const isHealthy = await checkSupabaseHealth();
+	if (!isHealthy) {
 		const anonymousLike = await getAnonymousArticleLike(slug);
-		if (anonymousLike) await claimAnonymousLike(slug, anonymousLike.token, supabase);
-		const { data, error } = await supabase.rpc('get_authenticated_like_state', { p_slug: slug });
-		if (error) throw error;
-		return normalizeLikeResult(data, slug);
+		return { slug, likeCount: 0, liked: Boolean(anonymousLike) };
 	}
 
-	const [likeCount, anonymousLike] = await Promise.all([
-		getPublicLikeCount(slug),
-		getAnonymousArticleLike(slug),
-	]);
-	return { slug, likeCount, liked: Boolean(anonymousLike) };
+	try {
+		const { supabase, session } = await getSession();
+		if (session?.user) {
+			const anonymousLike = await getAnonymousArticleLike(slug);
+			if (anonymousLike) await claimAnonymousLike(slug, anonymousLike.token, supabase);
+			const { data, error } = await supabase.rpc('get_authenticated_like_state', { p_slug: slug });
+			if (error) throw error;
+			return normalizeLikeResult(data, slug);
+		}
+
+		const [likeCount, anonymousLike] = await Promise.all([
+			getPublicLikeCount(slug),
+			getAnonymousArticleLike(slug),
+		]);
+		return { slug, likeCount, liked: Boolean(anonymousLike) };
+	} catch (err) {
+		if (isConnectionError(err)) markSupabaseUnavailable();
+		const anonymousLike = await getAnonymousArticleLike(slug);
+		return { slug, likeCount: 0, liked: Boolean(anonymousLike) };
+	}
+}
+
+export async function getBatchArticleLikeStates(slugs: string[]): Promise<Map<string, ArticleLikeState>> {
+	const result = new Map<string, ArticleLikeState>();
+	const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean)));
+	if (uniqueSlugs.length === 0) return result;
+
+	const localLikes = await getAnonymousArticleLikes();
+	const localLikedSet = new Set(localLikes.map((l) => l.slug));
+
+	const isHealthy = await checkSupabaseHealth();
+	if (!isHealthy) {
+		uniqueSlugs.forEach((slug) => {
+			result.set(slug, { slug, likeCount: 0, liked: localLikedSet.has(slug) });
+		});
+		return result;
+	}
+
+	const supabase = getSupabaseClient();
+	if (!supabase) {
+		uniqueSlugs.forEach((slug) => {
+			result.set(slug, { slug, likeCount: 0, liked: localLikedSet.has(slug) });
+		});
+		return result;
+	}
+
+	try {
+		const [likedSlugs, publicCountsResponse] = await Promise.all([
+			getLikedArticleSlugs(uniqueSlugs),
+			supabase.from('likes').select('slug, like_count').in('slug', uniqueSlugs),
+		]);
+
+		if (publicCountsResponse.error) {
+			if (isConnectionError(publicCountsResponse.error)) markSupabaseUnavailable();
+		}
+
+		const countMap = new Map<string, number>();
+		(publicCountsResponse.data ?? []).forEach((row: { slug: string; like_count: number }) => {
+			countMap.set(row.slug, row.like_count);
+		});
+
+		uniqueSlugs.forEach((slug) => {
+			result.set(slug, {
+				slug,
+				likeCount: countMap.get(slug) ?? 0,
+				liked: likedSlugs.has(slug),
+			});
+		});
+		return result;
+	} catch (err) {
+		if (isConnectionError(err)) markSupabaseUnavailable();
+		uniqueSlugs.forEach((slug) => {
+			result.set(slug, { slug, likeCount: 0, liked: localLikedSet.has(slug) });
+		});
+		return result;
+	}
 }
 
 export async function setArticleLikeState(slug: string, liked: boolean): Promise<ArticleLikeState> {
@@ -135,25 +223,39 @@ export async function setArticleLikeState(slug: string, liked: boolean): Promise
 
 export async function getLikedArticleSlugs(slugs: string[]) {
 	const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean))).slice(0, 200);
-	const { supabase, session } = await getSession();
 	const localLikes = await getAnonymousArticleLikes();
+	const localLikedSet = new Set(localLikes.map((l) => l.slug));
 
-	if (!session?.user) {
+	const isHealthy = await checkSupabaseHealth();
+	if (!isHealthy) {
 		const requested = new Set(uniqueSlugs);
 		return new Set(localLikes.filter((like) => requested.has(like.slug)).map((like) => like.slug));
 	}
 
-	const requested = new Set(uniqueSlugs);
-	const claimable = localLikes.filter((like) => requested.has(like.slug));
-	await Promise.allSettled(
-		claimable.map((like) => claimAnonymousLike(like.slug, like.token, supabase)),
-	);
+	try {
+		const { supabase, session } = await getSession();
 
-	const { data, error } = await supabase.rpc('get_authenticated_like_slugs', {
-		p_slugs: uniqueSlugs,
-	});
-	if (error) throw error;
-	return new Set(Array.isArray(data) ? data.filter((value): value is string => typeof value === 'string') : []);
+		if (!session?.user) {
+			const requested = new Set(uniqueSlugs);
+			return new Set(localLikes.filter((like) => requested.has(like.slug)).map((like) => like.slug));
+		}
+
+		const requested = new Set(uniqueSlugs);
+		const claimable = localLikes.filter((like) => requested.has(like.slug));
+		await Promise.allSettled(
+			claimable.map((like) => claimAnonymousLike(like.slug, like.token, supabase)),
+		);
+
+		const { data, error } = await supabase.rpc('get_authenticated_like_slugs', {
+			p_slugs: uniqueSlugs,
+		});
+		if (error) throw error;
+		return new Set(Array.isArray(data) ? data.filter((value): value is string => typeof value === 'string') : []);
+	} catch (err) {
+		if (isConnectionError(err)) markSupabaseUnavailable();
+		const requested = new Set(uniqueSlugs);
+		return new Set(localLikes.filter((like) => requested.has(like.slug)).map((like) => like.slug));
+	}
 }
 
 export function notifyArticleLikeChanged(state: ArticleLikeState) {

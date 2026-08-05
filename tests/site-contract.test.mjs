@@ -9,8 +9,8 @@ test('PC・モバイルナビを3項目に統一し、既存カテゴリを運�
 	const footer = read('src/components/Footer.astro');
 	for (const source of [header, footer]) {
 		assert.match(source, /href="\/knowhow\/my\/"/);
-		assert.match(source, /href="\/rikutsu\/"/);
-		assert.match(source, /"apps", "items", "logs"/);
+		assert.match(source, /href="\/recommend\/"/);
+		assert.match(source, /"recommend", "apps", "items", "logs"/);
 		assert.doesNotMatch(source, /href="\/(apps|items|logs)\/"/);
 	}
 	assert.ok(header.includes('UI.headerNav.knowhow'));
@@ -25,12 +25,12 @@ test('ルートをチェックリスト一覧にし、旧案内ページを廃�
 	const home = read('src/pages/index.astro');
 	const index = read('src/components/KnowhowIndexPage.astro');
 	const about = read('src/pages/about.astro');
-	const rikutsu = read('src/pages/rikutsu/index.astro');
+	const recommend = read('src/pages/recommend/index.astro');
 	assert.match(home, /<KnowhowIndexPage \/>/);
 	assert.doesNotMatch(home, /チェックリストを探す|続きから使う|運営のおうちを見る/);
 	assert.ok(index.includes("discoverRootPath = window.location.pathname === '/'"));
-	assert.doesNotMatch(rikutsu, />実体験の記録<|<h1[^>]*>運営のおうち<\/h1>|おすすめだけでなく/);
-	for (const label of ['チェックリスト', 'マイリスト', '運営のおうち']) {
+	assert.doesNotMatch(recommend, />実体験の記録<|<h1[^>]*>運営のおうち<\/h1>|おすすめだけでなく/);
+	for (const label of ['探す', 'マイリスト', 'おすすめ']) {
 		assert.ok(about.includes(label));
 	}
 });
@@ -77,7 +77,7 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 		read('src/content/knowhow/001-night-memo.md'),
 		read('src/content/knowhow/002-family-log.md'),
 	].join(String.fromCharCode(10));
-	for (const phase of ['all', 'pregnancy', '0-3', '4-6', '7-11', '1-plus']) {
+	for (const phase of ['all', 'pregnancy', '0-3m', '4-6m', '7-11m', '1y-plus']) {
 		assert.ok(index.includes('id: "' + phase + '"'));
 	}
 	for (const scene of ['おでかけ', '病院・健診', '毎日の準備', '帰省・旅行', '保育園', '防災']) {
@@ -86,11 +86,11 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.ok(index.includes("segments.push('my')"));
 	assert.ok(index.includes("segments.push('phase', currentPhase)"));
 	assert.ok(index.includes("segments.push('scene', sceneSlugByLabel[currentScene])"));
-	assert.doesNotMatch(index, /searchParams|\?mode|\?tab|#progress|#memo/);
+	assert.doesNotMatch(index, /\?tab|#progress|#memo/);
 	assert.equal(index.includes('data-knowhow-view'), false);
 	assert.equal(index.includes('チェックリストの表示切り替え'), false);
-	assert.ok(index.includes('data-display-mode-option="list"'));
-	assert.ok(index.includes('data-display-mode-option="gallery"'));
+	assert.ok(index.includes('data-display-mode-option="headline_view"'));
+	assert.ok(index.includes('data-display-mode-option="grid_view"'));
 	assert.ok(index.includes('knowhow-list-view'));
 	assert.ok(index.includes('knowhow-display-mode'));
 	assert.ok(index.includes('setPrivateSetting(DISPLAY_MODE_SETTING_KEY'));
@@ -235,9 +235,7 @@ test('いいねは認証ユーザーと匿名IndexedDB資格情報を分けて�
 	const likes = read('src/scripts/article-likes.ts');
 	const privateDb = read('src/scripts/private-db.ts');
 	const listSources = [
-		read('src/pages/apps/index.astro'),
-		read('src/pages/items/index.astro'),
-		read('src/pages/logs/index.astro'),
+		read('src/components/KnowhowIndexPage.astro'),
 		read('src/components/LogCard.astro'),
 	].join('\n');
 	assert.match(privateDb, /PRIVATE_DB_VERSION = 2/);
@@ -247,8 +245,7 @@ test('いいねは認証ユーザーと匿名IndexedDB資格情報を分けて�
 	assert.match(likes, /rpc\('add_anonymous_like'/);
 	assert.match(likes, /rpc\('remove_anonymous_like'/);
 	assert.match(likes, /rpc\('claim_anonymous_like'/);
-	assert.match(button, /getCurrentArticleLikeState/);
-	assert.match(listSources, /getLikedArticleSlugs/);
+	assert.match(button, /getBatchArticleLikeStates|getCurrentArticleLikeState/);
 	assert.doesNotMatch([button, listSources].join('\n'), /localStorage|liked:|increment_likes|decrement_likes/);
 });
 
@@ -277,14 +274,14 @@ test('公開操作migrationはテーブル直操作を閉じ、必要なRPCだ�
 
 test('PWAショートカットを最終3導線へ更新する', () => {
 	const manifest = JSON.parse(read('public/manifest.webmanifest'));
-	assert.match(read('src/consts.ts'), /SITE_TITLE = '子育てチェックリスト'/);
-	assert.equal(manifest.name, '子育てチェックリスト');
+	assert.match(read('src/consts.ts'), /SITE_TITLE = 'すくリス'/);
+	assert.equal(manifest.name, 'すくリス');
 	assert.match(read('src/components/BaseHead.astro'), /name="mobile-web-app-capable"/);
 	assert.equal(manifest.start_url, '/knowhow/my/');
 	assert.deepEqual(manifest.shortcuts.map((shortcut) => shortcut.url), [
 		'/',
 		'/knowhow/my/',
-		'/rikutsu/',
+		'/recommend/',
 	]);
 });
 

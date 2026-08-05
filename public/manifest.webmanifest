@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "子育てチェックリスト",
-  "short_name": "子育てチェック",
-  "description": "初めての子育てで直面した困りごとと、その対策や試行錯誤をまとめています。",
+  "name": "すくリス",
+  "short_name": "すくリス",
+  "description": "すくすく育つ子育ての困りごとや知恵、具体的な対策や試行錯誤を記録・検索できるサービスです。",
   "lang": "ja",
   "start_url": "/knowhow/my/",
   "scope": "/",
@@ -32,8 +32,8 @@
   ],
   "shortcuts": [
     {
-      "name": "チェックリスト",
-      "short_name": "チェックリスト",
+      "name": "探す",
+      "short_name": "探す",
       "url": "/"
     },
     {
@@ -42,9 +42,9 @@
       "url": "/knowhow/my/"
     },
     {
-      "name": "運営のおうち",
-      "short_name": "運営のおうち",
-      "url": "/rikutsu/"
+      "name": "おすすめ",
+      "short_name": "おすすめ",
+      "url": "/recommend/"
     }
   ]
 }

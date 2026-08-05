@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
-import RikutsuBackLink from "../../components/RikutsuBackLink.astro";
+import RecommendBackLink from "../../components/RecommendBackLink.astro";
 import {
 	SITE_TITLE,
 	SITE_DESCRIPTION,
@@ -11,63 +11,22 @@ import { UI } from "../../i18n/ja";
 const items = (await getCollection("items")).filter(
 	(item) => item.data.published,
 );
-items.sort(
-	(
-		a,
-		b,
-	) =>
-		a
-			.data
-			.order -
-		b
-			.data
-			.order,
-);
+items.sort((a, b) => a.data.order - b.data.order);
 
-const uniqueCategories =
-	[
-		...new Set(
-			items.flatMap(
-				(
-					item,
-				) =>
-					item
-						.data
-						.categories ||
-					[],
-			),
-		),
-	];
+const uniqueCategories = [
+	...new Set(
+		items.flatMap((item) => item.data.categories || []),
+	),
+];
 const displayCategories = ["すべて", ...uniqueCategories];
 
-const uniqueAges =
-	[
-		...new Set(
-			items
-				.map(
-					(
-						item,
-					) =>
-						item
-							.data
-							.childAgeMonths,
-				)
-				.filter(
-					(
-						age,
-					) =>
-						age !==
-						undefined,
-				),
-		),
-	].sort(
-		(
-			a,
-			b,
-		) =>
-			a! -
-			b!,
-	);
+const uniqueAges = [
+	...new Set(
+		items
+			.map((item) => item.data.childAgeMonths)
+			.filter((age) => age !== undefined),
+	),
+].sort((a, b) => a! - b!);
 ---
 
 <Layout
@@ -75,29 +34,7 @@ const uniqueAges =
 	description={SITE_DESCRIPTION}
 >
 	<div class="px-6 py-8 lg:py-12">
-		<div class="mb-6"><RikutsuBackLink label="アイテム" /></div>
-		<nav class="mb-6 border-b border-gray-200" aria-label="アイテムの表示切り替え">
-			<div class="flex items-stretch gap-7" role="tablist">
-				<button
-					type="button"
-					role="tab"
-					aria-selected="true"
-					data-list-view="all"
-					class="list-view-tab border-b-2 border-mint-500 px-1 pb-3 text-sm font-bold text-navy-900 transition-colors"
-				>
-					アイテムを探す
-				</button>
-				<button
-					type="button"
-					role="tab"
-					aria-selected="false"
-					data-list-view="my"
-					class="list-view-tab border-b-2 border-transparent px-1 pb-3 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
-				>
-					マイリスト
-				</button>
-			</div>
-		</nav>
+		<div class="mb-6"><RecommendBackLink label="アイテム" /></div>
 
 		<!-- Search Bar -->
 		<div class="relative mb-6">
@@ -105,9 +42,7 @@ const uniqueAges =
 			<input type="text" id="item-search" placeholder="アイテムを検索" class="w-full bg-white border border-gray-200 rounded-full py-3 sm:py-4 pl-12 pr-4 text-[0.95rem] focus:outline-none focus:border-mint-500 shadow-sm transition-colors" />
 		</div>
 
-		<div
-			class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between"
-		>
+		<div class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between">
 			<!-- Categories -->
 			<div
 				class="flex gap-2 sm:gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto"
@@ -120,518 +55,186 @@ const uniqueAges =
 					すべて
 				</button>
 				{
-					displayCategories.slice(1).map(
-						(
-							category,
-							index,
-						) => (
-							<button
-								class="category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50"
-								data-category={
-									category
-								}
-							>
-								{
-									category
-								}
-							</button>
-						),
-					)
+					displayCategories.slice(1).map((category) => (
+						<button
+							class="category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50"
+							data-category={category}
+						>
+							{category}
+						</button>
+					))
 				}
 			</div>
 
 			<!-- Age & Sort -->
-			<div
-				class="flex gap-3 w-full lg:w-auto shrink-0"
-			>
+			<div class="flex gap-3 w-full lg:w-auto shrink-0">
 				<select
 					id="age-filter"
 					class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500"
 				>
-					<option
-						value="all"
-						>すべての対象</option
-					>
+					<option value="all">すべての対象</option>
 					{
-						uniqueAges.map(
-							(
-								age,
-							) => (
-								<option
-									value={age.toString()}
-								>
-									生後
-									{
-										age
-									}
-									ヶ月向け
-								</option>
-							),
-						)
+						uniqueAges.map((age) => (
+							<option value={age.toString()}>
+								生後{age}ヶ月向け
+							</option>
+						))
 					}
-					<option
-						value="none"
-						>月齢未指定</option
-					>
+					<option value="none">月齢未指定</option>
 				</select>
 
 				<select
 					id="sort-order"
 					class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500"
 				>
-					<option
-						value="recommended"
-						>おすすめ順</option
-					>
-					<option
-						value="age-asc"
-						>月齢が低い順</option
-					>
-					<option
-						value="age-desc"
-						>月齢が高い順</option
-					>
+					<option value="recommended">おすすめ順</option>
+					<option value="age-asc">月齢が低い順</option>
+					<option value="age-desc">月齢が高い順</option>
 				</select>
 			</div>
 		</div>
 
 		<!-- Item Grid -->
-		<div
-			class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6"
-			id="items-container"
-		>
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6" id="items-container">
 			{
-				items.map(
-					(
-						item,
-					) => (
-						<a
-							href={`/items/${item.id}/`}
-							class="item-card flex flex-row items-center gap-4 bg-white p-4 lg:p-6 rounded-2xl hover:bg-gray-50 transition-colors border border-gray-100 shadow-sm"
-							data-categories={(
-								item.data.categories || []
-							).join(",")}
-							data-age={item.data.childAgeMonths ?? "none"}
-							data-order={item.data.order}
-							data-id={item.id}
-						>
-							<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-[1.25rem] sm:rounded-3xl bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 shadow-sm border border-gray-50">
-								<span class="material-symbols-outlined text-3xl sm:text-4xl">
-									{item.data.icon}
-								</span>
-							</div>
+				items.map((item) => (
+					<a
+						href={`/items/${item.id}/`}
+						class="item-card flex flex-row items-center gap-4 bg-white p-4 lg:p-6 rounded-2xl hover:bg-gray-50 transition-colors border border-gray-100 shadow-sm"
+						data-categories={(item.data.categories || []).join(",")}
+						data-age={item.data.childAgeMonths ?? "none"}
+						data-order={item.data.order}
+						data-id={item.id}
+					>
+						<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-[1.25rem] sm:rounded-3xl bg-orange-50 text-orange-400 flex items-center justify-center shrink-0 shadow-sm border border-gray-50">
+							<span class="material-symbols-outlined text-3xl sm:text-4xl">
+								{item.data.icon}
+							</span>
+						</div>
 
-							<div class="flex-grow min-w-0 pr-2">
-								<h3 class="text-[1rem] sm:text-[1.1rem] font-bold text-navy-900 truncate">
-									{item.data.title}
-								</h3>
-								<p class="text-[0.8rem] sm:text-[0.85rem] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
-									{item.data.description}
-								</p>
-								{item.data.childAgeMonths !== undefined && (
-									<div class="flex items-center gap-2 mt-1">
-										<span class="text-[0.75rem] sm:text-[0.8rem] text-gray-500 truncate">
-											生後{item.data.childAgeMonths}ヶ月〜
-										</span>
-									</div>
-								)}
-							</div>
-						</a>
-					),
-				)
+						<div class="flex-grow min-w-0 pr-2">
+							<h3 class="text-[1rem] sm:text-[1.1rem] font-bold text-navy-900 truncate">
+								{item.data.title}
+							</h3>
+							<p class="text-[0.8rem] sm:text-[0.85rem] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+								{item.data.description}
+							</p>
+							{item.data.childAgeMonths !== undefined && (
+								<div class="flex items-center gap-2 mt-1">
+									<span class="text-[0.75rem] sm:text-[0.8rem] text-gray-500 truncate">
+										生後{item.data.childAgeMonths}ヶ月〜
+									</span>
+								</div>
+							)}
+						</div>
+					</a>
+				))
 			}
 		</div>
 		<div id="items-empty" class="hidden rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
-			<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">favorite</span>
-			<p data-empty-message class="mt-3 text-sm font-bold text-gray-700">お気に入りに追加したアイテムはありません。</p>
-			<button type="button" data-find-content class="mt-4 text-sm font-bold text-mint-600 hover:text-mint-700">
-				アイテムを探す
-			</button>
+			<p class="text-sm font-bold text-gray-700">条件に一致するアイテムはありません。</p>
 		</div>
 	</div>
 </Layout>
 
-<script
->
-	import { getLikedArticleSlugs } from '../../scripts/article-likes';
-	import { getSupabaseClient } from '../../scripts/supabase-client';
-
+<script>
 	const initItemsList = () => {
-	const itemsContainer = document.getElementById("items-container");
-	if (!itemsContainer || itemsContainer.dataset.listInitialized === "true") return;
-	itemsContainer.dataset.listInitialized = "true";
+		const itemsContainer = document.getElementById("items-container");
+		if (!itemsContainer || itemsContainer.dataset.listInitialized === "true") return;
+		itemsContainer.dataset.listInitialized = "true";
 
-	const categoryButtons =
-		document.querySelectorAll(
-			".category-btn",
-		);
-	const ageFilter =
-		document.getElementById(
-			"age-filter",
-		) as HTMLSelectElement;
-	const sortOrder =
-		document.getElementById(
-			"sort-order",
-		) as HTMLSelectElement;
-	const cards =
-		Array.from(
-			document.querySelectorAll(
-				".item-card",
-			),
-		) as HTMLElement[];
+		const categoryButtons = document.querySelectorAll(".category-btn");
+		const ageFilter = document.getElementById("age-filter") as HTMLSelectElement;
+		const sortOrder = document.getElementById("sort-order") as HTMLSelectElement;
+		const cards = Array.from(document.querySelectorAll(".item-card")) as HTMLElement[];
+		const searchInput = document.getElementById("item-search") as HTMLInputElement;
 
-	const searchInput =
-		document.getElementById(
-			"item-search",
-		) as HTMLInputElement;
+		let currentCategory = "すべて";
+		let currentAge = "all";
+		let currentSort = "recommended";
+		let searchQuery = "";
 
-	let currentCategory =
-		"すべて";
-	let currentAge =
-		"all";
-	let currentSort =
-		"recommended";
-	let searchQuery =
-		"";
-	let currentListView: "all" | "my" = new URL(window.location.href).searchParams.get("view") === "my" ? "my" : "all";
-	const viewTabs = Array.from(document.querySelectorAll<HTMLElement>("[data-list-view]"));
-	const emptyState = document.getElementById("items-empty");
-	const emptyMessage = emptyState?.querySelector<HTMLElement>("[data-empty-message]");
-	const controller = new AbortController();
-
-	let likedSlugs = new Set<string>();
-	const articleSlugs = cards.flatMap((card) => {
-		const id = card.getAttribute("data-id");
-		return id ? [`items/${id}`] : [];
-	});
-	const isLiked = (id: string | null) => Boolean(id && likedSlugs.has(`items/${id}`));
-	const refreshLikedSlugs = async () => {
-		try {
-			likedSlugs = await getLikedArticleSlugs(articleSlugs);
-		} catch (error) {
-			console.error("Error fetching liked items:", error);
-			likedSlugs = new Set();
-		}
-		updateView();
-	};
-
-	const refreshViewTabs = () => {
-		viewTabs.forEach((tab) => {
-			const active = tab.dataset.listView === currentListView;
-			tab.setAttribute("aria-selected", String(active));
-			tab.classList.toggle("border-mint-500", active);
-			tab.classList.toggle("border-transparent", !active);
-			tab.classList.toggle("text-navy-900", active);
-			tab.classList.toggle("font-bold", active);
-			tab.classList.toggle("text-gray-400", !active);
-			tab.classList.toggle("font-medium", !active);
-		});
-	};
-
-	const setListView = (view: "all" | "my", pushHistory = true) => {
-		currentListView = view;
-		if (pushHistory) {
-			const url = new URL(window.location.href);
-			if (view === "my") url.searchParams.set("view", "my");
-			else url.searchParams.delete("view");
-			history.pushState({ listView: view }, "", url.toString());
-		}
-		refreshViewTabs();
-		updateView();
-	};
-
-	function updateView() {
-		// Filter
-		cards.forEach(
-			(
-				card,
-			) => {
+		function updateView() {
+			cards.forEach((card) => {
 				const titleText = (card.querySelector('h3')?.textContent || '').toLowerCase();
 				const descText = (card.querySelector('p')?.textContent || '').toLowerCase();
 				const searchMatch = !searchQuery || titleText.includes(searchQuery) || descText.includes(searchQuery);
 
 				const categoryMatch = currentCategory === "すべて"
 					|| (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
-				const viewMatch = currentListView === "all" || isLiked(card.getAttribute("data-id"));
+				const ageMatch = currentAge === "all" || card.getAttribute("data-age") === currentAge;
 
-				const ageMatch =
-					currentAge ===
-						"all" ||
-					card.getAttribute(
-						"data-age",
-					) ===
-						currentAge;
-
-				if (
-					categoryMatch &&
-					ageMatch &&
-					searchMatch &&
-					viewMatch
-				) {
-					card.style.display =
-						"flex";
+				if (categoryMatch && ageMatch && searchMatch) {
+					card.style.display = "flex";
 				} else {
-					card.style.display =
-						"none";
+					card.style.display = "none";
 				}
-			},
-		);
+			});
 
-		// Sort
-		const visibleCards =
-			cards.filter(
-				(
-					card,
-				) =>
-					card
-						.style
-						.display !==
-					"none",
-			);
-		const hiddenCards =
-			cards.filter(
-				(
-					card,
-				) =>
-					card
-						.style
-						.display ===
-					"none",
-			);
+			const visibleCards = cards.filter((card) => card.style.display !== "none");
+			const hiddenCards = cards.filter((card) => card.style.display === "none");
 
-		visibleCards.sort(
-			(
-				a,
-				b,
-			) => {
-				if (
-					currentSort ===
-					"recommended"
-				) {
-					const numA =
-						parseInt(
-							a.getAttribute(
-								"data-order",
-							) ||
-								"0",
-							10,
-						);
-					const numB =
-						parseInt(
-							b.getAttribute(
-								"data-order",
-							) ||
-								"0",
-							10,
-						);
-					return (
-						numA -
-						numB
-					);
+			visibleCards.sort((a, b) => {
+				if (currentSort === "recommended") {
+					const numA = parseInt(a.getAttribute("data-order") || "0", 10);
+					const numB = parseInt(b.getAttribute("data-order") || "0", 10);
+					return numA - numB;
 				} else {
-					const ageA =
-						a.getAttribute(
-							"data-age",
-						);
-					const ageB =
-						b.getAttribute(
-							"data-age",
-						);
-					const valA =
-						ageA ===
-						"none"
-							? Infinity
-							: parseInt(
-									ageA ||
-										"0",
-									10,
-								);
-					const valB =
-						ageB ===
-						"none"
-							? Infinity
-							: parseInt(
-									ageB ||
-										"0",
-									10,
-								);
+					const ageA = a.getAttribute("data-age");
+					const ageB = b.getAttribute("data-age");
+					const valA = ageA === "none" ? Infinity : parseInt(ageA || "0", 10);
+					const valB = ageB === "none" ? Infinity : parseInt(ageB || "0", 10);
 
-					if (
-						currentSort ===
-						"age-asc"
-					) {
-						return (
-							valA -
-							valB
-						);
+					if (currentSort === "age-asc") {
+						return valA - valB;
 					} else {
-						// age-desc
-						if (
-							valA ===
-								Infinity &&
-							valB !==
-								Infinity
-						)
-							return 1;
-						if (
-							valB ===
-								Infinity &&
-							valA !==
-								Infinity
-						)
-							return -1;
-						return (
-							valB -
-							valA
-						);
+						if (valA === Infinity && valB !== Infinity) return 1;
+						if (valB === Infinity && valA !== Infinity) return -1;
+						return valB - valA;
 					}
 				}
-			},
-		);
+			});
 
-		// Re-append to DOM in order
-		if (
-			itemsContainer
-		) {
-			visibleCards.forEach(
-				(
-					card,
-				) =>
-					itemsContainer.appendChild(
-						card,
-					),
-			);
-			hiddenCards.forEach(
-				(
-					card,
-				) =>
-					itemsContainer.appendChild(
-						card,
-					),
-			);
+			if (itemsContainer) {
+				visibleCards.forEach((card) => itemsContainer.appendChild(card));
+				hiddenCards.forEach((card) => itemsContainer.appendChild(card));
+			}
+
+			const emptyState = document.getElementById("items-empty");
+			emptyState?.classList.toggle("hidden", visibleCards.length > 0);
 		}
 
-		emptyState?.classList.toggle("hidden", visibleCards.length > 0);
-		if (emptyMessage) {
-			emptyMessage.textContent = currentListView === "my" && !cards.some((card) => isLiked(card.getAttribute("data-id")))
-				? "お気に入りに追加したアイテムはありません。"
-				: "条件に一致するアイテムはありません。";
-		}
-	}
+		categoryButtons.forEach((button) => {
+			button.addEventListener("click", () => {
+				currentCategory = button.getAttribute("data-category") || "すべて";
 
-	categoryButtons.forEach(
-		(
-			button,
-		) => {
-			button.addEventListener(
-				"click",
-				() => {
-					currentCategory =
-						button.getAttribute(
-							"data-category",
-						) ||
-						"すべて";
+				categoryButtons.forEach((btn) => {
+					btn.classList.remove("border-mint-500", "bg-mint-50", "text-mint-500", "font-bold");
+					btn.classList.add("border-gray-200", "bg-white", "text-gray-500", "font-medium");
+				});
+				button.classList.remove("border-gray-200", "bg-white", "text-gray-500", "font-medium");
+				button.classList.add("border-mint-500", "bg-mint-50", "text-mint-500", "font-bold");
 
-					// Update button styles
-					categoryButtons.forEach(
-						(
-							btn,
-						) => {
-							btn.classList.remove(
-								"border-mint-500",
-								"bg-mint-50",
-								"text-mint-500",
-								"font-bold",
-							);
-							btn.classList.add(
-								"border-gray-200",
-								"bg-white",
-								"text-gray-500",
-								"font-medium",
-							);
-						},
-					);
-					button.classList.remove(
-						"border-gray-200",
-						"bg-white",
-						"text-gray-500",
-						"font-medium",
-					);
-					button.classList.add(
-						"border-mint-500",
-						"bg-mint-50",
-						"text-mint-500",
-						"font-bold",
-					);
+				updateView();
+			});
+		});
 
-					updateView();
-				},
-			);
-		},
-	);
-
-	ageFilter?.addEventListener(
-		"change",
-		(
-			e,
-		) => {
-			currentAge =
-				(
-					e.target as HTMLSelectElement
-				)
-					.value;
+		ageFilter?.addEventListener("change", (e) => {
+			currentAge = (e.target as HTMLSelectElement).value;
 			updateView();
-		},
-	);
+		});
 
-	sortOrder?.addEventListener(
-		"change",
-		(
-			e,
-		) => {
-			currentSort =
-				(
-					e.target as HTMLSelectElement
-				)
-					.value;
+		sortOrder?.addEventListener("change", (e) => {
+			currentSort = (e.target as HTMLSelectElement).value;
 			updateView();
-		},
-	);
+		});
 
-	searchInput?.addEventListener(
-		"input",
-		(e) => {
+		searchInput?.addEventListener("input", (e) => {
 			searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
 			updateView();
-		}
-	);
-
-	viewTabs.forEach((tab) => {
-		tab.addEventListener("click", () => {
-			setListView(tab.dataset.listView === "my" ? "my" : "all");
 		});
-	});
-	document.querySelector<HTMLElement>("[data-find-content]")?.addEventListener("click", () => setListView("all"));
-	window.addEventListener("popstate", () => {
-		currentListView = new URL(window.location.href).searchParams.get("view") === "my" ? "my" : "all";
-		refreshViewTabs();
-		updateView();
-	}, { signal: controller.signal });
-	window.addEventListener("article-like-changed", () => void refreshLikedSlugs(), { signal: controller.signal });
-	const supabase = getSupabaseClient();
-	const authSubscription = supabase?.auth.onAuthStateChange(() => {
-		window.setTimeout(() => void refreshLikedSlugs(), 0);
-	}).data.subscription;
-	const cleanup = () => {
-		authSubscription?.unsubscribe();
-		controller.abort();
-		document.removeEventListener("astro:before-swap", cleanup);
-	};
-	document.addEventListener("astro:before-swap", cleanup);
 
-	refreshViewTabs();
-	updateView();
-	void refreshLikedSlugs();
+		updateView();
 	};
 
 	if (document.readyState === "loading") {
@@ -642,8 +245,7 @@ const uniqueAges =
 	document.addEventListener("astro:page-load", initItemsList);
 </script>
 
-<style
->
+<style>
 	.scrollbar-hide::-webkit-scrollbar {
 		display: none;
 	}

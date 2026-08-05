@@ -1,15 +1,15 @@
 export const UI = {
 	headerNav: {
-		knowhow: "チェックリスト",
+		knowhow: "探す",
 		myList: "マイリスト",
-		rikutsu: "運営のおうち",
+		rikutsu: "おすすめ",
 		naraibase: "Naraibase",
 		about: "このサイトについて",
 	},
 	footerNav: {
-		knowhow: "チェックリスト",
+		knowhow: "探す",
 		myList: "マイリスト",
-		rikutsu: "運営のおうち",
+		rikutsu: "おすすめ",
 		naraibase: "Naraibase",
 		about: "このサイトについて",
 	},
@@ -48,9 +48,9 @@ export const UI = {
 		searchPlaceholder: "子育てログやアプリを検索...",
 	},
 	knowhow: {
-		pageTitle: "チェックリスト",
-		pageDesc: "日々の子育ての「困った」を解決するために使えるチェックリストをご紹介します。",
-		detailTitle: "チェックリストの詳細",
+		pageTitle: "探す",
+		pageDesc: "日々の子育ての「困った」を解決するための情報を検索・発見できます。",
+		detailTitle: "ノウハウの詳細",
 		btnTry: "詳細を見る",
 		btnReadLog: "子育てログを読む",
 	},

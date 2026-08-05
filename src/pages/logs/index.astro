@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import LogCard from '../../components/LogCard.astro';
-import RikutsuBackLink from '../../components/RikutsuBackLink.astro';
+import RecommendBackLink from '../../components/RecommendBackLink.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { UI } from '../../i18n/ja';
 
@@ -16,31 +16,8 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 ---
 
 <Layout title={`${UI.logs.pageTitle} | ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
-
 	<div class="px-6 py-8 lg:py-12">
-		<div class="mb-6"><RikutsuBackLink label="育児ログ" /></div>
-		<nav class="mb-6 border-b border-gray-200" aria-label="子育てログの表示切り替え">
-			<div class="flex items-stretch gap-7" role="tablist">
-				<button
-					type="button"
-					role="tab"
-					aria-selected="true"
-					data-list-view="all"
-					class="list-view-tab border-b-2 border-mint-500 px-1 pb-3 text-sm font-bold text-navy-900 transition-colors"
-				>
-					子育てログを探す
-				</button>
-				<button
-					type="button"
-					role="tab"
-					aria-selected="false"
-					data-list-view="my"
-					class="list-view-tab border-b-2 border-transparent px-1 pb-3 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
-				>
-					マイリスト
-				</button>
-			</div>
-		</nav>
+		<div class="mb-6"><RecommendBackLink label="育児ログ" /></div>
 
 		<div class="relative mb-6">
 			<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">search</span>
@@ -88,192 +65,105 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 			{logs.map((log) => <LogCard log={log} />)}
 		</div>
 		<div id="logs-empty" class="hidden rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
-			<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">favorite</span>
-			<p data-empty-message class="mt-3 text-sm font-bold text-gray-700">お気に入りに追加した子育てログはありません。</p>
-			<button type="button" data-find-content class="mt-4 text-sm font-bold text-mint-600 hover:text-mint-700">
-				子育てログを探す
-			</button>
+			<p class="text-sm font-bold text-gray-700">条件に一致する子育てログはありません。</p>
 		</div>
 	</div>
 </Layout>
 
 <script>
-	import { getLikedArticleSlugs } from '../../scripts/article-likes';
-	import { getSupabaseClient } from '../../scripts/supabase-client';
-
 	const initLogsList = () => {
-	const logsContainer = document.getElementById('logs-container');
-	if (!logsContainer || logsContainer.dataset.listInitialized === 'true') return;
-	logsContainer.dataset.listInitialized = 'true';
+		const logsContainer = document.getElementById('logs-container');
+		if (!logsContainer || logsContainer.dataset.listInitialized === 'true') return;
+		logsContainer.dataset.listInitialized = 'true';
 
-	const categoryButtons = document.querySelectorAll('.category-btn');
-	const ageFilter = document.getElementById('age-filter') as HTMLSelectElement;
-	const sortOrder = document.getElementById('sort-order') as HTMLSelectElement;
-	const searchInput = document.getElementById('log-search') as HTMLInputElement;
-	const cards = Array.from(document.querySelectorAll('.log-card')) as HTMLElement[];
-	const viewTabs = Array.from(document.querySelectorAll<HTMLElement>('[data-list-view]'));
-	const emptyState = document.getElementById('logs-empty');
-	const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
-	const controller = new AbortController();
+		const categoryButtons = document.querySelectorAll('.category-btn');
+		const ageFilter = document.getElementById('age-filter') as HTMLSelectElement;
+		const sortOrder = document.getElementById('sort-order') as HTMLSelectElement;
+		const searchInput = document.getElementById('log-search') as HTMLInputElement;
+		const cards = Array.from(document.querySelectorAll('.log-card')) as HTMLElement[];
 
-	let currentCategory = 'すべて';
-	let currentAge = 'all';
-	let currentSort = 'newest';
-	let searchQuery = '';
-	let currentListView: 'all' | 'my' = new URL(window.location.href).searchParams.get('view') === 'my' ? 'my' : 'all';
+		let currentCategory = 'すべて';
+		let currentAge = 'all';
+		let currentSort = 'newest';
+		let searchQuery = '';
 
-	let likedSlugs = new Set<string>();
-	const articleSlugs = cards.flatMap((card) => {
-		const id = card.getAttribute('data-id');
-		return id ? [`logs/${id}`] : [];
-	});
-	const isLiked = (id: string | null) => Boolean(id && likedSlugs.has(`logs/${id}`));
-	const refreshLikedSlugs = async () => {
-		try {
-			likedSlugs = await getLikedArticleSlugs(articleSlugs);
-		} catch (error) {
-			console.error('Error fetching liked logs:', error);
-			likedSlugs = new Set();
-		}
-		updateView();
-	};
+		function updateView() {
+			cards.forEach((card) => {
+				const categoryMatch = currentCategory === 'すべて' || (card.getAttribute('data-categories') || '').split(',').includes(currentCategory);
+				const ageMatch = currentAge === 'all' || card.getAttribute('data-age') === currentAge;
+				const searchMatch = !searchQuery || (card.textContent || '').toLowerCase().includes(searchQuery);
 
-	const refreshViewTabs = () => {
-		viewTabs.forEach((tab) => {
-			const active = tab.dataset.listView === currentListView;
-			tab.setAttribute('aria-selected', String(active));
-			tab.classList.toggle('border-mint-500', active);
-			tab.classList.toggle('border-transparent', !active);
-			tab.classList.toggle('text-navy-900', active);
-			tab.classList.toggle('font-bold', active);
-			tab.classList.toggle('text-gray-400', !active);
-			tab.classList.toggle('font-medium', !active);
-		});
-	};
-
-	const setListView = (view: 'all' | 'my', pushHistory = true) => {
-		currentListView = view;
-		if (pushHistory) {
-			const url = new URL(window.location.href);
-			if (view === 'my') url.searchParams.set('view', 'my');
-			else url.searchParams.delete('view');
-			history.pushState({ listView: view }, '', url.toString());
-		}
-		refreshViewTabs();
-		updateView();
-	};
-
-	function updateView() {
-		// Filter
-		cards.forEach(card => {
-			const categoryMatch = currentCategory === 'すべて' || (card.getAttribute('data-categories') || '').split(',').includes(currentCategory);
-			const ageMatch = currentAge === 'all' || card.getAttribute('data-age') === currentAge;
-			const searchMatch = !searchQuery || (card.textContent || '').toLowerCase().includes(searchQuery);
-			const viewMatch = currentListView === 'all' || isLiked(card.getAttribute('data-id'));
-
-			if (categoryMatch && ageMatch && searchMatch && viewMatch) {
-				card.style.display = 'flex';
-			} else {
-				card.style.display = 'none';
-			}
-		});
-
-		// Sort
-		const visibleCards = cards.filter(card => card.style.display !== 'none');
-		const hiddenCards = cards.filter(card => card.style.display === 'none');
-
-		visibleCards.sort((a, b) => {
-			if (currentSort === 'newest') {
-				const numA = a.getAttribute('data-lognumber') || '';
-				const numB = b.getAttribute('data-lognumber') || '';
-				return numB.localeCompare(numA);
-			} else {
-				const ageA = a.getAttribute('data-age');
-				const ageB = b.getAttribute('data-age');
-				const valA = ageA === 'none' ? Infinity : parseInt(ageA || '0', 10);
-				const valB = ageB === 'none' ? Infinity : parseInt(ageB || '0', 10);
-
-				if (currentSort === 'age-asc') {
-					return valA - valB;
-				} else { // age-desc
-					if (valA === Infinity && valB !== Infinity) return 1;
-					if (valB === Infinity && valA !== Infinity) return -1;
-					return valB - valA;
+				if (categoryMatch && ageMatch && searchMatch) {
+					card.style.display = 'flex';
+				} else {
+					card.style.display = 'none';
 				}
+			});
+
+			const visibleCards = cards.filter((card) => card.style.display !== 'none');
+			const hiddenCards = cards.filter((card) => card.style.display === 'none');
+
+			visibleCards.sort((a, b) => {
+				if (currentSort === 'newest') {
+					const numA = a.getAttribute('data-lognumber') || '';
+					const numB = b.getAttribute('data-lognumber') || '';
+					return numB.localeCompare(numA);
+				} else {
+					const ageA = a.getAttribute('data-age');
+					const ageB = b.getAttribute('data-age');
+					const valA = ageA === 'none' ? Infinity : parseInt(ageA || '0', 10);
+					const valB = ageB === 'none' ? Infinity : parseInt(ageB || '0', 10);
+
+					if (currentSort === 'age-asc') {
+						return valA - valB;
+					} else {
+						if (valA === Infinity && valB !== Infinity) return 1;
+						if (valB === Infinity && valA !== Infinity) return -1;
+						return valB - valA;
+					}
+				}
+			});
+
+			if (logsContainer) {
+				visibleCards.forEach((card) => logsContainer.appendChild(card));
+				hiddenCards.forEach((card) => logsContainer.appendChild(card));
 			}
+
+			const emptyState = document.getElementById('logs-empty');
+			emptyState?.classList.toggle('hidden', visibleCards.length > 0);
+		}
+
+		categoryButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				currentCategory = button.getAttribute('data-category') || 'すべて';
+
+				categoryButtons.forEach((btn) => {
+					btn.classList.remove('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
+					btn.classList.add('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
+				});
+				button.classList.remove('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
+				button.classList.add('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
+
+				updateView();
+			});
 		});
 
-		// Re-append to DOM in order
-		if (logsContainer) {
-			visibleCards.forEach(card => logsContainer.appendChild(card));
-			hiddenCards.forEach(card => logsContainer.appendChild(card));
-		}
-
-		emptyState?.classList.toggle('hidden', visibleCards.length > 0);
-		if (emptyMessage) {
-			emptyMessage.textContent = currentListView === 'my' && !cards.some((card) => isLiked(card.getAttribute('data-id')))
-				? 'お気に入りに追加した子育てログはありません。'
-				: '条件に一致する子育てログはありません。';
-		}
-	}
-
-	categoryButtons.forEach(button => {
-		button.addEventListener('click', () => {
-			currentCategory = button.getAttribute('data-category') || 'すべて';
-
-			// Update button styles
-			categoryButtons.forEach(btn => {
-				btn.classList.remove('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
-				btn.classList.add('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
-			});
-			button.classList.remove('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
-			button.classList.add('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
-
+		ageFilter?.addEventListener('change', (e) => {
+			currentAge = (e.target as HTMLSelectElement).value;
 			updateView();
 		});
-	});
 
-	ageFilter?.addEventListener('change', (e) => {
-		currentAge = (e.target as HTMLSelectElement).value;
-		updateView();
-	});
-
-	sortOrder?.addEventListener('change', (e) => {
-		currentSort = (e.target as HTMLSelectElement).value;
-		updateView();
-	});
-
-	searchInput?.addEventListener('input', (e) => {
-		searchQuery = (e.target as HTMLInputElement).value.trim().toLowerCase();
-		updateView();
-	});
-
-	viewTabs.forEach((tab) => {
-		tab.addEventListener('click', () => {
-			setListView(tab.dataset.listView === 'my' ? 'my' : 'all');
+		sortOrder?.addEventListener('change', (e) => {
+			currentSort = (e.target as HTMLSelectElement).value;
+			updateView();
 		});
-	});
-	document.querySelector<HTMLElement>('[data-find-content]')?.addEventListener('click', () => setListView('all'));
-	window.addEventListener('popstate', () => {
-		currentListView = new URL(window.location.href).searchParams.get('view') === 'my' ? 'my' : 'all';
-		refreshViewTabs();
-		updateView();
-	}, { signal: controller.signal });
-	window.addEventListener('article-like-changed', () => void refreshLikedSlugs(), { signal: controller.signal });
-	const supabase = getSupabaseClient();
-	const authSubscription = supabase?.auth.onAuthStateChange(() => {
-		window.setTimeout(() => void refreshLikedSlugs(), 0);
-	}).data.subscription;
-	const cleanup = () => {
-		authSubscription?.unsubscribe();
-		controller.abort();
-		document.removeEventListener('astro:before-swap', cleanup);
-	};
-	document.addEventListener('astro:before-swap', cleanup);
 
-	refreshViewTabs();
-	updateView();
-	void refreshLikedSlugs();
+		searchInput?.addEventListener('input', (e) => {
+			searchQuery = (e.target as HTMLInputElement).value.trim().toLowerCase();
+			updateView();
+		});
+
+		updateView();
 	};
 
 	if (document.readyState === 'loading') {

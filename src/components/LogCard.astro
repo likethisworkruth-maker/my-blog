@@ -70,8 +70,8 @@ const likeSlug = `logs/${log.id}`;
 </a>
 
 <script>
-	import { getLikedArticleSlugs } from '../scripts/article-likes';
-	import { getSupabaseClient } from '../scripts/supabase-client';
+	import { getBatchArticleLikeStates } from '../scripts/article-likes';
+	import { checkSupabaseHealth } from '../scripts/supabase-client';
 
 	const initLogLikeCounts = async () => {
 		const countElements = Array.from(
@@ -88,35 +88,26 @@ const likeSlug = `logs/${log.id}`;
 			elementsBySlug.set(slug, elements);
 		});
 
-		const supabase = getSupabaseClient();
-		if (!supabase || elementsBySlug.size === 0) return;
+		if (elementsBySlug.size === 0) return;
 
-		try {
-			const slugs = Array.from(elementsBySlug.keys());
-			const [likedSlugs, response] = await Promise.all([
-				getLikedArticleSlugs(slugs),
-				supabase.from("likes").select("slug, like_count").in("slug", slugs),
-			]);
-			const { data, error } = response;
-			if (error) throw error;
+		const isHealthy = await checkSupabaseHealth();
+		if (!isHealthy) return;
 
-			const counts = new Map<string, number>();
-			(data ?? []).forEach((row: { slug: string; like_count: number }) => {
-				counts.set(row.slug, row.like_count);
+		const slugs = Array.from(elementsBySlug.keys());
+		const statesMap = await getBatchArticleLikeStates(slugs);
+
+		elementsBySlug.forEach((elements, slug) => {
+			const state = statesMap.get(slug);
+			const count = String(state?.likeCount ?? 0);
+			const isLiked = Boolean(state?.liked);
+			elements.forEach((element) => {
+				element.textContent = count;
+				const display = element.closest<HTMLElement>("[data-log-like-display]");
+				display?.querySelector(".log-like-icon-empty")?.classList.toggle("opacity-0", isLiked);
+				display?.querySelector(".log-like-icon-filled")?.classList.toggle("opacity-0", !isLiked);
+				element.classList.toggle("text-pink-500", isLiked);
 			});
-			elementsBySlug.forEach((elements, slug) => {
-				const count = String(counts.get(slug) ?? 0);
-				elements.forEach((element) => {
-					element.textContent = count;
-					const display = element.closest<HTMLElement>("[data-log-like-display]");
-					display?.querySelector(".log-like-icon-empty")?.classList.toggle("opacity-0", likedSlugs.has(slug));
-					display?.querySelector(".log-like-icon-filled")?.classList.toggle("opacity-0", !likedSlugs.has(slug));
-					element.classList.toggle("text-pink-500", likedSlugs.has(slug));
-				});
-			});
-		} catch (error) {
-			console.error("Error fetching log like counts:", error);
-		}
+		});
 	};
 
 	const runLogLikeCounts = () => void initLogLikeCounts();
@@ -125,13 +116,8 @@ const likeSlug = `logs/${log.id}`;
 		document.documentElement.dataset.logLikeListeners = 'true';
 		const controller = new AbortController();
 		window.addEventListener('article-like-changed', runLogLikeCounts, { signal: controller.signal });
-		const supabase = getSupabaseClient();
-		const authSubscription = supabase?.auth.onAuthStateChange(() => {
-			window.setTimeout(runLogLikeCounts, 0);
-		}).data.subscription;
 		const cleanup = () => {
 			controller.abort();
-			authSubscription?.unsubscribe();
 			delete document.documentElement.dataset.logLikeListeners;
 			document.removeEventListener('astro:before-swap', cleanup);
 		};

@@ -36,7 +36,67 @@ export function clearCapturedGoogleProviderAccess() {
 	capturedGoogleProviderAccess = undefined;
 }
 
+let isSupabaseDisabled = false;
+let connectionCheckPromise: Promise<boolean> | null = null;
+
+export function isConnectionError(error: unknown): boolean {
+	if (!error) return false;
+	const msg = String(error instanceof Error ? error.message : error).toLowerCase();
+	return (
+		msg.includes('failed to fetch') ||
+		msg.includes('connection refused') ||
+		msg.includes('networkerror') ||
+		msg.includes('err_connection_refused') ||
+		error instanceof TypeError
+	);
+}
+
+export function markSupabaseUnavailable() {
+	isSupabaseDisabled = true;
+}
+
+export function isSupabaseAvailable(): boolean {
+	return !isSupabaseDisabled;
+}
+
+export async function checkSupabaseHealth(): Promise<boolean> {
+	if (isSupabaseDisabled) return false;
+	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+	if (!supabaseUrl || !supabaseAnonKey || typeof window === 'undefined') {
+		markSupabaseUnavailable();
+		return false;
+	}
+
+	if (!connectionCheckPromise) {
+		connectionCheckPromise = (async () => {
+			try {
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => controller.abort(), 2000);
+				const res = await fetch(`${supabaseUrl}/rest/v1/`, {
+					method: 'HEAD',
+					headers: {
+						apikey: supabaseAnonKey,
+					},
+					signal: controller.signal,
+				}).finally(() => clearTimeout(timeoutId));
+
+				if (!res.ok && res.status >= 500) {
+					markSupabaseUnavailable();
+					return false;
+				}
+				return true;
+			} catch (err) {
+				markSupabaseUnavailable();
+				return false;
+			}
+		})();
+	}
+	return connectionCheckPromise;
+}
+
 export function getSupabaseClient(): SupabaseClient | null {
+	if (isSupabaseDisabled) return null;
 	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 	if (!supabaseUrl || !supabaseAnonKey || typeof window === 'undefined') return null;

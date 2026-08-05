@@ -19,7 +19,7 @@ const isMyListPath = pathSegments[0] === "knowhow" && (
 	pathSegments[1] === "my" || pathSegments[2] === "my"
 );
 const isChecklistPath = (pathname === "/" || pathSegments[0] === "knowhow") && !isMyListPath;
-const isRikutsuPath = ["rikutsu", "apps", "items", "logs"].some((path) =>
+const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 	currentPath.startsWith(path),
 );
 ---
@@ -55,8 +55,8 @@ const isRikutsuPath = ["rikutsu", "apps", "items", "logs"].some((path) =>
 				{UI.headerNav.myList}
 			</a>
 			<a
-				href="/rikutsu/"
-				class={`font-bold transition-colors pb-1 border-b-2 ${isRikutsuPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+				href="/recommend/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${isRecommendPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
 				{UI.headerNav.rikutsu}
 			</a>
