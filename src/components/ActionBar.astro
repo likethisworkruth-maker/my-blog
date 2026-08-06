@@ -17,7 +17,7 @@ const showShare = !slug.startsWith('knowhow/');
 		<LikeButton slug={slug} variant="reels" />
 		<div data-public-actions class="contents">
 			<button
-				class="flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95"
+				class="hidden flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95"
 				onclick="if(window.toggleCommentsPanel) window.toggleCommentsPanel()"
 			>
 				<span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
@@ -55,7 +55,7 @@ const showShare = !slug.startsWith('knowhow/');
 	<div class={`flex items-center justify-start gap-3 ${variant === 'default' ? 'my-12 pt-8 border-t border-gray-100' : 'my-3'}`}>
 		<LikeButton slug={slug} />
 		<button
-			class="flex h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95"
+			class="hidden h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95"
 			onclick={variant === 'feed'
 				? `if(window.openModal) window.openModal('${id}')`
 				: `const form = document.querySelector('[data-slug="${slug}"][data-variant] #comment-form'); form?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => form?.querySelector('textarea[name="content"]')?.focus(), 450);`}

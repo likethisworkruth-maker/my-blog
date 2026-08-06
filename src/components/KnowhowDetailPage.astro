@@ -90,7 +90,6 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 					<div class="flex-grow flex items-stretch justify-center w-full" role="tablist" aria-label="チェックリストの詳細">
 						<button id="tab-btn-desc" role="tab" aria-selected="true" aria-controls="tab-content-desc" tabindex="0" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
 						<button id="tab-btn-progress" role="tab" aria-selected="false" aria-controls="tab-content-progress" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
-						<button id="tab-btn-comments" role="tab" aria-selected="false" aria-controls="tab-content-comments" tabindex="-1" data-public-tab class="flex h-14 flex-1 px-2 sm:px-6 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-comments" onclick="if(window.toggleTab) window.toggleTab('comments')">みんなのコメント</button>
 						<button id="tab-btn-memo" role="tab" aria-selected="false" aria-controls="tab-content-memo" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-memo" onclick="if(window.toggleTab) window.toggleTab('memo')">メモ</button>
                     </div>
                     <button class="absolute bottom-4 right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()" aria-label="詳細パネルを閉じる">
@@ -104,7 +103,6 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                     <p class="text-[0.95rem] text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">{knowhow.data.description}</p>
 					<Content />
 					<button type="button" data-public-only data-start-checklist class="mt-7 w-full rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">このチェックリストを始める</button>
-					<a data-private-only href={`/knowhow/${knowhow.id}/comments/`} class="mt-7 hidden text-sm font-bold text-mint-300 underline underline-offset-4">みんなのコメントを見る</a>
 				</div>
 
                 <!-- Checklist Progress Content -->
@@ -112,8 +110,8 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
                     <ChecklistRunner checklist={checklist} />
                 </div>
 
-                <!-- Comments Content -->
-				<div id="tab-content-comments" role="tabpanel" aria-labelledby="tab-btn-comments" hidden class="flex-grow overflow-hidden hidden bg-[#262626] flex-col min-w-[320px]">
+                <!-- Comments Content (Hidden background component) -->
+				<div id="tab-content-comments" role="tabpanel" aria-labelledby="tab-btn-comments" hidden class="hidden bg-[#262626] flex-col min-w-[320px]">
 					<Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
 				</div>
 
@@ -217,7 +215,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 		};
 		let currentMode: DetailMode = readDetailRoute().mode;
 		const tabsByMode: Record<DetailMode, PanelTab[]> = {
-			public: ['desc', 'comments'],
+			public: ['desc'],
 			private: ['desc', 'progress', 'memo'],
 		};
 

@@ -39,7 +39,7 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	const detail = read('src/components/KnowhowDetailPage.astro');
 	const actionBar = read('src/components/ActionBar.astro');
 	const runner = read('src/components/ChecklistRunner.astro');
-	assert.match(detail, /data-public-tab[^>]*>みんなのコメント</);
+	assert.doesNotMatch(detail, /id="tab-btn-comments"[^>]*class="[^"]*flex/);
 	assert.match(detail, /id="info-panel"[\s\S]*h-\[100dvh\]/);
 	assert.doesNotMatch(detail, /h-\[65dvh\]|rounded-t-3xl/);
 	assert.match(detail, /id="knowhow-media-area"/);
@@ -64,7 +64,7 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	assert.match(detail, /deletePrivateChecklistRunsByChecklistId/);
 	assert.match(detail, /このチェックリストをマイリストから削除しますか？/);
 	assert.match(detail, /navigate\('\/knowhow\/my\/'\)/);
-	assert.ok(existsSync(new URL('../src/pages/knowhow/[id]/comments.astro', import.meta.url)));
+	assert.ok(!existsSync(new URL('../src/pages/knowhow/[id]/comments.astro', import.meta.url)));
 	assert.ok(existsSync(new URL('../src/pages/knowhow/[id]/my/[tab].astro', import.meta.url)));
 });
 
