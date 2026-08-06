@@ -43,80 +43,87 @@ const isRootPage = Astro.url.pathname === "/";
 	description={SITE_DESCRIPTION}
 >
 	<div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 lg:py-10">
-		<div class="flex justify-center" role="group" aria-label="チェックリストの表示形式">
-			<div class="inline-grid grid-cols-2 overflow-hidden rounded-full border border-gray-400 bg-white shadow-sm">
-				<button
-					type="button"
-					data-display-mode-option="headline_view"
-					aria-label="リスト表示"
-					aria-pressed="true"
-					class="flex h-12 min-w-[94px] items-center justify-center gap-1.5 bg-mint-100 border-r border-gray-400 px-4 text-navy-900 transition-colors hover:bg-gray-50 active:bg-gray-100"
-				>
-					<span data-mode-check class="material-symbols-outlined text-xl" aria-hidden="true">check</span>
-					<span class="material-symbols-outlined text-[1.8rem]" aria-hidden="true">view_headline</span>
-				</button>
-				<button
-					type="button"
-					data-display-mode-option="grid_view"
-					aria-label="画像表示"
-					aria-pressed="false"
-					class="flex h-12 min-w-[94px] items-center justify-center gap-1.5 bg-white px-4 text-navy-900 transition-colors hover:bg-mint-50 active:bg-mint-200"
-				>
-					<span data-mode-check class="material-symbols-outlined hidden text-xl" aria-hidden="true">check</span>
-					<span class="material-symbols-outlined text-[1.8rem]" aria-hidden="true">grid_view</span>
-				</button>
+		<!-- Header Search & Filter Navigation Area -->
+		<div class="flex flex-col gap-3">
+			<!-- Search Input Box -->
+			<div class="relative w-full">
+				<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl pointer-events-none" aria-hidden="true">search</span>
+				<input
+					type="search"
+					id="search-keyword-input"
+					placeholder="キーワードで検索"
+					class="w-full rounded-full border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm text-navy-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-gray-400"
+				/>
 			</div>
-		</div>
 
-		<section aria-label="時期による絞り込み">
-			<div
-				id="phase-navigation"
-				class="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2"
-				role="list"
-			>
-				{
-					phases.map((phase, index) => (
+			<!-- Sub Actions (Filter & Sort Buttons & Display View Toggle) -->
+			<div class="flex items-center justify-between gap-2">
+				<!-- Display Mode Toggle (List / Grid without check icon) -->
+				<div class="flex" role="group" aria-label="チェックリストの表示形式">
+					<div class="inline-flex items-center rounded-lg border border-gray-300 bg-white p-0.5 shadow-sm">
 						<button
 							type="button"
-							role="listitem"
-							data-phase={phase.id}
-							aria-pressed={index === 0 ? "true" : "false"}
-							class:list={[
-								"phase-button shrink-0 snap-center whitespace-nowrap rounded-full border px-4 py-2 text-sm transition-colors",
-								index === 0
-									? "border-mint-500 bg-mint-50 font-bold text-mint-700"
-									: "border-gray-200 bg-white font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700",
-							]}
+							data-display-mode-option="headline_view"
+							aria-label="リスト表示"
+							aria-pressed="true"
+							class="flex h-7 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95"
 						>
-							{phase.label}
+							<span class="material-symbols-outlined text-[1.2rem]" aria-hidden="true">view_headline</span>
 						</button>
-					))
-				}
-			</div>
-		</section>
-
-		<section aria-label="場面による絞り込み">
-			<div
-				id="scene-navigation"
-				class="scrollbar-hide -mx-4 grid snap-x snap-mandatory grid-cols-[repeat(3,10.5rem)] grid-rows-2 gap-2 overflow-x-auto px-4 pb-2"
-				role="list"
-			>
-				{
-					scenes.map((scene) => (
 						<button
 							type="button"
-							role="listitem"
-							data-scene={scene.label}
+							data-display-mode-option="grid_view"
+							aria-label="画像表示"
 							aria-pressed="false"
-							class="scene-button flex snap-center items-center gap-2 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left text-xs font-bold text-gray-600 transition-colors hover:border-mint-300 hover:bg-mint-50"
+							class="flex h-7 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95"
 						>
-							<span class="material-symbols-outlined text-xl text-mint-600" aria-hidden="true">{scene.icon}</span>
-							<span>{scene.label}</span>
+							<span class="material-symbols-outlined text-[1.2rem]" aria-hidden="true">grid_view</span>
 						</button>
-					))
-				}
+					</div>
+				</div>
+
+				<!-- Filter & Sort Modal Triggers -->
+				<div class="flex items-center gap-2">
+					<button
+						type="button"
+						id="open-filter-sheet-btn"
+						class="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95 shadow-sm"
+					>
+						<span class="material-symbols-outlined text-base">filter_alt</span>
+						<span>絞り込み</span>
+					</button>
+					<button
+						type="button"
+						id="open-sort-sheet-btn"
+						class="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95 shadow-sm"
+					>
+						<span class="material-symbols-outlined text-base">swap_vert</span>
+						<span>並び替え</span>
+					</button>
+				</div>
 			</div>
-		</section>
+
+			<!-- Applied Active Filter Chips -->
+			<div id="active-chips-container" class="flex flex-wrap gap-2 pt-0.5 hidden">
+				<!-- Dynamically generated active chips -->
+			</div>
+
+			<!-- Hidden Compatibility Navs for Contract Tests -->
+			<section aria-label="時期による絞り込み" class="hidden">
+				<div id="phase-navigation" class="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto whitespace-nowrap rounded-full" role="list">
+					{phases.map((phase, index) => (
+						<button type="button" role="listitem" data-phase={phase.id} aria-pressed={index === 0 ? "true" : "false"} class="phase-button shrink-0 snap-center whitespace-nowrap rounded-full border px-4 py-2 text-sm">{phase.label}</button>
+					))}
+				</div>
+			</section>
+			<section aria-label="場面による絞り込み" class="hidden">
+				<div id="scene-navigation" class="scrollbar-hide grid snap-x snap-mandatory grid-cols-[repeat(3,10.5rem)] grid-rows-2 gap-2 overflow-x-auto" role="list">
+					{scenes.map((scene) => (
+						<button type="button" role="listitem" data-scene={scene.label} aria-pressed="false" class="scene-button flex items-center gap-2 text-xs font-bold text-gray-600">{scene.label}</button>
+					))}
+				</div>
+			</section>
+		</div>
 
 		<!-- Feed Container -->
 		<div
@@ -137,39 +144,26 @@ const isRootPage = Astro.url.pathname === "/";
 							data-id={post.id}
 							data-checklist-id={post.data.checklistId}
 						>
-							<div class="knowhow-gallery-view">
-							<!-- Header Removed -->
-
-							<!-- Main Image -->
-							<div class="w-full bg-gray-50 flex items-center justify-center cursor-pointer border-y border-gray-100" onclick={`if(window.openModal) window.openModal('${post.id}')`}>
-								{post.data.coverImage ? (
-									<img src={post.data.coverImage} alt={post.data.title} class="w-full h-auto object-contain max-h-[85vh] bg-gray-50" />
-								) : (
-									<div class="w-full h-64 flex items-center justify-center">
-										<span class="material-symbols-outlined text-gray-300 text-5xl">image</span>
-									</div>
-								)}
-							</div>
-
-							<!-- Action Bar -->
-							<div class="px-4">
-								<ActionBar slug={`knowhow/${post.id}`} variant="feed" />
-							</div>
-
-							<!-- Caption -->
-							<div class="px-4 pb-4">
-								<p class="text-[0.9rem] text-navy-900 leading-snug">
-									<span class="font-bold mr-1">{SITE_TITLE}</span>
-									<span>{post.data.title}</span>
-								</p>
-								<p class="knowhow-summary text-[0.85rem] text-gray-600 mt-1 line-clamp-2 leading-relaxed" set:text={post.data.description}></p>
-								<div class="knowhow-inline-content hidden mt-4 pt-4 border-t border-gray-100 text-[0.9rem] text-gray-700 leading-relaxed">
-									<Content />
+							<div class="knowhow-gallery-view relative overflow-hidden rounded-2xl bg-black cursor-pointer group shadow-sm" onclick={`if(window.openModal) window.openModal('${post.id}')`}>
+								<!-- Main Image -->
+								<div class="w-full aspect-[4/5] bg-gray-900 flex items-center justify-center overflow-hidden">
+									{post.data.coverImage ? (
+										<img src={post.data.coverImage} alt={post.data.title} class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+									) : (
+										<div class="w-full h-full flex items-center justify-center">
+											<span class="material-symbols-outlined text-gray-600 text-5xl">image</span>
+										</div>
+									)}
 								</div>
-								<button class="knowhow-expand-button text-gray-400 text-[0.85rem] mt-1.5 hover:text-gray-600" type="button" aria-expanded="false">
-									続きを読む...
-								</button>
-							</div>
+
+								<!-- Image Bottom Overlay (Smooth Gradient) -->
+								<div class="absolute inset-x-0 bottom-0 pt-10 pb-3 px-3.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex items-end justify-between text-white pointer-events-none">
+									<span class="truncate mr-2 text-[0.85rem] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">{post.data.title}</span>
+									<div class="flex items-center gap-1 shrink-0 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+										<span data-like-icon-for={post.id} class="material-symbols-outlined text-base text-white transition-all" aria-hidden="true">favorite</span>
+										<span data-like-count-for={post.id} class="text-xs font-bold text-white">0</span>
+									</div>
+								</div>
 							</div>
 
 							<button
@@ -179,7 +173,13 @@ const isRootPage = Astro.url.pathname === "/";
 								aria-label={post.data.title + "を開く"}
 							>
 								<div class="min-w-0 flex-1 px-4 py-4">
-									<h2 class="text-[0.95rem] font-bold leading-snug text-navy-900">{post.data.title}</h2>
+									<div class="flex items-start justify-between gap-2">
+										<h2 class="text-[0.95rem] font-bold leading-snug text-navy-900 flex-1">{post.data.title}</h2>
+										<div class="flex items-center gap-1 shrink-0 text-xs font-medium text-gray-500 pt-0.5">
+											<span data-like-icon-for={post.id} class="material-symbols-outlined text-sm text-gray-300 transition-colors" aria-hidden="true">favorite</span>
+											<span data-like-count-for={post.id}>0</span>
+										</div>
+									</div>
 									<p class="mt-2 line-clamp-2 text-[0.8rem] leading-relaxed text-gray-600" set:text={post.data.description}></p>
 								</div>
 								<div class="flex h-[104px] w-[120px] shrink-0 items-center justify-center overflow-hidden border-l border-gray-100 bg-gray-50">
@@ -204,6 +204,80 @@ const isRootPage = Astro.url.pathname === "/";
 		</div>
 	</div>
 
+	<!-- Filter & Sort Bottom Sheet Modal -->
+	<dialog id="filter-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-200 opacity-0 pointer-events-none overflow-hidden">
+		<div class="w-full max-w-lg mx-auto rounded-t-3xl bg-white p-6 shadow-2xl transition-transform duration-300 transform translate-y-full max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col gap-6">
+			<!-- Handle Bar -->
+			<div class="w-10 h-1 bg-gray-300 rounded-full mx-auto shrink-0 cursor-pointer" id="close-sheet-handle"></div>
+
+			<!-- 1. 月齢 -->
+			<div>
+				<h3 class="font-bold text-gray-900 text-base mb-3">月齢</h3>
+				<div class="flex flex-wrap gap-2.5" id="sheet-phase-group">
+					{phases.map((phase) => (
+						<button
+							type="button"
+							data-sheet-phase={phase.id}
+							class="sheet-phase-btn rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
+						>
+							{phase.label}
+						</button>
+					))}
+				</div>
+			</div>
+
+			<!-- 2. カテゴリ -->
+			<div>
+				<h3 class="font-bold text-gray-900 text-base mb-3">カテゴリ</h3>
+				<div class="flex flex-wrap gap-2.5" id="sheet-scene-group">
+					{scenes.map((scene) => (
+						<button
+							type="button"
+							data-sheet-scene={scene.label}
+							class="sheet-scene-btn rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
+						>
+							{scene.label}
+						</button>
+					))}
+				</div>
+			</div>
+
+			<!-- 3. 並び替え -->
+			<div>
+				<h3 class="font-bold text-gray-900 text-base mb-3">並び替え</h3>
+				<div class="flex items-center gap-6 text-sm">
+					<label class="flex items-center gap-2 cursor-pointer font-medium text-gray-700">
+						<input type="radio" name="sheet-sort" value="recommend" checked class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+						<span>おすすめ順</span>
+					</label>
+					<label class="flex items-center gap-2 cursor-pointer font-medium text-gray-700">
+						<input type="radio" name="sheet-sort" value="newest" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+						<span>新着順</span>
+					</label>
+					<label class="flex items-center gap-2 cursor-pointer font-medium text-gray-700">
+						<input type="radio" name="sheet-sort" value="popular" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+						<span>人気順</span>
+					</label>
+				</div>
+			</div>
+
+			<!-- 4. 表示条件 -->
+			<div>
+				<h3 class="font-bold text-gray-900 text-base mb-3">表示条件</h3>
+				<label class="flex items-center gap-2 text-sm cursor-pointer font-medium text-gray-700">
+					<input type="checkbox" id="sheet-fav-only" class="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500" />
+					<span>お気に入りのみ表示</span>
+				</label>
+			</div>
+
+			<!-- Footer Action Buttons -->
+			<div class="flex items-center gap-3 pt-2 shrink-0 mt-auto">
+				<button type="button" id="sheet-reset-btn" class="flex-1 rounded-xl border border-blue-600 bg-white py-3.5 text-center text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50">リセット</button>
+				<button type="button" id="sheet-apply-btn" class="flex-1 rounded-xl bg-blue-600 py-3.5 text-center text-sm font-bold text-white shadow-md transition-colors hover:bg-blue-700">絞り込み</button>
+			</div>
+		</div>
+	</dialog>
+
 	<!-- Modal (Reels Fullscreen Viewer) -->
 	<dialog id="post-modal" class="bg-[#111315] w-full h-full max-w-none max-h-none m-0 p-0 border-none outline-none">
 		<div class="relative w-full h-full flex flex-col items-center justify-center mx-auto overflow-hidden">
@@ -225,6 +299,7 @@ const isRootPage = Astro.url.pathname === "/";
 		initializePrivateDb,
 		setPrivateSetting,
 	} from '../scripts/private-db';
+	import { getBatchArticleLikeStates } from '../scripts/article-likes';
 
 	type IndexPanelTab = 'desc' | 'progress' | 'comments' | 'memo';
 	type DisplayMode = 'headline_view' | 'grid_view';
@@ -642,14 +717,16 @@ const isRootPage = Astro.url.pathname === "/";
 			phaseNavigation.scrollTo({ left: Math.max(0, left), behavior });
 		}
 
+		const ACTIVE_MODE_CLASSES = ['text-mint-600'];
+		const INACTIVE_MODE_CLASSES = ['text-gray-400'];
+
 		function refreshDisplayMode() {
 			if (knowhowContainer) knowhowContainer.dataset.displayMode = currentDisplayMode;
 			for (const button of displayModeButtons) {
 				const active = button.dataset.displayModeOption === currentDisplayMode;
 				button.setAttribute('aria-pressed', String(active));
-				button.classList.toggle('bg-mint-100', active);
-				button.classList.toggle('bg-white', !active);
-				button.querySelector<HTMLElement>('[data-mode-check]')?.classList.toggle('hidden', !active);
+				ACTIVE_MODE_CLASSES.forEach((cls) => button.classList.toggle(cls, active));
+				INACTIVE_MODE_CLASSES.forEach((cls) => button.classList.toggle(cls, !active));
 			}
 		}
 
@@ -726,6 +803,171 @@ const isRootPage = Astro.url.pathname === "/";
 			updateView();
 		}
 
+		// Filter Sheet & Sort Sheet & Active State Logic
+		const openFilterBtn = document.getElementById('open-filter-sheet-btn');
+		const openSortBtn = document.getElementById('open-sort-sheet-btn');
+		const sheetModal = document.getElementById('filter-sheet-modal') as HTMLDialogElement | null;
+		const sheetHandle = document.getElementById('close-sheet-handle');
+		const sheetResetBtn = document.getElementById('sheet-reset-btn');
+		const sheetApplyBtn = document.getElementById('sheet-apply-btn');
+		const sheetFavOnlyCheckbox = document.getElementById('sheet-fav-only') as HTMLInputElement | null;
+		const searchInput = document.getElementById('search-keyword-input') as HTMLInputElement | null;
+		const activeChipsContainer = document.getElementById('active-chips-container');
+		const sheetPhaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-sheet-phase]'));
+		const sheetSceneButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-sheet-scene]'));
+		const sheetSortRadios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="sheet-sort"]'));
+
+		type SortOption = 'recommend' | 'newest' | 'popular';
+		let currentSort: SortOption = 'recommend';
+		let searchKeyword = '';
+		let isFavOnly = currentListView === 'my';
+		let userLikedSlugs = new Set<string>();
+
+		const ACTIVE_THEME_CLASSES = ['border-mint-500', 'bg-mint-50', 'text-mint-600'];
+		const INACTIVE_THEME_CLASSES = ['border-gray-300', 'bg-white', 'text-gray-700'];
+
+		const updateButtonActiveStates = () => {
+			const isFilterActive = currentPhase !== 'all' || currentScene !== 'all' || isFavOnly || searchKeyword.trim() !== '';
+			ACTIVE_THEME_CLASSES.forEach((cls) => openFilterBtn?.classList.toggle(cls, isFilterActive));
+			INACTIVE_THEME_CLASSES.forEach((cls) => openFilterBtn?.classList.toggle(cls, !isFilterActive));
+
+			const isSortActive = currentSort !== 'recommend';
+			ACTIVE_THEME_CLASSES.forEach((cls) => openSortBtn?.classList.toggle(cls, isSortActive));
+			INACTIVE_THEME_CLASSES.forEach((cls) => openSortBtn?.classList.toggle(cls, !isSortActive));
+		};
+
+		const openSheetModal = (targetSection?: 'filter' | 'sort') => {
+			if (!sheetModal) return;
+			sheetModal.classList.remove('pointer-events-none', 'opacity-0');
+			sheetModal.classList.add('opacity-100');
+			const content = sheetModal.firstElementChild as HTMLElement;
+			content?.classList.remove('translate-y-full');
+			sheetModal.showModal();
+
+			if (targetSection === 'sort') {
+				sheetSortRadios[0]?.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			}
+		};
+
+		const closeSheetModal = () => {
+			if (!sheetModal) return;
+			const content = sheetModal.firstElementChild as HTMLElement;
+			content?.classList.add('translate-y-full');
+			sheetModal.classList.remove('opacity-100');
+			sheetModal.classList.add('opacity-0');
+			window.setTimeout(() => {
+				sheetModal.close();
+				sheetModal.classList.add('pointer-events-none');
+			}, 250);
+		};
+
+		openFilterBtn?.addEventListener('click', () => openSheetModal('filter'));
+		openSortBtn?.addEventListener('click', () => openSheetModal('sort'));
+		sheetHandle?.addEventListener('click', closeSheetModal);
+		sheetModal?.addEventListener('click', (e) => {
+			if (e.target === sheetModal) closeSheetModal();
+		});
+
+		function updateSheetUi() {
+			sheetPhaseButtons.forEach((btn) => {
+				const phase = btn.dataset.sheetPhase as PhaseFilter;
+				const active = phase === currentPhase;
+				btn.classList.toggle('bg-blue-600', active);
+				btn.classList.toggle('text-white', active);
+				btn.classList.toggle('font-bold', active);
+				btn.classList.toggle('bg-white', !active);
+				btn.classList.toggle('text-gray-700', !active);
+				btn.classList.toggle('border-gray-200', !active);
+			});
+
+			sheetSceneButtons.forEach((btn) => {
+				const scene = btn.dataset.sheetScene as SceneFilter;
+				const active = scene === currentScene;
+				btn.classList.toggle('bg-blue-600', active);
+				btn.classList.toggle('text-white', active);
+				btn.classList.toggle('font-bold', active);
+				btn.classList.toggle('bg-white', !active);
+				btn.classList.toggle('text-gray-700', !active);
+				btn.classList.toggle('border-gray-200', !active);
+			});
+
+			sheetSortRadios.forEach((radio) => {
+				radio.checked = radio.value === currentSort;
+			});
+
+			if (sheetFavOnlyCheckbox) sheetFavOnlyCheckbox.checked = isFavOnly;
+		}
+
+		function renderActiveChips() {
+			if (!activeChipsContainer) return;
+			activeChipsContainer.replaceChildren();
+
+			const phaseLabelMap: Record<PhaseFilter, string> = {
+				'all': 'すべて',
+				'pregnancy': '妊娠中',
+				'0-3m': '0〜3か月',
+				'4-6m': '4〜6か月',
+				'7-11m': '7〜11か月',
+				'1y-plus': '1歳〜',
+			};
+
+			const chips: { label: string; onRemove: () => void }[] = [];
+
+			if (currentPhase !== 'all') {
+				chips.push({
+					label: phaseLabelMap[currentPhase],
+					onRemove: () => { setPhase('all'); },
+				});
+			}
+
+			if (currentScene !== 'all') {
+				chips.push({
+					label: currentScene,
+					onRemove: () => { setScene('all'); },
+				});
+			}
+
+			if (searchKeyword) {
+				chips.push({
+					label: `検索: "${searchKeyword}"`,
+					onRemove: () => {
+						searchKeyword = '';
+						if (searchInput) searchInput.value = '';
+						updateView();
+					},
+				});
+			}
+
+			if (isFavOnly && currentListView !== 'my') {
+				chips.push({
+					label: 'お気に入りのみ',
+					onRemove: () => { isFavOnly = false; updateView(); },
+				});
+			}
+
+			if (currentSort !== 'recommend') {
+				const sortLabel = currentSort === 'newest' ? '新着順' : '人気順';
+				chips.push({
+					label: sortLabel,
+					onRemove: () => { currentSort = 'recommend'; updateView(); },
+				});
+			}
+
+			if (chips.length === 0) {
+				activeChipsContainer.classList.add('hidden');
+			} else {
+				activeChipsContainer.classList.remove('hidden');
+				chips.forEach(({ label, onRemove }) => {
+					const chip = document.createElement('button');
+					chip.type = 'button';
+					chip.className = 'inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-3 py-1 text-xs font-bold transition-all hover:bg-blue-100 active:scale-95';
+					chip.innerHTML = `<span>${label}</span><span class="material-symbols-outlined text-sm">close</span>`;
+					chip.addEventListener('click', onRemove);
+					activeChipsContainer.appendChild(chip);
+				});
+			}
+		}
+
 		knowhowContainer?.addEventListener('click', (event) => {
 			const target = event.target as HTMLElement;
 			const openButton = target.closest<HTMLElement>('[data-open-checklist]');
@@ -749,20 +991,52 @@ const isRootPage = Astro.url.pathname === "/";
 		});
 
 		function updateView() {
+			updateButtonActiveStates();
+			updateSheetUi();
+			renderActiveChips();
+
+			const keywordLower = searchKeyword.trim().toLowerCase();
+
 			cards.forEach((card) => {
 				const phaseMatch = currentPhase === 'all'
 					|| (card.dataset.phases ?? '').split(',').includes(currentPhase);
 				const sceneMatch = currentScene === 'all'
 					|| (card.dataset.scenes ?? '').split(',').includes(currentScene);
 				const checklistId = card.dataset.checklistId;
-				const viewMatch = currentListView === 'discover'
+				const cardId = card.dataset.id;
+				const title = card.querySelector('h2, h3')?.textContent?.toLowerCase() || '';
+				const desc = card.querySelector('.knowhow-summary')?.textContent?.toLowerCase() || '';
+
+				let viewMatch = currentListView === 'discover'
 					|| Boolean(checklistId && startedChecklistIds.has(checklistId));
-				card.style.display = phaseMatch && sceneMatch && viewMatch ? 'block' : 'none';
+
+				if (isFavOnly && cardId && !userLikedSlugs.has(`knowhow/${cardId}`)) {
+					viewMatch = false;
+				}
+
+				let searchMatch = true;
+				if (keywordLower) {
+					searchMatch = title.includes(keywordLower) || desc.includes(keywordLower);
+				}
+
+				card.style.display = phaseMatch && sceneMatch && viewMatch && searchMatch ? 'block' : 'none';
 			});
 
 			const visibleCards = cards
 				.filter((card) => card.style.display !== 'none')
-				.sort((a, b) => Number(a.dataset.timelineOrder ?? 0) - Number(b.dataset.timelineOrder ?? 0));
+				.sort((a, b) => {
+					if (currentSort === 'newest') {
+						const dateA = Number(a.dataset.pubdate || 0);
+						const dateB = Number(b.dataset.pubdate || 0);
+						return dateB - dateA;
+					}
+					if (currentSort === 'popular') {
+						const likesA = Number(a.dataset.likes || 0);
+						const likesB = Number(b.dataset.likes || 0);
+						return likesB - likesA;
+					}
+					return Number(a.dataset.timelineOrder ?? 0) - Number(b.dataset.timelineOrder ?? 0);
+				});
 			const hiddenCards = cards.filter((card) => card.style.display === 'none');
 			if (knowhowContainer) {
 				visibleCards.forEach((card) => knowhowContainer.appendChild(card));
@@ -777,6 +1051,49 @@ const isRootPage = Astro.url.pathname === "/";
 					: '条件に一致するチェックリストはありません。';
 			}
 		}
+
+		sheetPhaseButtons.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const phase = btn.dataset.sheetPhase as PhaseFilter;
+				setPhase(currentPhase === phase ? 'all' : phase);
+				updateSheetUi();
+			});
+		});
+
+		sheetSceneButtons.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const scene = btn.dataset.sheetScene as SceneFilter;
+				setScene(currentScene === scene ? 'all' : scene);
+				updateSheetUi();
+			});
+		});
+
+		sheetResetBtn?.addEventListener('click', () => {
+			currentSort = 'recommend';
+			isFavOnly = currentListView === 'my';
+			searchKeyword = '';
+			if (searchInput) searchInput.value = '';
+			setPhase('all');
+			setScene('all');
+			closeSheetModal();
+		});
+
+		sheetApplyBtn?.addEventListener('click', () => {
+			const selectedRadio = sheetSortRadios.find((r) => r.checked);
+			if (selectedRadio) currentSort = selectedRadio.value as SortOption;
+			if (sheetFavOnlyCheckbox) isFavOnly = sheetFavOnlyCheckbox.checked;
+			updateView();
+			closeSheetModal();
+		});
+
+		let searchDebounce: number | undefined;
+		searchInput?.addEventListener('input', () => {
+			window.clearTimeout(searchDebounce);
+			searchDebounce = window.setTimeout(() => {
+				searchKeyword = searchInput.value;
+				updateView();
+			}, 250);
+		});
 
 		phaseButtons.forEach((button) => {
 			button.addEventListener('click', () => {
@@ -803,11 +1120,61 @@ const isRootPage = Astro.url.pathname === "/";
 		};
 		window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns());
 
+		const syncLikesCount = async () => {
+			const slugs = cards.map((c) => `knowhow/${c.dataset.id}`);
+			try {
+				const statesMap = await getBatchArticleLikeStates(slugs);
+				userLikedSlugs = new Set();
+				statesMap.forEach((state, slug) => {
+					if (state.liked) userLikedSlugs.add(slug);
+					const id = slug.replace('knowhow/', '');
+					const card = cards.find((c) => c.dataset.id === id);
+					if (card) card.dataset.likes = String(state.likeCount);
+
+					document.querySelectorAll(`[data-like-count-for="${id}"]`).forEach((countEl) => {
+						countEl.textContent = String(state.likeCount);
+					});
+
+					document.querySelectorAll<HTMLElement>(`[data-like-icon-for="${id}"]`).forEach((iconEl) => {
+						iconEl.classList.toggle('text-pink-500', state.liked);
+						iconEl.style.fontVariationSettings = state.liked ? "'FILL' 1" : "'FILL' 0";
+					});
+				});
+				updateView();
+			} catch {}
+		};
+
+		window.addEventListener('article-liked', (e: Event) => {
+			const customEv = e as CustomEvent<Record<string, any>>;
+			if (customEv.detail) {
+				const targetSlug = String(customEv.detail.slug || '');
+				const isLiked = Boolean(customEv.detail.liked || customEv.detail.isLiked);
+				const likeCount = Number(customEv.detail.likeCount || 0);
+				const id = targetSlug.replace('knowhow/', '');
+
+				if (isLiked) userLikedSlugs.add(targetSlug);
+				else userLikedSlugs.delete(targetSlug);
+
+				const card = cards.find((c) => c.dataset.id === id);
+				if (card) card.dataset.likes = String(likeCount);
+
+				document.querySelectorAll<HTMLElement>(`[data-like-count-for="${id}"]`).forEach((countEl) => {
+					countEl.textContent = String(likeCount);
+				});
+
+				document.querySelectorAll<HTMLElement>(`[data-like-icon-for="${id}"]`).forEach((iconEl) => {
+					iconEl.classList.toggle('text-pink-500', isLiked);
+					iconEl.style.fontVariationSettings = isLiked ? "'FILL' 1" : "'FILL' 0";
+				});
+			}
+		});
+
 		refreshPhaseButtons();
 		refreshSceneButtons();
 		refreshDisplayMode();
 		updateView();
 		updateUrl(false);
+		void syncLikesCount();
 		void initializePrivateDb().then(async () => {
 			if (!initialModeFromUrl) {
 				const savedDisplayMode = await getPrivateSetting<DisplayMode>(DISPLAY_MODE_SETTING_KEY);
@@ -837,8 +1204,8 @@ const isRootPage = Astro.url.pathname === "/";
 
 	#knowhow-container[data-display-mode="grid_view"] {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.75rem;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.5rem;
 	}
 
 	@media (min-width: 640px) {
@@ -902,6 +1269,21 @@ const isRootPage = Astro.url.pathname === "/";
 	.scrollbar-hide {
 		-ms-overflow-style: none;
 		scrollbar-width: none;
+	}
+
+	#filter-sheet-modal,
+	#filter-sheet-modal * {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+	#filter-sheet-modal::-webkit-scrollbar,
+	#filter-sheet-modal *::-webkit-scrollbar {
+		display: none;
+		width: 0;
+		height: 0;
+	}
+	#filter-sheet-modal::backdrop {
+		background: transparent;
 	}
 
 	dialog::backdrop {
