@@ -14,8 +14,10 @@ if (!checklistEntry || checklistEntry.data.status !== "published") {
 	throw new Error("公開中のチェックリスト原本がありません: " + knowhow.data.checklistId);
 }
 const checklist = checklistEntry.data;
-const prevUrl = prev ? `/knowhow/${prev.id}/` : '';
-const nextUrl = next ? `/knowhow/${next.id}/` : '';
+const isPrivateDetail = Astro.url.pathname.startsWith('/my-knowhow/');
+const detailRoutePrefix = isPrivateDetail ? '/my-knowhow/' : '/knowhow/';
+const prevUrl = prev ? `${detailRoutePrefix}${prev.id}/` : '';
+const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 ---
 
 <Layout
@@ -31,6 +33,29 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
          data-prev={prevUrl}
          data-next={nextUrl}>
 
+		<div
+			data-google-login-backup-notice
+			class="fixed inset-0 z-[200] hidden items-end justify-center bg-black/60 p-4 sm:items-center"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="google-login-backup-notice-title"
+		>
+			<div class="w-full max-w-md rounded-3xl bg-white p-5 text-gray-700 shadow-2xl">
+				<div class="flex items-start gap-3">
+					<span class="material-symbols-outlined shrink-0 text-3xl text-mint-500" aria-hidden="true">cloud_done</span>
+					<div class="min-w-0">
+						<h2 id="google-login-backup-notice-title" class="text-base font-bold text-navy-900">Googleログインで安全に保存</h2>
+						<p data-google-login-notice-message class="mt-2 text-sm leading-6 text-gray-600">Googleでログインすると、進捗やメモをDriveバックアップに保存できます。</p>
+					</div>
+				</div>
+				<div class="mt-5 flex flex-col gap-2">
+					<button type="button" data-google-login-notice-login class="rounded-full bg-mint-500 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-mint-600">Googleでログイン</button>
+					<button type="button" data-google-login-notice-dismiss class="rounded-full px-5 py-3 text-sm font-bold text-gray-500 transition-colors hover:bg-gray-100">今回はログインせずに続ける</button>
+				</div>
+				<p data-google-login-notice-error class="mt-3 hidden text-sm leading-5 text-red-600" role="alert"></p>
+			</div>
+
+		</div>
 		<!-- PC Back Button -->
 		<button data-media-ui onclick="window.goBackFromKnowhow?.(this)" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
 			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
@@ -71,13 +96,13 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 
                     <!-- Floating Action Bar (Mobile only) -->
                     <div data-media-ui class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
-                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} />
+                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} />
                     </div>
                 </div>
 
                 <!-- Floating Action Bar (PC only) -->
                 <div data-media-ui class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
-                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} />
+                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} />
                 </div>
             </div>
 
@@ -126,9 +151,13 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 <script>
     import { navigate } from 'astro:transitions/client';
 	import { createChecklistRun, type ChecklistTemplate } from '../scripts/checklist-state';
+	import { signInWithGoogle } from '../scripts/google-auth';
+	import { CHECKLIST_GOOGLE_LOGIN_NOTICE_KEY, recordChecklistUsage, type ChecklistUsageNotice } from '../scripts/checklist-usage';
+	import { getCurrentArticleLikeState, notifyArticleLikeChanged, setArticleLikeState } from '../scripts/article-likes';
 	import {
 		deletePrivateChecklistRunsByChecklistId,
 		getActivePrivateChecklistRun,
+		getPrivateChecklistRunsByChecklistId,
 		initializePrivateDb,
 		savePrivateChecklistRun,
 	} from '../scripts/private-db';
@@ -144,13 +173,14 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 			toggleDescPanel: () => void;
 			toggleProgressPanel: () => void;
 			toggleMemoPanel: () => void;
-			startChecklist: () => Promise<void>;
+			startChecklist: (options?: { skipLike?: boolean }) => Promise<void>;
 			removeChecklistFromMyList: () => Promise<void>;
             toggleInfoPanel: () => void;
             toggleTab: (tab: PanelTab) => void;
             switchTab: (tab: PanelTab) => void;
 			goBackFromKnowhow: (trigger?: HTMLElement) => void;
             closeModal?: () => void;
+		_knowhowStartRequest?: (event: Event) => void;
 		}
 	}
 
@@ -167,10 +197,96 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 		} catch {
 			// Session storage may be unavailable in strict privacy modes.
 		}
-		const destination = returnUrl.startsWith('/knowhow') ? returnUrl : '/knowhow/';
-		if (window.astroNavigate) window.astroNavigate(destination);
-		else window.location.href = destination;
+		const destination = returnUrl.startsWith('/knowhow') || returnUrl.startsWith('/my-knowhow') ? returnUrl : '/';
+			window.location.assign(destination);
 	};
+
+	// Show the backup guidance only for the mobile checklist experience.
+	function initGoogleLoginBackupNotice() {
+		const notice = document.querySelector<HTMLElement>('[data-google-login-backup-notice]');
+		if (!notice || notice.dataset.initialized) return;
+		notice.dataset.initialized = 'true';
+		const message = notice.querySelector<HTMLElement>('[data-google-login-notice-message]');
+		const loginButton = notice.querySelector<HTMLButtonElement>('[data-google-login-notice-login]');
+		const dismissButton = notice.querySelector<HTMLButtonElement>('[data-google-login-notice-dismiss]');
+		const errorMessage = notice.querySelector<HTMLElement>('[data-google-login-notice-error]');
+		const isSp = () => window.matchMedia?.('(max-width: 767px)').matches ?? window.innerWidth < 768;
+		const noticeController = new AbortController();
+		const clearPendingNotice = () => {
+			try {
+				sessionStorage.removeItem(CHECKLIST_GOOGLE_LOGIN_NOTICE_KEY);
+			} catch {
+				// Session storage may be unavailable in strict privacy modes.
+			}
+		};
+		const closeNotice = () => {
+			notice.classList.add('hidden');
+			notice.classList.remove('flex');
+			notice.setAttribute('aria-hidden', 'true');
+		};
+		const showNotice = (detail?: ChecklistUsageNotice) => {
+			if (!isSp()) {
+				clearPendingNotice();
+				closeNotice();
+				return;
+			}
+			let pending = detail;
+			if (!pending) {
+				try {
+					const stored = sessionStorage.getItem(CHECKLIST_GOOGLE_LOGIN_NOTICE_KEY);
+					pending = stored ? JSON.parse(stored) as ChecklistUsageNotice : undefined;
+				} catch {
+					pending = undefined;
+				}
+			}
+			if (!pending || !Number.isInteger(pending.usageCount)) return;
+			if (message) {
+				message.textContent = pending.usageCount === 1
+					? '初回利用です。Googleでログインすると、進捗やメモをDriveバックアップに保存できます。'
+					: `${pending.usageCount}回目の利用です。Googleでログインすると、進捗やメモをDriveバックアップに安全に保存できます。`;
+			}
+			if (errorMessage) {
+				errorMessage.textContent = '';
+				errorMessage.classList.add('hidden');
+			}
+			notice.classList.remove('hidden');
+			notice.classList.add('flex');
+			notice.setAttribute('aria-hidden', 'false');
+		};
+
+		loginButton?.addEventListener('click', async () => {
+			if (!loginButton) return;
+			loginButton.disabled = true;
+			if (dismissButton) dismissButton.disabled = true;
+			loginButton.textContent = 'ログインを開始しています…';
+			clearPendingNotice();
+			try {
+				await signInWithGoogle(window.location.href);
+				closeNotice();
+			} catch (error) {
+				if (errorMessage) {
+					errorMessage.textContent = error instanceof Error ? error.message : 'Googleログインを開始できませんでした。';
+					errorMessage.classList.remove('hidden');
+				}
+				loginButton.disabled = false;
+				if (dismissButton) dismissButton.disabled = false;
+				loginButton.textContent = 'Googleでログイン';
+			}
+		});
+		dismissButton?.addEventListener('click', () => {
+			clearPendingNotice();
+			closeNotice();
+		});
+		window.addEventListener('checklist-usage-notice', (event) => {
+			showNotice((event as CustomEvent<ChecklistUsageNotice>).detail);
+		}, { signal: noticeController.signal });
+		window.addEventListener('resize', () => showNotice(), { signal: noticeController.signal });
+		document.addEventListener('astro:before-swap', () => noticeController.abort(), {
+			once: true,
+			signal: noticeController.signal,
+		});
+		showNotice();
+	}
 
 	// Astro replaces the document during client navigation. Carry the wheel/swipe
 	// direction into the incoming document so both transition snapshots use the
@@ -187,6 +303,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 		const container = document.getElementById('knowhow-modal-container');
 		if (!container || container.dataset.reelsInitialized) return;
 		container.dataset.reelsInitialized = 'true';
+		initGoogleLoginBackupNotice();
 
         // We bind functions to window dynamically so they fetch the latest DOM elements
         const isMobile = () => window.innerWidth < 1024;
@@ -197,37 +314,55 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 			const hidden = container.dataset.mediaChromeHidden === 'true';
 			container.dataset.mediaChromeHidden = String(!hidden);
 		});
-		const detailBasePath = `/knowhow/${container.dataset.knowhowId}/`;
-		const readDetailRoute = () => {
-			const segments = window.location.pathname.split('/').filter(Boolean);
-			const knowhowIndex = segments.indexOf('knowhow');
-			const suffix = knowhowIndex >= 0 ? segments.slice(knowhowIndex + 2) : [];
-			const mode: DetailMode = suffix[0] === 'my' ? 'private' : 'public';
-			const tabSegment = mode === 'private' ? suffix[1] : suffix[0];
-			const tab: PanelTab = tabSegment === 'progress'
-				? 'progress'
-				: tabSegment === 'memo'
-					? 'memo'
-					: tabSegment === 'comments'
-						? 'comments'
-						: 'desc';
-			return { mode, tab, shouldOpen: Boolean(tabSegment) };
-		};
-		let currentMode: DetailMode = readDetailRoute().mode;
+		const knowhowId = container.dataset.knowhowId;
+		const detailBasePath = `/knowhow/${knowhowId}/`;
+		const privateDetailBasePath = `/my-knowhow/${knowhowId}/`;
+		
+		const urlParams = new URLSearchParams(window.location.search);
+		let currentMode: DetailMode = urlParams.get('mode') === 'my' ? 'private' : 'public';
+		// Optional: if the URL itself still implies "my-knowhow", handle it cleanly:
+		if (window.location.pathname.includes('/my-knowhow') || window.location.pathname.includes('/my/')) {
+			currentMode = 'private';
+		}
+		
 		const tabsByMode: Record<DetailMode, PanelTab[]> = {
 			public: ['desc'],
 			private: ['desc', 'progress', 'memo'],
 		};
 
+		const readDetailRoute = (): { mode: DetailMode; tab: PanelTab; shouldOpen: boolean } => {
+			const params = new URLSearchParams(window.location.search);
+			const segments = window.location.pathname.split('/').filter(Boolean);
+			const privateRouteIndex = segments.indexOf('my-knowhow');
+			const legacyPrivateRouteIndex = segments.indexOf('my');
+			const isPrivatePath = privateRouteIndex >= 0 || legacyPrivateRouteIndex >= 0;
+			const mode: DetailMode = params.get('mode') === 'my' || isPrivatePath ? 'private' : 'public';
+			const pathTab = privateRouteIndex >= 0
+				? segments[privateRouteIndex + 2]
+				: legacyPrivateRouteIndex >= 0
+					? segments[legacyPrivateRouteIndex + 1]
+					: undefined;
+			const requestedTab = params.get('tab') ?? (pathTab === 'description' ? 'desc' : pathTab);
+			const tab = requestedTab && tabsByMode[mode].includes(requestedTab as PanelTab)
+				? requestedTab as PanelTab
+				: 'desc';
+
+			return { mode, tab, shouldOpen: mode === 'private' && tab !== 'desc' };
+		};
+
 		const setUrlTab = (tab: PanelTab | null) => {
-			let path = detailBasePath;
-			if (currentMode === 'private') {
-				path += 'my/';
-				if (tab) path += `${tab === 'desc' ? 'description' : tab}/`;
-			} else if (tab) {
-				path += `${tab === 'desc' ? 'description' : tab}/`;
+			const params = new URLSearchParams(window.location.search);
+			params.delete('mode');
+			params.delete('tab');
+			const basePath = currentMode === 'private' ? privateDetailBasePath : detailBasePath;
+			const pathSuffix = currentMode === 'private' && tab && tab !== 'desc' ? `${tab}/` : '';
+
+			const queryString = params.toString();
+			const newPath = basePath + pathSuffix + (queryString ? `?${queryString}` : '');
+			
+			if (newPath !== window.location.pathname + window.location.search) {
+				history.replaceState(null, '', newPath);
 			}
-			if (path !== window.location.pathname) history.pushState(null, '', path);
 		};
 
 		const getActiveTab = (): PanelTab => {
@@ -353,7 +488,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 			});
 			try {
 				await deletePrivateChecklistRunsByChecklistId(checklistId);
-				await navigate('/knowhow/my/');
+				await navigate('/my-knowhow/');
 			} catch {
 				window.alert('マイリストから削除できませんでした。もう一度お試しください。');
 				removingChecklist = false;
@@ -364,7 +499,7 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 		};
 
 		let startingChecklist = false;
-		window.startChecklist = async () => {
+		window.startChecklist = async (options) => {
 			if (startingChecklist) return;
 			startingChecklist = true;
 			try {
@@ -372,9 +507,32 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 				if (!templateSource?.textContent) throw new Error('template-missing');
 				const template = JSON.parse(templateSource.textContent) as ChecklistTemplate;
 				await initializePrivateDb();
-				const existing = await getActivePrivateChecklistRun(template.checklistId);
-				if (!existing) await savePrivateChecklistRun(createChecklistRun(template));
-				await navigate(`${detailBasePath}my/progress/`);
+				const storedRuns = await getPrivateChecklistRunsByChecklistId(template.checklistId);
+				const existing = storedRuns.find((run) => !run.deletedAt);
+				if (!existing) {
+					await savePrivateChecklistRun(createChecklistRun(template));
+					try {
+						await recordChecklistUsage(template.checklistId);
+					} catch {
+						// Usage notifications must not block local checklist use.
+					}
+				}
+
+				// A checklist start is the first public action that creates a like.
+				// A like-button initiated start already owns this request, so avoid a
+				// second increment in that path.
+				if (storedRuns.length === 0 && !options?.skipLike) {
+					try {
+						const likeState = await getCurrentArticleLikeState(`knowhow/${knowhowId}`);
+						if (!likeState.liked) {
+							const nextLikeState = await setArticleLikeState(`knowhow/${knowhowId}`, true);
+							notifyArticleLikeChanged(nextLikeState);
+						}
+					} catch {
+						// Starting the checklist must remain available if the like API is unavailable.
+					}
+				}
+				await navigate(`${privateDetailBasePath}progress/`);
 			} catch {
 				window.alert('チェックリストを開始できませんでした。端末の保存設定をご確認ください。');
 			} finally {
@@ -385,11 +543,36 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 			button.addEventListener('click', () => void window.startChecklist());
 		});
 
+		const startRequestHandler = (event: Event) => {
+			const detail = (event as CustomEvent<{ slug?: string; skipLike?: boolean }>).detail;
+			if (detail?.slug !== `knowhow/${knowhowId}`) return;
+			void window.startChecklist({ skipLike: detail.skipLike === true });
+		};
+		if (window._knowhowStartRequest) {
+			window.removeEventListener('checklist-start-requested', window._knowhowStartRequest);
+		}
+		window._knowhowStartRequest = startRequestHandler;
+		window.addEventListener('checklist-start-requested', startRequestHandler);
+
+		let startAfterOpen = false;
+		let startAfterOpenSkipLike = false;
+		try {
+			if (sessionStorage.getItem('knowhow:start-after-open') === knowhowId) {
+				startAfterOpen = true;
+				startAfterOpenSkipLike = sessionStorage.getItem('knowhow:start-after-open-skip-like') === 'true';
+				sessionStorage.removeItem('knowhow:start-after-open');
+				sessionStorage.removeItem('knowhow:start-after-open-skip-like');
+			}
+		} catch {
+			// Session storage may be unavailable in strict privacy modes.
+		}
 		// Close panel if clicked outside
-		document.addEventListener('click', (e) => {
+		const handleOutsideClick = (e: MouseEvent) => {
 			const target = e.target as HTMLElement;
+			const currentContainer = document.getElementById('knowhow-modal-container');
+			if (!currentContainer) return;
             const infoPanel = document.getElementById('info-panel');
-			if (container && container.contains(target) &&
+			if (currentContainer.contains(target) &&
 				(!infoPanel || !infoPanel.contains(target)) &&
 				!target.closest('button[onclick*="toggleCommentsPanel"]') &&
 				!target.closest('button[onclick*="toggleDescPanel"]') &&
@@ -400,10 +583,11 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 				!target.closest('[data-private-action-trigger]') &&
                 !target.closest('button[onclick*="toggleTab"]') &&
                 !target.closest('div[onclick*="toggleDescPanel"]') &&
-				!target.closest('.like-btn')
+				!target.closest('.like-btn') &&
+				!target.closest('[data-media-ui]')
 			) {
 				if (infoPanel) {
-					if (isMobile()) infoPanel.classList.add('translate-y-full');
+					if (window.innerWidth < 1024) infoPanel.classList.add('translate-y-full');
 					else {
                         infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
                         infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
@@ -411,7 +595,12 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 				}
 				setUrlTab(null);
 			}
-		});
+		};
+		// @ts-ignore
+		if (window._knowhowOutsideClick) document.removeEventListener('click', window._knowhowOutsideClick);
+		// @ts-ignore
+		window._knowhowOutsideClick = handleOutsideClick;
+		document.addEventListener('click', handleOutsideClick);
 
         // Navigation logic for standalone page (wheel/swipe)
         let isNavigating = false;
@@ -498,12 +687,23 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 			applyModeUi();
 			window.switchTab(route.tab);
 			const infoPanel = document.getElementById('info-panel');
-			if (infoPanel && route.shouldOpen) {
-				if (isMobile()) {
-					infoPanel.classList.remove('translate-y-full');
+			if (infoPanel) {
+				if (route.shouldOpen) {
+					if (window.innerWidth < 1024) {
+						infoPanel.classList.remove('translate-y-full');
+						infoPanel.classList.add('translate-y-0');
+					} else {
+						infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+						infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+					}
 				} else {
-					infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-					infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+					if (window.innerWidth < 1024) {
+						infoPanel.classList.add('translate-y-full');
+						infoPanel.classList.remove('translate-y-0');
+					} else {
+						infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
+						infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+					}
 				}
 			}
 		};
@@ -525,8 +725,33 @@ const nextUrl = next ? `/knowhow/${next.id}/` : '';
 			buttons[nextIndex].focus();
 			window.toggleTab(buttons[nextIndex].id.replace('tab-btn-', '') as PanelTab);
 		});
+		// @ts-ignore
+		if (window._knowhowPopstate) window.removeEventListener('popstate', window._knowhowPopstate);
+		// @ts-ignore
+		window._knowhowPopstate = syncDetailStateFromUrl;
 		window.addEventListener('popstate', syncDetailStateFromUrl);
 		syncDetailStateFromUrl();
+
+		const syncPrivateStateFromStoredRuns = async () => {
+			try {
+				await initializePrivateDb();
+				const runs = await getPrivateChecklistRunsByChecklistId(container.dataset.checklistId ?? '');
+				const hasActiveRun = runs.some((run) => !run.deletedAt);
+				if (hasActiveRun && currentMode === 'public') {
+					currentMode = 'private';
+					applyModeUi();
+				}
+			} catch {
+				// The public detail remains usable when private storage is unavailable.
+			} finally {
+				container.dataset.privateStateLoaded = 'true';
+				if (startAfterOpen) {
+					startAfterOpen = false;
+					void window.startChecklist({ skipLike: startAfterOpenSkipLike });
+				}
+			}
+		};
+		void syncPrivateStateFromStoredRuns();
 	}
 
 	document.addEventListener('DOMContentLoaded', initReels);

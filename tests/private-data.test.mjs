@@ -166,7 +166,7 @@ test('run削除もrevisionを進めてDrive反映待ちにする', async () => {
 	assert.equal((await getBackupQueue()).some((entry) => entry.runId === run.runId), true);
 });
 
-test('マイリストからの削除は同じチェックリストの全履歴を削除する', async () => {
+test('マイリストからの削除は履歴を削除済みとして残し、通常一覧から除外する', async () => {
 	await clearPrivateChecklistData();
 	const first = createChecklistRun(template);
 	const second = duplicateChecklistRun(first);
@@ -176,7 +176,11 @@ test('マイリストからの削除は同じチェックリストの全履歴�
 	await savePrivateChecklistRun(other);
 	const before = await getPrivateDataRevision();
 	assert.equal(await deletePrivateChecklistRunsByChecklistId(template.checklistId), 2);
-	assert.deepEqual((await getPrivateChecklistRuns()).map((run) => run.checklistId), ['other-checklist']);
+	const runs = await getPrivateChecklistRuns();
+	assert.equal(runs.length, 3);
+	assert.equal(runs.filter((run) => run.checklistId === template.checklistId && run.deletedAt).length, 2);
+	assert.equal(await getActivePrivateChecklistRun(template.checklistId), null);
+	assert.equal((await getActivePrivateChecklistRun('other-checklist'))?.checklistId, 'other-checklist');
 	assert.equal(await getPrivateDataRevision(), before + 1);
 	const queued = await getBackupQueue();
 	assert.equal(queued.some((entry) => entry.runId === first.runId), true);

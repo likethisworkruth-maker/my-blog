@@ -69,28 +69,42 @@ export async function checkSupabaseHealth(): Promise<boolean> {
 	}
 
 	if (!connectionCheckPromise) {
-		connectionCheckPromise = (async () => {
-			try {
-				const controller = new AbortController();
-				const timeoutId = setTimeout(() => controller.abort(), 2000);
-				const res = await fetch(`${supabaseUrl}/rest/v1/`, {
-					method: 'HEAD',
-					headers: {
-						apikey: supabaseAnonKey,
-					},
-					signal: controller.signal,
-				}).finally(() => clearTimeout(timeoutId));
+		const checkPromise = new Promise<boolean>((resolve) => {
+			let settled = false;
+			const finish = (available: boolean) => {
+				if (settled) return;
+				settled = true;
+				resolve(available);
+			};
 
-				if (!res.ok && res.status >= 500) {
+			try {
+				const request = new XMLHttpRequest();
+				request.open('HEAD', `${supabaseUrl}/rest/v1/`, true);
+				request.timeout = 2000;
+				request.setRequestHeader('apikey', supabaseAnonKey);
+				request.onload = () => finish(request.status > 0 && request.status < 500);
+				request.onerror = () => {
 					markSupabaseUnavailable();
-					return false;
-				}
-				return true;
-			} catch (err) {
+					finish(false);
+				};
+				request.ontimeout = () => {
+					markSupabaseUnavailable();
+					finish(false);
+				};
+				request.onabort = () => {
+					markSupabaseUnavailable();
+					finish(false);
+				};
+				request.send();
+			} catch {
 				markSupabaseUnavailable();
-				return false;
+				finish(false);
 			}
-		})();
+		});
+		connectionCheckPromise = checkPromise.catch(() => {
+			markSupabaseUnavailable();
+			return false;
+		});
 	}
 	return connectionCheckPromise;
 }

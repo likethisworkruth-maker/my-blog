@@ -110,7 +110,11 @@ const likeSlug = `logs/${log.id}`;
 		});
 	};
 
-	const runLogLikeCounts = () => void initLogLikeCounts();
+	const runLogLikeCounts = () => {
+	void initLogLikeCounts().catch((error) => {
+		console.warn('ログのいいね状態の初期化に失敗しました。', error);
+	});
+	};
 	const installLogLikeListeners = () => {
 		if (document.documentElement.dataset.logLikeListeners === 'true') return;
 		document.documentElement.dataset.logLikeListeners = 'true';

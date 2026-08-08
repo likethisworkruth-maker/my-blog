@@ -80,7 +80,7 @@ const formClass = variant === 'modal'
 		</div>
 	</form>
 
-	<dialog data-comment-confirm class="comment-confirm-dialog w-[calc(100%_-_2rem)] max-w-sm rounded-2xl border-0 bg-white p-0 text-navy-900 shadow-2xl">
+	<dialog data-comment-confirm class="comment-confirm-dialog w-[calc(100%_-_2rem)] max-w-sm rounded-2xl border border-gray-200 bg-white p-0 text-navy-900">
 		<div class="p-6">
 			<h3 class="text-base font-bold">コメントを送信しますか？</h3>
 			<p class="mt-4 whitespace-pre-line text-sm leading-6 text-gray-600">コメントに氏名、連絡先、病院名などの
@@ -88,8 +88,8 @@ const formClass = variant === 'modal'
 			<p class="mt-4 whitespace-pre-line text-sm leading-6 text-gray-600">未ログインで投稿したコメントは、
 運営確認後に公開され、投稿後は削除できません。</p>
 			<div class="mt-6 flex justify-end gap-2">
-				<button type="button" data-comment-confirm-back class="rounded-full border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">入力に戻る</button>
-				<button type="button" data-comment-confirm-send class="rounded-full bg-mint-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-mint-600 disabled:cursor-not-allowed disabled:opacity-40">確認して送信</button>
+				<button type="button" data-comment-confirm-back class="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">入力に戻る</button>
+				<button type="button" data-comment-confirm-send class="rounded-xl bg-mint-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-mint-600 disabled:cursor-not-allowed disabled:opacity-40">確認して送信</button>
 			</div>
 		</div>
 	</dialog>
@@ -228,7 +228,7 @@ const formClass = variant === 'modal'
 						const reels = variant === 'reels';
 						card.className = reels
 							? 'bg-transparent p-2 relative flex gap-3'
-							: 'bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm relative';
+							: 'bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 relative';
 
 						const header = document.createElement('div');
 						header.className = 'mb-2 flex items-start justify-between gap-3';

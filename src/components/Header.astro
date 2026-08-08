@@ -15,10 +15,8 @@ const currentPath =
 		1,
 	);
 const pathSegments = pathname.split("/").filter(Boolean);
-const isMyListPath = pathSegments[0] === "knowhow" && (
-	pathSegments[1] === "my" || pathSegments[2] === "my"
-);
-const isChecklistPath = (pathname === "/" || pathSegments[0] === "knowhow") && !isMyListPath;
+const isMyListPath = pathSegments[0] === "my-knowhow";
+const isChecklistPath = (pathname === "/" || pathSegments[0] === "knowhow");
 const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 	currentPath.startsWith(path),
 );
@@ -26,6 +24,7 @@ const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 
 <header
 	class="sticky top-0 z-50 w-full bg-white border-b border-gray-100 lg:border-none"
+	data-site-header
 >
 	<div
 		class="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
@@ -49,7 +48,7 @@ const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 				{UI.headerNav.knowhow}
 			</a>
 			<a
-				href="/knowhow/my/"
+				href="/my-knowhow/"
 				class={`font-bold transition-colors pb-1 border-b-2 ${isMyListPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
 				{UI.headerNav.myList}
@@ -66,7 +65,7 @@ const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 
 	<div class="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-2 sm:right-6">
 		{SHOW_NARAIBASE && (
-			<a href="https://naraibase.likethis.work/" class="hidden rounded-full bg-[#1d224b] px-4 py-2 text-sm font-bold text-white transition-colors hover:opacity-90 sm:inline-flex">
+			<a href="https://naraibase.likethis.work/" class="hidden rounded-xl bg-[#1d224b] px-4 py-2 text-sm font-bold text-white transition-colors hover:opacity-90 sm:inline-flex">
 				{UI.headerNav.naraibase}
 			</a>
 		)}

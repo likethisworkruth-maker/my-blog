@@ -66,6 +66,7 @@ export interface ChecklistRun {
 	completedAt?: string;
 	updatedAt: string;
 	revision: number;
+	deletedAt?: string;
 }
 
 interface ChecklistStore {
@@ -159,10 +160,10 @@ export function getChecklistRuns(storage?: Storage): ChecklistRun[] {
 export function getActiveChecklistRun(checklistId: string, storage?: Storage): ChecklistRun | null {
 	const store = readChecklistStore(storage);
 	const activeRunId = store.activeRunIds[checklistId];
-	if (activeRunId && store.runs[activeRunId]) return store.runs[activeRunId];
+	if (activeRunId && store.runs[activeRunId] && !store.runs[activeRunId].deletedAt) return store.runs[activeRunId];
 
 	return Object.values(store.runs)
-		.filter((run) => run.checklistId === checklistId)
+		.filter((run) => run.checklistId === checklistId && !run.deletedAt)
 		.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
 }
 
@@ -291,6 +292,7 @@ export function duplicateChecklistRun(run: ChecklistRun): ChecklistRun {
 		preparedAt: undefined,
 		reviewStartedAt: undefined,
 		completedAt: undefined,
+		deletedAt: undefined,
 		updatedAt: now,
 		revision: 0,
 	};

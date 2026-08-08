@@ -26,39 +26,27 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 				type="search"
 				id="log-search"
 				placeholder="子育てログを検索"
-				class="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-[0.95rem] shadow-sm transition-colors focus:border-mint-500 focus:outline-none sm:py-4"
+				class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-[0.95rem] transition-colors focus:border-mint-500 focus:outline-none sm:py-4"
 			/>
 		</div>
 
-		<div class="flex flex-col lg:flex-row gap-4 mb-8 items-start lg:items-center justify-between">
-			<!-- Categories -->
-			<div class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide w-full lg:w-auto" id="category-filters">
-				{displayCategories.map((category, index) => (
-					<button
-						class={`category-btn px-4 py-2 rounded-full border text-sm whitespace-nowrap shrink-0 transition-colors ${index === 0 ? 'border-mint-500 bg-mint-50 text-mint-500 font-bold' : 'border-gray-200 bg-white text-gray-500 font-medium hover:bg-gray-50'}`}
-						data-category={category}
-					>
-						{category}
-					</button>
-				))}
-			</div>
-
-			<!-- Age & Sort -->
-			<div class="flex gap-3 w-full lg:w-auto shrink-0">
-				<select id="age-filter" class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500">
-					<option value="all">すべての月齢</option>
-					{uniqueAges.map(age => (
-						<option value={age.toString()}>生後{age}ヶ月</option>
-					))}
-					<option value="none">月齢未指定</option>
-				</select>
-
-				<select id="sort-order" class="flex-1 lg:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-mint-500">
-					<option value="newest">最新順</option>
-					<option value="age-asc">月齢が低い順</option>
-					<option value="age-desc">月齢が高い順</option>
-				</select>
-			</div>
+		<div class="flex items-center justify-end gap-2 mb-8">
+			<button
+				type="button"
+				id="open-filter-sheet-btn"
+				class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95"
+			>
+				<span class="material-symbols-outlined text-base">filter_alt</span>
+				<span>絞り込み</span>
+			</button>
+			<button
+				type="button"
+				id="open-sort-sheet-btn"
+				class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95"
+			>
+				<span class="material-symbols-outlined text-base">swap_vert</span>
+				<span>並び替え</span>
+			</button>
 		</div>
 
 		<div class="flex flex-col gap-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6" id="logs-container">
@@ -68,6 +56,60 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 			<p class="text-sm font-bold text-gray-700">条件に一致する子育てログはありません。</p>
 		</div>
 	</div>
+
+	<!-- Filter & Sort Bottom Sheet Modal -->
+	<dialog id="filter-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-200 opacity-0 pointer-events-none overflow-hidden">
+		<div id="filter-sheet-content" class="w-full max-w-lg mx-auto rounded-t-3xl bg-white px-6 pb-6 pt-3 transition-transform duration-250 ease-out transform translate-y-full h-[80vh] max-h-[80vh] overflow-y-auto scrollbar-hide flex flex-col gap-5 border border-gray-200">
+			<!-- Handle Bar -->
+			<div class="w-full pt-1 pb-3 shrink-0 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none" id="close-sheet-handle">
+				<div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+			</div>
+
+			<!-- Filter Section -->
+			<div id="sheet-section-filter" class="flex flex-col gap-5">
+				<div>
+					<h3 class="font-bold text-gray-900 text-base mb-3">カテゴリー</h3>
+					<div class="flex flex-wrap gap-2.5" id="sheet-category-group">
+						{displayCategories.map((category) => (
+							<button type="button" data-sheet-category={category} class="sheet-category-btn rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50">{category}</button>
+						))}
+					</div>
+				</div>
+				<div>
+					<h3 class="font-bold text-gray-900 text-base mb-3">対象月齢</h3>
+					<div class="flex flex-wrap gap-2.5" id="sheet-age-group">
+						<button type="button" data-sheet-age="all" class="sheet-age-btn rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50">すべての対象</button>
+						{uniqueAges.map((age) => (
+							<button type="button" data-sheet-age={age.toString()} class="sheet-age-btn rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50">生後{age}ヶ月向け</button>
+						))}
+						<button type="button" data-sheet-age="none" class="sheet-age-btn rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50">月齢未指定</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Sort Section -->
+			<div id="sheet-section-sort" class="flex flex-col gap-0 hidden">
+				<h3 class="font-bold text-gray-900 text-base mb-2">並び替え</h3>
+				<label class="flex items-center justify-between py-3.5 border-b border-gray-100 cursor-pointer group">
+					<span class="text-sm font-bold text-gray-700 group-hover:text-gray-900">最新順</span>
+					<input type="radio" name="sheet-sort" value="newest" class="w-4 h-4 text-mint-600 focus:ring-mint-500 border-gray-300" checked />
+				</label>
+				<label class="flex items-center justify-between py-3.5 border-b border-gray-100 cursor-pointer group">
+					<span class="text-sm font-bold text-gray-700 group-hover:text-gray-900">月齢が低い順</span>
+					<input type="radio" name="sheet-sort" value="age-asc" class="w-4 h-4 text-mint-600 focus:ring-mint-500 border-gray-300" />
+				</label>
+				<label class="flex items-center justify-between py-3.5 cursor-pointer group">
+					<span class="text-sm font-bold text-gray-700 group-hover:text-gray-900">月齢が高い順</span>
+					<input type="radio" name="sheet-sort" value="age-desc" class="w-4 h-4 text-mint-600 focus:ring-mint-500 border-gray-300" />
+				</label>
+			</div>
+
+			<!-- Apply Button -->
+			<div class="mt-auto pt-4 pb-2">
+				<button type="button" id="sheet-apply-btn" class="w-full rounded-xl bg-mint-500 px-4 py-3.5 text-center text-sm font-bold text-white transition-colors hover:bg-mint-600 active:scale-95">絞り込む</button>
+			</div>
+		</div>
+	</dialog>
 </Layout>
 
 <script>
@@ -76,16 +118,75 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 		if (!logsContainer || logsContainer.dataset.listInitialized === 'true') return;
 		logsContainer.dataset.listInitialized = 'true';
 
-		const categoryButtons = document.querySelectorAll('.category-btn');
-		const ageFilter = document.getElementById('age-filter') as HTMLSelectElement;
-		const sortOrder = document.getElementById('sort-order') as HTMLSelectElement;
-		const searchInput = document.getElementById('log-search') as HTMLInputElement;
 		const cards = Array.from(document.querySelectorAll('.log-card')) as HTMLElement[];
+		const searchInput = document.getElementById('log-search') as HTMLInputElement;
+
+		// Bottom Sheet Elements
+		const filterSheetModal = document.getElementById('filter-sheet-modal') as HTMLDialogElement;
+		const filterSheetContent = document.getElementById('filter-sheet-content');
+		const closeSheetHandle = document.getElementById('close-sheet-handle');
+		const openFilterSheetBtn = document.getElementById('open-filter-sheet-btn');
+		const openSortSheetBtn = document.getElementById('open-sort-sheet-btn');
+		const sheetSectionFilter = document.getElementById('sheet-section-filter');
+		const sheetSectionSort = document.getElementById('sheet-section-sort');
+		const sheetApplyBtn = document.getElementById('sheet-apply-btn');
+
+		const sheetCategoryBtns = document.querySelectorAll('.sheet-category-btn');
+		const sheetAgeBtns = document.querySelectorAll('.sheet-age-btn');
+		const sheetSortRadios = document.querySelectorAll('input[name="sheet-sort"]') as NodeListOf<HTMLInputElement>;
 
 		let currentCategory = 'すべて';
 		let currentAge = 'all';
 		let currentSort = 'newest';
 		let searchQuery = '';
+
+		// Sheet state
+		let isFilterMode = true;
+
+		// Initialize Sheet UI state
+		function updateSheetUI() {
+			sheetCategoryBtns.forEach(btn => {
+				const isSelected = btn.getAttribute('data-sheet-category') === currentCategory;
+				btn.classList.toggle('border-mint-500', isSelected);
+				btn.classList.toggle('bg-mint-50', isSelected);
+				btn.classList.toggle('text-mint-600', isSelected);
+				btn.classList.toggle('border-gray-200', !isSelected);
+				btn.classList.toggle('text-gray-700', !isSelected);
+			});
+			sheetAgeBtns.forEach(btn => {
+				const isSelected = btn.getAttribute('data-sheet-age') === currentAge;
+				btn.classList.toggle('border-mint-500', isSelected);
+				btn.classList.toggle('bg-mint-50', isSelected);
+				btn.classList.toggle('text-mint-600', isSelected);
+				btn.classList.toggle('border-gray-200', !isSelected);
+				btn.classList.toggle('text-gray-700', !isSelected);
+			});
+			sheetSortRadios.forEach(radio => {
+				radio.checked = radio.value === currentSort;
+			});
+		}
+
+		sheetCategoryBtns.forEach(btn => {
+			btn.addEventListener('click', () => {
+				currentCategory = btn.getAttribute('data-sheet-category') || 'すべて';
+				updateSheetUI();
+			});
+		});
+
+		sheetAgeBtns.forEach(btn => {
+			btn.addEventListener('click', () => {
+				currentAge = btn.getAttribute('data-sheet-age') || 'all';
+				updateSheetUI();
+			});
+		});
+
+		sheetSortRadios.forEach(radio => {
+			radio.addEventListener('change', (e) => {
+				if ((e.target as HTMLInputElement).checked) {
+					currentSort = (e.target as HTMLInputElement).value;
+				}
+			});
+		});
 
 		function updateView() {
 			cards.forEach((card) => {
@@ -131,35 +232,68 @@ const uniqueAges = [...new Set(logs.map(log => log.data.childAgeMonths).filter(a
 
 			const emptyState = document.getElementById('logs-empty');
 			emptyState?.classList.toggle('hidden', visibleCards.length > 0);
+			
+			// Highlight filter buttons if active
+			const isFilterActive = currentCategory !== 'すべて' || currentAge !== 'all';
+			openFilterSheetBtn?.classList.toggle('border-mint-500', isFilterActive);
+			openFilterSheetBtn?.classList.toggle('text-mint-600', isFilterActive);
+			openFilterSheetBtn?.classList.toggle('bg-mint-50', isFilterActive);
+			
+			const isSortActive = currentSort !== 'newest';
+			openSortSheetBtn?.classList.toggle('border-mint-500', isSortActive);
+			openSortSheetBtn?.classList.toggle('text-mint-600', isSortActive);
+			openSortSheetBtn?.classList.toggle('bg-mint-50', isSortActive);
 		}
 
-		categoryButtons.forEach((button) => {
-			button.addEventListener('click', () => {
-				currentCategory = button.getAttribute('data-category') || 'すべて';
+		// Bottom Sheet Logic
+		function openSheet(mode: 'filter' | 'sort') {
+			isFilterMode = mode === 'filter';
+			if (sheetSectionFilter && sheetSectionSort && sheetApplyBtn) {
+				sheetSectionFilter.classList.toggle('hidden', !isFilterMode);
+				sheetSectionSort.classList.toggle('hidden', isFilterMode);
+				sheetApplyBtn.textContent = isFilterMode ? '絞り込む' : '並び替える';
+			}
+			updateSheetUI();
 
-				categoryButtons.forEach((btn) => {
-					btn.classList.remove('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
-					btn.classList.add('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
-				});
-				button.classList.remove('border-gray-200', 'bg-white', 'text-gray-500', 'font-medium');
-				button.classList.add('border-mint-500', 'bg-mint-50', 'text-mint-500', 'font-bold');
-
-				updateView();
+			filterSheetModal.showModal();
+			document.body.style.overflow = 'hidden';
+			requestAnimationFrame(() => {
+				filterSheetModal.classList.remove('opacity-0', 'pointer-events-none');
+				filterSheetContent?.classList.remove('translate-y-full');
 			});
+		}
+
+		function closeSheet() {
+			filterSheetModal.classList.add('opacity-0', 'pointer-events-none');
+			filterSheetContent?.classList.add('translate-y-full');
+			document.body.style.overflow = '';
+			setTimeout(() => {
+				if (filterSheetModal.open) filterSheetModal.close();
+			}, 250);
+		}
+
+		openFilterSheetBtn?.addEventListener('click', () => openSheet('filter'));
+		openSortSheetBtn?.addEventListener('click', () => openSheet('sort'));
+		sheetApplyBtn?.addEventListener('click', () => {
+			updateView();
+			closeSheet();
 		});
 
-		ageFilter?.addEventListener('change', (e) => {
-			currentAge = (e.target as HTMLSelectElement).value;
-			updateView();
+		filterSheetModal?.addEventListener('click', (e) => {
+			if (e.target === filterSheetModal) closeSheet();
 		});
 
-		sortOrder?.addEventListener('change', (e) => {
-			currentSort = (e.target as HTMLSelectElement).value;
-			updateView();
-		});
+		let touchStartY = 0;
+		closeSheetHandle?.addEventListener('touchstart', (e) => {
+			touchStartY = e.touches[0].clientY;
+		}, { passive: true });
+		closeSheetHandle?.addEventListener('touchmove', (e) => {
+			const touchY = e.touches[0].clientY;
+			if (touchY - touchStartY > 50) closeSheet();
+		}, { passive: true });
 
 		searchInput?.addEventListener('input', (e) => {
-			searchQuery = (e.target as HTMLInputElement).value.trim().toLowerCase();
+			searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
 			updateView();
 		});
 

@@ -2,9 +2,10 @@
 interface Props {
 	slug: string | null;
 	variant?: 'large' | 'compact' | 'footer' | 'reels';
+	startOnLike?: boolean;
 }
 
-const { slug, variant = 'large' } = Astro.props;
+const { slug, variant = 'large', startOnLike = false } = Astro.props;
 
 // Disabled state for pages without a slug
 const disabledAttr = { disabled: true };
@@ -14,6 +15,7 @@ const disabledAttr = { disabled: true };
 	<button
 		type="button"
 		data-slug={slug}
+		data-start-on-like={startOnLike ? 'true' : undefined}
 		aria-pressed="false"
 		aria-label="いいね"
 		class="like-btn group relative flex items-center gap-2 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
@@ -31,6 +33,7 @@ const disabledAttr = { disabled: true };
 	<button
 		type="button"
 		data-slug={slug}
+		data-start-on-like={startOnLike ? 'true' : undefined}
 		aria-pressed="false"
 		aria-label="いいね"
 		class="like-btn group relative flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
@@ -48,6 +51,7 @@ const disabledAttr = { disabled: true };
 	<button
 		type="button"
 		data-slug={slug}
+		data-start-on-like={startOnLike ? 'true' : undefined}
 		aria-pressed="false"
 		aria-label="いいね"
 		class="like-btn group relative flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium text-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -65,16 +69,17 @@ const disabledAttr = { disabled: true };
 	<button
 		type="button"
 		data-slug={slug}
+		data-start-on-like={startOnLike ? 'true' : undefined}
 		aria-pressed="false"
 		aria-label="いいね"
 		class="like-btn group relative flex flex-col items-center gap-1 transition-all active:scale-95 disabled:opacity-80 disabled:cursor-not-allowed"
 		{...disabledAttr}
 	>
 		<div class="relative flex items-center justify-center">
-			<span class="material-symbols-outlined icon-empty text-white group-hover:text-pink-400 transition-colors text-[2rem] drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" aria-hidden="true">favorite</span>
-			<span class="material-symbols-outlined icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-[2rem] drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">favorite</span>
+			<span class="material-symbols-outlined icon-text-shadow icon-empty text-white group-hover:text-pink-400 transition-colors text-[2rem]" aria-hidden="true">favorite</span>
+			<span class="material-symbols-outlined icon-text-shadow icon-filled text-pink-500 absolute inset-0 opacity-0 transition-opacity text-[2rem]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">favorite</span>
 		</div>
-		<span class="like-count font-medium text-white group-hover:text-pink-400 transition-colors text-[0.8rem] drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">0</span>
+		<span class="icon-text-shadow like-count font-medium text-white group-hover:text-pink-400 transition-colors text-[0.8rem]">0</span>
 	</button>
 )}
 
@@ -93,7 +98,7 @@ const disabledAttr = { disabled: true };
 		const toast = document.createElement('p');
 		toast.dataset.likeErrorToast = 'true';
 		toast.setAttribute('role', 'status');
-		toast.className = 'fixed bottom-20 left-1/2 z-[100] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-lg bg-red-700 px-4 py-3 text-sm text-white shadow-lg';
+		toast.className = 'fixed bottom-20 left-1/2 z-[100] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-lg bg-red-700 px-4 py-3 text-sm text-white border border-red-800';
 		toast.textContent = message;
 		document.body.appendChild(toast);
 		window.setTimeout(() => toast.remove(), 5_000);
@@ -157,23 +162,46 @@ const disabledAttr = { disabled: true };
 			if (!btn.hasAttribute('data-like-listener-installed')) {
 				btn.setAttribute('data-like-listener-installed', 'true');
 				btn.addEventListener('click', async () => {
+					const startOnLikeClick = btn.dataset.startOnLike === 'true';
 					if (isBusyMap.get(slug)) return;
 					const current = buttonStates.get(slug);
+					if (startOnLikeClick && current?.liked) {
+						window.dispatchEvent(new CustomEvent('checklist-start-requested', {
+							detail: { slug, skipLike: true },
+						}));
+						return;
+					}
+					if (startOnLikeClick && !current) {
+						window.dispatchEvent(new CustomEvent('checklist-start-requested', {
+							detail: { slug, skipLike: false },
+						}));
+						return;
+					}
 					if (!current) return;
 
 					isBusyMap.set(slug, true);
 					buttonsBySlug.get(slug)?.forEach((b) => (b.disabled = true));
 
 					try {
-						const next = await setArticleLikeState(slug, !current.liked);
+						const next = await setArticleLikeState(slug, startOnLikeClick ? true : !current.liked);
 						buttonStates.set(slug, next);
 						buttonsBySlug.get(slug)?.forEach((b) => updateButtonUi(b, next));
 						notifyArticleLikeChanged(next);
+						if (startOnLikeClick) {
+							window.dispatchEvent(new CustomEvent('checklist-start-requested', {
+								detail: { slug, skipLike: true },
+							}));
+						}
 						if (next.liked) {
 							btn.classList.add('scale-110');
 							window.setTimeout(() => btn.classList.remove('scale-110'), 150);
 						}
 					} catch (error) {
+						if (startOnLikeClick) {
+							window.dispatchEvent(new CustomEvent('checklist-start-requested', {
+								detail: { slug, skipLike: false },
+							}));
+						}
 						console.error('Error updating like:', error);
 						showLikeError('いいねを更新できませんでした。時間をおいて再度お試しください。');
 					} finally {
@@ -195,10 +223,16 @@ const disabledAttr = { disabled: true };
 		});
 	};
 
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initLikes, { once: true });
-	} else {
-		initLikes();
-	}
-	document.addEventListener('astro:page-load', initLikes);
+	const runInitLikes = () => {
+	void initLikes().catch((error) => {
+		console.warn('いいね状態の初期化に失敗しました。', error);
+	});
+};
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', runInitLikes, { once: true });
+} else {
+	runInitLikes();
+}
+document.addEventListener('astro:page-load', runInitLikes);
 </script>

@@ -155,6 +155,7 @@ export function normalizeChecklistRun(value: unknown): ChecklistRun | null {
 		preparedAt: isValidDate(candidate.preparedAt) ? candidate.preparedAt : undefined,
 		reviewStartedAt: isValidDate(candidate.reviewStartedAt) ? candidate.reviewStartedAt : undefined,
 		completedAt: isValidDate(candidate.completedAt) ? candidate.completedAt : undefined,
+		deletedAt: isValidDate(candidate.deletedAt) ? candidate.deletedAt : undefined,
 		updatedAt: runUpdatedAt,
 		revision: Number.isInteger(candidate.revision) && Number(candidate.revision) >= 0 ? Number(candidate.revision) : 0,
 	};
@@ -247,16 +248,21 @@ export async function getPrivateChecklistRuns(): Promise<ChecklistRun[]> {
 		.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
-export async function getActivePrivateChecklistRun(checklistId: string): Promise<ChecklistRun | null> {
+export async function getPrivateChecklistRunsByChecklistId(checklistId: string): Promise<ChecklistRun[]> {
 	await initializePrivateDb();
 	const database = await getDatabase();
-	const runs = (await database.getAllFromIndex('runs', 'by-checklist', checklistId))
+	return (await database.getAllFromIndex('runs', 'by-checklist', checklistId))
 		.map(normalizeChecklistRun)
 		.filter((run): run is ChecklistRun => Boolean(run))
 		.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-	return runs.find((run) => run.status !== 'completed') ?? runs[0] ?? null;
 }
 
+export async function getActivePrivateChecklistRun(checklistId: string): Promise<ChecklistRun | null> {
+	const runs = await getPrivateChecklistRunsByChecklistId(checklistId);
+	return runs.find((run) => !run.deletedAt && run.status !== 'completed')
+		?? runs.find((run) => !run.deletedAt)
+		?? null;
+}
 export async function savePrivateChecklistRun(run: ChecklistRun, options?: { queueBackup?: boolean }) {
 	await initializePrivateDb();
 	const database = await getDatabase();
@@ -340,21 +346,26 @@ export async function deletePrivateChecklistRun(runId: string) {
 
 export async function deletePrivateChecklistRunsByChecklistId(checklistId: string) {
 	await initializePrivateDb();
-	const database = await getDatabase();
-	const runs = (await database.getAllFromIndex('runs', 'by-checklist', checklistId))
-		.map(normalizeChecklistRun)
-		.filter((run): run is ChecklistRun => Boolean(run));
+	const runs = (await getPrivateChecklistRunsByChecklistId(checklistId)).filter((run) => !run.deletedAt);
 	if (runs.length === 0) return 0;
 
+	const database = await getDatabase();
 	const transaction = database.transaction(['runs', 'backupQueue', 'settings'], 'readwrite');
 	const revisionSetting = await transaction.objectStore('settings').get(LOCAL_REVISION_KEY);
-	const localRevision = typeof revisionSetting?.value === 'number' ? revisionSetting.value + 1 : 1;
+	const localRevision = (typeof revisionSetting?.value === 'number' ? revisionSetting.value : 0) + 1;
 	const updatedAt = new Date().toISOString();
 	for (const run of runs) {
-		await transaction.objectStore('runs').delete(run.runId);
+		const deletedRun = normalizeChecklistRun({
+			...run,
+			deletedAt: updatedAt,
+			updatedAt,
+			revision: run.revision + 1,
+		});
+		if (!deletedRun) continue;
+		await transaction.objectStore('runs').put(deletedRun);
 		await transaction.objectStore('backupQueue').put({
-			runId: run.runId,
-			revision: localRevision,
+			runId: deletedRun.runId,
+			revision: deletedRun.revision,
 			updatedAt,
 		});
 	}
@@ -363,7 +374,6 @@ export async function deletePrivateChecklistRunsByChecklistId(checklistId: strin
 	notifyChecklistChange(checklistId);
 	return runs.length;
 }
-
 export async function clearPrivateChecklistData() {
 	await initializePrivateDb();
 	const database = await getDatabase();

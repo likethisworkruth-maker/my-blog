@@ -2,6 +2,7 @@
 import { getCollection, render } from "astro:content";
 import Layout from "../layouts/Layout.astro";
 import ActionBar from "./ActionBar.astro";
+import LikeButton from "./LikeButton.astro";
 import {
 	SITE_TITLE,
 	SITE_DESCRIPTION,
@@ -144,52 +145,70 @@ const isRootPage = Astro.url.pathname === "/";
 							data-id={post.id}
 							data-checklist-id={post.data.checklistId}
 						>
-							<div class="knowhow-gallery-view relative overflow-hidden rounded-2xl bg-black cursor-pointer group shadow-sm" onclick={`if(window.openModal) window.openModal('${post.id}')`}>
-								<!-- Main Image -->
-								<div class="w-full aspect-[4/5] bg-gray-900 flex items-center justify-center overflow-hidden">
-									{post.data.coverImage ? (
-										<img src={post.data.coverImage} alt={post.data.title} class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-									) : (
-										<div class="w-full h-full flex items-center justify-center">
-											<span class="material-symbols-outlined text-gray-600 text-5xl">image</span>
+							<div data-my-list-swipe-row class="relative">
+								<button
+									type="button"
+									data-my-list-delete
+									aria-label={`${post.data.title}をマイリストから削除`}
+									class="absolute inset-y-0 right-0 z-0 hidden w-20 flex-col items-center justify-center gap-1 bg-red-600 text-xs font-bold text-white"
+								>
+									<span class="material-symbols-outlined text-2xl" aria-hidden="true">delete</span>
+									<span>削除</span>
+								</button>
+								<div data-my-list-swipe-content class="relative z-10 bg-white transition-transform duration-200">
+									<div
+										class="knowhow-gallery-view relative overflow-hidden rounded-2xl bg-black cursor-pointer group shadow-sm"
+										data-open-checklist={post.id}
+										role="button"
+										tabindex="0"
+										aria-label={post.data.title + "を開く"}
+									>
+										<!-- Main Image -->
+										<div class="w-full aspect-[4/5] bg-gray-900 flex items-center justify-center overflow-hidden">
+											{post.data.coverImage ? (
+														<img src={post.data.coverImage} alt={post.data.title} class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105" />
+											) : (
+												<div class="w-full h-full flex items-center justify-center">
+													<span class="material-symbols-outlined text-gray-600 text-5xl">image</span>
+												</div>
+											)}
 										</div>
-									)}
-								</div>
 
-								<!-- Image Bottom Overlay (Smooth Gradient) -->
-								<div class="absolute inset-x-0 bottom-0 pt-10 pb-3 px-3.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex items-end justify-between text-white pointer-events-none">
-									<span class="truncate mr-2 text-[0.85rem] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">{post.data.title}</span>
-									<div class="flex items-center gap-1 shrink-0 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-										<span data-like-icon-for={post.id} class="material-symbols-outlined text-base text-white transition-all" aria-hidden="true">favorite</span>
-										<span data-like-count-for={post.id} class="text-xs font-bold text-white">0</span>
+										<!-- Image Bottom Overlay (Smooth Gradient) -->
+										<div class="absolute inset-x-0 bottom-0 pt-10 pb-3 px-3.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex items-end justify-between text-white pointer-events-none">
+											<span class="truncate mr-2 text-[0.85rem] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">{post.data.title}</span>
+											<div class="pointer-events-auto text-white">
+												<LikeButton slug={`knowhow/${post.id}`} variant="compact" startOnLike={true} />
+											</div>
+										</div>
+									</div>
+									
+									<div
+										class="knowhow-list-view w-full text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+										data-open-checklist={post.id}
+										role="button"
+										tabindex="0"
+										aria-label={post.data.title + "を開く"}
+									>
+										<div class="min-w-0 flex-1 px-4 py-4">
+											<div class="flex items-start justify-between gap-2">
+												<h2 class="text-[0.95rem] font-bold leading-snug text-navy-900 flex-1">{post.data.title}</h2>
+												<div class="pointer-events-auto shrink-0">
+													<LikeButton slug={`knowhow/${post.id}`} variant="compact" startOnLike={true} />
+												</div>
+											</div>
+										<p class="knowhow-summary mt-2 line-clamp-2 text-[0.8rem] leading-relaxed text-gray-600" set:text={post.data.description}></p>
+										</div>
+										<div class="flex h-[104px] w-[120px] shrink-0 items-center justify-center overflow-hidden border-l border-gray-100 bg-gray-50">
+											{post.data.coverImage ? (
+												<img src={post.data.coverImage} alt="" class="h-full w-full object-cover object-top" />
+											) : (
+												<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">image</span>
+											)}
+										</div>
 									</div>
 								</div>
 							</div>
-
-							<button
-								type="button"
-								class="knowhow-list-view w-full text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
-								data-open-checklist={post.id}
-								aria-label={post.data.title + "を開く"}
-							>
-								<div class="min-w-0 flex-1 px-4 py-4">
-									<div class="flex items-start justify-between gap-2">
-										<h2 class="text-[0.95rem] font-bold leading-snug text-navy-900 flex-1">{post.data.title}</h2>
-										<div class="flex items-center gap-1 shrink-0 text-xs font-medium text-gray-500 pt-0.5">
-											<span data-like-icon-for={post.id} class="material-symbols-outlined text-sm text-gray-300 transition-colors" aria-hidden="true">favorite</span>
-											<span data-like-count-for={post.id}>0</span>
-										</div>
-									</div>
-									<p class="mt-2 line-clamp-2 text-[0.8rem] leading-relaxed text-gray-600" set:text={post.data.description}></p>
-								</div>
-								<div class="flex h-[104px] w-[120px] shrink-0 items-center justify-center overflow-hidden border-l border-gray-100 bg-gray-50">
-									{post.data.coverImage ? (
-										<img src={post.data.coverImage} alt="" class="h-full w-full object-cover object-top" />
-									) : (
-										<span class="material-symbols-outlined text-4xl text-gray-300" aria-hidden="true">image</span>
-									)}
-								</div>
-							</button>
 						</article>
 					),
 				)
@@ -270,6 +289,13 @@ const isRootPage = Astro.url.pathname === "/";
 				</label>
 			</div>
 
+			<div id="sheet-deleted-only-row" class="hidden">
+				<label class="flex items-center gap-2 text-sm cursor-pointer font-medium text-gray-700">
+					<input type="checkbox" id="sheet-deleted-only" class="w-4 h-4 rounded text-red-600 border-gray-300 focus:ring-red-500" />
+					<span>削除済みのみ表示</span>
+				</label>
+			</div>
+
 			<!-- Footer Action Buttons -->
 			<div class="flex items-center gap-3 pt-2 shrink-0 mt-auto">
 				<button type="button" id="sheet-reset-btn" class="flex-1 rounded-xl border border-blue-600 bg-white py-3.5 text-center text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50">リセット</button>
@@ -296,6 +322,7 @@ const isRootPage = Astro.url.pathname === "/";
 	import {
 		getPrivateSetting,
 		getPrivateChecklistRuns,
+	deletePrivateChecklistRunsByChecklistId,
 		initializePrivateDb,
 		setPrivateSetting,
 	} from '../scripts/private-db';
@@ -307,7 +334,7 @@ const isRootPage = Astro.url.pathname === "/";
 
 	declare global {
 		interface Window {
-			openModal: (id: string) => void;
+			openModal: (id: string, options?: { start?: boolean; skipLike?: boolean }) => void;
 			toggleCommentsPanel: () => void;
 			toggleDescPanel: () => void;
 			toggleProgressPanel: () => void;
@@ -315,6 +342,7 @@ const isRootPage = Astro.url.pathname === "/";
 			toggleTab: (tab: IndexPanelTab) => void;
 			switchTab: (tab: IndexPanelTab) => void;
 			closeModal?: () => void;
+			_knowhowIndexStartRequest?: (event: Event) => void;
 		}
 	}
 
@@ -338,12 +366,8 @@ const isRootPage = Astro.url.pathname === "/";
 			if (modal && modal.open) {
 				modal.close();
 				unlockPageScroll();
-				// If we opened it via click (pushState), go back in history to clean it up
-				if (isModalOpenByClick && window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
+				if (isModalOpenByClick) {
 					history.back();
-				} else if (window.location.pathname !== '/knowhow' && window.location.pathname !== '/knowhow/') {
-					// If it was direct load or something else, replace state
-					history.replaceState(null, '', '/knowhow');
 				}
 				isModalOpenByClick = false;
 			}
@@ -360,22 +384,12 @@ const isRootPage = Astro.url.pathname === "/";
 
 		// Handle browser back/forward buttons
 		window.addEventListener('popstate', () => {
-			const segments = window.location.pathname.split('/').filter(Boolean);
-			const isListRoute = segments.length === 0 || (
-				segments[0] === 'knowhow'
-				&& (segments.length === 1 || ['my', 'phase', 'scene'].includes(segments[1]))
-			);
-			if (isListRoute) {
+			const isListRoute = window.location.pathname === '/' || window.location.pathname.startsWith('/knowhow') || window.location.pathname.startsWith('/my-knowhow');
+			if (isListRoute && (!window.location.pathname.match(/\/knowhow\/[a-zA-Z0-9_-]+\/?$/))) {
 				syncListViewFromUrl();
 				if (modal && modal.open) {
 					isModalOpenByClick = false;
 					modal.close();
-				}
-			} else if (segments[0] === 'knowhow') {
-				const id = segments[1];
-				if (id && (!modal || !modal.open)) {
-					// User navigated forward to a post, open the modal
-					window.openModal(id);
 				}
 			}
 		});
@@ -384,14 +398,11 @@ const isRootPage = Astro.url.pathname === "/";
 
 		const setUrlTab = (tab: IndexPanelTab | null) => {
 			if (!currentPostId) return;
-			let path = `/knowhow/${currentPostId}/`;
-			if (currentListView === 'my') {
-				path += 'my/';
-				if (tab) path += `${tab === 'desc' ? 'description' : tab}/`;
-			} else if (tab) {
-				path += `${tab === 'desc' ? 'description' : tab}/`;
-			}
-			history.replaceState(null, '', path);
+			const params = new URLSearchParams(window.location.search);
+			if (tab && tab !== 'desc') params.set('tab', tab);
+			else params.delete('tab');
+			const newPath = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+			history.replaceState(null, '', newPath);
 		};
 
 		const getActivePanelTab = (): IndexPanelTab => {
@@ -501,19 +512,23 @@ const isRootPage = Astro.url.pathname === "/";
 		let currentPostId = '';
 		let isNavigating = false;
 
-		window.openModal = async function(id: string) {
+		window.openModal = async function(id: string, options) {
 			if (isNavigating) return;
 
 			isNavigating = true;
 			isModalOpenByClick = true;
 			try {
 				try {
-					sessionStorage.setItem('knowhow:return-url', window.location.pathname);
+					sessionStorage.setItem('knowhow:return-url', window.location.pathname + window.location.search);
+					if (options?.start) {
+						sessionStorage.setItem('knowhow:start-after-open', id);
+						sessionStorage.setItem('knowhow:start-after-open-skip-like', String(options.skipLike === true));
+					}
 				} catch {
 					// Session storage may be unavailable in strict privacy modes.
 				}
-				const destination = currentListView === 'my'
-					? `/knowhow/${id}/my/progress/`
+				const destination = currentListView === 'my' && !isDeletedOnly
+					? `/my-knowhow/${id}/`
 					: `/knowhow/${id}/`;
 				await navigate(destination);
 			} catch (err) {
@@ -523,6 +538,17 @@ const isRootPage = Astro.url.pathname === "/";
 			}
 		};
 
+		const startRequestHandler = (event: Event) => {
+			const detail = (event as CustomEvent<{ slug?: string; skipLike?: boolean }>).detail;
+			const id = detail?.slug?.startsWith('knowhow/') ? detail.slug.slice('knowhow/'.length) : '';
+			if (!id) return;
+			void window.openModal(id, { start: true, skipLike: detail.skipLike === true });
+		};
+		if (window._knowhowIndexStartRequest) {
+			window.removeEventListener('checklist-start-requested', window._knowhowIndexStartRequest);
+		}
+		window._knowhowIndexStartRequest = startRequestHandler;
+		window.addEventListener('checklist-start-requested', startRequestHandler);
 		// Swipe and Wheel Navigation Logic
 		let startY = 0;
 		let endY = 0;
@@ -653,60 +679,79 @@ const isRootPage = Astro.url.pathname === "/";
 		};
 
 		const readListRoute = () => {
+			const params = new URLSearchParams(window.location.search);
 			const segments = window.location.pathname.split('/').filter(Boolean);
-			const suffix = segments[0] === 'knowhow' ? segments.slice(1) : [];
-			let offset = 0;
-			const view: ListView = suffix[0] === 'my' ? 'my' : 'discover';
-			if (view === 'my') offset = 1;
-			let phase: PhaseFilter = 'all';
-			let scene: SceneFilter = 'all';
-			if (suffix[offset] === 'phase' && validPhases.has(suffix[offset + 1] as PhaseFilter)) {
-				phase = suffix[offset + 1] as PhaseFilter;
-				offset += 2;
+			const privateIndex = segments.indexOf('my-knowhow');
+			const publicIndex = segments.indexOf('knowhow');
+			const view: 'discover' | 'my' = privateIndex >= 0 ? 'my' : 'discover';
+			const baseIndex = view === 'my' ? privateIndex : publicIndex;
+			const routeSegments = baseIndex >= 0 ? segments.slice(baseIndex + 1) : [];
+
+			let pathPhase: PhaseFilter = 'all';
+			let pathScene: SceneFilter = 'all';
+			if (routeSegments[0] === 'phase' && validPhases.has(routeSegments[1] as PhaseFilter)) {
+				pathPhase = routeSegments[1] as PhaseFilter;
+				if (routeSegments[2] === 'scene') {
+					pathScene = sceneLabelBySlug.get(routeSegments[3] ?? '') ?? 'all';
+				}
+			} else if (routeSegments[0] === 'scene') {
+				pathScene = sceneLabelBySlug.get(routeSegments[1] ?? '') ?? 'all';
 			}
-			if (suffix[offset] === 'scene') {
-				scene = sceneLabelBySlug.get(suffix[offset + 1]) ?? 'all';
-			}
-			return { view, phase, scene, hasPhase: phase !== 'all' };
+
+			const queryPhase = params.get('phase') as PhaseFilter | null;
+			const queryScene = params.get('scene');
+			const parsedQueryScene = queryScene
+				? sceneLabelBySlug.get(queryScene) ?? (validScenes.has(queryScene as SceneFilter) ? queryScene as SceneFilter : 'all')
+				: 'all';
+			const phase = queryPhase && validPhases.has(queryPhase) ? queryPhase : pathPhase;
+			const scene = parsedQueryScene !== 'all' ? parsedQueryScene : pathScene;
+			return {
+				view,
+				phase,
+				scene,
+				hasPhase: phase !== 'all',
+			deletedOnly: view === 'my' && ['1', 'true'].includes(params.get('deleted') ?? ''),
+			};
 		};
+
 		const initialRoute = readListRoute();
 		const initialModeFromUrl = getModeFromUrl();
-		const discoverRootPath = window.location.pathname === '/' ? '/' : '/knowhow/';
-		const hasInitialPhase = initialRoute.hasPhase;
-		let currentListView: ListView = initialRoute.view;
+		let currentListView: 'discover' | 'my' = initialRoute.view;
+		const hasInitialDeletedOnly = initialRoute.deletedOnly;
 		let currentPhase: PhaseFilter = initialRoute.phase;
+		const hasInitialPhase = initialRoute.hasPhase;
 		let currentScene: SceneFilter = initialRoute.scene;
 		let currentDisplayMode: DisplayMode = initialModeFromUrl || 'headline_view';
 		let startedChecklistIds = new Set<string>();
+		let deletedChecklistIds = new Set<string>();
+		let userLikedSlugs = new Set<string>();
+		let isPrivateDbLoaded = false;
 
 		function updateUrl(pushHistory = false) {
-			const segments = ['knowhow'];
-			if (currentListView === 'my') segments.push('my');
-			if (currentPhase !== 'all') segments.push('phase', currentPhase);
-			if (currentScene !== 'all') segments.push('scene', sceneSlugByLabel[currentScene]);
-			let path = currentListView === 'discover'
-				&& currentPhase === 'all'
-				&& currentScene === 'all'
-				&& discoverRootPath === '/'
-					? '/'
-					: `/${segments.join('/')}/`;
-			
 			const params = new URLSearchParams(window.location.search);
+			if (currentPhase !== 'all') params.set('phase', currentPhase);
+			else params.delete('phase');
+
+			if (currentScene !== 'all') params.set('scene', currentScene);
+			else params.delete('scene');
+
 			if (currentDisplayMode === 'grid_view') {
 				params.set('mode', 'grid_view');
 				params.delete('view_mode');
-			} else if (params.has('mode') || params.has('view_mode')) {
+			} else {
 				params.set('mode', 'headline_view');
 				params.delete('view_mode');
 			}
-			const queryString = params.toString();
-			if (queryString) {
-				path += `?${queryString}`;
-			}
 
+			if (currentListView === 'my' && isDeletedOnly) params.set('deleted', '1');
+			else params.delete('deleted');
+
+			const queryString = params.toString();
+			const newPath = window.location.pathname + (queryString ? `?${queryString}` : '');
+			
 			const state = { knowhowView: currentListView, phase: currentPhase, scene: currentScene, displayMode: currentDisplayMode };
-			if (pushHistory) history.pushState(state, '', path);
-			else history.replaceState(state, '', path);
+			if (pushHistory) history.pushState(state, '', newPath);
+			else history.replaceState(state, '', newPath);
 		}
 
 		function scrollActivePhaseIntoView(behavior: ScrollBehavior = 'smooth') {
@@ -781,7 +826,7 @@ const isRootPage = Astro.url.pathname === "/";
 			if (persist) void setPrivateSetting(PHASE_SETTING_KEY, phase).catch(() => undefined);
 		}
 
-		function setScene(scene: SceneFilter, pushHistory = true) {
+		function setScene(scene: string, pushHistory = true) {
 			currentScene = scene;
 			refreshSceneButtons();
 			updateView();
@@ -793,6 +838,7 @@ const isRootPage = Astro.url.pathname === "/";
 			currentListView = route.view;
 			currentPhase = route.phase;
 			currentScene = route.scene;
+			isDeletedOnly = route.deletedOnly;
 			const urlMode = getModeFromUrl();
 			if (urlMode) {
 				currentDisplayMode = urlMode;
@@ -811,6 +857,8 @@ const isRootPage = Astro.url.pathname === "/";
 		const sheetResetBtn = document.getElementById('sheet-reset-btn');
 		const sheetApplyBtn = document.getElementById('sheet-apply-btn');
 		const sheetFavOnlyCheckbox = document.getElementById('sheet-fav-only') as HTMLInputElement | null;
+		const sheetDeletedOnlyRow = document.getElementById('sheet-deleted-only-row');
+		const sheetDeletedOnlyCheckbox = document.getElementById('sheet-deleted-only') as HTMLInputElement | null;
 		const searchInput = document.getElementById('search-keyword-input') as HTMLInputElement | null;
 		const activeChipsContainer = document.getElementById('active-chips-container');
 		const sheetPhaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-sheet-phase]'));
@@ -820,14 +868,14 @@ const isRootPage = Astro.url.pathname === "/";
 		type SortOption = 'recommend' | 'newest' | 'popular';
 		let currentSort: SortOption = 'recommend';
 		let searchKeyword = '';
-		let isFavOnly = currentListView === 'my';
-		let userLikedSlugs = new Set<string>();
+		let isFavOnly = false;
+		let isDeletedOnly = hasInitialDeletedOnly;
 
 		const ACTIVE_THEME_CLASSES = ['border-mint-500', 'bg-mint-50', 'text-mint-600'];
 		const INACTIVE_THEME_CLASSES = ['border-gray-300', 'bg-white', 'text-gray-700'];
 
 		const updateButtonActiveStates = () => {
-			const isFilterActive = currentPhase !== 'all' || currentScene !== 'all' || isFavOnly || searchKeyword.trim() !== '';
+			const isFilterActive = currentPhase !== 'all' || currentScene !== 'all' || isFavOnly || isDeletedOnly || searchKeyword.trim() !== '';
 			ACTIVE_THEME_CLASSES.forEach((cls) => openFilterBtn?.classList.toggle(cls, isFilterActive));
 			INACTIVE_THEME_CLASSES.forEach((cls) => openFilterBtn?.classList.toggle(cls, !isFilterActive));
 
@@ -843,6 +891,7 @@ const isRootPage = Astro.url.pathname === "/";
 			const content = sheetModal.firstElementChild as HTMLElement;
 			content?.classList.remove('translate-y-full');
 			sheetModal.showModal();
+			updateSheetUi();
 
 			if (targetSection === 'sort') {
 				sheetSortRadios[0]?.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -896,6 +945,10 @@ const isRootPage = Astro.url.pathname === "/";
 			});
 
 			if (sheetFavOnlyCheckbox) sheetFavOnlyCheckbox.checked = isFavOnly;
+			sheetDeletedOnlyRow?.classList.toggle('hidden', currentListView !== 'my');
+			// 非同期のIndexedDB更新で一覧を再描画しても、開いているシート内の
+			// ユーザー選択を上書きしない。開く瞬間は上のopenSheetModalで同期する。
+			if (sheetDeletedOnlyCheckbox && !sheetModal?.open) sheetDeletedOnlyCheckbox.checked = isDeletedOnly;
 		}
 
 		function renderActiveChips() {
@@ -945,6 +998,13 @@ const isRootPage = Astro.url.pathname === "/";
 				});
 			}
 
+			if (isDeletedOnly && currentListView === 'my') {
+				chips.push({
+					label: '削除済みのみ',
+					onRemove: () => { isDeletedOnly = false; updateUrl(true); updateView(); },
+				});
+			}
+
 			if (currentSort !== 'recommend') {
 				const sortLabel = currentSort === 'newest' ? '新着順' : '人気順';
 				chips.push({
@@ -970,6 +1030,7 @@ const isRootPage = Astro.url.pathname === "/";
 
 		knowhowContainer?.addEventListener('click', (event) => {
 			const target = event.target as HTMLElement;
+			if (target.closest('.like-btn')) return;
 			const openButton = target.closest<HTMLElement>('[data-open-checklist]');
 			if (openButton?.dataset.openChecklist) {
 				window.openModal(openButton.dataset.openChecklist);
@@ -990,25 +1051,140 @@ const isRootPage = Astro.url.pathname === "/";
 			button.textContent = willExpand ? '閉じる' : '続きを読む...';
 		});
 
+		knowhowContainer?.addEventListener('keydown', (event) => {
+			if (event.key !== 'Enter' && event.key !== ' ') return;
+			const target = event.target as HTMLElement;
+			if (target.closest('.like-btn')) return;
+			const openButton = target.closest<HTMLElement>('[data-open-checklist]');
+			if (!openButton?.dataset.openChecklist) return;
+			event.preventDefault();
+			window.openModal(openButton.dataset.openChecklist);
+		});
+
+		const swipeRows = Array.from(document.querySelectorAll<HTMLElement>('[data-my-list-swipe-row]'));
+		const swipeStates = new WeakMap<HTMLElement, { startX: number; startY: number; horizontal: boolean; ignored: boolean }>();
+		let openSwipeRow: HTMLElement | null = null;
+
+		const setSwipeRowOpen = (row: HTMLElement, open: boolean) => {
+			const content = row.querySelector<HTMLElement>('[data-my-list-swipe-content]');
+			if (!content) return;
+			if (openSwipeRow && openSwipeRow !== row) setSwipeRowOpen(openSwipeRow, false);
+			content.style.transform = open ? 'translateX(-80px)' : 'translateX(0)';
+			row.dataset.swipeOpen = String(open);
+			openSwipeRow = open ? row : openSwipeRow === row ? null : openSwipeRow;
+		};
+
+		const updateSwipeRows = () => {
+			const enabled = currentListView === 'my' && isPrivateDbLoaded && !isDeletedOnly;
+			swipeRows.forEach((row) => {
+				const deleteButton = row.querySelector<HTMLElement>('[data-my-list-delete]');
+				deleteButton?.classList.toggle('hidden', !enabled);
+				if (!enabled) setSwipeRowOpen(row, false);
+			});
+		};
+
+		const deleteMyListCard = async (row: HTMLElement) => {
+			const card = row.closest<HTMLElement>('.knowhow-card');
+			const checklistId = card?.dataset.checklistId;
+			if (!checklistId || !window.confirm('このチェックリストをマイリストから削除しますか？\n削除済みフィルターから確認できます。')) return;
+			const deleteButton = row.querySelector<HTMLButtonElement>('[data-my-list-delete]');
+			if (deleteButton) deleteButton.disabled = true;
+			try {
+				await deletePrivateChecklistRunsByChecklistId(checklistId);
+				setSwipeRowOpen(row, false);
+				await refreshFromSavedRuns();
+			} catch {
+				window.alert('マイリストから削除できませんでした。もう一度お試しください。');
+			} finally {
+				if (deleteButton) deleteButton.disabled = false;
+			}
+		};
+
+		swipeRows.forEach((row) => {
+			const content = row.querySelector<HTMLElement>('[data-my-list-swipe-content]');
+			const deleteButton = row.querySelector<HTMLButtonElement>('[data-my-list-delete]');
+			if (!content || !deleteButton) return;
+
+			row.addEventListener('touchstart', (event) => {
+				if (currentListView !== 'my' || isDeletedOnly || (event.target as HTMLElement).closest('.like-btn, [data-my-list-delete]')) return;
+				const touch = event.touches[0];
+				if (!touch) return;
+				swipeStates.set(row, { startX: touch.clientX, startY: touch.clientY, horizontal: false, ignored: false });
+			}, { passive: true });
+
+			row.addEventListener('touchmove', (event) => {
+				const state = swipeStates.get(row);
+				const touch = event.touches[0];
+				if (!state || !touch) return;
+				const deltaX = touch.clientX - state.startX;
+				const deltaY = touch.clientY - state.startY;
+				if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
+					state.ignored = true;
+					return;
+				}
+				if (state.ignored || deltaX >= 0) return;
+				state.horizontal = true;
+				event.preventDefault();
+				content.style.transform = `translateX(${Math.max(-80, deltaX)}px)`;
+			}, { passive: false });
+
+			row.addEventListener('touchend', (event) => {
+				const state = swipeStates.get(row);
+				swipeStates.delete(row);
+				if (!state || state.ignored) return;
+				const touch = event.changedTouches[0];
+				if (!touch) return;
+				const deltaX = touch.clientX - state.startX;
+				if (state.horizontal && Math.abs(deltaX) > 10) {
+					row.dataset.swipeConsumed = 'true';
+					window.setTimeout(() => delete row.dataset.swipeConsumed, 450);
+				}
+				if (deltaX <= -48) setSwipeRowOpen(row, true);
+				else if (deltaX >= 48) setSwipeRowOpen(row, false);
+				else setSwipeRowOpen(row, Boolean(row.dataset.swipeOpen === 'true'));
+			}, { passive: true });
+
+			row.addEventListener('touchcancel', () => swipeStates.delete(row), { passive: true });
+			row.addEventListener('click', (event) => {
+				const target = event.target as HTMLElement;
+				if (target.closest('[data-my-list-delete]')) return;
+				if (row.dataset.swipeConsumed !== 'true') return;
+				event.preventDefault();
+				event.stopPropagation();
+			}, true);
+			deleteButton.addEventListener('click', () => void deleteMyListCard(row));
+		});
+
 		function updateView() {
+			if (currentListView === 'my' && !isPrivateDbLoaded) {
+				cards.forEach(card => card.style.display = 'none');
+				if (emptyState) emptyState.classList.add('hidden');
+				updateSwipeRows();
+				return;
+			}
+
 			updateButtonActiveStates();
 			updateSheetUi();
 			renderActiveChips();
 
 			const keywordLower = searchKeyword.trim().toLowerCase();
 
+	
 			cards.forEach((card) => {
-				const phaseMatch = currentPhase === 'all'
-					|| (card.dataset.phases ?? '').split(',').includes(currentPhase);
-				const sceneMatch = currentScene === 'all'
-					|| (card.dataset.scenes ?? '').split(',').includes(currentScene);
+				const cardPhases = (card.dataset.phases || '').split(',');
+				const cardScenes = (card.dataset.scenes || '').split(',');
+				
+				const phaseMatch = currentPhase === 'all' || cardPhases.includes(currentPhase);
+				const sceneMatch = currentScene === 'all' || cardScenes.includes(currentScene);
 				const checklistId = card.dataset.checklistId;
 				const cardId = card.dataset.id;
 				const title = card.querySelector('h2, h3')?.textContent?.toLowerCase() || '';
 				const desc = card.querySelector('.knowhow-summary')?.textContent?.toLowerCase() || '';
 
+				const activeMatch = Boolean(checklistId && startedChecklistIds.has(checklistId));
+				const deletedMatch = Boolean(checklistId && deletedChecklistIds.has(checklistId) && !startedChecklistIds.has(checklistId));
 				let viewMatch = currentListView === 'discover'
-					|| Boolean(checklistId && startedChecklistIds.has(checklistId));
+					|| (isDeletedOnly ? deletedMatch : activeMatch);
 
 				if (isFavOnly && cardId && !userLikedSlugs.has(`knowhow/${cardId}`)) {
 					viewMatch = false;
@@ -1019,11 +1195,13 @@ const isRootPage = Astro.url.pathname === "/";
 					searchMatch = title.includes(keywordLower) || desc.includes(keywordLower);
 				}
 
+
 				card.style.display = phaseMatch && sceneMatch && viewMatch && searchMatch ? 'block' : 'none';
 			});
 
-			const visibleCards = cards
-				.filter((card) => card.style.display !== 'none')
+			const visibleCards = cards.filter((card) => card.style.display !== 'none');
+				
+			visibleCards
 				.sort((a, b) => {
 					if (currentSort === 'newest') {
 						const dateA = Number(a.dataset.pubdate || 0);
@@ -1036,20 +1214,23 @@ const isRootPage = Astro.url.pathname === "/";
 						return likesB - likesA;
 					}
 					return Number(a.dataset.timelineOrder ?? 0) - Number(b.dataset.timelineOrder ?? 0);
+				})
+				.forEach((card, index) => {
+					card.style.setProperty('order', String(index));
 				});
-			const hiddenCards = cards.filter((card) => card.style.display === 'none');
-			if (knowhowContainer) {
-				visibleCards.forEach((card) => knowhowContainer.appendChild(card));
-				hiddenCards.forEach((card) => knowhowContainer.appendChild(card));
-			}
 
-			const myCount = cards.filter((card) => startedChecklistIds.has(card.dataset.checklistId ?? '')).length;
-			emptyState?.classList.toggle('hidden', visibleCards.length > 0);
-			if (emptyMessage) {
-				emptyMessage.textContent = currentListView === 'my' && myCount === 0
-					? 'まだ始めたチェックリストはありません。'
-					: '条件に一致するチェックリストはありません。';
+			if (emptyState) {
+				if (visibleCards.length === 0) {
+					emptyState.classList.remove('hidden');
+					if (emptyMessage) {
+						if (currentListView === 'my') emptyMessage.textContent = isDeletedOnly ? '削除済みのチェックリストはありません。' : 'まだ始めたチェックリストはありません。';
+						else emptyMessage.textContent = '条件に一致するチェックリストが見つかりませんでした。';
+					}
+				} else {
+					emptyState.classList.add('hidden');
+				}
 			}
+			updateSwipeRows();
 		}
 
 		sheetPhaseButtons.forEach((btn) => {
@@ -1070,7 +1251,8 @@ const isRootPage = Astro.url.pathname === "/";
 
 		sheetResetBtn?.addEventListener('click', () => {
 			currentSort = 'recommend';
-			isFavOnly = currentListView === 'my';
+			isFavOnly = false;
+			isDeletedOnly = false;
 			searchKeyword = '';
 			if (searchInput) searchInput.value = '';
 			setPhase('all');
@@ -1082,6 +1264,8 @@ const isRootPage = Astro.url.pathname === "/";
 			const selectedRadio = sheetSortRadios.find((r) => r.checked);
 			if (selectedRadio) currentSort = selectedRadio.value as SortOption;
 			if (sheetFavOnlyCheckbox) isFavOnly = sheetFavOnlyCheckbox.checked;
+			isDeletedOnly = currentListView === 'my' && Boolean(sheetDeletedOnlyCheckbox?.checked);
+			updateUrl(true);
 			updateView();
 			closeSheetModal();
 		});
@@ -1115,7 +1299,9 @@ const isRootPage = Astro.url.pathname === "/";
 		});
 		const refreshFromSavedRuns = async () => {
 			const runs = await getPrivateChecklistRuns();
-			startedChecklistIds = new Set(runs.map((run) => run.checklistId));
+			startedChecklistIds = new Set(runs.filter((run) => !run.deletedAt).map((run) => run.checklistId));
+			deletedChecklistIds = new Set(runs.filter((run) => Boolean(run.deletedAt)).map((run) => run.checklistId));
+			isPrivateDbLoaded = true;
 			updateView();
 		};
 		window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns());
@@ -1144,7 +1330,7 @@ const isRootPage = Astro.url.pathname === "/";
 			} catch {}
 		};
 
-		window.addEventListener('article-liked', (e: Event) => {
+		window.addEventListener('article-like-changed', (e: Event) => {
 			const customEv = e as CustomEvent<Record<string, any>>;
 			if (customEv.detail) {
 				const targetSlug = String(customEv.detail.slug || '');
@@ -1185,14 +1371,17 @@ const isRootPage = Astro.url.pathname === "/";
 			if (!hasInitialPhase) {
 				const savedPhase = await getPrivateSetting<PhaseFilter>(PHASE_SETTING_KEY);
 				if (savedPhase && validPhases.has(savedPhase)) {
-					setPhase(savedPhase, false, false);
+					currentPhase = savedPhase;
+					setPhase(currentPhase, false, false);
 				}
 			}
 			await refreshFromSavedRuns();
 		}).catch(() => {
+			isPrivateDbLoaded = true;
 			if (emptyMessage && currentListView === 'my') {
 				emptyMessage.textContent = 'このブラウザーではマイリストを読み込めませんでした。';
 			}
+			updateView();
 		});
 	});
 </script>
@@ -1202,16 +1391,20 @@ const isRootPage = Astro.url.pathname === "/";
 		display: none;
 	}
 
+	[data-my-list-swipe-content] {
+		touch-action: pan-y;
+		will-change: transform;
+	}
+
 	#knowhow-container[data-display-mode="grid_view"] {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 0.5rem;
+		gap: 0;
 	}
 
-	@media (min-width: 640px) {
-		#knowhow-container[data-display-mode="grid_view"] {
-			gap: 1.25rem;
-		}
+	#knowhow-container[data-display-mode="grid_view"] .knowhow-card,
+	#knowhow-container[data-display-mode="grid_view"] .knowhow-gallery-view {
+		border-radius: 0.375rem;
 	}
 
 	#knowhow-container[data-display-mode="grid_view"] .knowhow-list-view {
@@ -1220,6 +1413,13 @@ const isRootPage = Astro.url.pathname === "/";
 
 	#knowhow-container[data-display-mode="grid_view"] .knowhow-gallery-view {
 		display: block;
+	}
+
+	@media (max-width: 767px) {
+		#knowhow-container[data-display-mode="grid_view"] {
+			margin-left: -1rem;
+			margin-right: -1rem;
+		}
 	}
 
 	#knowhow-container[data-display-mode="headline_view"] {

@@ -56,20 +56,20 @@ const { Content } = await render(item);
 							href={item.data.actionUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
+							class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-xl transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
 						>
 							{item.data.actionText || UI.items.btnTry}
 						</a>
 					) : (
 						<button
-							class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
+							class="bg-mint-500 hover:bg-mint-600 text-white font-bold py-3 px-8 rounded-xl transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
 						>
 							{item.data.actionText || UI.items.btnTry}
 						</button>
 					)}
 					<a
 						href="/logs"
-						class="bg-white border border-mint-500 hover:bg-mint-50 text-mint-500 font-bold py-3 px-8 rounded-full transition-colors flex items-center justify-center gap-2"
+						class="bg-white border border-mint-500 hover:bg-mint-50 text-mint-500 font-bold py-3 px-8 rounded-xl transition-colors flex items-center justify-center gap-2"
 					>
 						{UI.items.btnReadLog}
 					</a>

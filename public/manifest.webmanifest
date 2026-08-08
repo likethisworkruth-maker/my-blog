@@ -4,7 +4,7 @@
   "short_name": "すくリス",
   "description": "すくすく育つ子育ての困りごとや知恵、具体的な対策や試行錯誤を記録・検索できるサービスです。",
   "lang": "ja",
-  "start_url": "/knowhow/my/",
+  "start_url": "/my-knowhow/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -39,7 +39,7 @@
     {
       "name": "マイリスト",
       "short_name": "マイリスト",
-      "url": "/knowhow/my/"
+      "url": "/my-knowhow/"
     },
     {
       "name": "おすすめ",

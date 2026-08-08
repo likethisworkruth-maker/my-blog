@@ -1,6 +1,6 @@
 ---
-import { getCollection } from 'astro:content';
-import KnowhowDetailPage from '../../../../components/KnowhowDetailPage.astro';
+import { getCollection, getEntry } from 'astro:content';
+import KnowhowDetailPage from "../../../components/KnowhowDetailPage.astro";
 
 export async function getStaticPaths() {
 	const knowhow = await getCollection('knowhow');
@@ -16,6 +16,7 @@ export async function getStaticPaths() {
 }
 
 const { knowhow, prev, next } = Astro.props;
+const { tab } = Astro.params;
 ---
 
-<KnowhowDetailPage knowhow={knowhow} prev={prev} next={next} />
+<KnowhowDetailPage knowhow={knowhow} prev={prev} next={next} initialTab={tab} />

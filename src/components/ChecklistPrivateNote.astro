@@ -23,7 +23,7 @@ const { checklistId } = Astro.props;
 		<p data-note-save-state class="hidden text-gray-400" aria-live="polite"></p>
 		<p data-note-count class="text-gray-500">0 / 3000</p>
 	</div>
-	<DriveBackupControls />
+	{checklistId !== 'family-log' && <DriveBackupControls />}
 </section>
 
 <script>

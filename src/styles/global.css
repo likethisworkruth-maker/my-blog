@@ -12,6 +12,23 @@
     @apply bg-slate-50 text-gray-700 antialiased;
     font-family: 'Inter', 'Noto Sans JP', sans-serif;
   }
+
+  /* Notion-like Minimalism: Remove all CSS shadows for clean flat design */
+  *, ::before, ::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  @media (max-width: 767px) {
+    [data-site-header],
+    [data-site-info-footer] {
+      display: none !important;
+    }
+
+    .icon-text-shadow {
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95) !important;
+    }
+  }
 }
 
 @layer utilities {

@@ -10,6 +10,7 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://likethis.work',
+  devToolbar: { enabled: false },
   integrations: [
     mdx(), 
     sitemap({

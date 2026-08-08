@@ -9,12 +9,17 @@
   "scripts": {
     "dev": "astro dev",
     "validate:checklists": "node scripts/validate-checklists.mjs",
-    "test": "node --experimental-strip-types --test tests/checklist-state.test.mjs tests/private-data.test.mjs tests/site-contract.test.mjs",
+    "test": "node --experimental-strip-types --test tests/checklist-state.test.mjs tests/private-data.test.mjs tests/site-contract.test.mjs tests/fixtures-contract.test.mjs",
     "test:checklists": "npm test",
+    "test:ui": "playwright test",
     "build": "npm run validate:checklists && astro build",
     "postbuild": "node scripts/postbuild.js",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test:anonymous": "playwright test tests/ui/anonymous tests/ui/knowhow-navigation.spec.ts",
+    "test:authenticated": "playwright test tests/ui/authenticated",
+    "test:auth:setup": "node scripts/prepare-e2e-auth.mjs",
+    "test:regression": "npm run build && npm run test && npm run test:anonymous && npm run test:authenticated"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
@@ -31,6 +36,7 @@
     "typescript": "^6.0.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "fake-indexeddb": "^6.2.5",
     "workbox-build": "^7.4.1"
   }

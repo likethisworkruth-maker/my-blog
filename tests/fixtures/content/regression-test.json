@@ -1,0 +1,26 @@
+{
+  "checklistId": "regression-test",
+  "title": "回帰テスト用チェックリスト",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "regression-basics",
+      "label": "基本確認",
+      "items": [
+        {
+          "id": "read-markdown",
+          "label": "Markdownのタイトルが表示される"
+        },
+        {
+          "id": "start-checklist",
+          "label": "開始操作でprivate progressへ遷移する"
+        },
+        {
+          "id": "open-memo",
+          "label": "メモ画面を直接開ける"
+        }
+      ]
+    }
+  ]
+}

@@ -8,7 +8,7 @@ test('PC・モバイルナビを3項目に統一し、既存カテゴリを運�
 	const header = read('src/components/Header.astro');
 	const footer = read('src/components/Footer.astro');
 	for (const source of [header, footer]) {
-		assert.match(source, /href="\/knowhow\/my\/"/);
+		assert.match(source, /href="\/my-knowhow\/"/);
 		assert.match(source, /href="\/recommend\/"/);
 		assert.match(source, /"recommend", "apps", "items", "logs"/);
 		assert.doesNotMatch(source, /href="\/(apps|items|logs)\/"/);
@@ -28,7 +28,7 @@ test('ルートをチェックリスト一覧にし、旧案内ページを廃�
 	const recommend = read('src/pages/recommend/index.astro');
 	assert.match(home, /<KnowhowIndexPage \/>/);
 	assert.doesNotMatch(home, /チェックリストを探す|続きから使う|運営のおうちを見る/);
-	assert.ok(index.includes("discoverRootPath = window.location.pathname === '/'"));
+	assert.ok(index.includes('const isRootPage = Astro.url.pathname === "/"'));
 	assert.doesNotMatch(recommend, />実体験の記録<|<h1[^>]*>運営のおうち<\/h1>|おすすめだけでなく/);
 	for (const label of ['探す', 'マイリスト', 'おすすめ']) {
 		assert.ok(about.includes(label));
@@ -53,8 +53,10 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	assert.match(detail, /data-private-tab[^>]*>メモ</);
 	assert.match(detail, /role="tablist"/);
 	assert.match(detail, /aria-selected=/);
-	assert.match(detail, /my\/progress\//);
+	assert.match(detail, /privateDetailBasePath =/);
 	assert.match(detail, /readDetailRoute/);
+	assert.match(detail, /getPrivateChecklistRunsByChecklistId/);
+	assert.match(detail, /privateStateLoaded/);
 	assert.doesNotMatch(detail, /searchParams|location\.hash|#progress|#memo/);
 	assert.match(actionBar, /data-panel-trigger[\s\S]*toggleDescPanel/);
 	assert.match(actionBar, />info</);
@@ -63,9 +65,9 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	assert.match(runner, /data-delete-list/);
 	assert.match(detail, /deletePrivateChecklistRunsByChecklistId/);
 	assert.match(detail, /このチェックリストをマイリストから削除しますか？/);
-	assert.match(detail, /navigate\('\/knowhow\/my\/'\)/);
+	assert.match(detail, /navigate\('\/my-knowhow\/'\)/);
 	assert.ok(!existsSync(new URL('../src/pages/knowhow/[id]/comments.astro', import.meta.url)));
-	assert.ok(existsSync(new URL('../src/pages/knowhow/[id]/my/[tab].astro', import.meta.url)));
+	assert.ok(existsSync(new URL('../src/pages/my-knowhow/[id]/[tab].astro', import.meta.url)));
 });
 
 test('チェックリスト一覧は時期・場面・マイリストをURLとIndexedDB設定で統合する', () => {
@@ -83,15 +85,21 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	for (const scene of ['おでかけ', '病院・健診', '毎日の準備', '帰省・旅行', '保育園', '防災']) {
 		assert.ok(index.includes(scene));
 	}
-	assert.ok(index.includes("segments.push('my')"));
-	assert.ok(index.includes("segments.push('phase', currentPhase)"));
-	assert.ok(index.includes("segments.push('scene', sceneSlugByLabel[currentScene])"));
+	assert.ok(index.includes("window.location.pathname.startsWith('/my-knowhow')"));
+	assert.ok(index.includes("const destination = currentListView === 'my'"));
+	assert.ok(index.includes('data-my-list-swipe-row'));
+	assert.ok(index.includes('deletePrivateChecklistRunsByChecklistId'));
+	assert.ok(index.includes('削除済みのみ表示'));
+	assert.ok(index.includes('deletedOnly'));
+	assert.ok(index.includes("if (currentPhase !== 'all') params.set('phase', currentPhase)"));
+	assert.ok(index.includes("if (currentScene !== 'all') params.set('scene', currentScene)"));
 	assert.doesNotMatch(index, /\?tab|#progress|#memo/);
 	assert.equal(index.includes('data-knowhow-view'), false);
 	assert.equal(index.includes('チェックリストの表示切り替え'), false);
 	assert.ok(index.includes('data-display-mode-option="headline_view"'));
 	assert.ok(index.includes('data-display-mode-option="grid_view"'));
 	assert.ok(index.includes('knowhow-list-view'));
+	assert.ok(index.includes('knowhow-summary'));
 	assert.ok(index.includes('knowhow-display-mode'));
 	assert.ok(index.includes('setPrivateSetting(DISPLAY_MODE_SETTING_KEY'));
 	assert.ok(index.includes('knowhow-selected-phase'));
@@ -167,7 +175,7 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.equal(runner.includes('data-complete-run'), false);
 	assert.equal(runner.includes('端末に保存済み'), false);
 	assert.ok(actionBar.includes("const showShare = !slug.startsWith('knowhow/')"));
-	assert.ok(existsSync(new URL('../src/pages/knowhow/my/index.astro', import.meta.url)));
+	assert.ok(existsSync(new URL('../src/pages/my-knowhow/index.astro', import.meta.url)));
 	assert.ok(existsSync(new URL('../src/pages/knowhow/phase/[...filters].astro', import.meta.url)));
 	assert.ok(existsSync(new URL('../src/pages/knowhow/scene/[scene].astro', import.meta.url)));
 	assert.equal(index.includes('<Comments slug="dummy"'), false);
@@ -246,6 +254,8 @@ test('いいねは認証ユーザーと匿名IndexedDB資格情報を分けて�
 	assert.match(likes, /rpc\('remove_anonymous_like'/);
 	assert.match(likes, /rpc\('claim_anonymous_like'/);
 	assert.match(button, /getBatchArticleLikeStates|getCurrentArticleLikeState/);
+	assert.match(button, /startOnLike/);
+	assert.match(button, /checklist-start-requested/);
 	assert.doesNotMatch([button, listSources].join('\n'), /localStorage|liked:|increment_likes|decrement_likes/);
 });
 
@@ -277,10 +287,10 @@ test('PWAショートカットを最終3導線へ更新する', () => {
 	assert.match(read('src/consts.ts'), /SITE_TITLE = 'すくリス'/);
 	assert.equal(manifest.name, 'すくリス');
 	assert.match(read('src/components/BaseHead.astro'), /name="mobile-web-app-capable"/);
-	assert.equal(manifest.start_url, '/knowhow/my/');
+	assert.equal(manifest.start_url, '/my-knowhow/');
 	assert.deepEqual(manifest.shortcuts.map((shortcut) => shortcut.url), [
 		'/',
-		'/knowhow/my/',
+		'/my-knowhow/',
 		'/recommend/',
 	]);
 });
@@ -288,4 +298,20 @@ test('PWAショートカットを最終3導線へ更新する', () => {
 test('テスト用アイテムを非公開にする', () => {
 	assert.match(read('src/content/items/003-item-sample.md'), /published: false/);
 	assert.match(read('src/pages/items/[id].astro'), /filter\(\(item\) => item\.data\.published\)/);
+});
+
+test('アプリ・アイテム・ログの検索UIをボトムシートに統一し、SP用パンくずを非表示にする', () => {
+	const apps = read('src/pages/apps/index.astro');
+	const items = read('src/pages/items/index.astro');
+	const logs = read('src/pages/logs/index.astro');
+	const backLink = read('src/components/RecommendBackLink.astro');
+
+	for (const page of [apps, items, logs]) {
+		assert.doesNotMatch(page, /<select id="age-filter"/);
+		assert.doesNotMatch(page, /<select id="sort-order"/);
+		assert.match(page, /id="open-filter-sheet-btn"/);
+		assert.match(page, /id="open-sort-sheet-btn"/);
+		assert.match(page, /<dialog id="filter-sheet-modal"/);
+	}
+	assert.match(backLink, /class="[^"]*hidden sm:flex[^"]*"/);
 });
