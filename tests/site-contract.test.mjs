@@ -61,6 +61,8 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	assert.match(actionBar, /data-panel-trigger[\s\S]*toggleDescPanel/);
 	assert.match(actionBar, />info</);
 	assert.match(actionBar, />説明</);
+	assert.match(actionBar, /privateMemoUrl/);
+	assert.match(actionBar, /window\.location\.assign/);
 	assert.doesNotMatch(actionBar, /data-private-action-trigger|マイリストから削除/);
 	assert.match(runner, /data-delete-list/);
 	assert.match(detail, /deletePrivateChecklistRunsByChecklistId/);
@@ -79,12 +81,15 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 		read('src/content/knowhow/001-night-memo.md'),
 		read('src/content/knowhow/002-family-log.md'),
 	].join(String.fromCharCode(10));
-	for (const phase of ['all', 'pregnancy', '0-3m', '4-6m', '7-11m', '1y-plus']) {
-		assert.ok(index.includes('id: "' + phase + '"'));
-	}
-	for (const scene of ['おでかけ', '病院・健診', '毎日の準備', '帰省・旅行', '保育園', '防災']) {
-		assert.ok(index.includes(scene));
-	}
+	assert.match(index, /const phaseIds = Array\.from\(new Set\(knowhow\.flatMap/);
+	assert.match(index, /const sceneLabels = Array\.from\(new Set\(knowhow\.flatMap/);
+	assert.match(index, /const filterOptions = \{ phases, scenes \}/);
+	assert.match(index, /data-filter-options=\{JSON\.stringify\(filterOptions\)\}/);
+	assert.match(index, /<dialog id="filter-sheet-modal"/);
+	assert.match(index, /<dialog id="sort-sheet-modal"/);
+	assert.match(index, /id="filter-sheet-content"/);
+	assert.match(index, /id="sort-sheet-content"/);
+	assert.match(index, /installSwipeToClose/);
 	assert.ok(index.includes("window.location.pathname.startsWith('/my-knowhow')"));
 	assert.ok(index.includes("const destination = currentListView === 'my'"));
 	assert.ok(index.includes('data-my-list-swipe-row'));
@@ -120,8 +125,8 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.equal(index.includes('id="sort-order"'), false);
 	assert.equal(index.includes('category-btn'), false);
 	assert.ok(schema.includes('timelineOrder: z.number().int().nonnegative()'));
-	assert.ok(schema.includes('phases: z.array'));
-	assert.ok(schema.includes('scenes: z.array'));
+	assert.ok(schema.includes('phases: z.array(z.string().min(1))'));
+	assert.ok(schema.includes('scenes: z.array(z.string().min(1))'));
 	assert.ok(content.includes('timelineOrder:'));
 	assert.ok(content.includes('phases:'));
 	assert.ok(content.includes('scenes:'));

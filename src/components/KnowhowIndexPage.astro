@@ -19,23 +19,35 @@ const knowhowWithContent = await Promise.all(
 	})),
 );
 
+const phaseIds = Array.from(new Set(knowhow.flatMap((post) => post.data.phases))).sort((a, b) => {
+	const phaseSortKey = (phase: string) => {
+		if (phase === "pregnancy") return -1;
+		const monthStart = Number(phase.match(/^(\d+)-/)?.[1] ?? NaN);
+		if (Number.isFinite(monthStart)) return monthStart;
+		const yearStart = Number(phase.match(/^(\d+)y/)?.[1] ?? NaN);
+		return Number.isFinite(yearStart) ? yearStart * 12 : Number.MAX_SAFE_INTEGER;
+	};
+	return phaseSortKey(a) - phaseSortKey(b);
+});
+
+const sceneLabels = Array.from(new Set(knowhow.flatMap((post) => post.data.scenes)));
+
+const getPhaseLabel = (phase: string) => {
+	if (phase === "pregnancy") return "妊娠中";
+	const monthRange = phase.match(/^(\d+)-(\d+)m$/);
+	if (monthRange) return monthRange[1] + "〜" + monthRange[2] + "か月";
+	const yearRange = phase.match(/^(\d+)y-plus$/);
+	if (yearRange) return yearRange[1] + "歳〜";
+	return phase;
+};
+
 const phases = [
 	{ id: "all", label: "すべて" },
-	{ id: "pregnancy", label: "妊娠中" },
-	{ id: "0-3m", label: "0〜3か月" },
-	{ id: "4-6m", label: "4〜6か月" },
-	{ id: "7-11m", label: "7〜11か月" },
-	{ id: "1y-plus", label: "1歳〜" },
-] as const;
+	...phaseIds.map((id) => ({ id, label: getPhaseLabel(id) })),
+];
 
-const scenes = [
-	{ label: "おでかけ", icon: "stroller" },
-	{ label: "病院・健診", icon: "medical_services" },
-	{ label: "毎日の準備", icon: "inventory_2" },
-	{ label: "帰省・旅行", icon: "luggage" },
-	{ label: "保育園", icon: "school" },
-	{ label: "防災", icon: "health_and_safety" },
-] as const;
+const scenes = sceneLabels.map((label) => ({ label }));
+const filterOptions = { phases, scenes };
 const isRootPage = Astro.url.pathname === "/";
 ---
 
@@ -88,7 +100,7 @@ const isRootPage = Astro.url.pathname === "/";
 					<button
 						type="button"
 						id="open-filter-sheet-btn"
-						class="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95 shadow-sm"
+						class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95 shadow-sm"
 					>
 						<span class="material-symbols-outlined text-base">filter_alt</span>
 						<span>絞り込み</span>
@@ -96,7 +108,7 @@ const isRootPage = Astro.url.pathname === "/";
 					<button
 						type="button"
 						id="open-sort-sheet-btn"
-						class="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95 shadow-sm"
+						class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95 shadow-sm"
 					>
 						<span class="material-symbols-outlined text-base">swap_vert</span>
 						<span>並び替え</span>
@@ -130,7 +142,7 @@ const isRootPage = Astro.url.pathname === "/";
 		<div
 			class="flex flex-col gap-10"
 			id="knowhow-container"
-			data-display-mode="headline_view"
+			data-display-mode="headline_view" data-filter-options={JSON.stringify(filterOptions)}
 		>
 			{
 				knowhowWithContent.map(
@@ -223,9 +235,9 @@ const isRootPage = Astro.url.pathname === "/";
 		</div>
 	</div>
 
-	<!-- Filter & Sort Bottom Sheet Modal -->
-	<dialog id="filter-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-200 opacity-0 pointer-events-none overflow-hidden">
-		<div class="w-full max-w-lg mx-auto rounded-t-3xl bg-white p-6 shadow-2xl transition-transform duration-300 transform translate-y-full max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col gap-6">
+	<!-- Filter Sheet Modal -->
+	<dialog id="filter-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-start bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-300 ease-out opacity-0 pointer-events-none overflow-hidden">
+		<div id="filter-sheet-content" class="w-full max-w-lg mx-auto rounded-b-3xl bg-white p-6 shadow-2xl transition-transform duration-300 ease-out transform -translate-y-full max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col gap-6">
 			<!-- Handle Bar -->
 			<div class="w-10 h-1 bg-gray-300 rounded-full mx-auto shrink-0 cursor-pointer" id="close-sheet-handle"></div>
 
@@ -261,30 +273,11 @@ const isRootPage = Astro.url.pathname === "/";
 				</div>
 			</div>
 
-			<!-- 3. 並び替え -->
-			<div>
-				<h3 class="font-bold text-gray-900 text-base mb-3">並び替え</h3>
-				<div class="flex items-center gap-6 text-sm">
-					<label class="flex items-center gap-2 cursor-pointer font-medium text-gray-700">
-						<input type="radio" name="sheet-sort" value="recommend" checked class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
-						<span>おすすめ順</span>
-					</label>
-					<label class="flex items-center gap-2 cursor-pointer font-medium text-gray-700">
-						<input type="radio" name="sheet-sort" value="newest" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
-						<span>新着順</span>
-					</label>
-					<label class="flex items-center gap-2 cursor-pointer font-medium text-gray-700">
-						<input type="radio" name="sheet-sort" value="popular" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
-						<span>人気順</span>
-					</label>
-				</div>
-			</div>
-
-			<!-- 4. 表示条件 -->
+			<!-- 3. 表示条件 -->
 			<div>
 				<h3 class="font-bold text-gray-900 text-base mb-3">表示条件</h3>
 				<label class="flex items-center gap-2 text-sm cursor-pointer font-medium text-gray-700">
-					<input type="checkbox" id="sheet-fav-only" class="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500" />
+					<input type="checkbox" id="sheet-fav-only" class="w-4 h-4 rounded text-mint-600 border-gray-300 focus:ring-mint-500" />
 					<span>お気に入りのみ表示</span>
 				</label>
 			</div>
@@ -298,8 +291,39 @@ const isRootPage = Astro.url.pathname === "/";
 
 			<!-- Footer Action Buttons -->
 			<div class="flex items-center gap-3 pt-2 shrink-0 mt-auto">
-				<button type="button" id="sheet-reset-btn" class="flex-1 rounded-xl border border-blue-600 bg-white py-3.5 text-center text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50">リセット</button>
-				<button type="button" id="sheet-apply-btn" class="flex-1 rounded-xl bg-blue-600 py-3.5 text-center text-sm font-bold text-white shadow-md transition-colors hover:bg-blue-700">絞り込み</button>
+				<button type="button" id="sheet-reset-btn" class="flex-1 rounded-xl border border-mint-600 bg-white py-3.5 text-center text-sm font-bold text-mint-600 transition-colors hover:bg-mint-50">リセット</button>
+				<button type="button" id="sheet-apply-btn" class="flex-1 rounded-xl bg-mint-600 py-3.5 text-center text-sm font-bold text-white shadow-md transition-colors hover:bg-mint-700">絞り込み</button>
+			</div>
+		</div>
+	</dialog>
+
+	<!-- Sort Sheet Modal -->
+	<dialog id="sort-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-start bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-300 ease-out opacity-0 pointer-events-none overflow-hidden">
+		<div id="sort-sheet-content" class="w-full max-w-lg mx-auto rounded-b-3xl bg-white p-6 shadow-2xl transition-transform duration-300 ease-out transform -translate-y-full max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col gap-6">
+			<!-- Handle Bar -->
+			<div class="w-10 h-1 bg-gray-300 rounded-full mx-auto shrink-0 cursor-pointer" id="close-sort-sheet-handle"></div>
+
+			<div>
+				<h3 class="font-bold text-gray-900 text-base mb-3">並び替え</h3>
+				<div class="flex flex-col gap-2 text-sm">
+					<label class="flex items-center gap-3 cursor-pointer rounded-xl border border-gray-200 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50">
+						<input type="radio" name="sheet-sort" value="recommend" checked class="w-4 h-4 text-mint-600 border-gray-300 focus:ring-mint-500" />
+						<span>おすすめ順</span>
+					</label>
+					<label class="flex items-center gap-3 cursor-pointer rounded-xl border border-gray-200 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50">
+						<input type="radio" name="sheet-sort" value="newest" class="w-4 h-4 text-mint-600 border-gray-300 focus:ring-mint-500" />
+						<span>新着順</span>
+					</label>
+					<label class="flex items-center gap-3 cursor-pointer rounded-xl border border-gray-200 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50">
+						<input type="radio" name="sheet-sort" value="popular" class="w-4 h-4 text-mint-600 border-gray-300 focus:ring-mint-500" />
+						<span>人気順</span>
+					</label>
+				</div>
+			</div>
+
+			<div class="flex items-center gap-3 pt-2 shrink-0 mt-auto">
+				<button type="button" id="sort-sheet-reset-btn" class="flex-1 rounded-xl border border-mint-600 bg-white py-3.5 text-center text-sm font-bold text-mint-600 transition-colors hover:bg-mint-50">リセット</button>
+				<button type="button" id="sort-sheet-apply-btn" class="flex-1 rounded-xl bg-mint-600 py-3.5 text-center text-sm font-bold text-white shadow-md transition-colors hover:bg-mint-700">並び替える</button>
 			</div>
 		</div>
 	</dialog>
@@ -642,14 +666,33 @@ const isRootPage = Astro.url.pathname === "/";
 			}
 		}, { passive: true });
 
-		type ListView = 'discover' | 'my';
-		type PhaseFilter = 'all' | 'pregnancy' | '0-3m' | '4-6m' | '7-11m' | '1y-plus';
-		type SceneFilter = 'all' | 'おでかけ' | '病院・健診' | '毎日の準備' | '帰省・旅行' | '保育園' | '防災';
+type ListView = 'discover' | 'my';
+		type FilterOption = { id: string; label: string };
+		type SceneOption = { label: string };
+		type PhaseFilter = string;
+		type SceneFilter = string;
 
 		const PHASE_SETTING_KEY = 'knowhow-selected-phase';
-		const validPhases = new Set<PhaseFilter>(['all', 'pregnancy', '0-3m', '4-6m', '7-11m', '1y-plus']);
-		const validScenes = new Set<SceneFilter>(['all', 'おでかけ', '病院・健診', '毎日の準備', '帰省・旅行', '保育園', '防災']);
-		const sceneSlugByLabel: Record<Exclude<SceneFilter, 'all'>, string> = {
+		const knowhowContainer = document.getElementById('knowhow-container');
+		const filterOptionsFallback = {
+			phases: [{ id: 'all', label: 'すべて' }],
+			scenes: [],
+		};
+		const filterOptions = (() => {
+			try {
+				return JSON.parse(knowhowContainer?.dataset.filterOptions ?? JSON.stringify(filterOptionsFallback)) as {
+					phases?: FilterOption[];
+					scenes?: SceneOption[];
+				};
+			} catch {
+				return filterOptionsFallback;
+			}
+		})();
+		const filterPhaseOptions = filterOptions.phases?.length ? filterOptions.phases : filterOptionsFallback.phases;
+		const filterSceneOptions = filterOptions.scenes ?? [];
+		const validPhases = new Set<PhaseFilter>(filterPhaseOptions.map((phase) => phase.id));
+		const validScenes = new Set<SceneFilter>(filterSceneOptions.map((scene) => scene.label));
+		const sceneSlugByLabel: Record<string, string> = {
 			'おでかけ': 'outing',
 			'病院・健診': 'medical',
 			'毎日の準備': 'daily',
@@ -658,9 +701,13 @@ const isRootPage = Astro.url.pathname === "/";
 			'防災': 'disaster',
 		};
 		const sceneLabelBySlug = new Map<string, SceneFilter>(
-			Object.entries(sceneSlugByLabel).map(([label, slug]) => [slug, label as SceneFilter]),
+			Object.entries(sceneSlugByLabel)
+				.map(([label, slug]) => [slug, label]),
 		);
-		const knowhowContainer = document.getElementById('knowhow-container');
+		filterSceneOptions.forEach((scene) => {
+			sceneLabelBySlug.set(scene.label, scene.label);
+			sceneLabelBySlug.set(encodeURIComponent(scene.label), scene.label);
+		});
 		const cards = Array.from(document.querySelectorAll<HTMLElement>('.knowhow-card'));
 		const displayModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-display-mode-option]'));
 		const phaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-phase]'));
@@ -849,13 +896,17 @@ const isRootPage = Astro.url.pathname === "/";
 			updateView();
 		}
 
-		// Filter Sheet & Sort Sheet & Active State Logic
+// Filter Sheet, Sort Sheet, and active state logic
 		const openFilterBtn = document.getElementById('open-filter-sheet-btn');
 		const openSortBtn = document.getElementById('open-sort-sheet-btn');
-		const sheetModal = document.getElementById('filter-sheet-modal') as HTMLDialogElement | null;
-		const sheetHandle = document.getElementById('close-sheet-handle');
-		const sheetResetBtn = document.getElementById('sheet-reset-btn');
-		const sheetApplyBtn = document.getElementById('sheet-apply-btn');
+		const filterSheetModal = document.getElementById('filter-sheet-modal') as HTMLDialogElement | null;
+		const sortSheetModal = document.getElementById('sort-sheet-modal') as HTMLDialogElement | null;
+		const filterSheetHandle = document.getElementById('close-sheet-handle');
+		const sortSheetHandle = document.getElementById('close-sort-sheet-handle');
+		const filterSheetResetBtn = document.getElementById('sheet-reset-btn');
+		const filterSheetApplyBtn = document.getElementById('sheet-apply-btn');
+		const sortSheetResetBtn = document.getElementById('sort-sheet-reset-btn');
+		const sortSheetApplyBtn = document.getElementById('sort-sheet-apply-btn');
 		const sheetFavOnlyCheckbox = document.getElementById('sheet-fav-only') as HTMLInputElement | null;
 		const sheetDeletedOnlyRow = document.getElementById('sheet-deleted-only-row');
 		const sheetDeletedOnlyCheckbox = document.getElementById('sheet-deleted-only') as HTMLInputElement | null;
@@ -863,7 +914,9 @@ const isRootPage = Astro.url.pathname === "/";
 		const activeChipsContainer = document.getElementById('active-chips-container');
 		const sheetPhaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-sheet-phase]'));
 		const sheetSceneButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-sheet-scene]'));
-		const sheetSortRadios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="sheet-sort"]'));
+		const sheetSortRadios = Array.from(
+			sortSheetModal?.querySelectorAll<HTMLInputElement>('input[name="sheet-sort"]') ?? [],
+		);
 
 		type SortOption = 'recommend' | 'newest' | 'popular';
 		let currentSort: SortOption = 'recommend';
@@ -871,8 +924,8 @@ const isRootPage = Astro.url.pathname === "/";
 		let isFavOnly = false;
 		let isDeletedOnly = hasInitialDeletedOnly;
 
-		const ACTIVE_THEME_CLASSES = ['border-mint-500', 'bg-mint-50', 'text-mint-600'];
-		const INACTIVE_THEME_CLASSES = ['border-gray-300', 'bg-white', 'text-gray-700'];
+		const ACTIVE_THEME_CLASSES = ['text-mint-600'];
+		const INACTIVE_THEME_CLASSES = ['text-gray-700'];
 
 		const updateButtonActiveStates = () => {
 			const isFilterActive = currentPhase !== 'all' || currentScene !== 'all' || isFavOnly || isDeletedOnly || searchKeyword.trim() !== '';
@@ -884,44 +937,134 @@ const isRootPage = Astro.url.pathname === "/";
 			INACTIVE_THEME_CLASSES.forEach((cls) => openSortBtn?.classList.toggle(cls, !isSortActive));
 		};
 
-		const openSheetModal = (targetSection?: 'filter' | 'sort') => {
-			if (!sheetModal) return;
-			sheetModal.classList.remove('pointer-events-none', 'opacity-0');
-			sheetModal.classList.add('opacity-100');
-			const content = sheetModal.firstElementChild as HTMLElement;
+		let activeSheetModal: HTMLDialogElement | null = null;
+		let sheetCloseTimer: number | undefined;
+
+		const resetSheetContent = (modal: HTMLDialogElement | null) => {
+			const content = modal?.firstElementChild as HTMLElement | null;
+			content?.style.removeProperty('transform');
 			content?.classList.remove('translate-y-full');
-			sheetModal.showModal();
-			updateSheetUi();
+			content?.classList.add('-translate-y-full');
+		};
 
-			if (targetSection === 'sort') {
-				sheetSortRadios[0]?.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		const closeSheetModal = (modal: HTMLDialogElement | null = activeSheetModal) => {
+			if (!modal) return;
+			if (sheetCloseTimer !== undefined) {
+				window.clearTimeout(sheetCloseTimer);
+				sheetCloseTimer = undefined;
 			}
+			const content = modal.firstElementChild as HTMLElement | null;
+			content?.style.removeProperty('transform');
+			content?.classList.remove('-translate-y-full');
+			content?.classList.add('translate-y-full');
+			modal.classList.remove('opacity-100');
+			modal.classList.add('opacity-0');
+			sheetCloseTimer = window.setTimeout(() => {
+				if (modal.open) modal.close();
+				modal.classList.add('pointer-events-none');
+				resetSheetContent(modal);
+				if (activeSheetModal === modal) activeSheetModal = null;
+				sheetCloseTimer = undefined;
+			}, 300);
 		};
 
-		const closeSheetModal = () => {
-			if (!sheetModal) return;
-			const content = sheetModal.firstElementChild as HTMLElement;
-			content?.classList.add('translate-y-full');
-			sheetModal.classList.remove('opacity-100');
-			sheetModal.classList.add('opacity-0');
-			window.setTimeout(() => {
-				sheetModal.close();
-				sheetModal.classList.add('pointer-events-none');
-			}, 250);
+		const openSheetModal = (targetSection: 'filter' | 'sort' = 'filter') => {
+			const modal = targetSection === 'sort' ? sortSheetModal : filterSheetModal;
+			if (!modal) return;
+			if (activeSheetModal && activeSheetModal !== modal) {
+				if (activeSheetModal.open) activeSheetModal.close();
+				resetSheetContent(activeSheetModal);
+			}
+			if (sheetCloseTimer !== undefined) {
+				window.clearTimeout(sheetCloseTimer);
+				sheetCloseTimer = undefined;
+			}
+			activeSheetModal = modal;
+			resetSheetContent(modal);
+			modal.classList.remove('pointer-events-none');
+			modal.classList.add('opacity-0');
+			updateSheetUi();
+			if (!modal.open) modal.showModal();
+			window.requestAnimationFrame(() => {
+				if (activeSheetModal !== modal || !modal.open) return;
+				modal.classList.remove('opacity-0');
+				modal.classList.add('opacity-100');
+				const content = modal.firstElementChild as HTMLElement | null;
+				content?.classList.remove('-translate-y-full');
+			});
 		};
+
+		const bindSheetEvents = (modal: HTMLDialogElement | null, handle: HTMLElement | null) => {
+			if (!modal) return;
+			handle?.addEventListener('click', () => closeSheetModal(modal));
+			modal.addEventListener('cancel', (event) => {
+				event.preventDefault();
+				closeSheetModal(modal);
+			});
+			modal.addEventListener('click', (event) => {
+				if (event.target === modal) closeSheetModal(modal);
+			});
+			modal.addEventListener('close', () => {
+				resetSheetContent(modal);
+				modal.classList.add('pointer-events-none', 'opacity-0');
+				if (activeSheetModal === modal) activeSheetModal = null;
+			});
+		};
+
+		const installSwipeToClose = (modal: HTMLDialogElement | null) => {
+			const content = modal?.firstElementChild as HTMLElement | null;
+			if (!modal || !content) return;
+			let startY: number | null = null;
+			let currentY = 0;
+			let dragging = false;
+			const resetDrag = () => {
+				startY = null;
+				currentY = 0;
+				dragging = false;
+				content.style.removeProperty('transform');
+			};
+			content.addEventListener('touchstart', (event) => {
+				if (window.innerWidth >= 768 || event.touches.length !== 1) return;
+				const touch = event.touches[0];
+				startY = touch.clientY;
+				currentY = startY;
+				dragging = content.scrollTop <= 0;
+			}, { passive: true });
+			content.addEventListener('touchmove', (event) => {
+				if (startY === null || !dragging || event.touches.length !== 1) return;
+				const touch = event.touches[0];
+				currentY = touch.clientY;
+				const deltaY = currentY - startY;
+				if (deltaY <= 0) return;
+				if (content.scrollTop > 0) {
+					dragging = false;
+					content.style.removeProperty('transform');
+					return;
+				}
+				content.style.transform = 'translateY(' + deltaY + 'px)';
+				event.preventDefault();
+			}, { passive: false });
+			content.addEventListener('touchend', () => {
+				if (startY === null) return;
+				const deltaY = currentY - startY;
+				const shouldClose = dragging && deltaY >= 80;
+				resetDrag();
+				if (shouldClose) closeSheetModal(modal);
+			}, { passive: true });
+			content.addEventListener('touchcancel', resetDrag, { passive: true });
+		};
+
+		bindSheetEvents(filterSheetModal, filterSheetHandle);
+		bindSheetEvents(sortSheetModal, sortSheetHandle);
+		installSwipeToClose(filterSheetModal);
 
 		openFilterBtn?.addEventListener('click', () => openSheetModal('filter'));
 		openSortBtn?.addEventListener('click', () => openSheetModal('sort'));
-		sheetHandle?.addEventListener('click', closeSheetModal);
-		sheetModal?.addEventListener('click', (e) => {
-			if (e.target === sheetModal) closeSheetModal();
-		});
-
 		function updateSheetUi() {
 			sheetPhaseButtons.forEach((btn) => {
 				const phase = btn.dataset.sheetPhase as PhaseFilter;
 				const active = phase === currentPhase;
-				btn.classList.toggle('bg-blue-600', active);
+				btn.classList.toggle('bg-mint-600', active);
 				btn.classList.toggle('text-white', active);
 				btn.classList.toggle('font-bold', active);
 				btn.classList.toggle('bg-white', !active);
@@ -932,7 +1075,7 @@ const isRootPage = Astro.url.pathname === "/";
 			sheetSceneButtons.forEach((btn) => {
 				const scene = btn.dataset.sheetScene as SceneFilter;
 				const active = scene === currentScene;
-				btn.classList.toggle('bg-blue-600', active);
+				btn.classList.toggle('bg-mint-600', active);
 				btn.classList.toggle('text-white', active);
 				btn.classList.toggle('font-bold', active);
 				btn.classList.toggle('bg-white', !active);
@@ -944,31 +1087,24 @@ const isRootPage = Astro.url.pathname === "/";
 				radio.checked = radio.value === currentSort;
 			});
 
-			if (sheetFavOnlyCheckbox) sheetFavOnlyCheckbox.checked = isFavOnly;
+			if (sheetFavOnlyCheckbox && !filterSheetModal?.open) sheetFavOnlyCheckbox.checked = isFavOnly;
 			sheetDeletedOnlyRow?.classList.toggle('hidden', currentListView !== 'my');
 			// 非同期のIndexedDB更新で一覧を再描画しても、開いているシート内の
 			// ユーザー選択を上書きしない。開く瞬間は上のopenSheetModalで同期する。
-			if (sheetDeletedOnlyCheckbox && !sheetModal?.open) sheetDeletedOnlyCheckbox.checked = isDeletedOnly;
+			if (sheetDeletedOnlyCheckbox && !filterSheetModal?.open) sheetDeletedOnlyCheckbox.checked = isDeletedOnly;
 		}
 
 		function renderActiveChips() {
 			if (!activeChipsContainer) return;
 			activeChipsContainer.replaceChildren();
 
-			const phaseLabelMap: Record<PhaseFilter, string> = {
-				'all': 'すべて',
-				'pregnancy': '妊娠中',
-				'0-3m': '0〜3か月',
-				'4-6m': '4〜6か月',
-				'7-11m': '7〜11か月',
-				'1y-plus': '1歳〜',
-			};
+			const phaseLabel = filterPhaseOptions.find((phase) => phase.id === currentPhase)?.label ?? currentPhase;
 
 			const chips: { label: string; onRemove: () => void }[] = [];
 
 			if (currentPhase !== 'all') {
 				chips.push({
-					label: phaseLabelMap[currentPhase],
+					label: phaseLabel,
 					onRemove: () => { setPhase('all'); },
 				});
 			}
@@ -1020,7 +1156,7 @@ const isRootPage = Astro.url.pathname === "/";
 				chips.forEach(({ label, onRemove }) => {
 					const chip = document.createElement('button');
 					chip.type = 'button';
-					chip.className = 'inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-3 py-1 text-xs font-bold transition-all hover:bg-blue-100 active:scale-95';
+					chip.className = 'inline-flex items-center gap-1 bg-mint-50 text-mint-600 border border-mint-200 rounded-full px-3 py-1 text-xs font-bold transition-all hover:bg-mint-100 active:scale-95';
 					chip.innerHTML = `<span>${label}</span><span class="material-symbols-outlined text-sm">close</span>`;
 					chip.addEventListener('click', onRemove);
 					activeChipsContainer.appendChild(chip);
@@ -1249,27 +1385,38 @@ const isRootPage = Astro.url.pathname === "/";
 			});
 		});
 
-		sheetResetBtn?.addEventListener('click', () => {
-			currentSort = 'recommend';
+filterSheetResetBtn?.addEventListener('click', () => {
 			isFavOnly = false;
 			isDeletedOnly = false;
 			searchKeyword = '';
 			if (searchInput) searchInput.value = '';
 			setPhase('all');
 			setScene('all');
-			closeSheetModal();
+			closeSheetModal(filterSheetModal);
 		});
 
-		sheetApplyBtn?.addEventListener('click', () => {
-			const selectedRadio = sheetSortRadios.find((r) => r.checked);
-			if (selectedRadio) currentSort = selectedRadio.value as SortOption;
+		filterSheetApplyBtn?.addEventListener('click', () => {
 			if (sheetFavOnlyCheckbox) isFavOnly = sheetFavOnlyCheckbox.checked;
 			isDeletedOnly = currentListView === 'my' && Boolean(sheetDeletedOnlyCheckbox?.checked);
 			updateUrl(true);
 			updateView();
-			closeSheetModal();
+			closeSheetModal(filterSheetModal);
 		});
 
+		sortSheetResetBtn?.addEventListener('click', () => {
+			currentSort = 'recommend';
+			updateUrl(true);
+			updateView();
+			closeSheetModal(sortSheetModal);
+		});
+
+		sortSheetApplyBtn?.addEventListener('click', () => {
+			const selectedRadio = sheetSortRadios.find((radio) => radio.checked);
+			if (selectedRadio) currentSort = selectedRadio.value as SortOption;
+			updateUrl(true);
+			updateView();
+			closeSheetModal(sortSheetModal);
+		});
 		let searchDebounce: number | undefined;
 		searchInput?.addEventListener('input', () => {
 			window.clearTimeout(searchDebounce);
@@ -1471,21 +1618,25 @@ const isRootPage = Astro.url.pathname === "/";
 		scrollbar-width: none;
 	}
 
-	#filter-sheet-modal,
-	#filter-sheet-modal * {
+#filter-sheet-modal,
+	#filter-sheet-modal *,
+	#sort-sheet-modal,
+	#sort-sheet-modal * {
 		-ms-overflow-style: none;
 		scrollbar-width: none;
 	}
 	#filter-sheet-modal::-webkit-scrollbar,
-	#filter-sheet-modal *::-webkit-scrollbar {
+	#filter-sheet-modal *::-webkit-scrollbar,
+	#sort-sheet-modal::-webkit-scrollbar,
+	#sort-sheet-modal *::-webkit-scrollbar {
 		display: none;
 		width: 0;
 		height: 0;
 	}
-	#filter-sheet-modal::backdrop {
+	#filter-sheet-modal::backdrop,
+	#sort-sheet-modal::backdrop {
 		background: transparent;
 	}
-
 	dialog::backdrop {
 		background: rgba(0, 0, 0, 0.85);
 	}

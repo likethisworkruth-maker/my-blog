@@ -27,9 +27,17 @@ async function expectTab(page: import('@playwright/test').Page, tab: 'desc' | 'p
 	await expect(page.locator(`#tab-content-${tab}`)).toBeVisible();
 }
 
+async function waitForSheetToSettle(page: import('@playwright/test').Page, contentSelector: string) {
+	await expect.poll(() => page.locator(contentSelector).evaluate((element) => {
+		const translate = getComputedStyle(element).translate;
+		return translate === 'none' || translate === '0px' || translate === '0px 0px';
+	}), { timeout: 1500 }).toBe(true);
+}
+
 async function openFilterSheet(page: import('@playwright/test').Page) {
 	await page.locator('#open-filter-sheet-btn').click();
 	await expect(page.locator('#filter-sheet-modal')).toBeVisible();
+	await waitForSheetToSettle(page, '#filter-sheet-content');
 }
 async function mockAnonymousLikeApi(page: import('@playwright/test').Page, addLikeRequests: string[]) {
 	const jsonHeaders = {
@@ -204,14 +212,55 @@ test('H-026 sort sheetは選択値を保持し、再表示時に同じ選択に�
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=headline_view');
 	await page.locator('#open-sort-sheet-btn').click();
-	await expect(page.locator('#filter-sheet-modal')).toBeVisible();
-	await page.locator('input[name="sheet-sort"][value="newest"]').check();
-	await page.locator('#sheet-apply-btn').click();
+	await expect(page.locator('#sort-sheet-modal')).toBeVisible();
+	await waitForSheetToSettle(page, '#sort-sheet-content');
+	await expect(page.locator('#filter-sheet-modal input[name="sheet-sort"]')).toHaveCount(0);
+	await expect(page.locator('#sort-sheet-modal #sheet-fav-only')).toHaveCount(0);
+	await page.locator('#sort-sheet-modal input[name="sheet-sort"][value="newest"]').check();
+	await page.locator('#sort-sheet-apply-btn').click();
 	await expect(page.locator('#active-chips-container button')).toContainText('新着順');
 	await page.locator('#open-sort-sheet-btn').click();
-	await expect(page.locator('input[name="sheet-sort"][value="newest"]')).toBeChecked();
-	await page.locator('#sheet-reset-btn').click();
+	await waitForSheetToSettle(page, '#sort-sheet-content');
+	await expect(page.locator('#sort-sheet-modal input[name="sheet-sort"][value="newest"]')).toBeChecked();
+	await page.locator('#sort-sheet-reset-btn').click();
 	await expectNoPageErrors(errors);
+});
+
+test('H-027 SPのフィルターシートを下へスワイプすると閉じる', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/?mode=headline_view');
+	await openFilterSheet(page);
+
+	await page.evaluate(() => {
+		const content = document.querySelector<HTMLElement>('#filter-sheet-content');
+		if (!content) throw new Error('filter content not found');
+		const dispatchTouch = (type: 'touchstart' | 'touchmove' | 'touchend', clientY: number) => {
+			const event = new Event(type, { bubbles: true, cancelable: true });
+			const touch = { clientX: 100, clientY };
+			Object.defineProperty(event, 'touches', { value: type === 'touchend' ? [] : [touch] });
+			Object.defineProperty(event, 'changedTouches', { value: [touch] });
+			content.dispatchEvent(event);
+		};
+		dispatchTouch('touchstart', 100);
+		dispatchTouch('touchmove', 210);
+		dispatchTouch('touchend', 210);
+	});
+
+	await expect(page.locator('#filter-sheet-modal[open]')).toHaveCount(0);
+});
+
+test('H-028 絞り込み・並び替えボタンは矩形で有効時は文字色だけ変わる', async ({ page }) => {
+	await page.goto('/?mode=headline_view');
+	const filterButton = page.locator('#open-filter-sheet-btn');
+	const sortButton = page.locator('#open-sort-sheet-btn');
+	await expect(filterButton).toHaveClass(/rounded-xl/);
+	await expect(sortButton).toHaveClass(/rounded-xl/);
+	await openFilterSheet(page);
+	await page.locator('[data-sheet-phase="pregnancy"]').click();
+	await expect(filterButton).toHaveClass(/text-mint-600/);
+	await expect(filterButton).not.toHaveClass(/bg-mint-50/);
+	await expect(sortButton).not.toHaveClass(/bg-mint-50/);
+	await page.locator('#sheet-apply-btn').click();
 });
 
 test('O-016 Ctrl+Kで検索modalを開き、結果を絞り込んで閉じる', async ({ page }) => {
@@ -515,6 +564,13 @@ test('K-005 progressのcheckbox変更がreload後も維持される', async ({ p
 	await expect(checkbox).toBeVisible();
 	await checkbox.check();
 	await expect(checkbox).toBeChecked();
+	await expect.poll(async () => {
+		const runs = await readPrivateRuns(page) as Array<{
+			checklistId: string;
+			items: Array<{ checked?: boolean }>;
+		}>;
+		return runs.find((run) => run.checklistId === 'night-memo')?.items[0]?.checked ?? false;
+	}, { timeout: 8000 }).toBe(true);
 	await page.reload();
 	await expect(page.locator('#tab-content-progress input[type="checkbox"]').first()).toBeChecked();
 	await expectNoPageErrors(errors);

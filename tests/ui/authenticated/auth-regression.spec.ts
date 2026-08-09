@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../auth-fixture';
 
 const defaultState = path.resolve('tests/fixtures/auth/authenticated.storageState.json');
 const authState = process.env.E2E_AUTH_STATE ? path.resolve(process.env.E2E_AUTH_STATE) : defaultState;

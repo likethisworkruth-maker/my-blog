@@ -3,6 +3,7 @@ import { createClient, type Session, type SupabaseClient } from '@supabase/supab
 declare global {
 	interface Window {
 		__supabaseClient?: SupabaseClient;
+		__E2E_AUTH_STUB__?: boolean;
 	}
 }
 
@@ -39,6 +40,77 @@ export function clearCapturedGoogleProviderAccess() {
 let isSupabaseDisabled = false;
 let connectionCheckPromise: Promise<boolean> | null = null;
 
+type E2EAuthEvent = 'INITIAL_SESSION' | 'SIGNED_IN' | 'SIGNED_OUT';
+type E2EAuthListener = (event: E2EAuthEvent, session: Session | null) => void | Promise<void>;
+
+function isE2EAuthStubEnabled() {
+	if (typeof window === 'undefined') return false;
+	return window.__E2E_AUTH_STUB__ === true
+		&& (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+}
+
+function getStoredAuthKey() {
+	if (typeof window === 'undefined') return null;
+	return Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key)) ?? null;
+}
+
+function readE2EAuthSession(): Session | null {
+	const key = getStoredAuthKey();
+	if (!key) return null;
+	try {
+		const stored = JSON.parse(window.localStorage.getItem(key) ?? 'null') as Partial<Session> | null;
+		if (!stored?.access_token || !stored.user) return null;
+		return stored as Session;
+	} catch {
+		return null;
+	}
+}
+
+function createE2EAuthClient(client: SupabaseClient) {
+	let session = readE2EAuthSession();
+	const listeners = new Set<E2EAuthListener>();
+	const notify = (event: E2EAuthEvent, nextSession: Session | null) => {
+		session = nextSession;
+		listeners.forEach((listener) => {
+			void listener(event, session);
+		});
+	};
+	const auth = {
+		getSession: async () => ({ data: { session }, error: null }),
+		getUser: async () => ({ data: { user: session?.user ?? null }, error: null }),
+		onAuthStateChange: (listener: E2EAuthListener) => {
+			listeners.add(listener);
+			queueMicrotask(() => void listener('INITIAL_SESSION', session));
+			return {
+				data: {
+					subscription: {
+						unsubscribe: () => listeners.delete(listener),
+					},
+				},
+				error: null,
+			};
+		},
+		signInWithOAuth: async () => {
+			const nextSession = readE2EAuthSession();
+			if (nextSession) notify('SIGNED_IN', nextSession);
+			return { data: { provider: 'google', url: null }, error: null };
+		},
+		signOut: async () => {
+			const key = getStoredAuthKey();
+			if (key) window.localStorage.removeItem(key);
+			notify('SIGNED_OUT', null);
+			return { error: null };
+		},
+	};
+
+	return new Proxy(client, {
+		get(target, property, receiver) {
+			if (property === 'auth') return auth;
+			return Reflect.get(target, property, receiver);
+		},
+	}) as SupabaseClient;
+}
+
 export function isConnectionError(error: unknown): boolean {
 	if (!error) return false;
 	const msg = String(error instanceof Error ? error.message : error).toLowerCase();
@@ -60,6 +132,9 @@ export function isSupabaseAvailable(): boolean {
 }
 
 export async function checkSupabaseHealth(): Promise<boolean> {
+	// Auth UI regression tests must not require a running Supabase or Google OAuth server.
+	// Data/RLS behavior remains covered by the real client outside this local-only flag.
+	if (isE2EAuthStubEnabled()) return false;
 	if (isSupabaseDisabled) return false;
 	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
@@ -110,14 +185,22 @@ export async function checkSupabaseHealth(): Promise<boolean> {
 }
 
 export function getSupabaseClient(): SupabaseClient | null {
-	if (isSupabaseDisabled) return null;
-	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+	const e2eAuthStub = isE2EAuthStubEnabled();
+	if (isSupabaseDisabled && !e2eAuthStub) return null;
+	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || (e2eAuthStub ? 'http://127.0.0.1:54321' : '');
+	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || (e2eAuthStub ? 'e2e-test-anon-key' : '');
 	if (!supabaseUrl || !supabaseAnonKey || typeof window === 'undefined') return null;
 
 	if (!window.__supabaseClient) {
-		const client = createClient(supabaseUrl, supabaseAnonKey);
-		client.auth.onAuthStateChange((event, session) => {
+		const client = createClient(supabaseUrl, supabaseAnonKey, e2eAuthStub ? {
+			auth: {
+				persistSession: false,
+				autoRefreshToken: false,
+				detectSessionInUrl: false,
+			},
+		} : undefined);
+		const resolvedClient = e2eAuthStub ? createE2EAuthClient(client) : client;
+		resolvedClient.auth.onAuthStateChange((event, session) => {
 			if (session?.provider_token) {
 				rememberGoogleProviderAccess(session);
 				return;
@@ -135,7 +218,7 @@ export function getSupabaseClient(): SupabaseClient | null {
 				clearCapturedGoogleProviderAccess();
 			}
 		});
-		window.__supabaseClient = client;
+		window.__supabaseClient = resolvedClient;
 	}
 	return window.__supabaseClient;
 }

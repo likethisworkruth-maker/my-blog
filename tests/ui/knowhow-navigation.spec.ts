@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
+import { makeRegressionRun, openPrivateDetailFromList, seedPrivateRuns } from './helpers';
 
 test.use({ storageState: path.resolve('tests/fixtures/auth/anonymous.storageState.json') });
 
@@ -36,6 +37,21 @@ test.describe('Knowhow Detail Page Navigation', () => {
     await expect(page.locator('#tab-content-memo')).toBeVisible();
   });
 
+  test('private一覧から001詳細へ遷移した直後でもメモアイコンを開ける', async ({ page }) => {
+    await page.goto('/my-knowhow/?mode=headline_view');
+    await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+    await page.reload();
+
+    await openPrivateDetailFromList(page, '001-night-memo');
+    await expect(page.locator('#knowhow-modal-container')).toBeVisible();
+
+    const memoButton = visibleMemoButton(page);
+    await expect(memoButton).toHaveCount(1);
+    await memoButton.click();
+
+    await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/memo\/?$/);
+    await expect(page.locator('#tab-content-memo')).toBeVisible();
+  });
   test('private詳細のスクロールで次のprivate詳細へ移動する', async ({ page }) => {
     await page.goto('/my-knowhow/001-night-memo/');
     await expect(page.locator('#knowhow-modal-container')).toBeVisible();

@@ -6,10 +6,12 @@ interface Props {
 	variant?: 'default' | 'feed' | 'reels';
 	checklistId?: string;
 	startOnLike?: boolean;
+	privateDetail?: boolean;
 }
 
-const { slug, variant = 'default', checklistId, startOnLike = false } = Astro.props;
+const { slug, variant = 'default', checklistId, startOnLike = false, privateDetail = false } = Astro.props;
 const id = slug.split('/')[1];
+const privateMemoUrl = privateDetail ? '/my-knowhow/' + id + '/memo/' : null;
 const showShare = !slug.startsWith('knowhow/');
 ---
 
@@ -40,7 +42,7 @@ const showShare = !slug.startsWith('knowhow/');
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">checklist</span>
 				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">進捗</span>
 			</button>
-			<button data-panel-trigger class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" onclick="if(window.toggleMemoPanel) window.toggleMemoPanel()" aria-label="このチェックリストのメモを開く">
+			<button data-panel-trigger class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" onclick={privateMemoUrl ? "if(window.astroNavigate) window.astroNavigate('" + privateMemoUrl + "'); else window.location.assign('" + privateMemoUrl + "')" : "if(window.toggleMemoPanel) window.toggleMemoPanel()"} aria-label="このチェックリストのメモを開く">
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">edit_note</span>
 				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">メモ</span>
 			</button>

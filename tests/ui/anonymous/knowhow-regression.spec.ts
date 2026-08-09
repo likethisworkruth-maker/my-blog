@@ -1,18 +1,9 @@
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
+import { collectPageErrors, expectNoPageErrors } from '../helpers';
 
 test.use({ storageState: path.resolve('tests/fixtures/auth/anonymous.storageState.json') });
 
-function collectPageErrors(page: import('@playwright/test').Page) {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	return errors;
-}
-
-async function expectNoPageErrors(errors: string[]) {
-	await new Promise((resolve) => setTimeout(resolve, 50));
-	expect(errors).toEqual([]);
-}
 
 test.describe('未ログイン回帰テスト', () => {
 	test('ルートのMarkdownカードがJS初期化後も表示される', async ({ page }) => {

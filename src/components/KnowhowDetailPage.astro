@@ -96,13 +96,13 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 
                     <!-- Floating Action Bar (Mobile only) -->
                     <div data-media-ui class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
-                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} />
+                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} privateDetail={isPrivateDetail} />
                     </div>
                 </div>
 
                 <!-- Floating Action Bar (PC only) -->
                 <div data-media-ui class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
-                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} />
+                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} privateDetail={isPrivateDetail} />
                 </div>
             </div>
 
@@ -224,7 +224,14 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 			notice.classList.remove('flex');
 			notice.setAttribute('aria-hidden', 'true');
 		};
+		const isPrivateChecklistPath = () => window.location.pathname.startsWith('/my-knowhow/')
+			|| new URLSearchParams(window.location.search).get('mode') === 'my';
 		const showNotice = (detail?: ChecklistUsageNotice) => {
+			if (isPrivateChecklistPath()) {
+				clearPendingNotice();
+				closeNotice();
+				return;
+			}
 			if (!isSp()) {
 				clearPendingNotice();
 				closeNotice();
