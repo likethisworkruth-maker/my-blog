@@ -28,27 +28,34 @@ const authPages = [
 ];
 
 async function expectSignedIn(page: import('@playwright/test').Page) {
+	const isSp = await page.evaluate(() => window.innerWidth < 1024);
 	const signedInUi = page.locator('[data-google-signed-in]');
-	if (await signedInUi.count()) {
+	if (isSp) {
+		await expect(page.locator('[data-site-header]')).toBeHidden();
+		await expect(signedInUi).toBeHidden();
+	} else if (await signedInUi.count()) {
 		await expect(signedInUi).toBeVisible();
 		await expect(page.locator('[data-google-login]')).toBeHidden();
 	}
 	const session = await page.evaluate(() => localStorage.getItem('sb-127-auth-token'));
 	expect(session).toContain('e2e-authenticated@example.test');
+	return isSp;
 }
 
 for (const route of authPages) {
 	test(`${route.id} authenticated ${route.label}でログイン表示を維持する`, async ({ page }) => {
 		const errors = collectPageErrors(page);
 		await page.goto(route.url);
-		await expectSignedIn(page);
-		await expect(page.locator('[data-google-account-trigger]')).toBeVisible();
+		const isSp = await expectSignedIn(page);
+		if (isSp) await expect(page.locator('[data-google-account-trigger]')).toBeHidden();
+		else await expect(page.locator('[data-google-account-trigger]')).toBeVisible();
 		await expectNoPageErrors(errors);
 	});
 }
 
 test('A-109 account menuは開閉とEscapeを正しく処理する', async ({ page }) => {
 	const errors = collectPageErrors(page);
+	await page.setViewportSize({ width: 1280, height: 720 });
 	await page.goto('/');
 	await expectSignedIn(page);
 	const trigger = page.locator('[data-google-account-trigger]');
@@ -66,6 +73,7 @@ test('A-109 account menuは開閉とEscapeを正しく処理する', async ({ pa
 
 test('A-110 account menuは外側clickで閉じる', async ({ page }) => {
 	const errors = collectPageErrors(page);
+	await page.setViewportSize({ width: 1280, height: 720 });
 	await page.goto('/');
 	await expectSignedIn(page);
 	await page.locator('[data-google-account-trigger]').click();

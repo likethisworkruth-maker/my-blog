@@ -28,7 +28,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 
 	<div data-checklist-active class="hidden">
 		<p data-review-guidance class="mb-4 hidden rounded-xl border border-mint-300/20 bg-mint-300/10 p-3 text-xs leading-5 text-mint-100">
-			実際に使った結果を項目ごとに選んでください。回答はこの端末とDriveバックアップにだけ保存されます。
+			実際に使った結果を項目ごとに選んでください。回答はこの端末に保存されます。
 		</p>
 
 		<div data-view-toolbar class="mb-6 flex justify-end">
@@ -55,12 +55,8 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		<div data-edit-footer class="-mx-4 mt-8 hidden border-t border-white/10 px-4 pt-6 sm:-mx-6 sm:px-6">
 			<div class="grid grid-cols-2 gap-3">
 				<button type="button" data-cancel-edit class="rounded-xl border border-slate-400 px-4 py-3 text-sm font-bold text-slate-300 transition-colors hover:border-white hover:text-white">キャンセル</button>
-				<button type="button" data-save-edit class="rounded-xl bg-mint-400 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-mint-500 disabled:cursor-wait disabled:opacity-60">変更を保存</button>
+				<button type="button" data-save-edit class="inline-flex items-center justify-center rounded-xl border-2 border-mint-300 bg-mint-400 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-mint-500 disabled:cursor-wait disabled:opacity-60">変更を保存</button>
 			</div>
-			<button type="button" data-delete-list class="mx-auto mt-6 flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-400 transition-colors hover:text-red-300">
-				<span class="material-symbols-outlined" aria-hidden="true">delete</span>
-				このリストを削除
-			</button>
 		</div>
 
 		<p data-save-state class="mt-5 hidden text-center text-xs text-gray-400" aria-live="polite"></p>
@@ -82,7 +78,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		initializePrivateDb,
 		savePrivateChecklistRun,
 	} from '../scripts/private-db';
-	import { recordChecklistUsage } from '../scripts/checklist-usage';
+	import { onPageLoad } from '../scripts/page-lifecycle';
 
 	function initChecklistRunners() {
 		document.querySelectorAll<HTMLElement>('.checklist-runner').forEach((root) => {
@@ -110,7 +106,6 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		const editButton = root.querySelector<HTMLButtonElement>('[data-edit-checklist]');
 		const cancelButton = root.querySelector<HTMLButtonElement>('[data-cancel-edit]');
 		const saveButton = root.querySelector<HTMLButtonElement>('[data-save-edit]');
-		const deleteListButton = root.querySelector<HTMLButtonElement>('[data-delete-list]');
 		const addItemInput = addItemForm?.elements.namedItem('label') as HTMLInputElement | null;
 		let run: ChecklistRun | null = null;
 		let editing = false;
@@ -524,6 +519,24 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			reviewGuidance?.classList.toggle('hidden', run.status !== 'review_pending');
 		};
 
+		const cancelEditing = () => {
+			if (!editing || !editSnapshot) return;
+			run = cloneRun(editSnapshot);
+			if (addItemInput) addItemInput.value = '';
+			editSnapshot = null;
+			editing = false;
+			setSaveState('');
+			render();
+		};
+
+		const cancelOnNavigation = () => {
+			cancelEditing();
+			window.removeEventListener('checklist-edit-cancel', cancelEditing);
+		};
+		window.addEventListener('checklist-edit-cancel', cancelEditing);
+		document.addEventListener('astro:before-swap', cancelOnNavigation, { once: true });
+		window.addEventListener('pagehide', cancelOnNavigation, { once: true });
+
 		editButton?.addEventListener('click', () => {
 			if (!run) return;
 			if (addItemInput) addItemInput.value = '';
@@ -532,15 +545,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			render();
 		});
 
-		cancelButton?.addEventListener('click', () => {
-			if (!editSnapshot) return;
-			run = cloneRun(editSnapshot);
-			if (addItemInput) addItemInput.value = '';
-			editSnapshot = null;
-			editing = false;
-			setSaveState('');
-			render();
-		});
+		cancelButton?.addEventListener('click', cancelEditing);
 
 		saveButton?.addEventListener('click', async () => {
 			if (!run) return;
@@ -568,20 +573,10 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			render();
 		});
 
-		deleteListButton?.addEventListener('click', () => {
-			const target = window as Window & { removeChecklistFromMyList?: () => void | Promise<void> };
-			void target.removeChecklistFromMyList?.();
-		});
-
 		root.querySelector<HTMLButtonElement>('[data-create-run]')?.addEventListener('click', async () => {
 			run = createChecklistRun(template);
 			try {
 				await savePrivateChecklistRun(run);
-				try {
-					await recordChecklistUsage(template.checklistId);
-				} catch {
-					// Usage notifications must not block local checklist use.
-				}
 				window.dispatchEvent(new CustomEvent('checklist-run-ready', { detail: { checklistId: template.checklistId } }));
 				render();
 			} catch {
@@ -618,8 +613,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		}
 	}
 
-	document.addEventListener('DOMContentLoaded', initChecklistRunners);
-	document.addEventListener('astro:page-load', initChecklistRunners);
+	onPageLoad(initChecklistRunners);
 </script>
 
 <style>

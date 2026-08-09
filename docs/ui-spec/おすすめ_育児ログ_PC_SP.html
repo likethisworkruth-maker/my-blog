@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>おすすめ：育児ログ（PC / SP） | すくリス UI仕様書</title>
+<style>
+:root { color-scheme: light; --ink:#17233f; --muted:#667085; --mint:#39b59e; --mint-soft:#e8f8f3; --line:#e5e7eb; --paper:#ffffff; --canvas:#f5f8f7; --accent:#f5a14d; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; color:var(--ink); background:var(--canvas); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif; line-height:1.7; }
+a { color:inherit; }
+.shell { width:min(1180px,calc(100% - 32px)); margin:0 auto; }
+.topbar { position:sticky; top:0; z-index:5; background:rgba(255,255,255,.94); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
+.topbar-inner { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:68px; }
+.brand { font-weight:800; color:var(--ink); text-decoration:none; letter-spacing:.04em; }
+.doc-nav { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; font-size:12px; }
+.doc-nav a { padding:5px 9px; border-radius:999px; color:var(--muted); text-decoration:none; }
+.doc-nav a:hover { background:var(--mint-soft); color:var(--mint); }
+.hero { padding:44px 0 28px; }
+.eyebrow { color:var(--mint); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+h1,h2,h3 { margin:0; line-height:1.3; color:var(--ink); }
+h1 { margin-top:10px; font-size:clamp(28px,4vw,48px); letter-spacing:-.03em; }
+h2 { font-size:24px; }
+h3 { font-size:17px; }
+.lead { max-width:820px; margin:16px 0 0; color:#475467; font-size:16px; }
+.meta { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:26px 0 0; }
+.meta-card { padding:14px 16px; border:1px solid var(--line); border-radius:16px; background:var(--paper); }
+.meta-card dt { color:var(--muted); font-size:11px; font-weight:700; }
+.meta-card dd { margin:3px 0 0; font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+.notice { margin:20px 0 0; padding:14px 16px; border-left:4px solid var(--mint); border-radius:12px; background:var(--mint-soft); color:#245b51; font-size:13px; }
+.section { margin:28px 0; padding:28px; border:1px solid var(--line); border-radius:22px; background:var(--paper); box-shadow:0 8px 30px rgba(23,35,63,.04); }
+.section > p:first-of-type { margin-top:10px; }
+p { color:#475467; }
+ul,ol { margin:10px 0 0; padding-left:22px; color:#475467; }
+li + li { margin-top:5px; }
+.capture-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:18px; }
+.capture { margin:0; padding:10px; border:1px solid var(--line); border-radius:16px; background:#fbfcfc; }
+.capture img { display:block; width:100%; max-height:540px; object-fit:contain; border:1px solid #edf0f0; border-radius:10px; background:#fff; }
+.capture figcaption { padding:9px 3px 1px; color:var(--muted); font-size:12px; }
+.capture figcaption strong { color:var(--ink); }
+.capture a { display:block; text-decoration:none; }
+.two-col { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.rule-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:16px; }
+.rule { padding:16px; border:1px solid var(--line); border-radius:15px; background:#fbfcfc; }
+.rule h3 { font-size:15px; }
+.rule p { margin:7px 0 0; font-size:13px; }
+table { width:100%; margin-top:16px; border-collapse:collapse; font-size:13px; }
+th,td { padding:11px 12px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+th { background:#f7faf9; color:var(--ink); font-size:12px; }
+code,kbd { padding:2px 6px; border-radius:6px; background:#eef2f2; color:#334155; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.9em; overflow-wrap:anywhere; }
+.path { display:inline-block; padding:3px 8px; border-radius:7px; background:#f1f5f4; color:#245b51; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:12px; }
+.source { margin-top:14px; padding:12px 14px; border:1px dashed #cdd9d6; border-radius:12px; color:var(--muted); font-size:12px; }
+.source code { background:transparent; padding:0; }
+details { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+summary { cursor:pointer; color:var(--ink); font-weight:800; }
+.footer { padding:22px 0 48px; color:var(--muted); font-size:12px; }
+.footer a { color:var(--mint); }
+@media (max-width:760px) {
+  .shell { width:min(100% - 20px,620px); }
+  .topbar-inner { align-items:flex-start; flex-direction:column; padding:12px 0; }
+  .doc-nav { justify-content:flex-start; }
+  .hero { padding:30px 0 18px; }
+  .section { padding:20px 16px; border-radius:18px; }
+  .meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .two-col,.rule-grid { grid-template-columns:1fr; }
+  .capture-grid { grid-template-columns:1fr; }
+  table { display:block; overflow-x:auto; white-space:normal; }
+  th,td { min-width:150px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="shell topbar-inner"><a class="brand" href="探すページPC_SP.html">すくリス / UI仕様書</a>
+<nav class="doc-nav" aria-label="仕様書">
+  <a href="探すページPC_SP.html">探す</a>
+  <a href="マイリストPC_SP.html">マイリスト</a>
+  <a href="おすすめ_アプリ_PC_SP.html">アプリ</a>
+  <a href="おすすめ_アイテム_PC_SP.html">アイテム</a>
+  <a href="おすすめ_育児ログ_PC_SP.html">育児ログ</a>
+</nav></div></header>
+<main class="shell">
+  <section class="hero">
+    <div class="eyebrow">Current local implementation specification</div>
+    <h1>おすすめ：育児ログ（PC / SP）</h1>
+    <p class="lead">育児の困りごと、試したこと、結果をカードで閲覧し、カテゴリー・対象月齢・検索語で絞り込む画面。</p>
+    <dl class="meta">
+      <div class="meta-card"><dt>対象URL</dt><dd>/logs/</dd></div>
+      <div class="meta-card"><dt>PC撮影</dt><dd>1440 × 1000</dd></div>
+      <div class="meta-card"><dt>SP撮影</dt><dd>390 × 844</dd></div>
+      <div class="meta-card"><dt>取得元</dt><dd>localhost:4321 / 現行ビルド</dd></div>
+    </dl>
+    <div class="notice">この資料は、実際の localhost:4321 をPC/SPビューポートで撮影し、現在のAstro実装とクライアント側の動作を仕様として整理したものです。画像はキャプチャ時点の端末データ・公開データを反映します。</div>
+  </section>
+  
+<section class="section">
+  <h2>1. 画面の目的と導線</h2>
+  <p>実際の育児上の困りごと、試したこと、結果を読む一覧です。正規URLは <span class="path">/logs/</span>、各カード押下先は <span class="path">/logs/:id/</span> です。</p>
+  <div class="rule-grid">
+    <div class="rule"><h3>PC</h3><p>ログカードを2〜3列のグリッドで表示。データ量に応じて実装のブレークポイントで列数が変わる。</p></div>
+    <div class="rule"><h3>SP</h3><p>ログカードを1列で表示。日付、月齢、いいね、困りごと、やってみたこと、結果を縦に整理。</p></div>
+  </div>
+</section>
+<section class="section">
+  <h2>2. 実画面キャプチャ</h2>
+  <div class="capture-grid">
+    <figure class="capture"><a href="assets/logs-pc.png" target="_blank" rel="noreferrer"><img src="assets/logs-pc.png" alt="PC / 育児ログ一覧"></a><figcaption><strong>PC / 育児ログ一覧</strong><br>2列カードと検索・操作ボタン。画像が未設定のログはプレースホルダー表示。</figcaption></figure>
+    <figure class="capture"><a href="assets/logs-sp.png" target="_blank" rel="noreferrer"><img src="assets/logs-sp.png" alt="SP / 育児ログ一覧"></a><figcaption><strong>SP / 育児ログ一覧</strong><br>1列カードとSP固定ナビ。</figcaption></figure>
+    <figure class="capture"><a href="assets/logs-filter-sp.png" target="_blank" rel="noreferrer"><img src="assets/logs-filter-sp.png" alt="SP / 絞り込み"></a><figcaption><strong>SP / 絞り込み</strong><br>カテゴリーと対象月齢を選ぶ下部シート。</figcaption></figure>
+    <figure class="capture"><a href="assets/logs-sort-sp.png" target="_blank" rel="noreferrer"><img src="assets/logs-sort-sp.png" alt="SP / 並び替え"></a><figcaption><strong>SP / 並び替え</strong><br>最新順、月齢が低い順、高い順を選ぶ下部シート。</figcaption></figure>
+  </div>
+</section>
+<section class="section">
+  <h2>3. 表示・検索・絞り込み・並び替え</h2>
+  <table><thead><tr><th>機能</th><th>仕様</th></tr></thead><tbody>
+    <tr><th>表示</th><td><code>logs</code> content collectionを <code>logNumber</code>降順で初期表示。PCはmdで2列、lgで3列、SPは1列。</td></tr>
+    <tr><th>検索</th><td>カードの全文（タイトル、やってみたこと、結果など）に対する小文字化部分一致。入力イベントごとに更新。</td></tr>
+    <tr><th>絞り込み</th><td>カテゴリーと対象月齢。カテゴリー・月齢・検索はAND条件。適用中はボタンをmint系で強調。</td></tr>
+    <tr><th>並び替え</th><td>最新順＝<code>data-lognumber</code>降順。月齢が低い順／高い順＝数値比較。月齢未指定は最後。</td></tr>
+    <tr><th>空状態</th><td>条件に一致するカードが0件なら「条件に一致する子育てログはありません。」を表示。</td></tr>
+    <tr><th>シート</th><td>絞り込み・並び替えとも下端から上へ開く同一シート。ハンドルの下スワイプ、背景クリックで閉じる。</td></tr>
+  </tbody></table>
+</section>
+<section class="section">
+  <h2>4. データのキャッシュ・保存法則</h2>
+  <ul><li>ログ本文・カード情報はAstroの <code>logs</code> content collectionからビルド時に静的生成。</li><li>検索・カテゴリー・月齢・並び順は画面内メモリのみ。リロードすると初期値へ戻り、URL／IndexedDBには保存しない。</li><li>カードのいいね状態・件数は共通のいいね処理を使用。件数は接続可能ならSupabase、匿名押下状態はIndexedDB <code>article_likes</code>、通信不能時は件数0へフォールバック。</li><li>画像が存在しないログは、現在のキャプチャのように画像プレースホルダーを表示する。</li></ul>
+</section>
+<section class="section">
+  <h2>5. 実装上の根拠</h2>
+  <div class="source"><code>src/pages/logs/index.astro</code>：ログcollection、初期順、PC/SP列数、検索、カテゴリー・月齢、並び替え、下部シート。</div>
+  <div class="source"><code>src/components/LogCard.astro</code>：カードの表示項目、画像、いいね状態の同期。</div>
+  <div class="source"><code>src/scripts/article-likes.ts</code>／<code>src/scripts/private-db.ts</code>：いいね件数と匿名状態の保存・フォールバック。</div>
+</section>
+</main>
+<footer class="shell footer">Generated from the local implementation. 関連ソースは各ページの「実装上の根拠」に記載しています。</footer>
+</body>
+</html>

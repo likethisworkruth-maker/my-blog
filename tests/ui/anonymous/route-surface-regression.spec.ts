@@ -51,7 +51,10 @@ for (const route of listRoutes) {
 		const errors = collectPageErrors(page);
 		const response = await page.goto(route.url);
 		expect(response?.status()).toBe(200);
-		await expect(page.locator('body > div > header')).toBeVisible();
+		const header = page.locator('body > div > header');
+		const isSp = await page.evaluate(() => window.innerWidth < 1024);
+		if (isSp) await expect(header).toBeHidden();
+		else await expect(header).toBeVisible();
 		await expect(page.locator('body > div > main')).toBeVisible();
 		if (route.expected > 0) await expect(page.locator('#knowhow-container')).toBeVisible();
 		await expectListState(page, route.expected);
@@ -88,6 +91,13 @@ test('R-036 unknown queryでも公開一覧が安全に初期化される', asyn
 	expect(response?.status()).toBe(200);
 	await expectListState(page, 2);
 	await expectNoPageErrors(errors);
+});
+
+test('R-038 SP表示では共通ヘッダーを完全に非表示にする', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/my-knowhow/?mode=grid_view');
+	await expect(page.locator('[data-site-header]')).toBeHidden();
+	await expect(page.locator('footer.fixed')).toBeVisible();
 });
 
 test('R-037 Markdownのタイトルと説明が画面に存在する', async ({ page }) => {

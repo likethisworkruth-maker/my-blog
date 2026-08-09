@@ -7,36 +7,6 @@ declare global {
 	}
 }
 
-export interface CapturedGoogleProviderAccess {
-	accessToken: string;
-	accountEmail: string;
-}
-
-let capturedGoogleProviderAccess: CapturedGoogleProviderAccess | undefined;
-
-function normalizeEmail(email: string) {
-	return email.trim().toLocaleLowerCase('en-US');
-}
-
-export function rememberGoogleProviderAccess(session: Session) {
-	const accessToken = session.provider_token;
-	const accountEmail = session.user.email;
-	if (!accessToken || !accountEmail) return;
-	capturedGoogleProviderAccess = {
-		accessToken,
-		accountEmail: normalizeEmail(accountEmail),
-	};
-}
-
-export function getCapturedGoogleProviderAccess(expectedEmail: string) {
-	if (capturedGoogleProviderAccess?.accountEmail !== normalizeEmail(expectedEmail)) return null;
-	return capturedGoogleProviderAccess;
-}
-
-export function clearCapturedGoogleProviderAccess() {
-	capturedGoogleProviderAccess = undefined;
-}
-
 let isSupabaseDisabled = false;
 let connectionCheckPromise: Promise<boolean> | null = null;
 
@@ -200,24 +170,6 @@ export function getSupabaseClient(): SupabaseClient | null {
 			},
 		} : undefined);
 		const resolvedClient = e2eAuthStub ? createE2EAuthClient(client) : client;
-		resolvedClient.auth.onAuthStateChange((event, session) => {
-			if (session?.provider_token) {
-				rememberGoogleProviderAccess(session);
-				return;
-			}
-			if (event === 'SIGNED_OUT') {
-				clearCapturedGoogleProviderAccess();
-				return;
-			}
-			const sessionEmail = session?.user.email;
-			if (
-				event === 'SIGNED_IN'
-				&& capturedGoogleProviderAccess
-				&& (!sessionEmail || capturedGoogleProviderAccess.accountEmail !== normalizeEmail(sessionEmail))
-			) {
-				clearCapturedGoogleProviderAccess();
-			}
-		});
 		window.__supabaseClient = resolvedClient;
 	}
 	return window.__supabaseClient;

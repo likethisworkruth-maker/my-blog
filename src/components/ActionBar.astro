@@ -21,34 +21,45 @@ const showShare = !slug.startsWith('knowhow/');
 		<div data-public-actions class="contents">
 			<button
 				class="hidden flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95"
-				onclick="if(window.toggleCommentsPanel) window.toggleCommentsPanel()"
+				data-panel-tab="comments"
 			>
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
 				<span class="icon-text-shadow text-[0.75rem] font-medium mt-1">コメント</span>
 			</button>
 			{checklistId && (
-				<button class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" onclick="if(window.startChecklist) window.startChecklist()" aria-label="このチェックリストを始める">
+				<button data-start-checklist-action class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="このチェックリストを始める">
 					<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">playlist_add</span>
 					<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">始める</span>
 				</button>
 			)}
 		</div>
 		<div data-private-actions class="hidden">
-			<button data-panel-trigger class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" onclick="if(window.toggleDescPanel) window.toggleDescPanel()" aria-label="チェックリストの説明を開く">
+			<button data-private-action-trigger data-private-list-delete data-remove-checklist class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="このチェックリストをマイリストから削除">
+				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">delete</span>
+				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">削除</span>
+			</button>
+			<button data-panel-trigger data-panel-tab="desc" class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="チェックリストの説明を開く">
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">info</span>
 				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">説明</span>
 			</button>
-			<button data-panel-trigger class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" onclick="if(window.toggleProgressPanel) window.toggleProgressPanel()" aria-label="チェックリストの進捗を開く">
+			<button data-panel-trigger data-panel-tab="progress" class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="チェックリストの進捗を開く">
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">checklist</span>
 				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">進捗</span>
 			</button>
-			<button data-panel-trigger class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" onclick={privateMemoUrl ? "if(window.astroNavigate) window.astroNavigate('" + privateMemoUrl + "'); else window.location.assign('" + privateMemoUrl + "')" : "if(window.toggleMemoPanel) window.toggleMemoPanel()"} aria-label="このチェックリストのメモを開く">
-				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">edit_note</span>
-				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">メモ</span>
-			</button>
+			{privateMemoUrl ? (
+				<button data-panel-trigger data-private-memo-route={privateMemoUrl} class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="このチェックリストのメモを開く">
+					<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">edit_note</span>
+					<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">メモ</span>
+				</button>
+			) : (
+				<button data-panel-trigger data-panel-tab="memo" class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="このチェックリストのメモを開く">
+					<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">edit_note</span>
+					<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">メモ</span>
+				</button>
+			)}
 		</div>
 		{showShare && (
-			<button class="flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" data-share-trigger onclick="window.openShareModal?.()" aria-label="このページを共有">
+			<button class="flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" data-share-trigger aria-label="このページを共有">
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">send</span>
 				<span class="icon-text-shadow text-[0.75rem] font-medium mt-1">シェア</span>
 			</button>
@@ -57,9 +68,9 @@ const showShare = !slug.startsWith('knowhow/');
 ) : (
 	<div class={`flex items-center justify-start gap-3 ${variant === 'default' ? 'my-12 pt-8 border-t border-gray-100' : 'my-3'}`}>
 		<LikeButton slug={slug} />
-		<button
+			<button
 			class="hidden h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95"
-			onclick={variant === 'feed'
+				onclick={variant === 'feed'
 				? `if(window.openModal) window.openModal('${id}')`
 				: `const form = document.querySelector('[data-slug="${slug}"][data-variant] #comment-form'); form?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => form?.querySelector('textarea[name="content"]')?.focus(), 450);`}
 			aria-label="コメントを投稿"
@@ -67,7 +78,7 @@ const showShare = !slug.startsWith('knowhow/');
 			<span class="material-symbols-outlined text-[1.5rem] font-light" aria-hidden="true">chat_bubble</span>
 		</button>
 		{showShare && (
-			<button class="flex h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95" data-share-trigger onclick="window.openShareModal?.()" aria-label="このページを共有">
+			<button class="flex h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-mint-600 active:scale-95" data-share-trigger aria-label="このページを共有">
 				<span class="material-symbols-outlined text-[1.5rem] font-light" aria-hidden="true">send</span>
 			</button>
 		)}

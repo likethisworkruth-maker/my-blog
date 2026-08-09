@@ -1,4 +1,39 @@
 @import "tailwindcss";
+@import "./list-sheet.css";
+
+/* URL指定の一覧形式を、一覧用JSの初期化前から同じ表示にする。 */
+html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container .knowhow-list-view {
+  display: none !important;
+}
+
+html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container .knowhow-gallery-view {
+  display: block !important;
+}
+
+html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container .my-list-delete-action {
+  display: none !important;
+}
+
+html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container [data-my-list-swipe-row],
+html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container [data-my-list-swipe-content] {
+  transform: translateX(0) !important;
+  touch-action: auto;
+  transition: none !important;
+  will-change: auto;
+}
+
+@media (max-width: 767px) {
+  html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container {
+    margin-left: -1rem;
+    margin-right: -1rem;
+  }
+}
 
 @theme {
   --color-mint-500: #3EC7A6;

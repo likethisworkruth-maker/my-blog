@@ -33,31 +33,8 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
          data-prev={prevUrl}
          data-next={nextUrl}>
 
-		<div
-			data-google-login-backup-notice
-			class="fixed inset-0 z-[200] hidden items-end justify-center bg-black/60 p-4 sm:items-center"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="google-login-backup-notice-title"
-		>
-			<div class="w-full max-w-md rounded-3xl bg-white p-5 text-gray-700 shadow-2xl">
-				<div class="flex items-start gap-3">
-					<span class="material-symbols-outlined shrink-0 text-3xl text-mint-500" aria-hidden="true">cloud_done</span>
-					<div class="min-w-0">
-						<h2 id="google-login-backup-notice-title" class="text-base font-bold text-navy-900">Googleログインで安全に保存</h2>
-						<p data-google-login-notice-message class="mt-2 text-sm leading-6 text-gray-600">Googleでログインすると、進捗やメモをDriveバックアップに保存できます。</p>
-					</div>
-				</div>
-				<div class="mt-5 flex flex-col gap-2">
-					<button type="button" data-google-login-notice-login class="rounded-full bg-mint-500 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-mint-600">Googleでログイン</button>
-					<button type="button" data-google-login-notice-dismiss class="rounded-full px-5 py-3 text-sm font-bold text-gray-500 transition-colors hover:bg-gray-100">今回はログインせずに続ける</button>
-				</div>
-				<p data-google-login-notice-error class="mt-3 hidden text-sm leading-5 text-red-600" role="alert"></p>
-			</div>
-
-		</div>
 		<!-- PC Back Button -->
-		<button data-media-ui onclick="window.goBackFromKnowhow?.(this)" class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
+		<button data-media-ui data-go-back class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
 			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
 		</button>
 
@@ -68,7 +45,7 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
                 <!-- Main Media Area -->
                 <div id="knowhow-media-area" class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl" transition:name="knowhow-media">
                     <!-- Mobile Back Button -->
-                    <button data-media-ui onclick="window.goBackFromKnowhow?.(this)" class="lg:hidden absolute top-4 left-4 z-50 flex h-10 w-10 cursor-pointer items-center justify-center text-white outline-none transition-colors hover:text-gray-200 active:scale-95" aria-label="チェックリスト一覧へ戻る">
+                    <button data-media-ui data-go-back class="lg:hidden absolute top-4 left-4 z-50 flex h-10 w-10 cursor-pointer items-center justify-center text-white outline-none transition-colors hover:text-gray-200 active:scale-95" aria-label="チェックリスト一覧へ戻る">
                         <span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">arrow_back_ios_new</span>
                     </button>
 
@@ -86,7 +63,7 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 
                     <!-- Floating Caption (Bottom Left) -->
                     <div data-media-ui class="absolute bottom-0 left-0 w-full p-4 lg:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none pb-8 lg:pb-6 z-10">
-                        <div class="pointer-events-auto cursor-pointer" onclick="if(window.toggleDescPanel) window.toggleDescPanel()">
+                        <div class="pointer-events-auto cursor-pointer" data-panel-tab="desc">
                             <h1 class="text-white font-bold text-lg mb-2 drop-shadow-md leading-snug pr-16">{knowhow.data.title}</h1>
                             <div class="text-white/90 text-sm drop-shadow-md prose prose-invert prose-sm max-w-none pr-16 line-clamp-2" id="caption-content">
                                 <Content />
@@ -113,11 +90,11 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
             >
                 <div class="relative flex items-center justify-between border-b border-gray-600 bg-[#343434] pl-4 pr-14 pt-[env(safe-area-inset-top)] shrink-0 min-w-[320px] lg:pt-0">
 					<div class="flex-grow flex items-stretch justify-center w-full" role="tablist" aria-label="チェックリストの詳細">
-						<button id="tab-btn-desc" role="tab" aria-selected="true" aria-controls="tab-content-desc" tabindex="0" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" onclick="if(window.toggleTab) window.toggleTab('desc')">説明</button>
-						<button id="tab-btn-progress" role="tab" aria-selected="false" aria-controls="tab-content-progress" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" onclick="if(window.toggleTab) window.toggleTab('progress')">進捗</button>
-						<button id="tab-btn-memo" role="tab" aria-selected="false" aria-controls="tab-content-memo" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-memo" onclick="if(window.toggleTab) window.toggleTab('memo')">メモ</button>
+						<button id="tab-btn-desc" role="tab" aria-selected="true" aria-controls="tab-content-desc" tabindex="0" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" data-panel-tab="desc">説明</button>
+						<button id="tab-btn-progress" role="tab" aria-selected="false" aria-controls="tab-content-progress" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" data-panel-tab="progress">進捗</button>
+						<button id="tab-btn-memo" role="tab" aria-selected="false" aria-controls="tab-content-memo" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-memo" data-panel-tab="memo">メモ</button>
                     </div>
-                    <button class="absolute bottom-4 right-4 text-gray-300 hover:text-white" onclick="if(window.toggleInfoPanel) window.toggleInfoPanel()" aria-label="詳細パネルを閉じる">
+                    <button data-toggle-info class="absolute bottom-4 right-4 text-gray-300 hover:text-white" aria-label="詳細パネルを閉じる">
                         <span class="material-symbols-outlined font-light">close</span>
                     </button>
                 </div>
@@ -149,47 +126,34 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 </Layout>
 
 <script>
-    import { navigate } from 'astro:transitions/client';
+	import { navigate } from 'astro:transitions/client';
 	import { createChecklistRun, type ChecklistTemplate } from '../scripts/checklist-state';
-	import { signInWithGoogle } from '../scripts/google-auth';
-	import { CHECKLIST_GOOGLE_LOGIN_NOTICE_KEY, recordChecklistUsage, type ChecklistUsageNotice } from '../scripts/checklist-usage';
 	import { getCurrentArticleLikeState, notifyArticleLikeChanged, setArticleLikeState } from '../scripts/article-likes';
+	import { deletePrivateListByChecklistId } from '../scripts/private-list-delete';
 	import {
-		deletePrivateChecklistRunsByChecklistId,
 		getActivePrivateChecklistRun,
 		getPrivateChecklistRunsByChecklistId,
 		initializePrivateDb,
 		savePrivateChecklistRun,
 	} from '../scripts/private-db';
+	import { onPageLoad } from '../scripts/page-lifecycle';
 
 	type PanelTab = 'desc' | 'progress' | 'comments' | 'memo';
 	type DetailMode = 'public' | 'private';
 
-	// Global toggle function
 	declare global {
 		interface Window {
-            astroNavigate?: (url: string) => void;
-			toggleCommentsPanel: () => void;
-			toggleDescPanel: () => void;
-			toggleProgressPanel: () => void;
-			toggleMemoPanel: () => void;
 			startChecklist: (options?: { skipLike?: boolean }) => Promise<void>;
 			removeChecklistFromMyList: () => Promise<void>;
-            toggleInfoPanel: () => void;
-            toggleTab: (tab: PanelTab) => void;
-            switchTab: (tab: PanelTab) => void;
-			goBackFromKnowhow: (trigger?: HTMLElement) => void;
-            closeModal?: () => void;
-		_knowhowStartRequest?: (event: Event) => void;
+			toggleInfoPanel: () => void;
+			toggleTab: (tab: PanelTab) => void;
+			switchTab: (tab: PanelTab) => void;
+			goBackFromKnowhow: () => void;
+			_knowhowStartRequest?: (event: Event) => void;
 		}
 	}
 
-	window.astroNavigate = navigate;
-	window.goBackFromKnowhow = (trigger) => {
-		if (trigger?.closest('dialog') && window.closeModal) {
-			window.closeModal();
-			return;
-		}
+	window.goBackFromKnowhow = () => {
 		let returnUrl = '';
 		try {
 			returnUrl = sessionStorage.getItem('knowhow:return-url') ?? '';
@@ -200,100 +164,6 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		const destination = returnUrl.startsWith('/knowhow') || returnUrl.startsWith('/my-knowhow') ? returnUrl : '/';
 			window.location.assign(destination);
 	};
-
-	// Show the backup guidance only for the mobile checklist experience.
-	function initGoogleLoginBackupNotice() {
-		const notice = document.querySelector<HTMLElement>('[data-google-login-backup-notice]');
-		if (!notice || notice.dataset.initialized) return;
-		notice.dataset.initialized = 'true';
-		const message = notice.querySelector<HTMLElement>('[data-google-login-notice-message]');
-		const loginButton = notice.querySelector<HTMLButtonElement>('[data-google-login-notice-login]');
-		const dismissButton = notice.querySelector<HTMLButtonElement>('[data-google-login-notice-dismiss]');
-		const errorMessage = notice.querySelector<HTMLElement>('[data-google-login-notice-error]');
-		const isSp = () => window.matchMedia?.('(max-width: 767px)').matches ?? window.innerWidth < 768;
-		const noticeController = new AbortController();
-		const clearPendingNotice = () => {
-			try {
-				sessionStorage.removeItem(CHECKLIST_GOOGLE_LOGIN_NOTICE_KEY);
-			} catch {
-				// Session storage may be unavailable in strict privacy modes.
-			}
-		};
-		const closeNotice = () => {
-			notice.classList.add('hidden');
-			notice.classList.remove('flex');
-			notice.setAttribute('aria-hidden', 'true');
-		};
-		const isPrivateChecklistPath = () => window.location.pathname.startsWith('/my-knowhow/')
-			|| new URLSearchParams(window.location.search).get('mode') === 'my';
-		const showNotice = (detail?: ChecklistUsageNotice) => {
-			if (isPrivateChecklistPath()) {
-				clearPendingNotice();
-				closeNotice();
-				return;
-			}
-			if (!isSp()) {
-				clearPendingNotice();
-				closeNotice();
-				return;
-			}
-			let pending = detail;
-			if (!pending) {
-				try {
-					const stored = sessionStorage.getItem(CHECKLIST_GOOGLE_LOGIN_NOTICE_KEY);
-					pending = stored ? JSON.parse(stored) as ChecklistUsageNotice : undefined;
-				} catch {
-					pending = undefined;
-				}
-			}
-			if (!pending || !Number.isInteger(pending.usageCount)) return;
-			if (message) {
-				message.textContent = pending.usageCount === 1
-					? '初回利用です。Googleでログインすると、進捗やメモをDriveバックアップに保存できます。'
-					: `${pending.usageCount}回目の利用です。Googleでログインすると、進捗やメモをDriveバックアップに安全に保存できます。`;
-			}
-			if (errorMessage) {
-				errorMessage.textContent = '';
-				errorMessage.classList.add('hidden');
-			}
-			notice.classList.remove('hidden');
-			notice.classList.add('flex');
-			notice.setAttribute('aria-hidden', 'false');
-		};
-
-		loginButton?.addEventListener('click', async () => {
-			if (!loginButton) return;
-			loginButton.disabled = true;
-			if (dismissButton) dismissButton.disabled = true;
-			loginButton.textContent = 'ログインを開始しています…';
-			clearPendingNotice();
-			try {
-				await signInWithGoogle(window.location.href);
-				closeNotice();
-			} catch (error) {
-				if (errorMessage) {
-					errorMessage.textContent = error instanceof Error ? error.message : 'Googleログインを開始できませんでした。';
-					errorMessage.classList.remove('hidden');
-				}
-				loginButton.disabled = false;
-				if (dismissButton) dismissButton.disabled = false;
-				loginButton.textContent = 'Googleでログイン';
-			}
-		});
-		dismissButton?.addEventListener('click', () => {
-			clearPendingNotice();
-			closeNotice();
-		});
-		window.addEventListener('checklist-usage-notice', (event) => {
-			showNotice((event as CustomEvent<ChecklistUsageNotice>).detail);
-		}, { signal: noticeController.signal });
-		window.addEventListener('resize', () => showNotice(), { signal: noticeController.signal });
-		document.addEventListener('astro:before-swap', () => noticeController.abort(), {
-			once: true,
-			signal: noticeController.signal,
-		});
-		showNotice();
-	}
 
 	// Astro replaces the document during client navigation. Carry the wheel/swipe
 	// direction into the incoming document so both transition snapshots use the
@@ -310,9 +180,7 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		const container = document.getElementById('knowhow-modal-container');
 		if (!container || container.dataset.reelsInitialized) return;
 		container.dataset.reelsInitialized = 'true';
-		initGoogleLoginBackupNotice();
 
-        // We bind functions to window dynamically so they fetch the latest DOM elements
         const isMobile = () => window.innerWidth < 1024;
 		const mediaArea = document.getElementById('knowhow-media-area');
 		mediaArea?.addEventListener('click', (event) => {
@@ -379,7 +247,8 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 			return 'desc';
 		};
 
-        window.switchTab = (tab: PanelTab) => {
+		window.switchTab = (tab: PanelTab) => {
+			window.dispatchEvent(new CustomEvent('checklist-edit-cancel'));
 			const allowedTabs = tabsByMode[currentMode];
 			const resolvedTab = allowedTabs.includes(tab) ? tab : 'desc';
 			const tabs: PanelTab[] = ['desc', 'progress', 'comments', 'memo'];
@@ -477,24 +346,21 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
             }
         };
 
-        // Backward compatibility for existing buttons
-		window.toggleCommentsPanel = () => window.toggleTab('comments');
-		window.toggleDescPanel = () => window.toggleTab('desc');
-		window.toggleProgressPanel = () => window.toggleTab('progress');
-		window.toggleMemoPanel = () => window.toggleTab('memo');
-
 		let removingChecklist = false;
 		window.removeChecklistFromMyList = async () => {
 			if (removingChecklist || currentMode !== 'private') return;
 			const checklistId = container.dataset.checklistId;
 			if (!checklistId) return;
-			if (!window.confirm('このチェックリストをマイリストから削除しますか？\n保存した進捗とメモも削除されます。')) return;
 			removingChecklist = true;
 			container.querySelectorAll<HTMLButtonElement>('[data-private-action-trigger]').forEach((button) => {
 				button.disabled = true;
 			});
 			try {
-				await deletePrivateChecklistRunsByChecklistId(checklistId);
+				const deleted = await deletePrivateListByChecklistId(checklistId);
+				if (!deleted) {
+					removingChecklist = false;
+					return;
+				}
 				await navigate('/my-knowhow/');
 			} catch {
 				window.alert('マイリストから削除できませんでした。もう一度お試しください。');
@@ -518,11 +384,6 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 				const existing = storedRuns.find((run) => !run.deletedAt);
 				if (!existing) {
 					await savePrivateChecklistRun(createChecklistRun(template));
-					try {
-						await recordChecklistUsage(template.checklistId);
-					} catch {
-						// Usage notifications must not block local checklist use.
-					}
 				}
 
 				// A checklist start is the first public action that creates a like.
@@ -546,8 +407,36 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 				startingChecklist = false;
 			}
 		};
-		container.querySelectorAll<HTMLButtonElement>('[data-start-checklist]').forEach((button) => {
+		container.querySelectorAll<HTMLButtonElement>('[data-start-checklist], [data-start-checklist-action]').forEach((button) => {
 			button.addEventListener('click', () => void window.startChecklist());
+		});
+
+		container.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement;
+			if (target.closest('[data-go-back]')) {
+				window.goBackFromKnowhow();
+				return;
+			}
+			if (target.closest('[data-remove-checklist]')) {
+				void window.removeChecklistFromMyList();
+				return;
+			}
+			if (target.closest('[data-toggle-info]')) {
+				window.toggleInfoPanel();
+				return;
+			}
+			const memoRoute = target.closest<HTMLElement>('[data-private-memo-route]')?.dataset.privateMemoRoute;
+			if (memoRoute) {
+				event.preventDefault();
+				window.location.assign(memoRoute);
+				return;
+			}
+			const panelTarget = target.closest<HTMLElement>('[data-panel-tab]');
+			const panelTab = panelTarget?.dataset.panelTab as PanelTab | undefined;
+			if (panelTarget && panelTab && panelTarget.tagName !== 'A') {
+				event.preventDefault();
+				window.toggleTab(panelTab);
+			}
 		});
 
 		const startRequestHandler = (event: Event) => {
@@ -581,15 +470,8 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
             const infoPanel = document.getElementById('info-panel');
 			if (currentContainer.contains(target) &&
 				(!infoPanel || !infoPanel.contains(target)) &&
-				!target.closest('button[onclick*="toggleCommentsPanel"]') &&
-				!target.closest('button[onclick*="toggleDescPanel"]') &&
-				!target.closest('button[onclick*="toggleProgressPanel"]') &&
-				!target.closest('button[onclick*="toggleMemoPanel"]') &&
-				!target.closest('button[onclick*="startChecklist"]') &&
-				!target.closest('[data-panel-trigger]') &&
-				!target.closest('[data-private-action-trigger]') &&
-                !target.closest('button[onclick*="toggleTab"]') &&
-                !target.closest('div[onclick*="toggleDescPanel"]') &&
+				!target.closest('button, a, input, textarea, select, label, [role="button"]') &&
+				!target.closest('[data-panel-tab], [data-panel-trigger], [data-private-action-trigger]') &&
 				!target.closest('.like-btn') &&
 				!target.closest('[data-media-ui]')
 			) {
@@ -611,12 +493,10 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 
         // Navigation logic for standalone page (wheel/swipe)
         let isNavigating = false;
-        const navigateTo = (direction: 'next' | 'prev') => {
-            if (isNavigating) return;
-            // Only navigate if we're not inside index.astro's modal
-            if (document.getElementById('post-modal')) return;
+		const navigateTo = (direction: 'next' | 'prev') => {
+			if (isNavigating) return;
 
-            const url = container.getAttribute(`data-${direction}`);
+			const url = container.getAttribute(`data-${direction}`);
             if (url) {
                 isNavigating = true;
                 // AstroのView Transitions用にスクロール方向を記録
@@ -761,14 +641,13 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		void syncPrivateStateFromStoredRuns();
 	}
 
-	document.addEventListener('DOMContentLoaded', initReels);
-	document.addEventListener('astro:page-load', () => {
+	onPageLoad(() => {
 		// Keep the direction through the view-transition snapshot, then clean it up.
-		setTimeout(() => {
+		window.setTimeout(() => {
 			document.documentElement.removeAttribute('data-scroll-direction');
 		}, 500);
-        initReels();
-    });
+		initReels();
+	});
 </script>
 
 <style is:global>

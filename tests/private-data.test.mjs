@@ -16,8 +16,6 @@ import {
 	normalizeChecklistRun,
 	savePrivateChecklistRun,
 } from '../src/scripts/private-db.ts';
-import { validateDriveBackupPayload } from '../src/scripts/drive-backup.ts';
-import { assertDriveAccountMatches } from '../src/scripts/drive-authorization.ts';
 import { createAnonymousLikeToken } from '../src/scripts/article-likes.ts';
 import {
 	PRIVATE_DB_VERSION,
@@ -99,44 +97,6 @@ test('匿名いいねトークンはWeb Crypto由来の32バイトをBase64URL�
 	});
 	assert.equal(token.length, 43);
 	assert.match(token, /^[a-zA-Z0-9_-]+$/);
-});
-
-test('DriveバックアップJSONを検証し、不正なデータを拒否する', async () => {
-	const runs = await getPrivateChecklistRuns();
-	const payload = {
-		schemaVersion: 1,
-		deviceId: 'test-device',
-		revision: await getPrivateDataRevision(),
-		exportedAt: new Date().toISOString(),
-		runs,
-	};
-	assert.equal(validateDriveBackupPayload(payload)?.runs.length, runs.length);
-	assert.equal(validateDriveBackupPayload({ ...payload, schemaVersion: 2 }), null);
-	assert.equal(validateDriveBackupPayload({ ...payload, revision: -1 }), null);
-	assert.equal(validateDriveBackupPayload({ ...payload, runs: [{ broken: true }] }), null);
-});
-
-test('Drive認可アカウントをSupabaseログインメールと照合する', async () => {
-	const matchingRequest = async (_url, options) => {
-		assert.match(options.headers.Authorization, /^Bearer /);
-		return new Response(JSON.stringify({ user: { emailAddress: 'Parent@Example.com' } }), {
-			status: 200,
-			headers: { 'Content-Type': 'application/json' },
-		});
-	};
-	assert.equal(
-		await assertDriveAccountMatches('matching-token', 'parent@example.com', matchingRequest),
-		'Parent@Example.com',
-	);
-
-	const differentAccountRequest = async () => new Response(
-		JSON.stringify({ user: { emailAddress: 'other@example.com' } }),
-		{ status: 200, headers: { 'Content-Type': 'application/json' } },
-	);
-	await assert.rejects(
-		assertDriveAccountMatches('wrong-account-token', 'parent@example.com', differentAccountRequest),
-		/一致しません/,
-	);
 });
 
 test('競合した同一runを両方残し、片方を別runとして保持する', async () => {

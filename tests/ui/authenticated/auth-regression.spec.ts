@@ -19,6 +19,7 @@ async function expectNoPageErrors(errors: string[]) {
 test.describe('ログイン済み回帰テスト', () => {
 	test('保存済みauth stateでアカウントUIを表示する', async ({ page }) => {
 		const errors = collectPageErrors(page);
+		await page.setViewportSize({ width: 1280, height: 720 });
 		await page.goto('/');
 		await expect(page.locator('[data-google-signed-in]')).toBeVisible();
 		await expect(page.locator('[data-google-login]')).toBeHidden();

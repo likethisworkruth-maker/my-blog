@@ -91,6 +91,7 @@ const disabledAttr = { disabled: true };
 		type ArticleLikeState,
 	} from '../scripts/article-likes';
 	import { checkSupabaseHealth, getSupabaseClient } from '../scripts/supabase-client';
+	import { onPageLoad } from '../scripts/page-lifecycle';
 
 	const showLikeError = (message: string) => {
 		const existing = document.querySelector<HTMLElement>('[data-like-error-toast]');
@@ -229,10 +230,5 @@ const disabledAttr = { disabled: true };
 	});
 };
 
-if (document.readyState === 'loading') {
-	document.addEventListener('DOMContentLoaded', runInitLikes, { once: true });
-} else {
-	runInitLikes();
-}
-document.addEventListener('astro:page-load', runInitLikes);
+onPageLoad(runInitLikes);
 </script>

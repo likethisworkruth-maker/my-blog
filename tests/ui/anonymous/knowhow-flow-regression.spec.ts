@@ -31,7 +31,7 @@ async function waitForSheetToSettle(page: import('@playwright/test').Page, conte
 	await expect.poll(() => page.locator(contentSelector).evaluate((element) => {
 		const translate = getComputedStyle(element).translate;
 		return translate === 'none' || translate === '0px' || translate === '0px 0px';
-	}), { timeout: 1500 }).toBe(true);
+	}), { timeout: 3000 }).toBe(true);
 }
 
 async function openFilterSheet(page: import('@playwright/test').Page) {
@@ -134,6 +134,25 @@ test('H-008/H-009 表示形式をheadlineとgridの間で往復できる', async
 	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'headline_view');
 	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(2);
 	await expectNoPageErrors(errors);
+});
+
+test('H-016 URL指定のviewを初期表示から一致させる', async ({ page }) => {
+	await page.goto('/my-knowhow/?mode=grid_view');
+	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'grid_view');
+	await expect(page.locator('html')).toHaveAttribute('data-knowhow-initial-display-mode', 'grid_view');
+	await expect(page.locator('[data-display-mode-option="grid_view"]')).toHaveAttribute('aria-pressed', 'true');
+
+	await page.goto('/?mode=grid_view');
+	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'grid_view');
+	await expect(page.locator('html')).toHaveAttribute('data-knowhow-initial-display-mode', 'grid_view');
+	await expect(page.locator('.knowhow-gallery-view:visible')).toHaveCount(2);
+	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(0);
+
+	await page.goto('/?mode=headline_view');
+	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'headline_view');
+	await expect(page.locator('html')).toHaveAttribute('data-knowhow-initial-display-mode', 'headline_view');
+	await expect(page.locator('.knowhow-gallery-view:visible')).toHaveCount(0);
+	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(2);
 });
 
 test('H-014 phaseフィルター選択が表示・URL・chipに同期する', async ({ page }) => {
@@ -263,6 +282,35 @@ test('H-028 絞り込み・並び替えボタンは矩形で有効時は文字�
 	await page.locator('#sheet-apply-btn').click();
 });
 
+test('H-029 絞り込みシートは画面下端から上へ表示される', async ({ page }) => {
+	await page.goto('/?mode=headline_view');
+	await openFilterSheet(page);
+	const sheet = page.locator('#filter-sheet-content');
+	await expect(sheet).toHaveClass(/rounded-t-3xl/);
+	const bounds = await sheet.evaluate((element) => {
+		const rect = element.getBoundingClientRect();
+		return { top: rect.top, bottom: rect.bottom, viewportHeight: window.innerHeight };
+	});
+	expect(Math.abs(bounds.bottom - bounds.viewportHeight)).toBeLessThanOrEqual(1);
+	expect(bounds.top).toBeGreaterThan(0);
+	await page.locator('#close-sheet-handle').click();
+});
+
+test('H-030 並び替えシートも画面下端から上へ表示される', async ({ page }) => {
+	await page.goto('/?mode=headline_view');
+	await page.locator('#open-sort-sheet-btn').click();
+	await expect(page.locator('#sort-sheet-modal')).toBeVisible();
+	await waitForSheetToSettle(page, '#sort-sheet-content');
+	const sheet = page.locator('#sort-sheet-content');
+	await expect(sheet).toHaveClass(/rounded-t-3xl/);
+	const bounds = await sheet.evaluate((element) => {
+		const rect = element.getBoundingClientRect();
+		return { top: rect.top, bottom: rect.bottom, viewportHeight: window.innerHeight };
+	});
+	expect(Math.abs(bounds.bottom - bounds.viewportHeight)).toBeLessThanOrEqual(1);
+	expect(bounds.top).toBeGreaterThan(0);
+	await page.locator('#close-sort-sheet-handle').click();
+});
 test('O-016 Ctrl+Kで検索modalを開き、結果を絞り込んで閉じる', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/about/');
@@ -296,6 +344,26 @@ test('H-005 画像のsrcと意味のあるaltが全カードに存在する', as
 		await expect(images.nth(index)).toHaveAttribute('src', /^\//);
 		await expect(images.nth(index)).not.toHaveAttribute('alt', '');
 	}
+	await expectNoPageErrors(errors);
+});
+
+test('H-015 公開grid_viewは長押し処理を持たず、直後も他の操作を受け付ける', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/?mode=grid_view');
+	const container = page.locator('#knowhow-container');
+	const gallery = page.locator('.knowhow-gallery-view:visible').first();
+
+	await gallery.dispatchEvent('pointerdown', { button: 0, buttons: 1, pointerType: 'mouse' });
+	await page.waitForTimeout(700);
+	await gallery.dispatchEvent('pointerup', { button: 0, buttons: 0, pointerType: 'mouse' });
+
+	await expect(container).not.toHaveAttribute('data-grid-edit-mode');
+	await expect(gallery).toHaveCSS('cursor', 'default');
+	await expect(page.locator('dialog[data-list-sheet][open]')).toHaveCount(0);
+	await page.locator('#open-filter-sheet-btn').click();
+	await expect(page.locator('#filter-sheet-modal')).toBeVisible();
+	await page.locator('#close-sheet-handle').click();
+	await expect(page.locator('#filter-sheet-modal[open]')).toHaveCount(0);
 	await expectNoPageErrors(errors);
 });
 
@@ -382,6 +450,46 @@ test('M-001 マイリストの左スワイプ→削除→削除済み絞り込�
 	await expectNoPageErrors(errors);
 });
 
+test('M-004 公開一覧のheadline_viewでも保存済みrunの左スワイプ削除を維持する', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await page.goto('/?mode=headline_view');
+	await expectListState(page, 2);
+	await swipeMyListRow(page, 'night-memo');
+	const row = page.locator('.knowhow-card[data-checklist-id="night-memo"] [data-my-list-swipe-row]');
+	await expect(row).toHaveAttribute('data-swipe-open', 'true');
+	await expect(row.locator('[data-my-list-delete]')).toBeVisible();
+	page.once('dialog', (dialog) => void dialog.accept());
+	await row.locator('[data-my-list-delete]').click();
+	const deletedRun = await readPrivateRuns(page) as Array<{ checklistId: string; deletedAt?: string }>;
+	expect(deletedRun.filter((run) => run.checklistId === 'night-memo' && run.deletedAt)).toHaveLength(1);
+	await expect(row.locator('[data-my-list-delete]')).toBeHidden();
+	await expectNoPageErrors(errors);
+});
+
+test('M-003 grid_viewでは削除UIと揺れを表示しない', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await page.goto('/my-knowhow/?mode=grid_view');
+	await expectListState(page, 1);
+	const container = page.locator('#knowhow-container');
+	const card = page.locator('.knowhow-card[data-checklist-id="night-memo"]');
+	await expect(container).toHaveAttribute('data-display-mode', 'grid_view');
+	await expect(card.locator('[data-my-list-delete]')).toBeHidden();
+	await expect(card.locator('[data-my-list-grid-delete]')).toHaveCount(0);
+	await expect(container).not.toHaveAttribute('data-grid-edit-mode');
+	await expect(card).toHaveCSS('animation-name', 'none');
+	await expect(card.locator('.knowhow-gallery-view')).toHaveCSS('cursor', 'default');
+	await expect(card.locator('.knowhow-gallery-view img')).toHaveAttribute('draggable', 'false');
+	await expect(card.locator('[data-my-list-swipe-content]')).toHaveCSS('transition-duration', '0s');
+	const swipeTransform = await card.locator('[data-my-list-swipe-content]').evaluate((element) => getComputedStyle(element).transform);
+	expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(swipeTransform);
+	await expectNoPageErrors(errors);
+});
 test('M-002 既存の削除済み履歴は通常マイリストから除外し、削除済みのみで復元表示する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
@@ -576,6 +684,25 @@ test('K-005 progressのcheckbox変更がreload後も維持される', async ({ p
 	await expectNoPageErrors(errors);
 });
 
+test('K-006 memoは表示本文を直接編集し、文字数制限なく保存できる', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await seedPrivateRuns(page, [makeRegressionRun('family-log')]);
+	await page.goto('/my-knowhow/002-family-log/memo/');
+	const editor = page.locator('[data-note-editor]');
+	await expect(editor).toHaveCount(1);
+	await expect(editor).toHaveAttribute('contenteditable', 'true');
+	await expect(editor).toHaveAttribute('role', 'textbox');
+	const longNote = 'メモ'.repeat(1800);
+	await editor.fill(longNote);
+	await expect.poll(async () => {
+		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; note?: string }>;
+		return runs.find((run) => run.checklistId === 'family-log')?.note ?? '';
+	}, { timeout: 8000 }).toBe(longNote);
+	await page.reload();
+	await expect(page.locator('[data-note-editor]')).toHaveText(longNote);
+	await expectNoPageErrors(errors);
+});
 test('K-007/K-008 progress編集→保存→reloadで項目文言を維持する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');

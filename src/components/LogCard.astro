@@ -13,6 +13,7 @@ const likeSlug = `logs/${log.id}`;
 <a
 	href={`/logs/${log.id}/`}
 	class="log-card flex flex-col bg-white border-b border-gray-100 md:border md:border-gray-200 md:rounded-2xl transition-colors hover:bg-gray-50 group overflow-hidden"
+	data-list-card
 	data-categories={(log.data.categories || []).join(",")}
 	data-age={log.data.childAgeMonths ?? "none"}
 	data-lognumber={log.data.logNumber}
@@ -72,6 +73,7 @@ const likeSlug = `logs/${log.id}`;
 <script>
 	import { getBatchArticleLikeStates } from '../scripts/article-likes';
 	import { checkSupabaseHealth } from '../scripts/supabase-client';
+	import { onPageLoad } from '../scripts/page-lifecycle';
 
 	const initLogLikeCounts = async () => {
 		const countElements = Array.from(
@@ -127,17 +129,9 @@ const likeSlug = `logs/${log.id}`;
 		};
 		document.addEventListener('astro:before-swap', cleanup);
 	};
-	if (document.readyState === "loading") {
-		document.addEventListener("DOMContentLoaded", () => {
-			installLogLikeListeners();
-			runLogLikeCounts();
-		}, { once: true });
-	} else {
+	const initLogLikes = () => {
 		installLogLikeListeners();
 		runLogLikeCounts();
-	}
-	document.addEventListener("astro:page-load", () => {
-		installLogLikeListeners();
-		runLogLikeCounts();
-	});
+	};
+	onPageLoad(initLogLikes);
 </script>

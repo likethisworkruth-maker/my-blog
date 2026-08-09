@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>マイリスト（PC / SP） | すくリス UI仕様書</title>
+<style>
+:root { color-scheme: light; --ink:#17233f; --muted:#667085; --mint:#39b59e; --mint-soft:#e8f8f3; --line:#e5e7eb; --paper:#ffffff; --canvas:#f5f8f7; --accent:#f5a14d; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; color:var(--ink); background:var(--canvas); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif; line-height:1.7; }
+a { color:inherit; }
+.shell { width:min(1180px,calc(100% - 32px)); margin:0 auto; }
+.topbar { position:sticky; top:0; z-index:5; background:rgba(255,255,255,.94); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
+.topbar-inner { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:68px; }
+.brand { font-weight:800; color:var(--ink); text-decoration:none; letter-spacing:.04em; }
+.doc-nav { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; font-size:12px; }
+.doc-nav a { padding:5px 9px; border-radius:999px; color:var(--muted); text-decoration:none; }
+.doc-nav a:hover { background:var(--mint-soft); color:var(--mint); }
+.hero { padding:44px 0 28px; }
+.eyebrow { color:var(--mint); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+h1,h2,h3 { margin:0; line-height:1.3; color:var(--ink); }
+h1 { margin-top:10px; font-size:clamp(28px,4vw,48px); letter-spacing:-.03em; }
+h2 { font-size:24px; }
+h3 { font-size:17px; }
+.lead { max-width:820px; margin:16px 0 0; color:#475467; font-size:16px; }
+.meta { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:26px 0 0; }
+.meta-card { padding:14px 16px; border:1px solid var(--line); border-radius:16px; background:var(--paper); }
+.meta-card dt { color:var(--muted); font-size:11px; font-weight:700; }
+.meta-card dd { margin:3px 0 0; font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+.notice { margin:20px 0 0; padding:14px 16px; border-left:4px solid var(--mint); border-radius:12px; background:var(--mint-soft); color:#245b51; font-size:13px; }
+.section { margin:28px 0; padding:28px; border:1px solid var(--line); border-radius:22px; background:var(--paper); box-shadow:0 8px 30px rgba(23,35,63,.04); }
+.section > p:first-of-type { margin-top:10px; }
+p { color:#475467; }
+ul,ol { margin:10px 0 0; padding-left:22px; color:#475467; }
+li + li { margin-top:5px; }
+.capture-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:18px; }
+.capture { margin:0; padding:10px; border:1px solid var(--line); border-radius:16px; background:#fbfcfc; }
+.capture img { display:block; width:100%; max-height:540px; object-fit:contain; border:1px solid #edf0f0; border-radius:10px; background:#fff; }
+.capture figcaption { padding:9px 3px 1px; color:var(--muted); font-size:12px; }
+.capture figcaption strong { color:var(--ink); }
+.capture a { display:block; text-decoration:none; }
+.two-col { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.rule-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:16px; }
+.rule { padding:16px; border:1px solid var(--line); border-radius:15px; background:#fbfcfc; }
+.rule h3 { font-size:15px; }
+.rule p { margin:7px 0 0; font-size:13px; }
+table { width:100%; margin-top:16px; border-collapse:collapse; font-size:13px; }
+th,td { padding:11px 12px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+th { background:#f7faf9; color:var(--ink); font-size:12px; }
+code,kbd { padding:2px 6px; border-radius:6px; background:#eef2f2; color:#334155; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.9em; overflow-wrap:anywhere; }
+.path { display:inline-block; padding:3px 8px; border-radius:7px; background:#f1f5f4; color:#245b51; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:12px; }
+.source { margin-top:14px; padding:12px 14px; border:1px dashed #cdd9d6; border-radius:12px; color:var(--muted); font-size:12px; }
+.source code { background:transparent; padding:0; }
+details { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+summary { cursor:pointer; color:var(--ink); font-weight:800; }
+.footer { padding:22px 0 48px; color:var(--muted); font-size:12px; }
+.footer a { color:var(--mint); }
+@media (max-width:760px) {
+  .shell { width:min(100% - 20px,620px); }
+  .topbar-inner { align-items:flex-start; flex-direction:column; padding:12px 0; }
+  .doc-nav { justify-content:flex-start; }
+  .hero { padding:30px 0 18px; }
+  .section { padding:20px 16px; border-radius:18px; }
+  .meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .two-col,.rule-grid { grid-template-columns:1fr; }
+  .capture-grid { grid-template-columns:1fr; }
+  table { display:block; overflow-x:auto; white-space:normal; }
+  th,td { min-width:150px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="shell topbar-inner"><a class="brand" href="探すページPC_SP.html">すくリス / UI仕様書</a>
+<nav class="doc-nav" aria-label="仕様書">
+  <a href="探すページPC_SP.html">探す</a>
+  <a href="マイリストPC_SP.html">マイリスト</a>
+  <a href="おすすめ_アプリ_PC_SP.html">アプリ</a>
+  <a href="おすすめ_アイテム_PC_SP.html">アイテム</a>
+  <a href="おすすめ_育児ログ_PC_SP.html">育児ログ</a>
+</nav></div></header>
+<main class="shell">
+  <section class="hero">
+    <div class="eyebrow">Current local implementation specification</div>
+    <h1>マイリスト（PC / SP）</h1>
+    <p class="lead">端末内に保存したチェックリストrunを表示し、headline_viewだけでスワイプ削除を行う画面。grid_viewには削除機能を持たせない。</p>
+    <dl class="meta">
+      <div class="meta-card"><dt>対象URL</dt><dd>/my-knowhow/</dd></div>
+      <div class="meta-card"><dt>PC撮影</dt><dd>1440 × 1000</dd></div>
+      <div class="meta-card"><dt>SP撮影</dt><dd>390 × 844</dd></div>
+      <div class="meta-card"><dt>取得元</dt><dd>localhost:4321 / 現行ビルド</dd></div>
+    </dl>
+    <div class="notice">この資料は、実際の localhost:4321 をPC/SPビューポートで撮影し、現在のAstro実装とクライアント側の動作を仕様として整理したものです。画像はキャプチャ時点の端末データ・公開データを反映します。</div>
+  </section>
+  
+<section class="section">
+  <h2>1. 画面の目的と導線</h2>
+  <p>ユーザーが開始したチェックリストを端末内で管理するページです。公開カードを探すページとは異なり、表示対象はIndexedDBに保存された自分のrunです。</p>
+  <div class="rule-grid">
+    <div class="rule"><h3>通常のマイリスト</h3><p><span class="path">/my-knowhow/</span>。<code>deletedAt</code> がないrunを表示。</p></div>
+    <div class="rule"><h3>削除済みだけ</h3><p><span class="path">/my-knowhow/?deleted=1</span>。削除済みrunを復元確認するための表示。</p></div>
+  </div>
+</section>
+<section class="section">
+  <h2>2. 実画面キャプチャ</h2>
+  <div class="capture-grid">
+    <figure class="capture"><a href="assets/mylist-pc.png" target="_blank" rel="noreferrer"><img src="assets/mylist-pc.png" alt="PC / headline_view"></a><figcaption><strong>PC / headline_view</strong><br>通常のマイリスト表示。キャプチャ時点の端末内保存runを反映。</figcaption></figure>
+    <figure class="capture"><a href="assets/mylist-sp.png" target="_blank" rel="noreferrer"><img src="assets/mylist-sp.png" alt="SP / headline_view"></a><figcaption><strong>SP / headline_view</strong><br>SP固定ナビのマイリスト選択状態。</figcaption></figure>
+    <figure class="capture"><a href="assets/mylist-grid-pc.png" target="_blank" rel="noreferrer"><img src="assets/mylist-grid-pc.png" alt="PC / grid_view"></a><figcaption><strong>PC / grid_view</strong><br>マイリストの画像グリッド。</figcaption></figure>
+    <figure class="capture"><a href="assets/mylist-grid-sp.png" target="_blank" rel="noreferrer"><img src="assets/mylist-grid-sp.png" alt="SP / grid_view"></a><figcaption><strong>SP / grid_view</strong><br>grid表示。削除UI・揺れ・長押し編集モードは表示しない。</figcaption></figure>
+    <figure class="capture"><a href="assets/mylist-filter-sp.png" target="_blank" rel="noreferrer"><img src="assets/mylist-filter-sp.png" alt="SP / 絞り込みシート"></a><figcaption><strong>SP / 絞り込みシート</strong><br>月齢・カテゴリ・お気に入りに加え、削除済みのみ表示が選べる。</figcaption></figure>
+    <figure class="capture"><a href="assets/mylist-sort-sp.png" target="_blank" rel="noreferrer"><img src="assets/mylist-sort-sp.png" alt="SP / 並び替えシート"></a><figcaption><strong>SP / 並び替えシート</strong><br>公開一覧と同じおすすめ／新着／人気。</figcaption></figure>
+  </div>
+</section>
+<section class="section">
+  <h2>3. headline_viewとgrid_view</h2>
+  <table><thead><tr><th>状態</th><th>通常操作</th><th>削除操作</th></tr></thead><tbody>
+    <tr><th>headline_view</th><td>カードを開く。SPのカードを左へスワイプすると削除アクションが現れる。</td><td>既存のスワイプ削除を維持。確認ダイアログを受け入れるとrunに削除日時を付ける。</td></tr>
+    <tr><th>grid_view</th><td>カードをタップすると通常のカード操作。横スワイプ、長押し、削除モードは行わない。</td><td>削除機能なし。headline_viewの削除背景や削除ボタンもgrid_viewでは表示しない。</td></tr>
+  </tbody></table>
+  <div class="notice">削除導線はheadline_viewの左スワイプだけです。grid_viewでは削除ボタン、削除背景、揺れ、長押し編集モードを表示せず、削除イベントもheadline_viewに限定します。</div>
+<h3 style="margin-top:22px">grid_viewの削除仕様</h3>
+<ul><li>grid_viewではカードを通常の表示・詳細導線として扱う。</li><li>横スワイプ削除はheadline_viewのみに限定する。</li><li>削除処理は詳細画面の先頭アクションとheadline_viewから共通モジュールを呼び出す。</li></ul>
+</section>
+<section class="section">
+  <h2>4. 検索・絞り込み・並び替え</h2>
+  <table><thead><tr><th>機能</th><th>仕様</th><th>反映先</th></tr></thead><tbody>
+    <tr><th>検索</th><td>タイトルと説明文の部分一致。入力後250msで更新。</td><td>画面だけ。URL／settingsには保存しない。</td></tr>
+    <tr><th>絞り込み</th><td>月齢、場面、いいね済み。マイリストでは「削除済みのみ表示」も追加。</td><td>phase／scene／deletedはURLに反映。お気に入り・検索は画面状態。</td></tr>
+    <tr><th>並び替え</th><td>おすすめ順／新着順／人気順。フィルターと同じ画面下端から上へ開く。</td><td>おすすめ＝timelineOrder、新着＝pubdate、人気＝like count。リロードでおすすめ順へ戻る。</td></tr>
+  </tbody></table>
+</section>
+<section class="section">
+  <h2>5. データのキャッシュ・保存法則</h2>
+  <ul><li>run本体はIndexedDB <code>likethis-private</code> v2の <code>runs</code> object storeに保存。Supabaseログインなしでもローカル完結する。</li><li>保存・チェック・メモ・削除などの変更後は <code>checklist-runs-changed</code> イベントで一覧を再読込。</li><li>削除は物理削除ではなく <code>deletedAt</code> を付与して履歴を残す。削除済みフィルターから確認可能。</li><li>バックアップ待ちのrevisionは <code>backupQueue</code> に保持。ログイン／Driveバックアップを使わない場合でもローカルrunは利用できる。</li><li>表示モードと選択月齢はsettingsへ保存。URLに明示されたmode／phaseが最優先。</li><li>端末データにTTLはなく、ブラウザーのサイトデータを消すまで保持。</li></ul>
+</section>
+<section class="section">
+  <h2>6. 実装上の根拠</h2>
+  <div class="source"><code>src/components/KnowhowIndexPage.astro</code>：my判定、deleted判定、headlineのスワイプ、grid表示、表示・絞り込み。</div>
+  <div class="source"><code>src/scripts/private-db.ts</code>：runのIndexedDB保存、revision、backupQueue、deletedAt付き削除。</div>
+  <div class="source"><code>src/components/ChecklistRunner.astro</code>／<code>src/components/ChecklistPrivateNote.astro</code>：run・進捗・直接編集メモの保存元。進捗編集中の画面遷移は編集をキャンセルする。</div>
+</section>
+</main>
+<footer class="shell footer">Generated from the local implementation. 関連ソースは各ページの「実装上の根拠」に記載しています。</footer>
+</body>
+</html>

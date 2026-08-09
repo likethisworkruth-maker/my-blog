@@ -60,6 +60,7 @@
 </dialog>
 
 <script>
+	import { onPageLoad } from '../scripts/page-lifecycle';
     const setupShareModal = () => {
         const modal = document.getElementById('share-modal') as HTMLDialogElement | null;
         const backdrop = document.getElementById('share-backdrop');
@@ -67,6 +68,8 @@
         const cancelBtn = document.getElementById('share-cancel');
 
         if (!modal || !backdrop || !content) return;
+		if (modal.dataset.initialized === 'true') return;
+		modal.dataset.initialized = 'true';
 
         // Attach globally so inline onclick can use it
         (window as any).openShareModal = () => {
@@ -121,10 +124,7 @@
 		}
     };
 
-    // Initialize on DOM load and Astro page load
-	setupShareModal();
-    document.addEventListener('DOMContentLoaded', setupShareModal);
-    document.addEventListener('astro:page-load', setupShareModal);
+    onPageLoad(setupShareModal);
 </script>
 
 <style>

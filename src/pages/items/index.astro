@@ -62,12 +62,13 @@ const uniqueAges = [
 		</div>
 
 		<!-- Item Grid -->
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6" id="items-container">
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6" id="items-container" data-content-list data-list-empty="items-empty" data-list-search="item-search" data-list-default-sort="recommended">
 			{
 				items.map((item) => (
 					<a
 						href={`/items/${item.id}/`}
 						class="item-card flex flex-row items-center gap-4 bg-white p-4 lg:p-6 rounded-2xl hover:bg-gray-50 transition-colors border border-gray-100"
+						data-list-card
 						data-categories={(item.data.categories || []).join(",")}
 						data-age={item.data.childAgeMonths ?? "none"}
 						data-order={item.data.order}
@@ -104,10 +105,10 @@ const uniqueAges = [
 	</div>
 
 	<!-- Filter & Sort Bottom Sheet Modal -->
-	<dialog id="filter-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-200 opacity-0 pointer-events-none overflow-hidden">
-		<div id="filter-sheet-content" class="w-full max-w-lg mx-auto rounded-t-3xl bg-white px-6 pb-6 pt-3 transition-transform duration-250 ease-out transform translate-y-full h-[80vh] max-h-[80vh] overflow-y-auto scrollbar-hide flex flex-col gap-5 border border-gray-200">
+	<dialog data-list-sheet id="filter-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-200 opacity-0 pointer-events-none overflow-hidden">
+		<div data-list-sheet-content id="filter-sheet-content" class="w-full max-w-lg mx-auto rounded-t-3xl bg-white px-6 pb-6 pt-3 transition-transform duration-250 ease-out transform translate-y-full h-[80vh] max-h-[80vh] overflow-y-auto scrollbar-hide flex flex-col gap-5 border border-gray-200">
 			<!-- Handle Bar -->
-			<div class="w-full pt-1 pb-3 shrink-0 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none" id="close-sheet-handle">
+			<div class="w-full pt-1 pb-3 shrink-0 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none" id="close-sheet-handle" data-list-sheet-handle>
 				<div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
 			</div>
 
@@ -159,211 +160,6 @@ const uniqueAges = [
 </Layout>
 
 <script>
-	const initItemsList = () => {
-		const itemsContainer = document.getElementById("items-container");
-		if (!itemsContainer || itemsContainer.dataset.listInitialized === "true") return;
-		itemsContainer.dataset.listInitialized = "true";
-
-		const cards = Array.from(document.querySelectorAll(".item-card")) as HTMLElement[];
-		const searchInput = document.getElementById("item-search") as HTMLInputElement;
-
-		// Bottom Sheet Elements
-		const filterSheetModal = document.getElementById('filter-sheet-modal') as HTMLDialogElement;
-		const filterSheetContent = document.getElementById('filter-sheet-content');
-		const closeSheetHandle = document.getElementById('close-sheet-handle');
-		const openFilterSheetBtn = document.getElementById('open-filter-sheet-btn');
-		const openSortSheetBtn = document.getElementById('open-sort-sheet-btn');
-		const sheetSectionFilter = document.getElementById('sheet-section-filter');
-		const sheetSectionSort = document.getElementById('sheet-section-sort');
-		const sheetApplyBtn = document.getElementById('sheet-apply-btn');
-
-		const sheetCategoryBtns = document.querySelectorAll('.sheet-category-btn');
-		const sheetAgeBtns = document.querySelectorAll('.sheet-age-btn');
-		const sheetSortRadios = document.querySelectorAll('input[name="sheet-sort"]') as NodeListOf<HTMLInputElement>;
-
-		let currentCategory = "すべて";
-		let currentAge = "all";
-		let currentSort = "recommended";
-		let searchQuery = "";
-
-		// Sheet state
-		let isFilterMode = true;
-
-		// Initialize Sheet UI state
-		function updateSheetUI() {
-			sheetCategoryBtns.forEach(btn => {
-				const isSelected = btn.getAttribute('data-sheet-category') === currentCategory;
-				btn.classList.toggle('border-mint-500', isSelected);
-				btn.classList.toggle('bg-mint-50', isSelected);
-				btn.classList.toggle('text-mint-600', isSelected);
-				btn.classList.toggle('border-gray-200', !isSelected);
-				btn.classList.toggle('text-gray-700', !isSelected);
-			});
-			sheetAgeBtns.forEach(btn => {
-				const isSelected = btn.getAttribute('data-sheet-age') === currentAge;
-				btn.classList.toggle('border-mint-500', isSelected);
-				btn.classList.toggle('bg-mint-50', isSelected);
-				btn.classList.toggle('text-mint-600', isSelected);
-				btn.classList.toggle('border-gray-200', !isSelected);
-				btn.classList.toggle('text-gray-700', !isSelected);
-			});
-			sheetSortRadios.forEach(radio => {
-				radio.checked = radio.value === currentSort;
-			});
-		}
-
-		sheetCategoryBtns.forEach(btn => {
-			btn.addEventListener('click', () => {
-				currentCategory = btn.getAttribute('data-sheet-category') || 'すべて';
-				updateSheetUI();
-			});
-		});
-
-		sheetAgeBtns.forEach(btn => {
-			btn.addEventListener('click', () => {
-				currentAge = btn.getAttribute('data-sheet-age') || 'all';
-				updateSheetUI();
-			});
-		});
-
-		sheetSortRadios.forEach(radio => {
-			radio.addEventListener('change', (e) => {
-				if ((e.target as HTMLInputElement).checked) {
-					currentSort = (e.target as HTMLInputElement).value;
-				}
-			});
-		});
-
-		function updateView() {
-			cards.forEach((card) => {
-				const titleText = (card.querySelector('h3')?.textContent || '').toLowerCase();
-				const descText = (card.querySelector('p')?.textContent || '').toLowerCase();
-				const searchMatch = !searchQuery || titleText.includes(searchQuery) || descText.includes(searchQuery);
-
-				const categoryMatch = currentCategory === "すべて"
-					|| (card.getAttribute("data-categories") || "").split(",").includes(currentCategory);
-				const ageMatch = currentAge === "all" || card.getAttribute("data-age") === currentAge;
-
-				if (categoryMatch && ageMatch && searchMatch) {
-					card.style.display = "flex";
-				} else {
-					card.style.display = "none";
-				}
-			});
-
-			const visibleCards = cards.filter((card) => card.style.display !== "none");
-			const hiddenCards = cards.filter((card) => card.style.display === "none");
-
-			visibleCards.sort((a, b) => {
-				if (currentSort === "recommended") {
-					const numA = parseInt(a.getAttribute("data-order") || "0", 10);
-					const numB = parseInt(b.getAttribute("data-order") || "0", 10);
-					return numA - numB;
-				} else {
-					const ageA = a.getAttribute("data-age");
-					const ageB = b.getAttribute("data-age");
-					const valA = ageA === "none" ? Infinity : parseInt(ageA || "0", 10);
-					const valB = ageB === "none" ? Infinity : parseInt(ageB || "0", 10);
-
-					if (currentSort === "age-asc") {
-						return valA - valB;
-					} else {
-						if (valA === Infinity && valB !== Infinity) return 1;
-						if (valB === Infinity && valA !== Infinity) return -1;
-						return valB - valA;
-					}
-				}
-			});
-
-			if (itemsContainer) {
-				visibleCards.forEach((card) => itemsContainer.appendChild(card));
-				hiddenCards.forEach((card) => itemsContainer.appendChild(card));
-			}
-
-			const emptyState = document.getElementById("items-empty");
-			emptyState?.classList.toggle("hidden", visibleCards.length > 0);
-			
-			// Highlight filter buttons if active
-			const isFilterActive = currentCategory !== 'すべて' || currentAge !== 'all';
-			openFilterSheetBtn?.classList.toggle('border-mint-500', isFilterActive);
-			openFilterSheetBtn?.classList.toggle('text-mint-600', isFilterActive);
-			openFilterSheetBtn?.classList.toggle('bg-mint-50', isFilterActive);
-			
-			const isSortActive = currentSort !== 'recommended';
-			openSortSheetBtn?.classList.toggle('border-mint-500', isSortActive);
-			openSortSheetBtn?.classList.toggle('text-mint-600', isSortActive);
-			openSortSheetBtn?.classList.toggle('bg-mint-50', isSortActive);
-		}
-
-		// Bottom Sheet Logic
-		function openSheet(mode: 'filter' | 'sort') {
-			isFilterMode = mode === 'filter';
-			if (sheetSectionFilter && sheetSectionSort && sheetApplyBtn) {
-				sheetSectionFilter.classList.toggle('hidden', !isFilterMode);
-				sheetSectionSort.classList.toggle('hidden', isFilterMode);
-				sheetApplyBtn.textContent = isFilterMode ? '絞り込む' : '並び替える';
-			}
-			updateSheetUI();
-
-			filterSheetModal.showModal();
-			document.body.style.overflow = 'hidden';
-			requestAnimationFrame(() => {
-				filterSheetModal.classList.remove('opacity-0', 'pointer-events-none');
-				filterSheetContent?.classList.remove('translate-y-full');
-			});
-		}
-
-		function closeSheet() {
-			filterSheetModal.classList.add('opacity-0', 'pointer-events-none');
-			filterSheetContent?.classList.add('translate-y-full');
-			document.body.style.overflow = '';
-			setTimeout(() => {
-				if (filterSheetModal.open) filterSheetModal.close();
-			}, 250);
-		}
-
-		openFilterSheetBtn?.addEventListener('click', () => openSheet('filter'));
-		openSortSheetBtn?.addEventListener('click', () => openSheet('sort'));
-		sheetApplyBtn?.addEventListener('click', () => {
-			updateView();
-			closeSheet();
-		});
-
-		filterSheetModal?.addEventListener('click', (e) => {
-			if (e.target === filterSheetModal) closeSheet();
-		});
-
-		let touchStartY = 0;
-		closeSheetHandle?.addEventListener('touchstart', (e) => {
-			touchStartY = e.touches[0].clientY;
-		}, { passive: true });
-		closeSheetHandle?.addEventListener('touchmove', (e) => {
-			const touchY = e.touches[0].clientY;
-			if (touchY - touchStartY > 50) closeSheet();
-		}, { passive: true });
-
-		searchInput?.addEventListener("input", (e) => {
-			searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
-			updateView();
-		});
-
-		updateView();
-	};
-
-	if (document.readyState === "loading") {
-		document.addEventListener("DOMContentLoaded", initItemsList, { once: true });
-	} else {
-		initItemsList();
-	}
-	document.addEventListener("astro:page-load", initItemsList);
+	import { bootContentLists } from '../../scripts/list-page';
+	bootContentLists();
 </script>
-
-<style>
-	.scrollbar-hide::-webkit-scrollbar {
-		display: none;
-	}
-	.scrollbar-hide {
-		-ms-overflow-style: none;
-		scrollbar-width: none;
-	}
-</style>

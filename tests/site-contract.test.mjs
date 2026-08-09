@@ -16,6 +16,7 @@ test('PC・モバイルナビを3項目に統一し、既存カテゴリを運�
 	assert.ok(header.includes('UI.headerNav.knowhow'));
 	assert.ok(header.includes('UI.headerNav.myList'));
 	assert.equal(header.includes('UI.headerNav.home'), false);
+	assert.match(header, /<header[\s\S]*class="hidden[^\"]*lg:block/);
 	assert.ok(footer.includes('UI.footerNav.knowhow'));
 	assert.ok(footer.includes('UI.footerNav.myList'));
 	assert.equal(footer.includes('UI.footerNav.home'), false);
@@ -25,20 +26,24 @@ test('ルートをチェックリスト一覧にし、旧案内ページを廃�
 	const home = read('src/pages/index.astro');
 	const index = read('src/components/KnowhowIndexPage.astro');
 	const about = read('src/pages/about.astro');
+	const globalCss = read('src/styles/global.css');
 	const recommend = read('src/pages/recommend/index.astro');
 	assert.match(home, /<KnowhowIndexPage \/>/);
 	assert.doesNotMatch(home, /チェックリストを探す|続きから使う|運営のおうちを見る/);
 	assert.ok(index.includes('const isRootPage = Astro.url.pathname === "/"'));
 	assert.doesNotMatch(recommend, />実体験の記録<|<h1[^>]*>運営のおうち<\/h1>|おすすめだけでなく/);
-	for (const label of ['探す', 'マイリスト', 'おすすめ']) {
-		assert.ok(about.includes(label));
-	}
+	assert.doesNotMatch(about, /サイトの構成/);
+	assert.match(globalCss, /html\[data-knowhow-initial-display-mode="grid_view"\] #knowhow-container \{[\s\S]*display: grid !important/);
+	assert.match(globalCss, /html\[data-knowhow-initial-display-mode="grid_view"\] #knowhow-container \.knowhow-list-view \{[\s\S]*display: none !important/);
+	assert.match(globalCss, /html\[data-knowhow-initial-display-mode="grid_view"\] #knowhow-container \.knowhow-gallery-view \{[\s\S]*display: block !important/);
 });
 
 test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	const detail = read('src/components/KnowhowDetailPage.astro');
 	const actionBar = read('src/components/ActionBar.astro');
 	const runner = read('src/components/ChecklistRunner.astro');
+	const privateNote = read('src/components/ChecklistPrivateNote.astro');
+	const deleteModule = read('src/scripts/private-list-delete.ts');
 	assert.doesNotMatch(detail, /id="tab-btn-comments"[^>]*class="[^"]*flex/);
 	assert.match(detail, /id="info-panel"[\s\S]*h-\[100dvh\]/);
 	assert.doesNotMatch(detail, /h-\[65dvh\]|rounded-t-3xl/);
@@ -58,22 +63,28 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	assert.match(detail, /getPrivateChecklistRunsByChecklistId/);
 	assert.match(detail, /privateStateLoaded/);
 	assert.doesNotMatch(detail, /searchParams|location\.hash|#progress|#memo/);
-	assert.match(actionBar, /data-panel-trigger[\s\S]*toggleDescPanel/);
+	assert.match(actionBar, /data-panel-trigger[\s\S]*data-panel-tab="desc"/);
 	assert.match(actionBar, />info</);
 	assert.match(actionBar, />説明</);
 	assert.match(actionBar, /privateMemoUrl/);
-	assert.match(actionBar, /window\.location\.assign/);
-	assert.doesNotMatch(actionBar, /data-private-action-trigger|マイリストから削除/);
-	assert.match(runner, /data-delete-list/);
-	assert.match(detail, /deletePrivateChecklistRunsByChecklistId/);
-	assert.match(detail, /このチェックリストをマイリストから削除しますか？/);
+	assert.match(actionBar, /data-private-memo-route=\{privateMemoUrl\}/);
+	assert.match(actionBar, /data-private-action-trigger data-private-list-delete/);
+	assert.doesNotMatch(runner, /data-delete-list/);
+	assert.match(detail, /deletePrivateListByChecklistId/);
+	assert.match(deleteModule, /PRIVATE_LIST_DELETE_CONFIRM_MESSAGE/);
 	assert.match(detail, /navigate\('\/my-knowhow\/'\)/);
+	assert.match(privateNote, /data-note-editor/);
+	assert.match(privateNote, /contenteditable=\"false\"/);
+	assert.match(privateNote, /readEditorText/);
+	assert.doesNotMatch(privateNote, /<textarea|maxlength=\"3000\"|data-note-count|保存中/);
 	assert.ok(!existsSync(new URL('../src/pages/knowhow/[id]/comments.astro', import.meta.url)));
 	assert.ok(existsSync(new URL('../src/pages/my-knowhow/[id]/[tab].astro', import.meta.url)));
 });
 
 test('チェックリスト一覧は時期・場面・マイリストをURLとIndexedDB設定で統合する', () => {
 	const index = read('src/components/KnowhowIndexPage.astro');
+	const listPage = read('src/scripts/list-page.ts');
+	const privateListDelete = read('src/scripts/private-list-delete.ts');
 	const runner = read('src/components/ChecklistRunner.astro');
 	const actionBar = read('src/components/ActionBar.astro');
 	const schema = read('src/content.config.ts');
@@ -85,15 +96,30 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.match(index, /const sceneLabels = Array\.from\(new Set\(knowhow\.flatMap/);
 	assert.match(index, /const filterOptions = \{ phases, scenes \}/);
 	assert.match(index, /data-filter-options=\{JSON\.stringify\(filterOptions\)\}/);
-	assert.match(index, /<dialog id="filter-sheet-modal"/);
-	assert.match(index, /<dialog id="sort-sheet-modal"/);
+	assert.match(index, /<dialog data-list-sheet id="filter-sheet-modal"/);
+	assert.match(index, /<dialog data-list-sheet id="sort-sheet-modal"/);
+	assert.match(index, /<dialog data-list-sheet id="filter-sheet-modal"[^>]*items-end/);
+	assert.match(index, /id="filter-sheet-content"[^>]*rounded-t-3xl/);
+	assert.match(index, /id="filter-sheet-content"[^>]*translate-y-full/);
 	assert.match(index, /id="filter-sheet-content"/);
-	assert.match(index, /id="sort-sheet-content"/);
-	assert.match(index, /installSwipeToClose/);
-	assert.ok(index.includes("window.location.pathname.startsWith('/my-knowhow')"));
+	assert.match(index, /id="sort-sheet-content"[^>]*rounded-t-3xl/);
+	assert.match(index, /createListSheetController\(filterSheetModal/);
+	assert.match(index, /createListSheetController\(sortSheetModal/);
+	assert.match(listPage, /export const createListSheetController/);
+	assert.ok(index.includes('const readListRoute = () =>'));
 	assert.ok(index.includes("const destination = currentListView === 'my'"));
 	assert.ok(index.includes('data-my-list-swipe-row'));
-	assert.ok(index.includes('deletePrivateChecklistRunsByChecklistId'));
+	assert.ok(index.includes('my-list-delete-action'));
+	assert.doesNotMatch(index, /data-my-list-grid-delete|my-list-grid-delete-close|gridHoldStates|data-grid-edit-mode|my-list-card-shake/);
+	assert.match(index, /data-my-list-delete[\s\S]*material-symbols-outlined text-2xl[\s\S]*delete[\s\S]*削除/);
+	assert.match(index, /const canDeleteRow = \(row: HTMLElement\)/);
+	assert.match(index, /startedChecklistIds\.has\(checklistId\)/);
+	assert.match(privateListDelete, /if \(!canDelete\(row\)/);
+	const forbiddenDeleteColor = ['#dc', '2626'].join('');
+	assert.doesNotMatch(index, new RegExp(forbiddenDeleteColor, 'i'));
+	assert.match(privateListDelete, /deleteButton\) deleteButton\.hidden = !enabled/);
+	assert.doesNotMatch(index, /bg-red-600/);
+	assert.ok(privateListDelete.includes('deletePrivateListByChecklistId'));
 	assert.ok(index.includes('削除済みのみ表示'));
 	assert.ok(index.includes('deletedOnly'));
 	assert.ok(index.includes("if (currentPhase !== 'all') params.set('phase', currentPhase)"));
@@ -111,10 +137,12 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.ok(index.includes('getPrivateSetting<PhaseFilter>'));
 	assert.ok(index.includes('setPrivateSetting(PHASE_SETTING_KEY'));
 	assert.ok(index.includes('data-timeline-order'));
-	assert.ok(index.includes('overflow-x-auto'));
-	assert.ok(index.includes('whitespace-nowrap rounded-full'));
-	assert.ok(index.includes('id="scene-navigation"'));
-	assert.ok(index.includes('grid-rows-2'));
+	assert.ok(index.includes('data-sheet-phase'));
+	assert.ok(index.includes('data-sheet-scene'));
+	assert.equal(index.includes('id="phase-navigation"'), false);
+	assert.equal(index.includes('id="scene-navigation"'), false);
+	assert.equal(index.includes('data-phase='), false);
+	assert.equal(index.includes('data-scene='), false);
 	assert.equal(index.includes('今の時期から探す'), false);
 	assert.equal(index.includes('<details id="scene-filter"'), false);
 	assert.equal(index.includes('data-scene-summary'), false);
@@ -139,11 +167,10 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.ok(runner.includes('data-cancel-edit'));
 	assert.ok(runner.includes('data-save-edit'));
 	assert.ok(runner.includes('変更を保存'));
-	assert.ok(runner.includes('data-delete-list'));
-	assert.ok(runner.includes('このリストを削除'));
+	assert.match(runner, /data-save-edit[^>]*rounded-xl[^>]*border/);
+	assert.ok(runner.includes('cancelEditing'));
 	assert.ok(runner.includes('editSnapshot = cloneRun(run)'));
 	assert.ok(runner.includes('run = cloneRun(editSnapshot)'));
-	assert.ok(runner.includes('removeChecklistFromMyList'));
 	assert.ok(runner.includes('if (editing) label.append(text)'));
 	assert.ok(runner.includes('scrollbar-width: none'));
 	assert.ok(runner.includes('.checklist-runner::-webkit-scrollbar'));
@@ -195,26 +222,21 @@ test('private保存からSupabase同期コードを除外する', () => {
 	].join('\n');
 	assert.doesNotMatch(privateSources, /supabase|checklist_runs|checklist_run_items|personal_note/i);
 	assert.doesNotMatch(read('src/components/ChecklistPrivateNote.astro'), /氏名、住所、病院名、病歴|このチェックリストのメモ</);
-	assert.doesNotMatch(read('src/components/DriveBackupControls.astro'), /通常のDriveファイルは読み取りません/);
+	assert.doesNotMatch(read('src/components/ChecklistPrivateNote.astro'), /DriveBackupControls|data-drive-backup|Google Driveバックアップ|今すぐバックアップ/);
 });
 
-test('GoogleログインとDrive許可を同じSupabase OAuthへ統合する', () => {
+test('GoogleログインはDrive権限とバックアップUIを持たない', () => {
 	const googleAuth = read('src/scripts/google-auth.ts');
-	const authorization = read('src/scripts/drive-authorization.ts');
-	const controls = read('src/components/DriveBackupControls.astro');
-	const envExample = read('.env.example');
-	assert.match(googleAuth, /scopes: DRIVE_APPDATA_SCOPE/);
-	assert.match(googleAuth, /include_granted_scopes: 'true'/);
-	assert.match(googleAuth, /prompt: 'consent'/);
-	assert.doesNotMatch(googleAuth, /access_type|provider_refresh_token/);
-	assert.match(authorization, /session\.provider_token/);
-	assert.match(authorization, /getCapturedGoogleProviderAccess/);
-	assert.match(authorization, /drive\/v3\/about/);
-	assert.match(authorization, /Googleログイン中のアカウントとDriveのアカウントが一致しません/);
-	assert.match(controls, /getGoogleDriveAuthorization/);
-	assert.doesNotMatch(controls, /requestDriveAccessToken|data-drive-connect/);
-	assert.doesNotMatch(authorization, /accounts\.google\.com\/gsi|initTokenClient|login_hint/);
-	assert.doesNotMatch(envExample, /PUBLIC_GOOGLE_DRIVE_CLIENT_ID|PUBLIC_ENABLE_GOOGLE_DRIVE_BACKUP/);
+	const privateNote = read('src/components/ChecklistPrivateNote.astro');
+	const detail = read('src/components/KnowhowDetailPage.astro');
+	const runner = read('src/components/ChecklistRunner.astro');
+	assert.doesNotMatch(googleAuth, /DRIVE_APPDATA_SCOPE|drive\.appdata|include_granted_scopes|prompt: 'consent'/);
+	assert.doesNotMatch(privateNote, /Drive|data-drive-backup|今すぐバックアップ/);
+	assert.doesNotMatch(detail, /Drive|google-login-backup-notice|checklist-usage-notice/);
+	assert.doesNotMatch(runner, /Driveバックアップ/);
+	assert.equal(existsSync(new URL('../src/components/DriveBackupControls.astro', import.meta.url)), false);
+	assert.equal(existsSync(new URL('../src/scripts/drive-authorization.ts', import.meta.url)), false);
+	assert.equal(existsSync(new URL('../src/scripts/drive-backup.ts', import.meta.url)), false);
 });
 
 test('コメントは公開RPCだけを使用し、ログイン投稿だけ本人削除を提供する', () => {
@@ -316,7 +338,8 @@ test('アプリ・アイテム・ログの検索UIをボトムシートに統一
 		assert.doesNotMatch(page, /<select id="sort-order"/);
 		assert.match(page, /id="open-filter-sheet-btn"/);
 		assert.match(page, /id="open-sort-sheet-btn"/);
-		assert.match(page, /<dialog id="filter-sheet-modal"/);
+		assert.match(page, /<dialog data-list-sheet id="filter-sheet-modal"/);
+		assert.match(page, /data-list-sheet-content/);
 	}
 	assert.match(backLink, /class="[^"]*hidden sm:flex[^"]*"/);
 });

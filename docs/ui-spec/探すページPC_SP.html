@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>探すページ（PC / SP） | すくリス UI仕様書</title>
+<style>
+:root { color-scheme: light; --ink:#17233f; --muted:#667085; --mint:#39b59e; --mint-soft:#e8f8f3; --line:#e5e7eb; --paper:#ffffff; --canvas:#f5f8f7; --accent:#f5a14d; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; color:var(--ink); background:var(--canvas); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif; line-height:1.7; }
+a { color:inherit; }
+.shell { width:min(1180px,calc(100% - 32px)); margin:0 auto; }
+.topbar { position:sticky; top:0; z-index:5; background:rgba(255,255,255,.94); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
+.topbar-inner { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:68px; }
+.brand { font-weight:800; color:var(--ink); text-decoration:none; letter-spacing:.04em; }
+.doc-nav { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; font-size:12px; }
+.doc-nav a { padding:5px 9px; border-radius:999px; color:var(--muted); text-decoration:none; }
+.doc-nav a:hover { background:var(--mint-soft); color:var(--mint); }
+.hero { padding:44px 0 28px; }
+.eyebrow { color:var(--mint); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+h1,h2,h3 { margin:0; line-height:1.3; color:var(--ink); }
+h1 { margin-top:10px; font-size:clamp(28px,4vw,48px); letter-spacing:-.03em; }
+h2 { font-size:24px; }
+h3 { font-size:17px; }
+.lead { max-width:820px; margin:16px 0 0; color:#475467; font-size:16px; }
+.meta { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:26px 0 0; }
+.meta-card { padding:14px 16px; border:1px solid var(--line); border-radius:16px; background:var(--paper); }
+.meta-card dt { color:var(--muted); font-size:11px; font-weight:700; }
+.meta-card dd { margin:3px 0 0; font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+.notice { margin:20px 0 0; padding:14px 16px; border-left:4px solid var(--mint); border-radius:12px; background:var(--mint-soft); color:#245b51; font-size:13px; }
+.section { margin:28px 0; padding:28px; border:1px solid var(--line); border-radius:22px; background:var(--paper); box-shadow:0 8px 30px rgba(23,35,63,.04); }
+.section > p:first-of-type { margin-top:10px; }
+p { color:#475467; }
+ul,ol { margin:10px 0 0; padding-left:22px; color:#475467; }
+li + li { margin-top:5px; }
+.capture-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:18px; }
+.capture { margin:0; padding:10px; border:1px solid var(--line); border-radius:16px; background:#fbfcfc; }
+.capture img { display:block; width:100%; max-height:540px; object-fit:contain; border:1px solid #edf0f0; border-radius:10px; background:#fff; }
+.capture figcaption { padding:9px 3px 1px; color:var(--muted); font-size:12px; }
+.capture figcaption strong { color:var(--ink); }
+.capture a { display:block; text-decoration:none; }
+.two-col { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.rule-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:16px; }
+.rule { padding:16px; border:1px solid var(--line); border-radius:15px; background:#fbfcfc; }
+.rule h3 { font-size:15px; }
+.rule p { margin:7px 0 0; font-size:13px; }
+table { width:100%; margin-top:16px; border-collapse:collapse; font-size:13px; }
+th,td { padding:11px 12px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+th { background:#f7faf9; color:var(--ink); font-size:12px; }
+code,kbd { padding:2px 6px; border-radius:6px; background:#eef2f2; color:#334155; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.9em; overflow-wrap:anywhere; }
+.path { display:inline-block; padding:3px 8px; border-radius:7px; background:#f1f5f4; color:#245b51; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:12px; }
+.source { margin-top:14px; padding:12px 14px; border:1px dashed #cdd9d6; border-radius:12px; color:var(--muted); font-size:12px; }
+.source code { background:transparent; padding:0; }
+details { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+summary { cursor:pointer; color:var(--ink); font-weight:800; }
+.footer { padding:22px 0 48px; color:var(--muted); font-size:12px; }
+.footer a { color:var(--mint); }
+@media (max-width:760px) {
+  .shell { width:min(100% - 20px,620px); }
+  .topbar-inner { align-items:flex-start; flex-direction:column; padding:12px 0; }
+  .doc-nav { justify-content:flex-start; }
+  .hero { padding:30px 0 18px; }
+  .section { padding:20px 16px; border-radius:18px; }
+  .meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .two-col,.rule-grid { grid-template-columns:1fr; }
+  .capture-grid { grid-template-columns:1fr; }
+  table { display:block; overflow-x:auto; white-space:normal; }
+  th,td { min-width:150px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="shell topbar-inner"><a class="brand" href="探すページPC_SP.html">すくリス / UI仕様書</a>
+<nav class="doc-nav" aria-label="仕様書">
+  <a href="探すページPC_SP.html">探す</a>
+  <a href="マイリストPC_SP.html">マイリスト</a>
+  <a href="おすすめ_アプリ_PC_SP.html">アプリ</a>
+  <a href="おすすめ_アイテム_PC_SP.html">アイテム</a>
+  <a href="おすすめ_育児ログ_PC_SP.html">育児ログ</a>
+</nav></div></header>
+<main class="shell">
+  <section class="hero">
+    <div class="eyebrow">Current local implementation specification</div>
+    <h1>探すページ（PC / SP）</h1>
+    <p class="lead">公開チェックリストを検索・絞り込み・並び替えし、headline_view と grid_view を切り替える画面。</p>
+    <dl class="meta">
+      <div class="meta-card"><dt>対象URL</dt><dd>/</dd></div>
+      <div class="meta-card"><dt>PC撮影</dt><dd>1440 × 1000</dd></div>
+      <div class="meta-card"><dt>SP撮影</dt><dd>390 × 844</dd></div>
+      <div class="meta-card"><dt>取得元</dt><dd>localhost:4321 / 現行ビルド</dd></div>
+    </dl>
+    <div class="notice">この資料は、実際の localhost:4321 をPC/SPビューポートで撮影し、現在のAstro実装とクライアント側の動作を仕様として整理したものです。画像はキャプチャ時点の端末データ・公開データを反映します。</div>
+  </section>
+  
+<section class="section">
+  <h2>1. 画面の目的と導線</h2>
+  <p>公開チェックリストを探す入口です。PCでは上部ヘッダー、SPでは画面下の固定ナビから「探す」に戻ります。カードをタップ／クリックするとチェックリスト詳細モーダルを開きます。</p>
+  <div class="rule-grid">
+    <div class="rule"><h3>公開一覧</h3><p><span class="path">/</span> または公開 <span class="path">/knowhow/...</span>。公開カードは端末のマイリスト状態とは独立して表示します。</p></div>
+    <div class="rule"><h3>ログイン</h3><p>右上のGoogleログイン導線は認証操作を行うボタンです。本キャプチャではログイン操作を実行していません。</p></div>
+  </div>
+</section>
+<section class="section">
+  <h2>2. 実画面キャプチャ</h2>
+  <div class="capture-grid">
+    <figure class="capture"><a href="assets/explore-pc.png" target="_blank" rel="noreferrer"><img src="assets/explore-pc.png" alt="PC / headline_view"></a><figcaption><strong>PC / headline_view</strong><br>公開一覧の標準リスト表示。ヘッダー、検索、表示切替、絞り込み、並び替えを確認できる。</figcaption></figure>
+    <figure class="capture"><a href="assets/explore-sp.png" target="_blank" rel="noreferrer"><img src="assets/explore-sp.png" alt="SP / headline_view"></a><figcaption><strong>SP / headline_view</strong><br>SP固定ナビとカードのリスト表示。</figcaption></figure>
+    <figure class="capture"><a href="assets/explore-grid-pc.png" target="_blank" rel="noreferrer"><img src="assets/explore-grid-pc.png" alt="PC / grid_view"></a><figcaption><strong>PC / grid_view</strong><br>画像カードを横方向に並べるグリッド表示。</figcaption></figure>
+    <figure class="capture"><a href="assets/explore-grid-sp.png" target="_blank" rel="noreferrer"><img src="assets/explore-grid-sp.png" alt="SP / grid_view"></a><figcaption><strong>SP / grid_view</strong><br>SPでも画像カードを2列で表示。公開一覧では削除UIは出ない。</figcaption></figure>
+    <figure class="capture"><a href="assets/explore-filter-sp.png" target="_blank" rel="noreferrer"><img src="assets/explore-filter-sp.png" alt="SP / 絞り込みシート"></a><figcaption><strong>SP / 絞り込みシート</strong><br>画面下端から上へ開くフィルターシート。</figcaption></figure>
+    <figure class="capture"><a href="assets/explore-sort-sp.png" target="_blank" rel="noreferrer"><img src="assets/explore-sort-sp.png" alt="SP / 並び替えシート"></a><figcaption><strong>SP / 並び替えシート</strong><br>画面下端から上へ開く並び替えシート。絞り込みと同じ下端基準のアニメーション。</figcaption></figure>
+  </div>
+</section>
+<section class="section">
+  <h2>3. view（表示形式）</h2>
+  <table><thead><tr><th>状態</th><th>見た目</th><th>操作とURL</th><th>保存</th></tr></thead><tbody>
+    <tr><th>headline_view</th><td>タイトル・説明・いいね・画像を横長の一覧カードで表示。</td><td>リスト表示ボタン。正規URLは <code>?mode=headline_view</code>。</td><td>IndexedDB settings の <code>knowhow-display-mode</code> に保存。</td></tr>
+    <tr><th>grid_view</th><td>画像を主役にしたカードを2列で表示。カード下部にタイトルといいねを重ねる。</td><td>画像表示ボタン。正規URLは <code>?mode=grid_view</code>。</td><td>同じ表示モード設定に保存。URLのmodeがある場合はURLを優先。</td></tr>
+    <tr><th>公開一覧の削除</th><td colspan="3">端末に保存済みのカードはheadline_viewで左スワイプ削除できる。grid_viewでは削除操作を持たせない。</td></tr>
+  </tbody></table>
+</section>
+<section class="section">
+  <h2>4. 検索・絞り込み・並び替え</h2>
+  <div class="two-col">
+    <div><h3>検索</h3><ul><li>検索文字列はタイトルと説明文に対して小文字化した部分一致。</li><li>入力後250msのデバウンスでカードの表示を更新。</li><li>検索文字列はURLやIndexedDB settingsには保存しない。</li></ul></div>
+    <div><h3>絞り込み</h3><ul><li>月齢：すべて／妊娠中／0〜3か月／4〜6か月／7〜11か月／1歳〜。</li><li>カテゴリ（場面）とお気に入りのみ表示を組み合わせる。</li><li>条件はAND。適用後はactive chipで確認・個別解除できる。</li></ul></div>
+  </div>
+  <table><thead><tr><th>操作</th><th>仕様</th><th>URL・状態</th></tr></thead><tbody>
+    <tr><th>絞り込みシート</th><td>SP/PCとも下端から上へ表示。ハンドル、背景クリック、Escape、SPの下スワイプで閉じる。</td><td>phase、scene、myのdeletedのみURLへ反映。お気に入りと検索は画面状態。</td></tr>
+    <tr><th>並び替え</th><td>おすすめ順／新着順／人気順。シートは画面下端から上へ表示。</td><td>おすすめ＝timelineOrder昇順、新着＝公開日降順、人気＝いいね数降順。並び順自体はURLやsettingsへ保存しない。</td></tr>
+    <tr><th>リセット</th><td>絞り込み条件・お気に入り・削除済み条件・検索を初期状態へ戻す。</td><td>URLのphase／scene／deletedも削除。</td></tr>
+  </tbody></table>
+</section>
+<section class="section">
+  <h2>5. データのキャッシュ・保存法則</h2>
+  <ul><li>公開カードの原稿はAstro content collectionからビルド時に静的生成。ページ操作ごとに公開カードをAPI取得し直さない。</li><li>表示モードはIndexedDB <code>likethis-private</code> v2のsettingsキー <code>knowhow-display-mode</code>、選択月齢は <code>knowhow-selected-phase</code> に保存。</li><li>URLに明示された <code>mode</code>／<code>phase</code>／<code>scene</code> は保存設定より優先。検索・並び替えはリロードで初期値へ戻る。</li><li>いいね件数は接続可能ならSupabaseから取得。接続不能時は件数0へフォールバックし、匿名ユーザーの押下状態はIndexedDBの <code>article_likes</code> から復元する。</li><li>端末データの保存期限（TTL）は設けず、ブラウザーのサイトデータを削除するまで保持する。</li></ul>
+</section>
+<section class="section">
+  <h2>6. 実装上の根拠</h2>
+  <div class="source"><code>src/components/KnowhowIndexPage.astro</code>：URL、view切替、検索、phase／scene／お気に入り、sheet、並び替え、公開／マイリスト判定。</div>
+  <div class="source"><code>src/scripts/private-db.ts</code>：IndexedDB名・version、runs/settings/article_likes、legacy localStorage移行、保存・削除。</div>
+  <div class="source"><code>src/styles/list-sheet.css</code>：全コンテンツの絞り込み／並び替えを下端に固定する共通CSSと250msの上方向アニメーション。</div>
+  <div class="source"><code>src/scripts/article-likes.ts</code>：Supabaseいいね件数と匿名いいね状態の取得・フォールバック。</div>
+</section>
+</main>
+<footer class="shell footer">Generated from the local implementation. 関連ソースは各ページの「実装上の根拠」に記載しています。</footer>
+</body>
+</html>

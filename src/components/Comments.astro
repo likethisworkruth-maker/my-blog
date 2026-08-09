@@ -97,6 +97,7 @@ const formClass = variant === 'modal'
 
 <script>
 	import { checkSupabaseHealth, getSupabaseClient } from '../scripts/supabase-client';
+	import { onPageLoad } from '../scripts/page-lifecycle';
 
 	interface PublicComment {
 		id: string;
@@ -407,8 +408,7 @@ const formClass = variant === 'modal'
 		});
 	};
 
-	document.addEventListener('DOMContentLoaded', initComments);
-	document.addEventListener('astro:page-load', initComments);
+	onPageLoad(initComments);
 	document.addEventListener('comments:activate', initComments);
 </script>
 

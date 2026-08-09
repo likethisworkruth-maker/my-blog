@@ -1,0 +1,40 @@
+/*
+ * Shared list filter/sort bottom-sheet motion.
+ * Every list page uses the same bottom-anchored sheet geometry and timing.
+ */
+[data-list-sheet] {
+  align-items: flex-end;
+  justify-content: center;
+  transition: opacity 200ms ease-out;
+}
+
+[data-list-sheet].is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+[data-list-sheet-content] {
+  transform: translateY(100%);
+  transition: transform 250ms ease-out;
+}
+
+[data-list-sheet].is-open [data-list-sheet-content] {
+  transform: translateY(0);
+}
+
+[data-list-sheet-content].is-dragging {
+  transition: none;
+}
+
+[data-list-sheet]::backdrop {
+  background: transparent;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
