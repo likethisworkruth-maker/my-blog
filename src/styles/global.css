@@ -16,6 +16,12 @@ html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container .knowhow-
   display: block !important;
 }
 
+/* 初期HTMLも一覧JS適用後と同じグリッドの角丸にする。 */
+html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container .knowhow-card,
+html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container .knowhow-gallery-view {
+  border-radius: 0.375rem !important;
+}
+
 html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container .my-list-delete-action {
   display: none !important;
 }
@@ -26,6 +32,11 @@ html[data-knowhow-initial-display-mode="grid_view"] #knowhow-container [data-my-
   touch-action: auto;
   transition: none !important;
   will-change: auto;
+}
+
+/* マイリストはIndexedDBの状態が確定するまでカードを描画しない。 */
+#knowhow-container[data-list-view="my"]:not([data-private-state-loaded="true"]) .knowhow-card {
+  display: none !important;
 }
 
 @media (max-width: 767px) {

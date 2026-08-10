@@ -12,15 +12,15 @@ const primarySortLabel = defaultSort === 'newest' ? '最新順' : 'おすすめ�
 <dialog
 	data-list-sheet
 	id="filter-sheet-modal"
-	class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end overflow-hidden border-none bg-black/50 p-0 opacity-0 outline-none pointer-events-none backdrop-blur-sm transition-opacity duration-200"
+	class="fixed inset-0 z-[100] m-0 h-full max-h-none w-full max-w-none items-end overflow-hidden border-none bg-black/50 p-0 outline-none backdrop-blur-sm"
 >
 	<div
 		data-list-sheet-content
 		id="filter-sheet-content"
-		class="scrollbar-hide mx-auto flex h-[80vh] max-h-[80vh] w-full max-w-lg translate-y-full transform flex-col gap-5 overflow-y-auto rounded-t-3xl border border-gray-200 bg-white px-6 pb-6 pt-3 transition-transform duration-250 ease-out"
+		class="scrollbar-hide mx-auto flex h-[80vh] max-h-[80vh] w-full max-w-lg flex-col gap-5 overflow-y-auto rounded-t-3xl border border-gray-200 bg-white px-6 pb-6 pt-3"
 	>
 		<div
-			class="flex w-full shrink-0 touch-none cursor-grab select-none items-center justify-center pb-3 pt-1 active:cursor-grabbing"
+			class="flex w-full shrink-0 touch-none select-none items-center justify-center pb-3 pt-1"
 			data-list-sheet-handle
 			aria-label="閉じる"
 		>

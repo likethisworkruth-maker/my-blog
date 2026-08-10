@@ -177,7 +177,10 @@ test('A-117 authenticated public list does not expose private run labels', async
 
 test('A-118 authenticated detail wheel keeps canonical private route', async ({ page }) => {
 	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await seedPrivateRuns(page, [makeRegressionRun('night-memo'), makeRegressionRun('family-log')]);
 	await page.goto('/my-knowhow/001-night-memo/');
+	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
 	await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/?$/);
 	await expectSignedIn(page);

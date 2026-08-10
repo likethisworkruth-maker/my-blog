@@ -21,6 +21,70 @@ const scenes = [
 	{ slug: 'disaster', expected: 0 },
 ] as const;
 
+type SheetMotionSample = {
+	type: 'initial' | 'transitionend';
+	top: number;
+	bottom: number;
+	viewportHeight: number;
+	dialogClass: string;
+	translatedTop: number;
+	activeAnimationCount: number;
+};
+
+async function captureSheetOpenMotion(
+	page: import('@playwright/test').Page,
+	triggerSelector: string,
+	contentSelector: string,
+) {
+	await expect.poll(() => page.evaluate(() => Boolean(document.querySelector(
+		'[data-knowhow-list-initialized="true"], [data-content-list][data-list-initialized="true"]',
+	)))).toBe(true);
+	const content = page.locator(contentSelector);
+	await content.evaluate(async (element, sheetTriggerSelector) => {
+		type MotionWindow = Window & { __listSheetMotion?: SheetMotionSample[] };
+		const motionWindow = window as MotionWindow;
+		motionWindow.__listSheetMotion = [];
+		const record = (type: SheetMotionSample['type']) => {
+			const rect = element.getBoundingClientRect();
+			const dialog = element.closest('dialog');
+			const style = getComputedStyle(element);
+			const translateY = style.transform === 'none' ? 0 : new DOMMatrixReadOnly(style.transform).m42;
+			motionWindow.__listSheetMotion?.push({
+				type,
+				top: rect.top,
+				bottom: rect.bottom,
+				viewportHeight: window.innerHeight,
+				dialogClass: dialog?.className ?? '',
+				translatedTop: (element as HTMLElement).offsetTop + translateY,
+				activeAnimationCount: element.getAnimations().length,
+			});
+		};
+		const trigger = document.querySelector(sheetTriggerSelector);
+		if (!trigger) throw new Error(`sheet trigger not found: ${sheetTriggerSelector}`);
+		const recordTransformEnd = (event: Event) => {
+			const transitionEvent = event as TransitionEvent;
+			if (event.target !== element || transitionEvent.propertyName !== 'transform') return;
+			element.removeEventListener('transitionend', recordTransformEnd);
+			record('transitionend');
+		};
+		element.addEventListener('transitionend', recordTransformEnd);
+		// clickは同期的にアプリ側のハンドラーを完了する。次のrequestAnimationFrameへ
+		// 制御を返した後、初期状態を描画する1フレーム目で画面下外の位置を記録する。
+		(trigger as HTMLElement).click();
+		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+		record('initial');
+	}, triggerSelector);
+	await expect.poll(() => page.evaluate(() => {
+		const motionWindow = window as Window & { __listSheetMotion?: SheetMotionSample[] };
+		return motionWindow.__listSheetMotion?.length ?? 0;
+	}), { timeout: 3000 }).toBe(2);
+
+	return page.evaluate(() => {
+		const motionWindow = window as Window & { __listSheetMotion?: SheetMotionSample[] };
+		return motionWindow.__listSheetMotion ?? [];
+	});
+}
+
 const listRoutes = [
 	{ id: 'R-001', label: '公開ルート', url: '/?mode=headline_view', expected: 2 },
 	{ id: 'R-002', label: '公開knowhowルート', url: '/knowhow/?mode=headline_view', expected: 2 },
@@ -129,6 +193,63 @@ test('R-040 共有モーダルを通常のイベント処理で開閉する', as
 	await expect(page.locator('[data-share-platform="x"]')).toHaveAttribute('href', /twitter\.com\/intent\/tweet/);
 	await page.locator('#share-cancel').click();
 	await expect(page.locator('#share-modal[open]')).toHaveCount(0);
+});
+
+test('R-041 knowhow一覧の絞り込みシートを画面下端に固定する', async ({ page }) => {
+	for (const url of ['/?mode=headline_view', '/my-knowhow/?mode=headline_view']) {
+		await page.goto(url);
+		await page.locator('#open-filter-sheet-btn').click();
+		await expect(page.locator('#filter-sheet-modal[open]')).toHaveCount(1);
+		await expect.poll(() => page.locator('#filter-sheet-content').evaluate((content) => {
+			return Math.round(window.innerHeight - content.getBoundingClientRect().bottom);
+		})).toBe(0);
+		await page.locator('#sheet-apply-btn').click();
+		await expect(page.locator('#filter-sheet-modal[open]')).toHaveCount(0);
+	}
+});
+
+test('R-042 PCのシートハンドルはドラッグせず、他の操作を阻害しない', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 900 });
+	await page.goto('/my-knowhow/?mode=grid_view');
+	await page.locator('#open-sort-sheet-btn').click();
+	const handle = page.locator('#sort-sheet-content [data-list-sheet-handle]');
+	await expect(handle).toHaveCSS('cursor', 'default');
+	const bounds = await handle.boundingBox();
+	if (!bounds) throw new Error('sort sheet handle not found');
+	await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + 180);
+	await page.mouse.up();
+	await page.locator('#sort-sheet-modal input[name="sheet-sort"][value="newest"]').check();
+	await expect(page.locator('#sort-sheet-modal input[name="sheet-sort"][value="newest"]')).toBeChecked();
+});
+
+test('R-043 絞り込み・並び替えシートは必ず画面下の外側から下端へ上昇する', async ({ page }) => {
+	const cases = [
+		{ url: '/?mode=headline_view', trigger: '#open-filter-sheet-btn', content: '#filter-sheet-content' },
+		{ url: '/?mode=headline_view', trigger: '#open-sort-sheet-btn', content: '#sort-sheet-content' },
+		{ url: '/items/', trigger: '#open-filter-sheet-btn', content: '#filter-sheet-content' },
+		{ url: '/items/', trigger: '#open-sort-sheet-btn', content: '#filter-sheet-content' },
+	] as const;
+
+	for (const target of cases) {
+		await page.goto(target.url);
+		const samples = await captureSheetOpenMotion(page, target.trigger, target.content);
+		const start = samples.find((sample) => sample.type === 'initial');
+		const end = samples.find((sample) => sample.type === 'transitionend');
+		expect(start).toBeDefined();
+		expect(end).toBeDefined();
+		if (!start || !end) continue;
+
+		expect(start.dialogClass).not.toContain('is-open');
+		expect(start.activeAnimationCount).toBe(0);
+		expect(start.translatedTop).toBeGreaterThanOrEqual(start.viewportHeight - 1);
+		expect(end.dialogClass).toContain('is-open');
+		expect(Math.abs(end.bottom - end.viewportHeight)).toBeLessThanOrEqual(1);
+
+		await page.keyboard.press('Escape');
+		await expect(page.locator('dialog[data-list-sheet][open]')).toHaveCount(0);
+	}
 });
 
 test('R-037 Markdownのタイトルと説明が画面に存在する', async ({ page }) => {

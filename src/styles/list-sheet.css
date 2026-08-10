@@ -3,31 +3,63 @@
  * Every list page uses the same bottom-anchored sheet geometry and timing.
  */
 [data-list-sheet] {
-  align-items: flex-end;
-  justify-content: center;
-  transition: opacity 200ms ease-out;
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	max-height: none;
+	margin: 0;
+	padding: 0;
+	display: none;
+	align-items: flex-end;
+	justify-content: center;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 200ms ease-out;
+}
+
+[data-list-sheet][open] {
+	display: flex;
+	align-items: flex-end;
 }
 
 [data-list-sheet].is-open {
-  opacity: 1;
-  pointer-events: auto;
+	opacity: 1;
+	pointer-events: auto;
 }
 
 [data-list-sheet-content] {
-  transform: translateY(100%);
-  transition: transform 250ms ease-out;
+	margin: 0 auto;
+	transform: translate3d(0, 100%, 0);
+	will-change: transform;
+}
+
+[data-list-sheet].is-motion-ready [data-list-sheet-content] {
+	transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-list-sheet-handle] {
+	cursor: default;
+	touch-action: none;
+}
+
+@media (min-width: 1024px) {
+	[data-list-sheet-handle] {
+		touch-action: auto;
+	}
 }
 
 [data-list-sheet].is-open [data-list-sheet-content] {
-  transform: translateY(0);
+	transform: translate3d(0, 0, 0);
 }
 
 [data-list-sheet-content].is-dragging {
-  transition: none;
+	transition: none;
 }
 
 [data-list-sheet]::backdrop {
-  background: transparent;
+	background: transparent;
 }
 
 .scrollbar-hide {

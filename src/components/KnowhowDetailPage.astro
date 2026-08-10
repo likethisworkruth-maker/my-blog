@@ -7,7 +7,7 @@ import ChecklistPrivateNote from "./ChecklistPrivateNote.astro";
 import Comments from "./Comments.astro";
 import { SITE_TITLE } from "../consts";
 
-const { knowhow, prev, next } = Astro.props;
+const { knowhow, prev, next, navigationItems = [] } = Astro.props;
 const { Content } = await render(knowhow);
 const checklistEntry = await getEntry("checklists", knowhow.data.checklistId);
 if (!checklistEntry || checklistEntry.data.status !== "published") {
@@ -31,7 +31,9 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		 data-knowhow-id={knowhow.id}
 		 data-checklist-id={checklist.checklistId}
          data-prev={prevUrl}
-         data-next={nextUrl}>
+         data-next={nextUrl}
+		 data-private-navigation={isPrivateDetail ? JSON.stringify(navigationItems) : undefined}
+		 data-private-state-loaded={isPrivateDetail ? 'false' : 'true'}>
 
 		<!-- PC Back Button -->
 		<button data-media-ui data-go-back class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
@@ -131,6 +133,7 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 	import { getCurrentArticleLikeState, notifyArticleLikeChanged, setArticleLikeState } from '../scripts/article-likes';
 	import { deletePrivateListByChecklistId } from '../scripts/private-list-delete';
 	import {
+		getPrivateChecklistRuns,
 		getPrivateChecklistRunsByChecklistId,
 		initializePrivateDb,
 		savePrivateChecklistRun,
@@ -191,6 +194,23 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		const knowhowId = container.dataset.knowhowId;
 		const detailBasePath = `/knowhow/${knowhowId}/`;
 		const privateDetailBasePath = `/my-knowhow/${knowhowId}/`;
+		const isPrivateDetailPath = window.location.pathname.startsWith('/my-knowhow/');
+		type DetailNavigationItem = { id: string; checklistId: string };
+		const privateNavigationItems = (() => {
+			try {
+				const parsed = JSON.parse(container.dataset.privateNavigation ?? '[]') as unknown;
+				return Array.isArray(parsed)
+					? parsed.filter((item): item is DetailNavigationItem => (
+						Boolean(item)
+						&& typeof item === 'object'
+						&& typeof (item as DetailNavigationItem).id === 'string'
+						&& typeof (item as DetailNavigationItem).checklistId === 'string'
+					))
+					: [];
+			} catch {
+				return [];
+			}
+		})();
 		
 		const urlParams = new URLSearchParams(window.location.search);
 		let currentMode: DetailMode = urlParams.get('mode') === 'my' ? 'private' : 'public';
@@ -492,8 +512,31 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 
         // Navigation logic for standalone page (wheel/swipe)
         let isNavigating = false;
+		const clearPrivateNavigation = () => {
+			if (!isPrivateDetailPath) return;
+			container.removeAttribute('data-prev');
+			container.removeAttribute('data-next');
+		};
+		const syncPrivateNavigation = (runs: Array<{ checklistId: string; deletedAt?: string }>) => {
+			if (!isPrivateDetailPath) return;
+			const activeChecklistIds = new Set(runs.filter((run) => !run.deletedAt).map((run) => run.checklistId));
+			const activeNavigationItems = privateNavigationItems.filter((item) => activeChecklistIds.has(item.checklistId));
+			const currentIndex = activeNavigationItems.findIndex((item) => item.id === knowhowId);
+			if (currentIndex < 0) {
+				clearPrivateNavigation();
+				return;
+			}
+
+			const previous = activeNavigationItems[currentIndex - 1];
+			const nextItem = activeNavigationItems[currentIndex + 1];
+			if (previous) container.setAttribute('data-prev', `/my-knowhow/${previous.id}/`);
+			else container.removeAttribute('data-prev');
+			if (nextItem) container.setAttribute('data-next', `/my-knowhow/${nextItem.id}/`);
+			else container.removeAttribute('data-next');
+		};
 		const navigateTo = (direction: 'next' | 'prev') => {
 			if (isNavigating) return;
+			if (isPrivateDetailPath && container.dataset.privateStateLoaded !== 'true') return;
 
 			const url = container.getAttribute(`data-${direction}`);
             if (url) {
@@ -623,12 +666,14 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 				await initializePrivateDb();
 				const runs = await getPrivateChecklistRunsByChecklistId(container.dataset.checklistId ?? '');
 				const hasActiveRun = runs.some((run) => !run.deletedAt);
+				if (isPrivateDetailPath) syncPrivateNavigation(await getPrivateChecklistRuns());
 				if (hasActiveRun && currentMode === 'public') {
 					currentMode = 'private';
 					applyModeUi();
 				}
 			} catch {
 				// The public detail remains usable when private storage is unavailable.
+				clearPrivateNavigation();
 			} finally {
 				container.dataset.privateStateLoaded = 'true';
 				if (startAfterOpen) {

@@ -13,6 +13,7 @@ interface Props {
 	image?: string | ImageMetadata;
 	fullScreen?: boolean;
 	noindex?: boolean;
+	initialDisplayMode?: 'headline_view' | 'grid_view';
 }
 
 const {
@@ -21,11 +22,16 @@ const {
 	image,
 	fullScreen = false,
 	noindex = false,
+	initialDisplayMode,
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="ja" class={fullScreen ? "overflow-hidden w-full h-full" : ""}>
+<html
+	lang="ja"
+	class={fullScreen ? "overflow-hidden w-full h-full" : ""}
+	data-knowhow-initial-display-mode={initialDisplayMode}
+>
 	<head>
 		<BaseHead title={title} description={description} image={image} noindex={noindex} />
 	</head>

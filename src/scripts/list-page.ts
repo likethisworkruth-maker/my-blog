@@ -2,6 +2,8 @@ import { onPageLoad } from './page-lifecycle';
 
 type ListSheetMode = 'filter' | 'sort';
 
+const SHEET_TRANSITION_MS = 250;
+
 interface ListSheetControllerOptions {
 	content?: HTMLElement | null;
 	handle?: HTMLElement | null;
@@ -47,6 +49,7 @@ export const createListSheetController = (
 	const handle = options.handle ?? content.querySelector<HTMLElement>('[data-list-sheet-handle]');
 	const listeners = new AbortController();
 	let closeTimer: number | undefined;
+	let openFrame: number | undefined;
 	let dragStartY: number | null = null;
 	let dragCurrentY = 0;
 	let scrollLocked = false;
@@ -55,36 +58,42 @@ export const createListSheetController = (
 	const resetContent = () => {
 		content.classList.remove('is-dragging');
 		content.style.removeProperty('transform');
-		content.classList.add('translate-y-full');
+	};
+
+	const cancelOpenFrame = () => {
+		if (openFrame === undefined) return;
+		window.cancelAnimationFrame(openFrame);
+		openFrame = undefined;
 	};
 
 	const finishClose = () => {
+		cancelOpenFrame();
 		if (closeTimer !== undefined) window.clearTimeout(closeTimer);
 		closeTimer = undefined;
 		const shouldUnlock = scrollLocked;
 		scrollLocked = false;
 		if (modal.open) modal.close();
-		modal.classList.remove('is-open', 'opacity-100');
-		modal.classList.add('opacity-0', 'pointer-events-none');
+		modal.classList.remove('is-open', 'is-motion-ready');
 		resetContent();
 		if (shouldUnlock) unlockBodyScroll();
 	};
 
 	const close = () => {
+		cancelOpenFrame();
 		if (closeTimer !== undefined) window.clearTimeout(closeTimer);
 		if (!modal.open) {
 			finishClose();
 			return;
 		}
 
-		modal.classList.remove('is-open', 'opacity-100');
-		modal.classList.add('opacity-0', 'pointer-events-none');
 		resetContent();
-		closeTimer = window.setTimeout(finishClose, 250);
+		modal.classList.remove('is-open');
+		closeTimer = window.setTimeout(finishClose, SHEET_TRANSITION_MS);
 	};
 
 	const open = () => {
 		if (destroyed) return;
+		cancelOpenFrame();
 		if (closeTimer !== undefined) {
 			window.clearTimeout(closeTimer);
 			closeTimer = undefined;
@@ -93,11 +102,22 @@ export const createListSheetController = (
 			lockBodyScroll();
 			scrollLocked = true;
 		}
+		resetContent();
+		modal.classList.remove('is-open', 'is-motion-ready');
 		if (!modal.open) modal.showModal();
-		modal.classList.add('is-open');
-		modal.classList.remove('opacity-0', 'pointer-events-none');
-		requestAnimationFrame(() => {
-			content.classList.remove('translate-y-full');
+
+		// showModal直後の「画面下外」状態を確定させ、最初のフレームでは何も変えず描画する。
+		// 次にtransitionだけを有効化し、その次のフレームで上昇を開始する。
+		void content.offsetHeight;
+		openFrame = window.requestAnimationFrame(() => {
+			openFrame = window.requestAnimationFrame(() => {
+				modal.classList.add('is-motion-ready');
+				openFrame = window.requestAnimationFrame(() => {
+					openFrame = undefined;
+					if (destroyed || !modal.open) return;
+					modal.classList.add('is-open');
+				});
+			});
 		});
 	};
 
@@ -107,8 +127,10 @@ export const createListSheetController = (
 		content.classList.remove('is-dragging');
 		content.style.removeProperty('transform');
 	};
+	const isMobileSheet = () => window.innerWidth < 1024;
 
 	content.addEventListener('touchstart', (event) => {
+		if (!isMobileSheet()) return;
 		const target = event.target as Node | null;
 		if (content.scrollTop > 0 && (!target || !handle?.contains(target))) return;
 		const touch = event.touches[0];
@@ -119,6 +141,7 @@ export const createListSheetController = (
 	}, { passive: true, signal: listeners.signal });
 
 	content.addEventListener('touchmove', (event) => {
+		if (!isMobileSheet()) return;
 		if (dragStartY === null || event.touches.length !== 1) return;
 		const touch = event.touches[0];
 		dragCurrentY = touch.clientY;
@@ -129,13 +152,16 @@ export const createListSheetController = (
 	}, { passive: false, signal: listeners.signal });
 
 	content.addEventListener('touchend', () => {
+		if (!isMobileSheet()) return;
 		if (dragStartY === null) return;
 		const shouldClose = dragCurrentY - dragStartY >= 80;
 		resetDrag();
 		if (shouldClose) close();
 	}, { passive: true, signal: listeners.signal });
 
-	content.addEventListener('touchcancel', resetDrag, { passive: true, signal: listeners.signal });
+	content.addEventListener('touchcancel', () => {
+		if (isMobileSheet()) resetDrag();
+	}, { passive: true, signal: listeners.signal });
 	handle?.addEventListener('click', close, { signal: listeners.signal });
 	modal.addEventListener('click', (event) => {
 		if (event.target === modal) close();

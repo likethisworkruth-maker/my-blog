@@ -41,6 +41,7 @@ const phases = [
 const scenes = sceneLabels.map((label) => ({ label }));
 const filterOptions = { phases, scenes };
 const isRootPage = Astro.url.pathname === "/";
+const isMyListPage = Astro.url.pathname.startsWith("/my-knowhow");
 const getInitialDisplayMode = (mode: string | null) => (
 	mode === "grid_view" || mode === "grid" || mode === "gallery" ? "grid_view" : "headline_view"
 );
@@ -52,6 +53,7 @@ const initialDisplayMode = getInitialDisplayMode(
 <Layout
 	title={isRootPage ? SITE_TITLE : `${UI.knowhow.pageTitle} | ${SITE_TITLE}`}
 	description={SITE_DESCRIPTION}
+	initialDisplayMode={initialDisplayMode}
 >
 	<div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 lg:py-10">
 		<!-- Header Search & Filter Navigation Area -->
@@ -121,26 +123,20 @@ const initialDisplayMode = getInitialDisplayMode(
 
 		</div>
 
-		<script is:inline>
-			(() => {
-				const mode = new URLSearchParams(window.location.search).get('mode')
-					|| new URLSearchParams(window.location.search).get('view_mode');
-				document.documentElement.dataset.knowhowInitialDisplayMode =
-					mode === 'grid_view' || mode === 'grid' || mode === 'gallery' ? 'grid_view' : 'headline_view';
-			})();
-		</script>
-
 		<!-- Feed Container -->
 		<div
 			class="flex flex-col gap-10"
 			id="knowhow-container"
-			data-display-mode={initialDisplayMode} data-filter-options={JSON.stringify(filterOptions)}
+			data-display-mode={initialDisplayMode}
+			data-list-view={isMyListPage ? "my" : "discover"}
+			data-private-state-loaded={isMyListPage ? "false" : "true"}
+			data-filter-options={JSON.stringify(filterOptions)}
 		>
 			{
 				knowhow.map(
 					(post) => (
 						<article
-							class="knowhow-card bg-white rounded-xl lg:border border-gray-200 lg:shadow-sm overflow-hidden"
+							class="knowhow-card bg-white lg:border border-gray-200 lg:shadow-sm overflow-hidden"
 							data-phases={post.data.phases.join(",")}
 							data-scenes={post.data.scenes.join(",")}
 							data-timeline-order={post.data.timelineOrder}
@@ -160,7 +156,7 @@ const initialDisplayMode = getInitialDisplayMode(
 
 								<div data-my-list-swipe-content class="relative z-10 bg-white transition-transform duration-200">
 									<div
-										class="knowhow-gallery-view relative overflow-hidden rounded-2xl bg-black cursor-default group shadow-sm"
+										class="knowhow-gallery-view relative overflow-hidden bg-black cursor-default group shadow-sm"
 										data-open-checklist={post.id}
 										role="button"
 										tabindex="0"
@@ -227,10 +223,10 @@ const initialDisplayMode = getInitialDisplayMode(
 	</div>
 
 	<!-- Filter Sheet Modal -->
-	<dialog data-list-sheet id="filter-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-200 ease-out opacity-0 pointer-events-none overflow-hidden">
-		<div data-list-sheet-content id="filter-sheet-content" class="w-full max-w-lg mx-auto rounded-t-3xl bg-white px-6 pb-6 pt-3 transition-transform duration-250 ease-out transform translate-y-full h-[80vh] max-h-[80vh] overflow-y-auto scrollbar-hide flex flex-col gap-5 border border-gray-200">
+	<dialog data-list-sheet id="filter-sheet-modal" class="fixed inset-0 z-[100] m-0 h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm overflow-hidden">
+		<div data-list-sheet-content id="filter-sheet-content" class="w-full max-w-lg mx-auto rounded-t-3xl bg-white px-6 pb-6 pt-3 h-[80vh] max-h-[80vh] overflow-y-auto scrollbar-hide flex flex-col gap-5 border border-gray-200">
 			<!-- Handle Bar -->
-			<div data-list-sheet-handle class="w-10 h-1 bg-gray-300 rounded-full mx-auto shrink-0 cursor-pointer" id="close-sheet-handle"></div>
+			<div data-list-sheet-handle class="w-10 h-1 bg-gray-300 rounded-full mx-auto shrink-0" id="close-sheet-handle"></div>
 
 			<!-- 1. 月齢 -->
 			<div>
@@ -289,10 +285,10 @@ const initialDisplayMode = getInitialDisplayMode(
 	</dialog>
 
 	<!-- Sort Sheet Modal -->
-	<dialog data-list-sheet id="sort-sheet-modal" class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm transition-opacity duration-200 ease-out opacity-0 pointer-events-none overflow-hidden">
-		<div data-list-sheet-content id="sort-sheet-content" class="w-full max-w-lg mx-auto rounded-t-3xl bg-white px-6 pb-6 pt-3 transition-transform duration-250 ease-out transform translate-y-full h-[80vh] max-h-[80vh] overflow-y-auto scrollbar-hide flex flex-col gap-5 border border-gray-200">
+	<dialog data-list-sheet id="sort-sheet-modal" class="fixed inset-0 z-[100] m-0 h-full max-h-none w-full max-w-none items-end bg-black/50 p-0 border-none outline-none backdrop-blur-sm overflow-hidden">
+		<div data-list-sheet-content id="sort-sheet-content" class="w-full max-w-lg mx-auto rounded-t-3xl bg-white px-6 pb-6 pt-3 h-[80vh] max-h-[80vh] overflow-y-auto scrollbar-hide flex flex-col gap-5 border border-gray-200">
 			<!-- Handle Bar -->
-			<div data-list-sheet-handle class="w-10 h-1 bg-gray-300 rounded-full mx-auto shrink-0 cursor-pointer" id="close-sort-sheet-handle"></div>
+			<div data-list-sheet-handle class="w-10 h-1 bg-gray-300 rounded-full mx-auto shrink-0" id="close-sort-sheet-handle"></div>
 
 			<div>
 				<h3 class="font-bold text-gray-900 text-base mb-3">並び替え</h3>
@@ -484,6 +480,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		let startedChecklistIds = new Set<string>();
 		let deletedChecklistIds = new Set<string>();
 		let userLikedSlugs = new Set<string>();
+		const userLikeOverrides = new Map<string, { isLiked: boolean; likeCount: number }>();
 		let isPrivateDbLoaded = false;
 
 		function updateUrl(pushHistory = false) {
@@ -794,11 +791,17 @@ const initialDisplayMode = getInitialDisplayMode(
 
 				const activeMatch = Boolean(checklistId && startedChecklistIds.has(checklistId));
 				const deletedMatch = Boolean(checklistId && deletedChecklistIds.has(checklistId) && !startedChecklistIds.has(checklistId));
-				let viewMatch = currentListView === 'discover'
-					|| (isDeletedOnly ? deletedMatch : activeMatch);
-
-				if (isFavOnly && cardId && !userLikedSlugs.has(`knowhow/${cardId}`)) {
-					viewMatch = false;
+				const favoriteMatch = Boolean(cardId && userLikedSlugs.has(`knowhow/${cardId}`));
+				let viewMatch = true;
+				if (currentListView === 'discover') {
+					viewMatch = !isFavOnly || favoriteMatch;
+				} else if (!isFavOnly && !isDeletedOnly) {
+					viewMatch = activeMatch;
+				} else {
+					// マイリストの表示条件はANDではなく、選択された条件のORで評価する。
+					const favoriteSelection = isFavOnly && activeMatch && favoriteMatch;
+					const deletedSelection = isDeletedOnly && deletedMatch;
+					viewMatch = favoriteSelection || deletedSelection;
 				}
 
 				let searchMatch = true;
@@ -913,6 +916,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			startedChecklistIds = new Set(runs.filter((run) => !run.deletedAt).map((run) => run.checklistId));
 			deletedChecklistIds = new Set(runs.filter((run) => Boolean(run.deletedAt)).map((run) => run.checklistId));
 			isPrivateDbLoaded = true;
+			knowhowContainer.dataset.privateStateLoaded = 'true';
 			updateView();
 		};
 		window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns(), listenerOptions);
@@ -941,7 +945,11 @@ const initialDisplayMode = getInitialDisplayMode(
 				if (destroyed) return;
 				userLikedSlugs = new Set();
 				statesMap.forEach((state, slug) => {
-					applyLikeState(slug, state.liked, state.likeCount);
+					const override = userLikeOverrides.get(slug);
+					applyLikeState(slug, override?.isLiked ?? state.liked, override?.likeCount ?? state.likeCount);
+				});
+				userLikeOverrides.forEach((override, slug) => {
+					if (!statesMap.has(slug)) applyLikeState(slug, override.isLiked, override.likeCount);
 				});
 				updateView();
 			} catch {}
@@ -953,6 +961,7 @@ const initialDisplayMode = getInitialDisplayMode(
 				const targetSlug = String(customEv.detail.slug || '');
 				const isLiked = Boolean(customEv.detail.liked || customEv.detail.isLiked);
 				const likeCount = Number(customEv.detail.likeCount || 0);
+				userLikeOverrides.set(targetSlug, { isLiked, likeCount });
 				applyLikeState(targetSlug, isLiked, likeCount);
 			}
 		}, listenerOptions);
@@ -994,6 +1003,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		}).catch(() => {
 			if (destroyed) return;
 			isPrivateDbLoaded = true;
+			knowhowContainer.dataset.privateStateLoaded = 'true';
 			if (emptyMessage && currentListView === 'my') {
 				emptyMessage.textContent = 'このブラウザーではマイリストを読み込めませんでした。';
 			}

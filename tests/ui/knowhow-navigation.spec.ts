@@ -53,8 +53,11 @@ test.describe('Knowhow Detail Page Navigation', () => {
     await expect(page.locator('#tab-content-memo')).toBeVisible();
   });
   test('private詳細のスクロールで次のprivate詳細へ移動する', async ({ page }) => {
+    await page.goto('/my-knowhow/?mode=headline_view');
+    await seedPrivateRuns(page, [makeRegressionRun('night-memo'), makeRegressionRun('family-log')]);
     await page.goto('/my-knowhow/001-night-memo/');
     await expect(page.locator('#knowhow-modal-container')).toBeVisible();
+    await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 
     await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 100 });
     await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/?$/);

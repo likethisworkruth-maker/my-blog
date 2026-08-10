@@ -25,6 +25,7 @@ test('PC・モバイルナビを3項目に統一し、既存カテゴリを運�
 test('ルートをチェックリスト一覧にし、旧案内ページを廃止する', () => {
 	const home = read('src/pages/index.astro');
 	const index = read('src/components/KnowhowIndexPage.astro');
+	const layout = read('src/layouts/Layout.astro');
 	const about = read('src/pages/about.astro');
 	const globalCss = read('src/styles/global.css');
 	const recommend = read('src/pages/recommend/index.astro');
@@ -33,9 +34,14 @@ test('ルートをチェックリスト一覧にし、旧案内ページを廃�
 	assert.ok(index.includes('const isRootPage = Astro.url.pathname === "/"'));
 	assert.doesNotMatch(recommend, />実体験の記録<|<h1[^>]*>運営のおうち<\/h1>|おすすめだけでなく/);
 	assert.doesNotMatch(about, /サイトの構成/);
+	assert.ok(layout.includes("initialDisplayMode?: 'headline_view' | 'grid_view'"));
+	assert.ok(layout.includes('data-knowhow-initial-display-mode={initialDisplayMode}'));
+	assert.equal(index.includes('<script is:inline>'), false);
 	assert.match(globalCss, /html\[data-knowhow-initial-display-mode="grid_view"\] #knowhow-container \{[\s\S]*display: grid !important/);
 	assert.match(globalCss, /html\[data-knowhow-initial-display-mode="grid_view"\] #knowhow-container \.knowhow-list-view \{[\s\S]*display: none !important/);
 	assert.match(globalCss, /html\[data-knowhow-initial-display-mode="grid_view"\] #knowhow-container \.knowhow-gallery-view \{[\s\S]*display: block !important/);
+	assert.match(globalCss, /html\[data-knowhow-initial-display-mode="grid_view"\][\s\S]*border-radius:\s*0\.375rem\s*!important/);
+	assert.match(globalCss, /#knowhow-container\[data-list-view="my"\]:not\(\[data-private-state-loaded="true"\]\) \.knowhow-card/);
 });
 
 test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
@@ -62,6 +68,11 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	assert.match(detail, /readDetailRoute/);
 	assert.match(detail, /getPrivateChecklistRunsByChecklistId/);
 	assert.match(detail, /privateStateLoaded/);
+	assert.match(detail, /data-private-navigation/);
+	assert.match(detail, /data-private-state-loaded=\{isPrivateDetail \? 'false' : 'true'\}/);
+	assert.match(detail, /getPrivateChecklistRuns\(\)/);
+	assert.match(detail, /syncPrivateNavigation/);
+	assert.match(detail, /isPrivateDetailPath && container\.dataset\.privateStateLoaded !== 'true'/);
 	assert.doesNotMatch(detail, /searchParams|location\.hash|#progress|#memo/);
 	assert.match(actionBar, /data-panel-trigger[\s\S]*data-panel-tab="desc"/);
 	assert.match(actionBar, />info</);
@@ -100,7 +111,7 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.match(index, /<dialog data-list-sheet id="sort-sheet-modal"/);
 	assert.match(index, /<dialog data-list-sheet id="filter-sheet-modal"[^>]*items-end/);
 	assert.match(index, /id="filter-sheet-content"[^>]*rounded-t-3xl/);
-	assert.match(index, /id="filter-sheet-content"[^>]*translate-y-full/);
+	assert.doesNotMatch(index, /\btranslate-y-full\b/);
 	assert.match(index, /id="filter-sheet-content"/);
 	assert.match(index, /id="sort-sheet-content"[^>]*rounded-t-3xl/);
 	assert.match(index, /createListSheetController\(filterSheetModal/);
@@ -129,6 +140,8 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.equal(index.includes('チェックリストの表示切り替え'), false);
 	assert.ok(index.includes('data-display-mode-option="headline_view"'));
 	assert.ok(index.includes('data-display-mode-option="grid_view"'));
+	assert.ok(index.includes('data-list-view={isMyListPage ? "my" : "discover"}'));
+	assert.ok(index.includes('data-private-state-loaded={isMyListPage ? "false" : "true"}'));
 	assert.ok(index.includes('knowhow-list-view'));
 	assert.ok(index.includes('knowhow-summary'));
 	assert.ok(index.includes('knowhow-display-mode'));
@@ -139,6 +152,9 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.ok(index.includes('data-timeline-order'));
 	assert.ok(index.includes('data-sheet-phase'));
 	assert.ok(index.includes('data-sheet-scene'));
+	assert.match(index, /const favoriteSelection = isFavOnly && activeMatch && favoriteMatch/);
+	assert.match(index, /const deletedSelection = isDeletedOnly && deletedMatch/);
+	assert.match(index, /viewMatch = favoriteSelection \|\| deletedSelection/);
 	assert.equal(index.includes('id="phase-navigation"'), false);
 	assert.equal(index.includes('id="scene-navigation"'), false);
 	assert.equal(index.includes('data-phase='), false);
@@ -334,6 +350,7 @@ test('アプリ・アイテム・ログの検索UIをボトムシートに統一
 	const controls = read('src/components/ContentListControls.astro');
 	const sheet = read('src/components/ContentListSheet.astro');
 	const listPage = read('src/scripts/list-page.ts');
+	const listSheetCss = read('src/styles/list-sheet.css');
 	const backLink = read('src/components/RecommendBackLink.astro');
 
 	for (const page of [apps, items, logs]) {
@@ -350,6 +367,18 @@ test('アプリ・アイテム・ログの検索UIをボトムシートに統一
 	assert.match(listPage, /destroy: \(\) => void/);
 	assert.match(listPage, /new AbortController\(\)/);
 	assert.match(listPage, /astro:before-swap/);
+	assert.match(listPage, /const isMobileSheet = \(\) => window\.innerWidth < 1024/);
+	assert.match(listPage, /if \(!isMobileSheet\(\)\) return/);
+	assert.match(listPage, /void content\.offsetHeight/);
+	assert.match(listPage, /requestAnimationFrame\([\s\S]*modal\.classList\.add\('is-open'\)/);
+	assert.doesNotMatch([sheet, listPage].join('\n'), /\btranslate-y-full\b/);
+	assert.match(listSheetCss, /\[data-list-sheet\][\s\S]*display:\s*none/);
+	assert.match(listSheetCss, /\[data-list-sheet\]\[open\][\s\S]*display:\s*flex/);
+	assert.match(listSheetCss, /transform:\s*translate3d\(0,\s*100%,\s*0\)/);
+	assert.match(listSheetCss, /\.is-motion-ready \[data-list-sheet-content\][\s\S]*transition:\s*transform 250ms/);
+	assert.match(listSheetCss, /\.is-open \[data-list-sheet-content\][\s\S]*transform:\s*translate3d\(0,\s*0,\s*0\)/);
+	assert.match(listSheetCss, /\[data-list-sheet-handle\][\s\S]*cursor:\s*default/);
+	assert.doesNotMatch(sheet, /cursor-grab|cursor-grabbing/);
 	assert.match(backLink, /class="[^"]*hidden sm:flex[^"]*"/);
 });
 

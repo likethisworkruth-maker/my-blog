@@ -155,6 +155,28 @@ test('H-016 URL指定のviewを初期表示から一致させる', async ({ page
 	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(2);
 });
 
+test('H-017 マイリストはIndexedDB確定前にカードを表示しない', async ({ page }) => {
+	await page.goto('/my-knowhow/?mode=headline_view', { waitUntil: 'commit' });
+	await page.locator('#knowhow-container').waitFor({ state: 'attached' });
+	const initialState = await page.locator('#knowhow-container').evaluate((container) => ({
+		privateStateLoaded: container.getAttribute('data-private-state-loaded'),
+		visibleCards: Array.from(container.querySelectorAll<HTMLElement>('.knowhow-card'))
+			.filter((card) => getComputedStyle(card).display !== 'none').length,
+	}));
+	expect(initialState.privateStateLoaded).toBe('false');
+	expect(initialState.visibleCards).toBe(0);
+	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-private-state-loaded', 'true');
+});
+
+test('H-018 グリッドの初期角丸をJS適用後と一致させる', async ({ page }) => {
+	await page.goto('/?mode=grid_view');
+	const radius = await page.locator('.knowhow-card').first().evaluate((card) => ({
+		card: getComputedStyle(card).borderRadius,
+		gallery: getComputedStyle(card.querySelector<HTMLElement>('.knowhow-gallery-view')!).borderRadius,
+	}));
+	expect(radius).toEqual({ card: '6px', gallery: '6px' });
+});
+
 test('H-014 phaseフィルター選択が表示・URL・chipに同期する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=headline_view');
@@ -507,6 +529,28 @@ test('M-002 既存の削除済み履歴は通常マイリストから除外し�
 	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夜泣き対応メモ');
 	await expectNoPageErrors(errors);
 });
+
+test('M-005 マイリストの表示条件はお気に入りと削除済みをORで評価する', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeDeletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await page.goto('/my-knowhow/?mode=grid_view');
+	await expectListState(page, 1);
+	await page.evaluate(() => {
+		window.dispatchEvent(new CustomEvent('article-like-changed', {
+			detail: { slug: 'knowhow/002-family-log', liked: true, likeCount: 1 },
+		}));
+	});
+	await page.locator('#open-filter-sheet-btn').click();
+	await page.locator('#sheet-fav-only').check();
+	await page.locator('#sheet-deleted-only').check();
+	await page.locator('#sheet-apply-btn').click();
+	await expectListState(page, 2);
+	await expect(page.locator('.knowhow-card:visible h2')).toHaveText(['夜泣き対応メモ', '夫婦共有ログ']);
+	await expectNoPageErrors(errors);
+});
+
 for (const item of ids) {
 	test(`D-001/D-002 ${item.id} 公開詳細のlandmarkとMarkdown表示`, async ({ page }) => {
 		const errors = collectPageErrors(page);
@@ -602,7 +646,11 @@ for (const item of ids) {
 
 test('D-017/D-018 private001のwheelでprivate002へ移動し、family templateを表示する', async ({ page }) => {
 	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeRegressionRun('night-memo'), makeRegressionRun('family-log')]);
 	await page.goto('/my-knowhow/001-night-memo/');
+	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
 	await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/?$/);
 	await expect(page.locator('#knowhow-modal-container h1').first()).toContainText('夫婦共有ログ');
@@ -612,10 +660,28 @@ test('D-017/D-018 private001のwheelでprivate002へ移動し、family template�
 
 test('D-019 private002の末尾wheelで不正な次URLへ進まない', async ({ page }) => {
 	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeRegressionRun('family-log')]);
 	await page.goto('/my-knowhow/002-family-log/');
 	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
 	await page.waitForTimeout(400);
 	await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/?$/);
+	await expectNoPageErrors(errors);
+});
+
+test('D-029 削除済みprivate詳細から上下移動で別のマイリスト項目へ進まない', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeDeletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await page.goto('/my-knowhow/001-night-memo/');
+	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
+	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-next');
+	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-prev');
+	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
+	await page.waitForTimeout(400);
+	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/?$/);
 	await expectNoPageErrors(errors);
 });
 
