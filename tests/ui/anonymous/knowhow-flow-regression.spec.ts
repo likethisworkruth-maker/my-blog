@@ -573,6 +573,59 @@ test('M-005 マイリストの表示条件はお気に入りと削除済みをOR
 	await expectNoPageErrors(errors);
 });
 
+test('D-030 マイリストの絞り込み・並び替えと削除済み表示を上下移動へ引き継ぐ', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeDeletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await page.goto('/my-knowhow/?mode=headline_view');
+	await expectListState(page, 1);
+	await page.evaluate(() => {
+		window.dispatchEvent(new CustomEvent('article-like-changed', {
+			detail: { slug: 'knowhow/002-family-log', liked: true, likeCount: 10 },
+		}));
+	});
+
+	await openFilterSheet(page);
+	await page.locator('#sheet-deleted-only').check();
+	await page.locator('#sheet-apply-btn').click();
+	await expectListState(page, 2);
+	await expect(page.locator('#filter-sheet-modal[open]')).toHaveCount(0);
+	await page.locator('#open-sort-sheet-btn').click();
+	await waitForSheetToSettle(page, '#sort-sheet-content');
+	await page.locator('#sort-sheet-modal input[name="sheet-sort"][value="popular"]').check();
+	await page.locator('#sort-sheet-apply-btn').click();
+
+	const listState = await page.evaluate(() => {
+		const cards = Array.from(document.querySelectorAll<HTMLElement>('.knowhow-card'))
+			.filter((card) => card.style.display !== 'none')
+			.sort((left, right) => Number(getComputedStyle(left).order) - Number(getComputedStyle(right).order));
+		return {
+			titles: cards.map((card) => card.querySelector('h2')?.textContent?.trim()),
+			cache: JSON.parse(sessionStorage.getItem('knowhow-list-cache') ?? 'null'),
+		};
+	});
+	expect(listState.titles).toEqual(['夫婦共有ログ', '夜泣き対応メモ']);
+	expect(listState.cache).toMatchObject({
+		view: 'my',
+		deletedDisplay: true,
+		sort: 'popular',
+		orderedIds: ['002-family-log', '001-night-memo'],
+	});
+
+	await openPrivateDetailFromList(page, '002-family-log');
+	const container = page.locator('#knowhow-modal-container');
+	await expect(container).toHaveAttribute('data-private-state-loaded', 'true');
+	await expect(container).not.toHaveAttribute('data-prev');
+	await expect(container).toHaveAttribute('data-next', '/my-knowhow/001-night-memo/');
+	await container.dispatchEvent('wheel', { deltaY: 120 });
+	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/?$/);
+	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
+	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-prev', '/my-knowhow/002-family-log/');
+	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-next');
+	await expectNoPageErrors(errors);
+});
+
 for (const item of ids) {
 	test(`D-001/D-002 ${item.id} 公開詳細のlandmarkとMarkdown表示`, async ({ page }) => {
 		const errors = collectPageErrors(page);

@@ -329,6 +329,11 @@ const initialDisplayMode = getInitialDisplayMode(
 		bindPrivateListSwipeRows,
 	} from '../scripts/private-list-delete';
 	import { createListSheetController } from '../scripts/list-page';
+	import {
+		readKnowhowListCache,
+		saveKnowhowListCache,
+		type KnowhowListSort,
+	} from '../scripts/knowhow-list-cache';
 
 	type DisplayMode = 'headline_view' | 'grid_view';
 	const DISPLAY_MODE_SETTING_KEY = 'knowhow-display-mode';
@@ -362,9 +367,10 @@ const initialDisplayMode = getInitialDisplayMode(
 					// Session storage may be unavailable in strict privacy modes.
 				}
 				const checklistId = cardsById.get(id)?.dataset.checklistId;
-				const isActivePrivateItem = currentListView === 'my'
-					&& Boolean(checklistId && startedChecklistIds.has(checklistId));
-				const destination = isActivePrivateItem
+				persistListState();
+				const isPrivateListItem = currentListView === 'my'
+					&& (Boolean(checklistId && startedChecklistIds.has(checklistId)) || isDeletedOnly);
+				const destination = isPrivateListItem
 					? `/my-knowhow/${id}/`
 					: `/knowhow/${id}/`;
 				await navigate(destination);
@@ -486,6 +492,23 @@ const initialDisplayMode = getInitialDisplayMode(
 		let userLikedSlugs = new Set<string>();
 		const userLikeOverrides = new Map<string, { isLiked: boolean; likeCount: number }>();
 		let isPrivateDbLoaded = false;
+		let visibleListIds: string[] = [];
+
+		function persistListState(orderedIds = visibleListIds) {
+			if (currentListView !== 'my' || !isPrivateDbLoaded) return;
+			saveKnowhowListCache({
+				sourcePath: window.location.pathname + window.location.search,
+				view: currentListView,
+				displayMode: currentDisplayMode,
+				phases: Array.from(currentPhases),
+				scene: currentScene,
+				favoriteOnly: isFavOnly,
+				deletedDisplay: isDeletedOnly,
+				searchKeyword: searchKeyword.trim(),
+				sort: currentSort,
+				orderedIds: orderedIds.filter(Boolean),
+			});
+		}
 
 		function updateUrl(pushHistory = false) {
 			const params = new URLSearchParams(window.location.search);
@@ -512,6 +535,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			const state = { knowhowView: currentListView, phases: Array.from(currentPhases), scene: currentScene, displayMode: currentDisplayMode };
 			if (pushHistory) history.pushState(state, '', newPath);
 			else history.replaceState(state, '', newPath);
+			persistListState();
 		}
 
 		const ACTIVE_MODE_CLASSES = ['text-mint-600'];
@@ -555,6 +579,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			currentPhases = new Set(route.phases);
 			currentScene = route.scene;
 			isDeletedOnly = route.deletedOnly;
+			restoreCachedTransientState();
 			const urlMode = getModeFromUrl();
 			if (urlMode) {
 				currentDisplayMode = urlMode;
@@ -584,11 +609,23 @@ const initialDisplayMode = getInitialDisplayMode(
 			sortSheetModal?.querySelectorAll<HTMLInputElement>('input[name="sheet-sort"]') ?? [],
 		);
 
-		type SortOption = 'recommend' | 'newest' | 'popular';
+		type SortOption = KnowhowListSort;
 		let currentSort: SortOption = 'recommend';
 		let searchKeyword = '';
 		let isFavOnly = false;
 		let isDeletedOnly = hasInitialDeletedOnly;
+
+		const restoreCachedTransientState = () => {
+			if (currentListView !== 'my') return;
+			const cached = readKnowhowListCache();
+			const currentPath = window.location.pathname + window.location.search;
+			if (!cached || cached.view !== 'my' || cached.sourcePath !== currentPath) return;
+			isFavOnly = cached.favoriteOnly;
+			searchKeyword = cached.searchKeyword;
+			currentSort = cached.sort;
+			if (searchInput) searchInput.value = searchKeyword;
+		};
+		restoreCachedTransientState();
 
 		const ACTIVE_THEME_CLASSES = ['text-mint-600'];
 		const INACTIVE_THEME_CLASSES = ['text-gray-700'];
@@ -839,6 +876,10 @@ const initialDisplayMode = getInitialDisplayMode(
 				.forEach((card, index) => {
 					card.style.setProperty('order', String(index));
 				});
+			visibleListIds = visibleCards
+				.map((card) => card.dataset.id ?? '')
+				.filter(Boolean);
+			persistListState(visibleListIds);
 
 			if (emptyState) {
 				if (visibleCards.length === 0) {

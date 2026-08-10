@@ -4,7 +4,9 @@ import KnowhowDetailPage from '../../../components/KnowhowDetailPage.astro';
 
 export async function getStaticPaths() {
 	const knowhow = await getCollection('knowhow');
-	const navigationItems = knowhow.map((entry) => ({ id: entry.id, checklistId: entry.data.checklistId }));
+	const navigationItems = knowhow
+		.map((entry) => ({ id: entry.id, checklistId: entry.data.checklistId, timelineOrder: entry.data.timelineOrder }))
+		.sort((left, right) => left.timelineOrder - right.timelineOrder);
 	return knowhow.map((item, index) => ({
 		params: { id: item.id },
 		props: {

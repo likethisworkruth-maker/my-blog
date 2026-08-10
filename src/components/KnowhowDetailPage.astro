@@ -138,6 +138,7 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		initializePrivateDb,
 		savePrivateChecklistRun,
 	} from '../scripts/private-db';
+	import { readKnowhowListCache } from '../scripts/knowhow-list-cache';
 	import { onPageLoad } from '../scripts/page-lifecycle';
 
 	type PanelTab = 'desc' | 'progress' | 'comments' | 'memo';
@@ -195,22 +196,39 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		const detailBasePath = `/knowhow/${knowhowId}/`;
 		const privateDetailBasePath = `/my-knowhow/${knowhowId}/`;
 		const isPrivateDetailPath = window.location.pathname.startsWith('/my-knowhow/');
-		type DetailNavigationItem = { id: string; checklistId: string };
+		type DetailNavigationItem = { id: string; checklistId: string; timelineOrder?: number };
 		const privateNavigationItems = (() => {
 			try {
 				const parsed = JSON.parse(container.dataset.privateNavigation ?? '[]') as unknown;
-				return Array.isArray(parsed)
+				const items = Array.isArray(parsed)
 					? parsed.filter((item): item is DetailNavigationItem => (
 						Boolean(item)
 						&& typeof item === 'object'
 						&& typeof (item as DetailNavigationItem).id === 'string'
 						&& typeof (item as DetailNavigationItem).checklistId === 'string'
+						&& (typeof (item as DetailNavigationItem).timelineOrder === 'undefined'
+							|| typeof (item as DetailNavigationItem).timelineOrder === 'number')
 					))
 					: [];
+				return items.sort((left, right) => (
+					(left.timelineOrder ?? Number.MAX_SAFE_INTEGER) - (right.timelineOrder ?? Number.MAX_SAFE_INTEGER)
+				));
 			} catch {
 				return [];
 			}
 		})();
+		const getCachedPrivateListState = () => {
+			if (!isPrivateDetailPath) return null;
+			const cached = readKnowhowListCache();
+			if (!cached || cached.view !== 'my') return null;
+			try {
+				const returnPath = sessionStorage.getItem('knowhow:return-url') ?? '';
+				if (!returnPath.startsWith('/my-knowhow/') || cached.sourcePath !== returnPath) return null;
+			} catch {
+				return null;
+			}
+			return cached;
+		};
 		
 		const urlParams = new URLSearchParams(window.location.search);
 		let currentMode: DetailMode = urlParams.get('mode') === 'my' ? 'private' : 'public';
@@ -520,15 +538,30 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		const syncPrivateNavigation = (runs: Array<{ checklistId: string; deletedAt?: string }>) => {
 			if (!isPrivateDetailPath) return;
 			const activeChecklistIds = new Set(runs.filter((run) => !run.deletedAt).map((run) => run.checklistId));
-			const activeNavigationItems = privateNavigationItems.filter((item) => activeChecklistIds.has(item.checklistId));
-			const currentIndex = activeNavigationItems.findIndex((item) => item.id === knowhowId);
+			const deletedChecklistIds = new Set(
+				runs
+					.filter((run) => Boolean(run.deletedAt) && !activeChecklistIds.has(run.checklistId))
+					.map((run) => run.checklistId),
+			);
+			const cachedListState = getCachedPrivateListState();
+			const navigationById = new Map(privateNavigationItems.map((item) => [item.id, item]));
+			const isAvailablePrivateItem = (item: DetailNavigationItem) => (
+				activeChecklistIds.has(item.checklistId)
+				|| Boolean(cachedListState?.deletedDisplay && deletedChecklistIds.has(item.checklistId))
+			);
+			const navigationItemsForView = cachedListState
+				? cachedListState.orderedIds
+					.map((id) => navigationById.get(id))
+					.filter((item): item is DetailNavigationItem => Boolean(item && isAvailablePrivateItem(item)))
+				: privateNavigationItems.filter((item) => activeChecklistIds.has(item.checklistId));
+			const currentIndex = navigationItemsForView.findIndex((item) => item.id === knowhowId);
 			if (currentIndex < 0) {
 				clearPrivateNavigation();
 				return;
 			}
 
-			const previous = activeNavigationItems[currentIndex - 1];
-			const nextItem = activeNavigationItems[currentIndex + 1];
+			const previous = navigationItemsForView[currentIndex - 1];
+			const nextItem = navigationItemsForView[currentIndex + 1];
 			if (previous) container.setAttribute('data-prev', `/my-knowhow/${previous.id}/`);
 			else container.removeAttribute('data-prev');
 			if (nextItem) container.setAttribute('data-next', `/my-knowhow/${nextItem.id}/`);

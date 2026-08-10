@@ -118,7 +118,9 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.match(index, /createListSheetController\(sortSheetModal/);
 	assert.match(listPage, /export const createListSheetController/);
 	assert.ok(index.includes('const readListRoute = () =>'));
-	assert.ok(index.includes('const isActivePrivateItem = currentListView === \'my\''));
+	assert.ok(index.includes('const isPrivateListItem = currentListView === \'my\''));
+	assert.ok(index.includes('saveKnowhowListCache'));
+	assert.ok(index.includes('readKnowhowListCache'));
 	assert.ok(index.includes('data-my-list-swipe-row'));
 	assert.ok(index.includes('my-list-delete-action'));
 	assert.doesNotMatch(index, /data-my-list-grid-delete|my-list-grid-delete-close|gridHoldStates|data-grid-edit-mode|my-list-card-shake/);
