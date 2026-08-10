@@ -1,7 +1,6 @@
 ---
-import { getCollection, render } from "astro:content";
+import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
-import ActionBar from "./ActionBar.astro";
 import LikeButton from "./LikeButton.astro";
 import {
 	SITE_TITLE,
@@ -11,13 +10,6 @@ import { UI } from "../i18n/ja";
 
 const knowhow = await getCollection("knowhow");
 knowhow.sort((a, b) => a.data.timelineOrder - b.data.timelineOrder);
-
-const knowhowWithContent = await Promise.all(
-	knowhow.map(async (post) => ({
-		post,
-		Content: (await render(post)).Content,
-	})),
-);
 
 const phaseIds = Array.from(new Set(knowhow.flatMap((post) => post.data.phases))).sort((a, b) => {
 	const phaseSortKey = (phase: string) => {
@@ -145,10 +137,8 @@ const initialDisplayMode = getInitialDisplayMode(
 			data-display-mode={initialDisplayMode} data-filter-options={JSON.stringify(filterOptions)}
 		>
 			{
-				knowhowWithContent.map(
-					(
-						{ post, Content },
-					) => (
+				knowhow.map(
+					(post) => (
 						<article
 							class="knowhow-card bg-white rounded-xl lg:border border-gray-200 lg:shadow-sm overflow-hidden"
 							data-phases={post.data.phases.join(",")}
@@ -350,8 +340,7 @@ const initialDisplayMode = getInitialDisplayMode(
 
 	declare global {
 		interface Window {
-			openModal: (id: string, options?: { start?: boolean; skipLike?: boolean }) => void;
-			_knowhowIndexStartRequest?: (event: Event) => void;
+			openModal?: (id: string, options?: { start?: boolean; skipLike?: boolean }) => void;
 		}
 	}
 
@@ -359,10 +348,13 @@ const initialDisplayMode = getInitialDisplayMode(
 		const knowhowContainer = document.getElementById('knowhow-container');
 		if (!knowhowContainer || knowhowContainer.dataset.knowhowListInitialized === 'true') return;
 		knowhowContainer.dataset.knowhowListInitialized = 'true';
+		const listeners = new AbortController();
+		const listenerOptions = { signal: listeners.signal };
+		let destroyed = false;
 
 		let isNavigating = false;
-		window.openModal = async (id: string, options) => {
-			if (isNavigating) return;
+		const openChecklist = async (id: string, options?: { start?: boolean; skipLike?: boolean }) => {
+			if (destroyed || isNavigating) return;
 			isNavigating = true;
 			try {
 				try {
@@ -382,24 +374,15 @@ const initialDisplayMode = getInitialDisplayMode(
 				isNavigating = false;
 			}
 		};
+		window.openModal = openChecklist;
 
 		const startRequestHandler = (event: Event) => {
 			const detail = (event as CustomEvent<{ slug?: string; skipLike?: boolean }>).detail;
 			const id = detail?.slug?.startsWith('knowhow/') ? detail.slug.slice('knowhow/'.length) : '';
-			if (id) void window.openModal(id, { start: true, skipLike: detail.skipLike === true });
+			if (id) void openChecklist(id, { start: true, skipLike: detail.skipLike === true });
 		};
-		if (window._knowhowIndexStartRequest) {
-			window.removeEventListener('checklist-start-requested', window._knowhowIndexStartRequest);
-		}
-		window._knowhowIndexStartRequest = startRequestHandler;
-		window.addEventListener('checklist-start-requested', startRequestHandler);
-		document.addEventListener('astro:before-swap', () => {
-			if (window._knowhowIndexStartRequest !== startRequestHandler) return;
-			window.removeEventListener('checklist-start-requested', startRequestHandler);
-			window._knowhowIndexStartRequest = undefined;
-		}, { once: true });
+		window.addEventListener('checklist-start-requested', startRequestHandler, listenerOptions);
 
-		type ListView = 'discover' | 'my';
 		type FilterOption = { id: string; label: string };
 		type SceneOption = { label: string };
 		type PhaseFilter = string;
@@ -441,6 +424,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			sceneLabelBySlug.set(encodeURIComponent(scene.label), scene.label);
 		});
 		const cards = Array.from(document.querySelectorAll<HTMLElement>('.knowhow-card'));
+		const cardsById = new Map(cards.map((card) => [card.dataset.id ?? '', card]));
 		const displayModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-display-mode-option]'));
 		const emptyState = document.getElementById('knowhow-empty');
 		const emptyMessage = emptyState?.querySelector<HTMLElement>('[data-empty-message]');
@@ -577,10 +561,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			}
 			updateView();
 		}
-		window.addEventListener('popstate', syncListViewFromUrl);
-		document.addEventListener('astro:before-swap', () => {
-			window.removeEventListener('popstate', syncListViewFromUrl);
-		}, { once: true });
+		window.addEventListener('popstate', syncListViewFromUrl, listenerOptions);
 
 // Filter Sheet, Sort Sheet, and active state logic
 		const openFilterBtn = document.getElementById('open-filter-sheet-btn');
@@ -636,8 +617,8 @@ const initialDisplayMode = getInitialDisplayMode(
 			controller?.open();
 		};
 
-		openFilterBtn?.addEventListener('click', () => openSheetModal('filter'));
-		openSortBtn?.addEventListener('click', () => openSheetModal('sort'));
+		openFilterBtn?.addEventListener('click', () => openSheetModal('filter'), listenerOptions);
+		openSortBtn?.addEventListener('click', () => openSheetModal('sort'), listenerOptions);
 		function updateSheetUi() {
 			sheetPhaseButtons.forEach((btn) => {
 				const phase = btn.dataset.sheetPhase as PhaseFilter;
@@ -736,7 +717,7 @@ const initialDisplayMode = getInitialDisplayMode(
 					chip.type = 'button';
 					chip.className = 'inline-flex items-center gap-1 bg-mint-50 text-mint-600 border border-mint-200 rounded-full px-3 py-1 text-xs font-bold transition-all hover:bg-mint-100 active:scale-95';
 					chip.innerHTML = `<span>${label}</span><span class="material-symbols-outlined text-sm">close</span>`;
-					chip.addEventListener('click', onRemove);
+					chip.addEventListener('click', onRemove, listenerOptions);
 					activeChipsContainer.appendChild(chip);
 				});
 			}
@@ -747,9 +728,9 @@ const initialDisplayMode = getInitialDisplayMode(
 			if (target.closest('.like-btn')) return;
 			const openButton = target.closest<HTMLElement>('[data-open-checklist]');
 			if (openButton?.dataset.openChecklist) {
-				window.openModal(openButton.dataset.openChecklist);
+				void openChecklist(openButton.dataset.openChecklist);
 			}
-		});
+		}, listenerOptions);
 
 		knowhowContainer?.addEventListener('keydown', (event) => {
 			if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -758,8 +739,8 @@ const initialDisplayMode = getInitialDisplayMode(
 			const openButton = target.closest<HTMLElement>('[data-open-checklist]');
 			if (!openButton?.dataset.openChecklist) return;
 			event.preventDefault();
-			window.openModal(openButton.dataset.openChecklist);
-		});
+			void openChecklist(openButton.dataset.openChecklist);
+		}, listenerOptions);
 
 		const swipeRows = Array.from(document.querySelectorAll<HTMLElement>('[data-my-list-swipe-row]'));
 
@@ -868,7 +849,7 @@ const initialDisplayMode = getInitialDisplayMode(
 				const phase = btn.dataset.sheetPhase as PhaseFilter;
 				setPhase(currentPhase === phase ? 'all' : phase);
 				updateSheetUi();
-			});
+			}, listenerOptions);
 		});
 
 		sheetSceneButtons.forEach((btn) => {
@@ -876,10 +857,10 @@ const initialDisplayMode = getInitialDisplayMode(
 				const scene = btn.dataset.sheetScene as SceneFilter;
 				setScene(currentScene === scene ? 'all' : scene);
 				updateSheetUi();
-			});
+			}, listenerOptions);
 		});
 
-filterSheetResetBtn?.addEventListener('click', () => {
+		filterSheetResetBtn?.addEventListener('click', () => {
 			isFavOnly = false;
 			isDeletedOnly = false;
 			searchKeyword = '';
@@ -887,7 +868,7 @@ filterSheetResetBtn?.addEventListener('click', () => {
 			setPhase('all');
 			setScene('all');
 			closeSheetModal(filterSheetModal);
-		});
+		}, listenerOptions);
 
 		filterSheetApplyBtn?.addEventListener('click', () => {
 			if (sheetFavOnlyCheckbox) isFavOnly = sheetFavOnlyCheckbox.checked;
@@ -895,14 +876,14 @@ filterSheetResetBtn?.addEventListener('click', () => {
 			updateUrl(true);
 			updateView();
 			closeSheetModal(filterSheetModal);
-		});
+		}, listenerOptions);
 
 		sortSheetResetBtn?.addEventListener('click', () => {
 			currentSort = 'recommend';
 			updateUrl(true);
 			updateView();
 			closeSheetModal(sortSheetModal);
-		});
+		}, listenerOptions);
 
 		sortSheetApplyBtn?.addEventListener('click', () => {
 			const selectedRadio = sheetSortRadios.find((radio) => radio.checked);
@@ -910,7 +891,7 @@ filterSheetResetBtn?.addEventListener('click', () => {
 			updateUrl(true);
 			updateView();
 			closeSheetModal(sortSheetModal);
-		});
+		}, listenerOptions);
 		let searchDebounce: number | undefined;
 		searchInput?.addEventListener('input', () => {
 			window.clearTimeout(searchDebounce);
@@ -918,42 +899,49 @@ filterSheetResetBtn?.addEventListener('click', () => {
 				searchKeyword = searchInput.value;
 				updateView();
 			}, 250);
-		});
+		}, listenerOptions);
 
 		displayModeButtons.forEach((button) => {
 			button.addEventListener('click', () => {
 				const mode = button.dataset.displayModeOption as DisplayMode;
 				if (mode === 'grid_view' || mode === 'headline_view') setDisplayMode(mode, true);
-			});
+			}, listenerOptions);
 		});
 		const refreshFromSavedRuns = async () => {
 			const runs = await getPrivateChecklistRuns();
+			if (destroyed) return;
 			startedChecklistIds = new Set(runs.filter((run) => !run.deletedAt).map((run) => run.checklistId));
 			deletedChecklistIds = new Set(runs.filter((run) => Boolean(run.deletedAt)).map((run) => run.checklistId));
 			isPrivateDbLoaded = true;
 			updateView();
 		};
-		window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns());
+		window.addEventListener('checklist-runs-changed', () => void refreshFromSavedRuns(), listenerOptions);
+
+		const applyLikeState = (slug: string, isLiked: boolean, likeCount: number) => {
+			if (isLiked) userLikedSlugs.add(slug);
+			else userLikedSlugs.delete(slug);
+
+			const id = slug.replace('knowhow/', '');
+			const card = cardsById.get(id);
+			if (card) card.dataset.likes = String(likeCount);
+
+			knowhowContainer.querySelectorAll<HTMLElement>(`[data-like-count-for="${id}"]`).forEach((count) => {
+				count.textContent = String(likeCount);
+			});
+			knowhowContainer.querySelectorAll<HTMLElement>(`[data-like-icon-for="${id}"]`).forEach((icon) => {
+				icon.classList.toggle('text-pink-500', isLiked);
+				icon.style.fontVariationSettings = isLiked ? "'FILL' 1" : "'FILL' 0";
+			});
+		};
 
 		const syncLikesCount = async () => {
 			const slugs = cards.map((c) => `knowhow/${c.dataset.id}`);
 			try {
 				const statesMap = await getBatchArticleLikeStates(slugs);
+				if (destroyed) return;
 				userLikedSlugs = new Set();
 				statesMap.forEach((state, slug) => {
-					if (state.liked) userLikedSlugs.add(slug);
-					const id = slug.replace('knowhow/', '');
-					const card = cards.find((c) => c.dataset.id === id);
-					if (card) card.dataset.likes = String(state.likeCount);
-
-					document.querySelectorAll(`[data-like-count-for="${id}"]`).forEach((countEl) => {
-						countEl.textContent = String(state.likeCount);
-					});
-
-					document.querySelectorAll<HTMLElement>(`[data-like-icon-for="${id}"]`).forEach((iconEl) => {
-						iconEl.classList.toggle('text-pink-500', state.liked);
-						iconEl.style.fontVariationSettings = state.liked ? "'FILL' 1" : "'FILL' 0";
-					});
+					applyLikeState(slug, state.liked, state.likeCount);
 				});
 				updateView();
 			} catch {}
@@ -965,38 +953,38 @@ filterSheetResetBtn?.addEventListener('click', () => {
 				const targetSlug = String(customEv.detail.slug || '');
 				const isLiked = Boolean(customEv.detail.liked || customEv.detail.isLiked);
 				const likeCount = Number(customEv.detail.likeCount || 0);
-				const id = targetSlug.replace('knowhow/', '');
-
-				if (isLiked) userLikedSlugs.add(targetSlug);
-				else userLikedSlugs.delete(targetSlug);
-
-				const card = cards.find((c) => c.dataset.id === id);
-				if (card) card.dataset.likes = String(likeCount);
-
-				document.querySelectorAll<HTMLElement>(`[data-like-count-for="${id}"]`).forEach((countEl) => {
-					countEl.textContent = String(likeCount);
-				});
-
-				document.querySelectorAll<HTMLElement>(`[data-like-icon-for="${id}"]`).forEach((iconEl) => {
-					iconEl.classList.toggle('text-pink-500', isLiked);
-					iconEl.style.fontVariationSettings = isLiked ? "'FILL' 1" : "'FILL' 0";
-				});
+				applyLikeState(targetSlug, isLiked, likeCount);
 			}
-		});
+		}, listenerOptions);
+
+		const cleanup = () => {
+			destroyed = true;
+			window.clearTimeout(searchDebounce);
+			swipeController?.destroy();
+			filterSheetController?.destroy();
+			sortSheetController?.destroy();
+			listeners.abort();
+			if (window.openModal === openChecklist) window.openModal = undefined;
+			delete knowhowContainer.dataset.knowhowListInitialized;
+		};
+		document.addEventListener('astro:before-swap', cleanup, { once: true });
 
 		refreshDisplayMode();
 		updateView();
 		updateUrl(false);
 		void syncLikesCount();
 		void initializePrivateDb().then(async () => {
+			if (destroyed) return;
 			if (!initialModeFromUrl) {
 				const savedDisplayMode = await getPrivateSetting<DisplayMode>(DISPLAY_MODE_SETTING_KEY);
+				if (destroyed) return;
 				if (savedDisplayMode === 'grid_view' || savedDisplayMode === 'headline_view') {
 					setDisplayMode(savedDisplayMode, false, false);
 				}
 			}
 			if (!hasInitialPhase) {
 				const savedPhase = await getPrivateSetting<PhaseFilter>(PHASE_SETTING_KEY);
+				if (destroyed) return;
 				if (savedPhase && validPhases.has(savedPhase)) {
 					currentPhase = savedPhase;
 					setPhase(currentPhase, false, false);
@@ -1004,6 +992,7 @@ filterSheetResetBtn?.addEventListener('click', () => {
 			}
 			await refreshFromSavedRuns();
 		}).catch(() => {
+			if (destroyed) return;
 			isPrivateDbLoaded = true;
 			if (emptyMessage && currentListView === 'my') {
 				emptyMessage.textContent = 'このブラウザーではマイリストを読み込めませんでした。';

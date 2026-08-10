@@ -100,6 +100,37 @@ test('R-038 SP表示では共通ヘッダーを完全に非表示にする', asy
 	await expect(page.locator('footer.fixed')).toBeVisible();
 });
 
+test('R-039 コンテンツ一覧の絞り込み・並び替えシートを共通動作にする', async ({ page }) => {
+	for (const url of ['/apps/', '/items/', '/logs/']) {
+		await page.goto(url);
+		await expect(page.locator('[data-content-list]')).toHaveAttribute('data-list-initialized', 'true');
+
+		await page.locator('#open-filter-sheet-btn').click();
+		await expect(page.locator('#filter-sheet-modal')).toBeVisible();
+		await expect(page.locator('#sheet-section-filter')).toBeVisible();
+		await expect.poll(async () => page.locator('#filter-sheet-content').evaluate((content) => {
+			return Math.round(window.innerHeight - content.getBoundingClientRect().bottom);
+		})).toBe(0);
+		await page.locator('#sheet-apply-btn').click();
+		await expect(page.locator('#filter-sheet-modal[open]')).toHaveCount(0);
+		await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
+
+		await page.locator('#open-sort-sheet-btn').click();
+		await expect(page.locator('#sheet-section-sort')).toBeVisible();
+		await page.locator('#sheet-apply-btn').click();
+		await expect(page.locator('#filter-sheet-modal[open]')).toHaveCount(0);
+	}
+});
+
+test('R-040 共有モーダルを通常のイベント処理で開閉する', async ({ page }) => {
+	await page.goto('/apps/002-family-log/');
+	await page.locator('[data-share-trigger]').click();
+	await expect(page.locator('#share-modal')).toBeVisible();
+	await expect(page.locator('[data-share-platform="x"]')).toHaveAttribute('href', /twitter\.com\/intent\/tweet/);
+	await page.locator('#share-cancel').click();
+	await expect(page.locator('#share-modal[open]')).toHaveCount(0);
+});
+
 test('R-037 Markdownのタイトルと説明が画面に存在する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=headline_view');

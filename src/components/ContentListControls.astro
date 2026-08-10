@@ -1,0 +1,39 @@
+---
+interface Props {
+	searchId: string;
+	searchLabel: string;
+	searchPlaceholder: string;
+}
+
+const { searchId, searchLabel, searchPlaceholder } = Astro.props;
+---
+
+<div class="relative mb-6">
+	<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">search</span>
+	<label for={searchId} class="sr-only">{searchLabel}</label>
+	<input
+		type="search"
+		id={searchId}
+		placeholder={searchPlaceholder}
+		class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-[0.95rem] transition-colors focus:border-mint-500 focus:outline-none sm:py-4"
+	/>
+</div>
+
+<div class="mb-8 flex items-center justify-end gap-2">
+	<button
+		type="button"
+		id="open-filter-sheet-btn"
+		class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95"
+	>
+		<span class="material-symbols-outlined text-base" aria-hidden="true">filter_alt</span>
+		<span>絞り込み</span>
+	</button>
+	<button
+		type="button"
+		id="open-sort-sheet-btn"
+		class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 active:scale-95"
+	>
+		<span class="material-symbols-outlined text-base" aria-hidden="true">swap_vert</span>
+		<span>並び替え</span>
+	</button>
+</div>

@@ -1,3 +1,5 @@
+import { onPageLoad } from './page-lifecycle';
+
 type ListSheetMode = 'filter' | 'sort';
 
 interface ListSheetControllerOptions {
@@ -8,7 +10,22 @@ interface ListSheetControllerOptions {
 export interface ListSheetController {
 	open: () => void;
 	close: () => void;
+	destroy: () => void;
 }
+
+let bodyScrollLockCount = 0;
+let bodyOverflowBeforeSheets = '';
+
+const lockBodyScroll = () => {
+	if (bodyScrollLockCount === 0) bodyOverflowBeforeSheets = document.body.style.overflow;
+	bodyScrollLockCount += 1;
+	document.body.style.overflow = 'hidden';
+};
+
+const unlockBodyScroll = () => {
+	bodyScrollLockCount = Math.max(0, bodyScrollLockCount - 1);
+	if (bodyScrollLockCount === 0) document.body.style.overflow = bodyOverflowBeforeSheets;
+};
 
 const toggleClasses = (element: Element | null, active: boolean) => {
 	element?.classList.toggle('border-mint-500', active);
@@ -28,14 +45,12 @@ export const createListSheetController = (
 	if (!content) return null;
 
 	const handle = options.handle ?? content.querySelector<HTMLElement>('[data-list-sheet-handle]');
+	const listeners = new AbortController();
 	let closeTimer: number | undefined;
-	let previousBodyOverflow = '';
 	let dragStartY: number | null = null;
 	let dragCurrentY = 0;
-
-	const restorePageScroll = () => {
-		document.body.style.overflow = previousBodyOverflow;
-	};
+	let scrollLocked = false;
+	let destroyed = false;
 
 	const resetContent = () => {
 		content.classList.remove('is-dragging');
@@ -44,12 +59,15 @@ export const createListSheetController = (
 	};
 
 	const finishClose = () => {
+		if (closeTimer !== undefined) window.clearTimeout(closeTimer);
+		closeTimer = undefined;
+		const shouldUnlock = scrollLocked;
+		scrollLocked = false;
 		if (modal.open) modal.close();
 		modal.classList.remove('is-open', 'opacity-100');
 		modal.classList.add('opacity-0', 'pointer-events-none');
 		resetContent();
-		restorePageScroll();
-		closeTimer = undefined;
+		if (shouldUnlock) unlockBodyScroll();
 	};
 
 	const close = () => {
@@ -66,12 +84,15 @@ export const createListSheetController = (
 	};
 
 	const open = () => {
+		if (destroyed) return;
 		if (closeTimer !== undefined) {
 			window.clearTimeout(closeTimer);
 			closeTimer = undefined;
 		}
-		previousBodyOverflow = document.body.style.overflow;
-		document.body.style.overflow = 'hidden';
+		if (!scrollLocked) {
+			lockBodyScroll();
+			scrollLocked = true;
+		}
 		if (!modal.open) modal.showModal();
 		modal.classList.add('is-open');
 		modal.classList.remove('opacity-0', 'pointer-events-none');
@@ -95,7 +116,7 @@ export const createListSheetController = (
 		dragStartY = touch.clientY;
 		dragCurrentY = touch.clientY;
 		content.classList.add('is-dragging');
-	}, { passive: true });
+	}, { passive: true, signal: listeners.signal });
 
 	content.addEventListener('touchmove', (event) => {
 		if (dragStartY === null || event.touches.length !== 1) return;
@@ -105,23 +126,34 @@ export const createListSheetController = (
 		if (distance <= 0) return;
 		content.style.transform = `translateY(${distance}px)`;
 		event.preventDefault();
-	}, { passive: false });
+	}, { passive: false, signal: listeners.signal });
 
 	content.addEventListener('touchend', () => {
 		if (dragStartY === null) return;
 		const shouldClose = dragCurrentY - dragStartY >= 80;
 		resetDrag();
 		if (shouldClose) close();
-	}, { passive: true });
+	}, { passive: true, signal: listeners.signal });
 
-	content.addEventListener('touchcancel', resetDrag, { passive: true });
-	handle?.addEventListener('click', close);
+	content.addEventListener('touchcancel', resetDrag, { passive: true, signal: listeners.signal });
+	handle?.addEventListener('click', close, { signal: listeners.signal });
 	modal.addEventListener('click', (event) => {
 		if (event.target === modal) close();
-	});
-	modal.addEventListener('close', finishClose);
+	}, { signal: listeners.signal });
+	modal.addEventListener('cancel', (event) => {
+		event.preventDefault();
+		close();
+	}, { signal: listeners.signal });
+	modal.addEventListener('close', finishClose, { signal: listeners.signal });
 
-	return { open, close };
+	const destroy = () => {
+		if (destroyed) return;
+		destroyed = true;
+		finishClose();
+		listeners.abort();
+	};
+
+	return { open, close, destroy };
 };
 
 interface ContentListElements {
@@ -129,7 +161,6 @@ interface ContentListElements {
 	cards: HTMLElement[];
 	emptyState: HTMLElement | null;
 	searchInput: HTMLInputElement | null;
-	filterModal: HTMLDialogElement | null;
 	sheetController: ListSheetController | null;
 	filterTrigger: HTMLButtonElement | null;
 	sortTrigger: HTMLButtonElement | null;
@@ -183,7 +214,6 @@ const getListElements = (container: HTMLElement): ContentListElements => {
 		cards: Array.from(container.querySelectorAll<HTMLElement>('[data-list-card]')),
 		emptyState: getById(container.dataset.listEmpty),
 		searchInput: getById<HTMLInputElement>(container.dataset.listSearch),
-		filterModal,
 		sheetController: createListSheetController(filterModal, { content }),
 		filterTrigger: getById<HTMLButtonElement>('open-filter-sheet-btn'),
 		sortTrigger: getById<HTMLButtonElement>('open-sort-sheet-btn'),
@@ -196,17 +226,18 @@ const getListElements = (container: HTMLElement): ContentListElements => {
 	};
 };
 
-const initContentList = (container: HTMLElement) => {
-	if (container.dataset.listInitialized === 'true') return;
+const initContentList = (container: HTMLElement): (() => void) | null => {
+	if (container.dataset.listInitialized === 'true') return null;
 	const elements = getListElements(container);
-	if (elements.cards.length === 0 || !elements.sheetController) return;
+	if (!elements.sheetController) return null;
 	container.dataset.listInitialized = 'true';
+	const listeners = new AbortController();
+	const listenerOptions = { signal: listeners.signal };
 
 	let category = elements.categoryButtons.find((button) => button.dataset.sheetCategory === 'すべて')?.dataset.sheetCategory ?? 'すべて';
 	let age = 'all';
 	let sort = container.dataset.listDefaultSort ?? elements.sortRadios.find((radio) => radio.checked)?.value ?? 'recommended';
 	let search = '';
-	let sheetMode: ListSheetMode = 'filter';
 
 	const updateSheet = () => {
 		elements.categoryButtons.forEach((button) => toggleClasses(button, button.dataset.sheetCategory === category));
@@ -236,7 +267,6 @@ const initContentList = (container: HTMLElement) => {
 	};
 
 	const openSheet = (mode: ListSheetMode) => {
-		sheetMode = mode;
 		elements.filterSection?.classList.toggle('hidden', mode !== 'filter');
 		elements.sortSection?.classList.toggle('hidden', mode !== 'sort');
 		if (elements.applyButton) elements.applyButton.textContent = mode === 'filter' ? '絞り込む' : '並び替える';
@@ -248,43 +278,59 @@ const initContentList = (container: HTMLElement) => {
 		button.addEventListener('click', () => {
 			category = button.dataset.sheetCategory ?? 'すべて';
 			updateSheet();
-		});
+		}, listenerOptions);
 	});
 	elements.ageButtons.forEach((button) => {
 		button.addEventListener('click', () => {
 			age = button.dataset.sheetAge ?? 'all';
 			updateSheet();
-		});
+		}, listenerOptions);
 	});
 	elements.sortRadios.forEach((radio) => {
 		radio.addEventListener('change', () => {
 			if (radio.checked) sort = radio.value;
-		});
+		}, listenerOptions);
 	});
-	elements.filterTrigger?.addEventListener('click', () => openSheet('filter'));
-	elements.sortTrigger?.addEventListener('click', () => openSheet('sort'));
+	elements.filterTrigger?.addEventListener('click', () => openSheet('filter'), listenerOptions);
+	elements.sortTrigger?.addEventListener('click', () => openSheet('sort'), listenerOptions);
 	elements.applyButton?.addEventListener('click', () => {
 		updateView();
 		elements.sheetController?.close();
-	});
+	}, listenerOptions);
 	elements.searchInput?.addEventListener('input', () => {
 		search = elements.searchInput?.value.toLowerCase() ?? '';
 		updateView();
-	});
+	}, listenerOptions);
 
 	updateSheet();
 	updateView();
+
+	return () => {
+		listeners.abort();
+		elements.sheetController?.destroy();
+		delete container.dataset.listInitialized;
+	};
 };
 
 let didBootContentLists = false;
+const contentListCleanups = new Set<() => void>();
 
 const initContentLists = () => {
-	document.querySelectorAll<HTMLElement>('[data-content-list]').forEach(initContentList);
+	document.querySelectorAll<HTMLElement>('[data-content-list]').forEach((container) => {
+		const cleanup = initContentList(container);
+		if (cleanup) contentListCleanups.add(cleanup);
+	});
+};
+
+const destroyContentLists = () => {
+	contentListCleanups.forEach((cleanup) => cleanup());
+	contentListCleanups.clear();
 };
 
 export const bootContentLists = () => {
 	initContentLists();
 	if (didBootContentLists) return;
 	didBootContentLists = true;
-	document.addEventListener('astro:page-load', initContentLists);
+	onPageLoad(initContentLists);
+	document.addEventListener('astro:before-swap', destroyContentLists);
 };

@@ -1,0 +1,72 @@
+---
+interface Props {
+	categories: string[];
+	ages: number[];
+	defaultSort: 'recommended' | 'newest';
+}
+
+const { categories, ages, defaultSort } = Astro.props;
+const primarySortLabel = defaultSort === 'newest' ? '最新順' : 'おすすめ順';
+---
+
+<dialog
+	data-list-sheet
+	id="filter-sheet-modal"
+	class="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-end overflow-hidden border-none bg-black/50 p-0 opacity-0 outline-none pointer-events-none backdrop-blur-sm transition-opacity duration-200"
+>
+	<div
+		data-list-sheet-content
+		id="filter-sheet-content"
+		class="scrollbar-hide mx-auto flex h-[80vh] max-h-[80vh] w-full max-w-lg translate-y-full transform flex-col gap-5 overflow-y-auto rounded-t-3xl border border-gray-200 bg-white px-6 pb-6 pt-3 transition-transform duration-250 ease-out"
+	>
+		<div
+			class="flex w-full shrink-0 touch-none cursor-grab select-none items-center justify-center pb-3 pt-1 active:cursor-grabbing"
+			data-list-sheet-handle
+			aria-label="閉じる"
+		>
+			<div class="h-1.5 w-12 rounded-full bg-gray-300"></div>
+		</div>
+
+		<div id="sheet-section-filter" class="flex flex-col gap-5">
+			<div>
+				<h3 class="mb-3 text-base font-bold text-gray-900">カテゴリー</h3>
+				<div class="flex flex-wrap gap-2.5">
+					{categories.map((category) => (
+						<button type="button" data-sheet-category={category} class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50">{category}</button>
+					))}
+				</div>
+			</div>
+
+			<div>
+				<h3 class="mb-3 text-base font-bold text-gray-900">対象月齢</h3>
+				<div class="flex flex-wrap gap-2.5">
+					<button type="button" data-sheet-age="all" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50">すべての対象</button>
+					{ages.map((age) => (
+						<button type="button" data-sheet-age={String(age)} class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50">生後{age}ヶ月向け</button>
+					))}
+					<button type="button" data-sheet-age="none" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50">月齢未指定</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="sheet-section-sort" class="hidden flex flex-col gap-0">
+			<h3 class="mb-2 text-base font-bold text-gray-900">並び替え</h3>
+			<label class="group flex cursor-pointer items-center justify-between border-b border-gray-100 py-3.5">
+				<span class="text-sm font-bold text-gray-700 group-hover:text-gray-900">{primarySortLabel}</span>
+				<input type="radio" name="sheet-sort" value={defaultSort} class="h-4 w-4 border-gray-300 text-mint-600 focus:ring-mint-500" checked />
+			</label>
+			<label class="group flex cursor-pointer items-center justify-between border-b border-gray-100 py-3.5">
+				<span class="text-sm font-bold text-gray-700 group-hover:text-gray-900">月齢が低い順</span>
+				<input type="radio" name="sheet-sort" value="age-asc" class="h-4 w-4 border-gray-300 text-mint-600 focus:ring-mint-500" />
+			</label>
+			<label class="group flex cursor-pointer items-center justify-between py-3.5">
+				<span class="text-sm font-bold text-gray-700 group-hover:text-gray-900">月齢が高い順</span>
+				<input type="radio" name="sheet-sort" value="age-desc" class="h-4 w-4 border-gray-300 text-mint-600 focus:ring-mint-500" />
+			</label>
+		</div>
+
+		<div class="mt-auto pb-2 pt-4">
+			<button type="button" id="sheet-apply-btn" class="w-full rounded-xl bg-mint-500 px-4 py-3.5 text-center text-sm font-bold text-white transition-colors hover:bg-mint-600 active:scale-95">絞り込む</button>
+		</div>
+	</div>
+</dialog>

@@ -331,15 +331,35 @@ test('アプリ・アイテム・ログの検索UIをボトムシートに統一
 	const apps = read('src/pages/apps/index.astro');
 	const items = read('src/pages/items/index.astro');
 	const logs = read('src/pages/logs/index.astro');
+	const controls = read('src/components/ContentListControls.astro');
+	const sheet = read('src/components/ContentListSheet.astro');
+	const listPage = read('src/scripts/list-page.ts');
 	const backLink = read('src/components/RecommendBackLink.astro');
 
 	for (const page of [apps, items, logs]) {
 		assert.doesNotMatch(page, /<select id="age-filter"/);
 		assert.doesNotMatch(page, /<select id="sort-order"/);
-		assert.match(page, /id="open-filter-sheet-btn"/);
-		assert.match(page, /id="open-sort-sheet-btn"/);
-		assert.match(page, /<dialog data-list-sheet id="filter-sheet-modal"/);
-		assert.match(page, /data-list-sheet-content/);
+		assert.match(page, /<ContentListControls/);
+		assert.match(page, /<ContentListSheet/);
+		assert.doesNotMatch(page, /<dialog|id="open-filter-sheet-btn"|id="open-sort-sheet-btn"/);
 	}
+	assert.match(controls, /id="open-filter-sheet-btn"/);
+	assert.match(controls, /id="open-sort-sheet-btn"/);
+	assert.match(sheet, /<dialog[\s\S]*data-list-sheet[\s\S]*id="filter-sheet-modal"/);
+	assert.match(sheet, /data-list-sheet-content/);
+	assert.match(listPage, /destroy: \(\) => void/);
+	assert.match(listPage, /new AbortController\(\)/);
+	assert.match(listPage, /astro:before-swap/);
 	assert.match(backLink, /class="[^"]*hidden sm:flex[^"]*"/);
+});
+
+test('共有UIからインラインJavaScriptを除去し、画面遷移時に解除する', () => {
+	const actionBar = read('src/components/ActionBar.astro');
+	const shareModal = read('src/components/ShareModal.astro');
+	assert.doesNotMatch(actionBar, /onclick=/);
+	assert.doesNotMatch(shareModal, /onclick=/);
+	assert.match(shareModal, /data-copy-share-link/);
+	assert.match(shareModal, /data-share-platform="x"/);
+	assert.match(shareModal, /new AbortController\(\)/);
+	assert.match(shareModal, /astro:before-swap/);
 });

@@ -224,7 +224,6 @@ export async function setArticleLikeState(slug: string, liked: boolean): Promise
 export async function getLikedArticleSlugs(slugs: string[]) {
 	const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean))).slice(0, 200);
 	const localLikes = await getAnonymousArticleLikes();
-	const localLikedSet = new Set(localLikes.map((l) => l.slug));
 
 	const isHealthy = await checkSupabaseHealth();
 	if (!isHealthy) {
