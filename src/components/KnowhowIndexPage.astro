@@ -34,7 +34,6 @@ const getPhaseLabel = (phase: string) => {
 };
 
 const phases = [
-	{ id: "all", label: "すべて" },
 	...phaseIds.map((id) => ({ id, label: getPhaseLabel(id) })),
 ];
 
@@ -272,7 +271,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			<div id="sheet-deleted-only-row" class="hidden">
 				<label class="flex items-center gap-2 text-sm cursor-pointer font-medium text-gray-700">
 					<input type="checkbox" id="sheet-deleted-only" class="w-4 h-4 rounded text-red-600 border-gray-300 focus:ring-red-500" />
-					<span>削除済みのみ表示</span>
+					<span>削除済み表示</span>
 				</label>
 			</div>
 
@@ -362,7 +361,10 @@ const initialDisplayMode = getInitialDisplayMode(
 				} catch {
 					// Session storage may be unavailable in strict privacy modes.
 				}
-				const destination = currentListView === 'my' && !isDeletedOnly
+				const checklistId = cardsById.get(id)?.dataset.checklistId;
+				const isActivePrivateItem = currentListView === 'my'
+					&& Boolean(checklistId && startedChecklistIds.has(checklistId));
+				const destination = isActivePrivateItem
 					? `/my-knowhow/${id}/`
 					: `/knowhow/${id}/`;
 				await navigate(destination);
@@ -386,7 +388,7 @@ const initialDisplayMode = getInitialDisplayMode(
 
 		const PHASE_SETTING_KEY = 'knowhow-selected-phase';
 		const filterOptionsFallback = {
-			phases: [{ id: 'all', label: 'すべて' }],
+			phases: [],
 			scenes: [],
 		};
 		const filterOptions = (() => {
@@ -399,7 +401,7 @@ const initialDisplayMode = getInitialDisplayMode(
 				return filterOptionsFallback;
 			}
 		})();
-		const filterPhaseOptions = filterOptions.phases?.length ? filterOptions.phases : filterOptionsFallback.phases;
+		const filterPhaseOptions = filterOptions.phases ?? filterOptionsFallback.phases;
 		const filterSceneOptions = filterOptions.scenes ?? [];
 		const validPhases = new Set<PhaseFilter>(filterPhaseOptions.map((phase) => phase.id));
 		const validScenes = new Set<SceneFilter>(filterSceneOptions.map((scene) => scene.label));
@@ -442,10 +444,10 @@ const initialDisplayMode = getInitialDisplayMode(
 			const baseIndex = view === 'my' ? privateIndex : publicIndex;
 			const routeSegments = baseIndex >= 0 ? segments.slice(baseIndex + 1) : [];
 
-			let pathPhase: PhaseFilter = 'all';
+			let pathPhases: PhaseFilter[] = [];
 			let pathScene: SceneFilter = 'all';
 			if (routeSegments[0] === 'phase' && validPhases.has(routeSegments[1] as PhaseFilter)) {
-				pathPhase = routeSegments[1] as PhaseFilter;
+				pathPhases = [routeSegments[1] as PhaseFilter];
 				if (routeSegments[2] === 'scene') {
 					pathScene = sceneLabelBySlug.get(routeSegments[3] ?? '') ?? 'all';
 				}
@@ -453,19 +455,21 @@ const initialDisplayMode = getInitialDisplayMode(
 				pathScene = sceneLabelBySlug.get(routeSegments[1] ?? '') ?? 'all';
 			}
 
-			const queryPhase = params.get('phase') as PhaseFilter | null;
+			const queryPhases = params.getAll('phase')
+				.flatMap((value) => value.split(','))
+				.filter((phase): phase is PhaseFilter => validPhases.has(phase));
 			const queryScene = params.get('scene');
 			const parsedQueryScene = queryScene
 				? sceneLabelBySlug.get(queryScene) ?? (validScenes.has(queryScene as SceneFilter) ? queryScene as SceneFilter : 'all')
 				: 'all';
-			const phase = queryPhase && validPhases.has(queryPhase) ? queryPhase : pathPhase;
+			const phasesFromRoute = Array.from(new Set(queryPhases.length > 0 ? queryPhases : pathPhases));
 			const scene = parsedQueryScene !== 'all' ? parsedQueryScene : pathScene;
 			return {
 				view,
-				phase,
+				phases: phasesFromRoute,
 				scene,
-				hasPhase: phase !== 'all',
-			deletedOnly: view === 'my' && ['1', 'true'].includes(params.get('deleted') ?? ''),
+				hasPhase: phasesFromRoute.length > 0,
+				deletedOnly: view === 'my' && ['1', 'true'].includes(params.get('deleted') ?? ''),
 			};
 		};
 
@@ -473,7 +477,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		const initialModeFromUrl = getModeFromUrl();
 		let currentListView: 'discover' | 'my' = initialRoute.view;
 		const hasInitialDeletedOnly = initialRoute.deletedOnly;
-		let currentPhase: PhaseFilter = initialRoute.phase;
+		let currentPhases = new Set<PhaseFilter>(initialRoute.phases);
 		const hasInitialPhase = initialRoute.hasPhase;
 		let currentScene: SceneFilter = initialRoute.scene;
 		let currentDisplayMode: DisplayMode = initialModeFromUrl || 'headline_view';
@@ -485,8 +489,8 @@ const initialDisplayMode = getInitialDisplayMode(
 
 		function updateUrl(pushHistory = false) {
 			const params = new URLSearchParams(window.location.search);
-			if (currentPhase !== 'all') params.set('phase', currentPhase);
-			else params.delete('phase');
+			params.delete('phase');
+			currentPhases.forEach((phase) => params.append('phase', phase));
 
 			if (currentScene !== 'all') params.set('scene', currentScene);
 			else params.delete('scene');
@@ -505,7 +509,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			const queryString = params.toString();
 			const newPath = window.location.pathname + (queryString ? `?${queryString}` : '');
 			
-			const state = { knowhowView: currentListView, phase: currentPhase, scene: currentScene, displayMode: currentDisplayMode };
+			const state = { knowhowView: currentListView, phases: Array.from(currentPhases), scene: currentScene, displayMode: currentDisplayMode };
 			if (pushHistory) history.pushState(state, '', newPath);
 			else history.replaceState(state, '', newPath);
 		}
@@ -532,11 +536,11 @@ const initialDisplayMode = getInitialDisplayMode(
 			if (persist) void setPrivateSetting(DISPLAY_MODE_SETTING_KEY, mode).catch(() => undefined);
 		}
 
-		function setPhase(phase: PhaseFilter, pushHistory = true, persist = true) {
-			currentPhase = phase;
+		function setPhases(phases: Iterable<PhaseFilter>, pushHistory = true, persist = true) {
+			currentPhases = new Set(phases);
 			updateView();
 			updateUrl(pushHistory);
-			if (persist) void setPrivateSetting(PHASE_SETTING_KEY, phase).catch(() => undefined);
+			if (persist) void setPrivateSetting(PHASE_SETTING_KEY, Array.from(currentPhases)).catch(() => undefined);
 		}
 
 		function setScene(scene: string, pushHistory = true) {
@@ -548,7 +552,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		function syncListViewFromUrl() {
 			const route = readListRoute();
 			currentListView = route.view;
-			currentPhase = route.phase;
+			currentPhases = new Set(route.phases);
 			currentScene = route.scene;
 			isDeletedOnly = route.deletedOnly;
 			const urlMode = getModeFromUrl();
@@ -590,7 +594,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		const INACTIVE_THEME_CLASSES = ['text-gray-700'];
 
 		const updateButtonActiveStates = () => {
-			const isFilterActive = currentPhase !== 'all' || currentScene !== 'all' || isFavOnly || isDeletedOnly || searchKeyword.trim() !== '';
+			const isFilterActive = currentPhases.size > 0 || currentScene !== 'all' || isFavOnly || isDeletedOnly || searchKeyword.trim() !== '';
 			ACTIVE_THEME_CLASSES.forEach((cls) => openFilterBtn?.classList.toggle(cls, isFilterActive));
 			INACTIVE_THEME_CLASSES.forEach((cls) => openFilterBtn?.classList.toggle(cls, !isFilterActive));
 
@@ -619,7 +623,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		function updateSheetUi() {
 			sheetPhaseButtons.forEach((btn) => {
 				const phase = btn.dataset.sheetPhase as PhaseFilter;
-				const active = phase === currentPhase;
+				const active = currentPhases.has(phase);
 				btn.classList.toggle('bg-mint-600', active);
 				btn.classList.toggle('text-white', active);
 				btn.classList.toggle('font-bold', active);
@@ -654,14 +658,17 @@ const initialDisplayMode = getInitialDisplayMode(
 			if (!activeChipsContainer) return;
 			activeChipsContainer.replaceChildren();
 
-			const phaseLabel = filterPhaseOptions.find((phase) => phase.id === currentPhase)?.label ?? currentPhase;
-
 			const chips: { label: string; onRemove: () => void }[] = [];
 
-			if (currentPhase !== 'all') {
+			for (const phase of currentPhases) {
+				const phaseLabel = filterPhaseOptions.find((option) => option.id === phase)?.label ?? phase;
 				chips.push({
 					label: phaseLabel,
-					onRemove: () => { setPhase('all'); },
+					onRemove: () => {
+						const nextPhases = new Set(currentPhases);
+						nextPhases.delete(phase);
+						setPhases(nextPhases);
+					},
 				});
 			}
 
@@ -692,7 +699,7 @@ const initialDisplayMode = getInitialDisplayMode(
 
 			if (isDeletedOnly && currentListView === 'my') {
 				chips.push({
-					label: '削除済みのみ',
+					label: '削除済み表示',
 					onRemove: () => { isDeletedOnly = false; updateUrl(true); updateView(); },
 				});
 			}
@@ -742,7 +749,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		const swipeRows = Array.from(document.querySelectorAll<HTMLElement>('[data-my-list-swipe-row]'));
 
 		const canDeleteRow = (row: HTMLElement) => {
-			if (!isPrivateDbLoaded || currentDisplayMode !== 'headline_view' || isDeletedOnly) return false;
+			if (!isPrivateDbLoaded || currentDisplayMode !== 'headline_view') return false;
 			const checklistId = row.closest<HTMLElement>('.knowhow-card')?.dataset.checklistId;
 			return Boolean(checklistId && startedChecklistIds.has(checklistId));
 		};
@@ -782,7 +789,7 @@ const initialDisplayMode = getInitialDisplayMode(
 				const cardPhases = (card.dataset.phases || '').split(',');
 				const cardScenes = (card.dataset.scenes || '').split(',');
 				
-				const phaseMatch = currentPhase === 'all' || cardPhases.includes(currentPhase);
+				const phaseMatch = currentPhases.size === 0 || cardPhases.some((phase) => currentPhases.has(phase));
 				const sceneMatch = currentScene === 'all' || cardScenes.includes(currentScene);
 				const checklistId = card.dataset.checklistId;
 				const cardId = card.dataset.id;
@@ -800,7 +807,7 @@ const initialDisplayMode = getInitialDisplayMode(
 				} else {
 					// マイリストの表示条件はANDではなく、選択された条件のORで評価する。
 					const favoriteSelection = isFavOnly && activeMatch && favoriteMatch;
-					const deletedSelection = isDeletedOnly && deletedMatch;
+					const deletedSelection = isDeletedOnly && (activeMatch || deletedMatch);
 					viewMatch = favoriteSelection || deletedSelection;
 				}
 
@@ -837,7 +844,7 @@ const initialDisplayMode = getInitialDisplayMode(
 				if (visibleCards.length === 0) {
 					emptyState.classList.remove('hidden');
 					if (emptyMessage) {
-						if (currentListView === 'my') emptyMessage.textContent = isDeletedOnly ? '削除済みのチェックリストはありません。' : 'まだ始めたチェックリストはありません。';
+						if (currentListView === 'my') emptyMessage.textContent = isDeletedOnly ? '表示できるチェックリストはありません。' : 'まだ始めたチェックリストはありません。';
 						else emptyMessage.textContent = '条件に一致するチェックリストが見つかりませんでした。';
 					}
 				} else {
@@ -850,7 +857,10 @@ const initialDisplayMode = getInitialDisplayMode(
 		sheetPhaseButtons.forEach((btn) => {
 			btn.addEventListener('click', () => {
 				const phase = btn.dataset.sheetPhase as PhaseFilter;
-				setPhase(currentPhase === phase ? 'all' : phase);
+				const nextPhases = new Set(currentPhases);
+				if (nextPhases.has(phase)) nextPhases.delete(phase);
+				else nextPhases.add(phase);
+				setPhases(nextPhases);
 				updateSheetUi();
 			}, listenerOptions);
 		});
@@ -868,7 +878,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			isDeletedOnly = false;
 			searchKeyword = '';
 			if (searchInput) searchInput.value = '';
-			setPhase('all');
+			setPhases([]);
 			setScene('all');
 			closeSheetModal(filterSheetModal);
 		}, listenerOptions);
@@ -992,11 +1002,12 @@ const initialDisplayMode = getInitialDisplayMode(
 				}
 			}
 			if (!hasInitialPhase) {
-				const savedPhase = await getPrivateSetting<PhaseFilter>(PHASE_SETTING_KEY);
+				const savedPhases = await getPrivateSetting<PhaseFilter | PhaseFilter[]>(PHASE_SETTING_KEY);
 				if (destroyed) return;
-				if (savedPhase && validPhases.has(savedPhase)) {
-					currentPhase = savedPhase;
-					setPhase(currentPhase, false, false);
+				const savedPhaseList = Array.isArray(savedPhases) ? savedPhases : savedPhases ? [savedPhases] : [];
+				const validSavedPhases = savedPhaseList.filter((phase) => validPhases.has(phase));
+				if (validSavedPhases.length > 0) {
+					setPhases(validSavedPhases, false, false);
 				}
 			}
 			await refreshFromSavedRuns();

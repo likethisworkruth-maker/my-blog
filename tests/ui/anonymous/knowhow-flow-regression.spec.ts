@@ -29,8 +29,12 @@ async function expectTab(page: import('@playwright/test').Page, tab: 'desc' | 'p
 
 async function waitForSheetToSettle(page: import('@playwright/test').Page, contentSelector: string) {
 	await expect.poll(() => page.locator(contentSelector).evaluate((element) => {
-		const translate = getComputedStyle(element).translate;
-		return translate === 'none' || translate === '0px' || translate === '0px 0px';
+		const dialog = element.closest('dialog');
+		const transform = getComputedStyle(element).transform;
+		if (!dialog?.open) return false;
+		if (transform === 'none') return true;
+		const matrix = new DOMMatrixReadOnly(transform);
+		return Math.abs(matrix.m41) < 0.5 && Math.abs(matrix.m42) < 0.5;
 	}), { timeout: 3000 }).toBe(true);
 }
 
@@ -186,6 +190,22 @@ test('H-014 phaseフィルター選択が表示・URL・chipに同期する', as
 	await expect(page).toHaveURL(/phase=pregnancy/);
 	await expectListState(page, 1);
 	await expect(page.locator('#active-chips-container button')).toContainText('妊娠中');
+	await expectNoPageErrors(errors);
+});
+
+test('H-014b 月齢は複数選択をORで表示し、すべてボタンを持たない', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/?mode=headline_view');
+	await openFilterSheet(page);
+	await expect(page.locator('[data-sheet-phase="all"]')).toHaveCount(0);
+	await page.locator('[data-sheet-phase="pregnancy"]').click();
+	await page.locator('[data-sheet-phase="0-3m"]').click();
+	await page.locator('#sheet-apply-btn').click();
+	await expect(page).toHaveURL(/phase=pregnancy&phase=0-3m/);
+	await expectListState(page, 2);
+	await expect(page.locator('#active-chips-container button')).toHaveCount(2);
+	await expect(page.locator('#active-chips-container')).toContainText('妊娠中');
+	await expect(page.locator('#active-chips-container')).toContainText('0〜3か月');
 	await expectNoPageErrors(errors);
 });
 
@@ -512,7 +532,7 @@ test('M-003 grid_viewでは削除UIと揺れを表示しない', async ({ page }
 	expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(swipeTransform);
 	await expectNoPageErrors(errors);
 });
-test('M-002 既存の削除済み履歴は通常マイリストから除外し、削除済みのみで復元表示する', async ({ page }) => {
+test('M-002 削除済み表示は削除済みと未削除を同時に表示する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
@@ -525,8 +545,10 @@ test('M-002 既存の削除済み履歴は通常マイリストから除外し�
 	await page.locator('#sheet-deleted-only').check();
 	await page.locator('#sheet-apply-btn').click();
 	await expect(page).toHaveURL(/deleted=1/);
-	await expectListState(page, 1);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夜泣き対応メモ');
+	await expectListState(page, 2);
+	await expect(page.locator('.knowhow-card:visible h2')).toHaveText(['夜泣き対応メモ', '夫婦共有ログ']);
+	await expect(page.locator('.knowhow-card[data-checklist-id="night-memo"] [data-my-list-delete]')).toBeHidden();
+	await expect(page.locator('.knowhow-card[data-checklist-id="family-log"] [data-my-list-delete]')).toBeVisible();
 	await expectNoPageErrors(errors);
 });
 
