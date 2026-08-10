@@ -7,18 +7,29 @@ interface Props {
 	checklistId?: string;
 	startOnLike?: boolean;
 	privateDetail?: boolean;
+	activeTab?: 'base' | 'desc' | 'progress' | 'memo';
 }
 
-const { slug, variant = 'default', checklistId, startOnLike = false, privateDetail = false } = Astro.props;
+const {
+	slug,
+	variant = 'default',
+	checklistId,
+	startOnLike = false,
+	privateDetail = false,
+	activeTab = 'desc',
+} = Astro.props;
 const id = slug.split('/')[1];
-const privateMemoUrl = privateDetail ? '/my-knowhow/' + id + '/memo/' : null;
+const privateDetailUrl = '/my-knowhow/' + id + '/';
+const privateDescriptionUrl = privateDetailUrl + 'description/';
+const privateProgressUrl = privateDetailUrl + 'progress/';
+const privateMemoUrl = privateDetailUrl + 'memo/';
 const showShare = !slug.startsWith('knowhow/');
 ---
 
 {variant === 'reels' ? (
 	<div class="flex flex-col items-center gap-6">
 		<LikeButton slug={slug} variant="reels" startOnLike={startOnLike} />
-		<div data-public-actions class="contents">
+		<div data-public-actions class={privateDetail ? 'hidden' : 'contents'}>
 			<button
 				class="hidden flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95"
 				data-panel-tab="comments"
@@ -33,30 +44,23 @@ const showShare = !slug.startsWith('knowhow/');
 				</button>
 			)}
 		</div>
-		<div data-private-actions class="hidden">
+		<div data-private-actions class={privateDetail ? 'contents' : 'hidden'}>
 			<button data-private-action-trigger data-private-list-delete data-remove-checklist class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="このチェックリストをマイリストから削除">
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">delete</span>
 				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">削除</span>
 			</button>
-			<button data-panel-trigger data-panel-tab="desc" class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="チェックリストの説明を開く">
+			<a href={privateDescriptionUrl} data-panel-trigger data-panel-tab="desc" data-detail-nav class:list-active={activeTab === 'desc'} class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="チェックリストの説明を開く" aria-current={activeTab === 'desc' ? 'page' : undefined}>
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">info</span>
 				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">説明</span>
-			</button>
-			<button data-panel-trigger data-panel-tab="progress" class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="チェックリストの進捗を開く">
+			</a>
+			<a href={privateProgressUrl} data-panel-trigger data-panel-tab="progress" data-detail-nav class:list-active={activeTab === 'progress'} class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="チェックリストの進捗を開く" aria-current={activeTab === 'progress' ? 'page' : undefined}>
 				<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">checklist</span>
 				<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">進捗</span>
-			</button>
-			{privateMemoUrl ? (
-				<button data-panel-trigger data-private-memo-route={privateMemoUrl} class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="このチェックリストのメモを開く">
+			</a>
+			<a href={privateMemoUrl} data-panel-trigger data-panel-tab="memo" data-private-memo-route={privateMemoUrl} data-detail-nav class:list-active={activeTab === 'memo'} class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="このチェックリストのメモを開く" aria-current={activeTab === 'memo' ? 'page' : undefined}>
 					<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">edit_note</span>
 					<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">メモ</span>
-				</button>
-			) : (
-				<button data-panel-trigger data-panel-tab="memo" class="relative flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" aria-label="このチェックリストのメモを開く">
-					<span class="material-symbols-outlined icon-text-shadow text-[2rem] font-light">edit_note</span>
-					<span class="icon-text-shadow mt-1 text-[0.75rem] font-medium">メモ</span>
-				</button>
-			)}
+			</a>
 		</div>
 		{showShare && (
 			<button class="flex flex-col items-center text-white hover:text-gray-200 transition-colors active:scale-95" data-share-trigger aria-label="このページを共有">

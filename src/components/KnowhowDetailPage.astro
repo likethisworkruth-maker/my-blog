@@ -1,130 +1,131 @@
 ---
-import { getEntry, render } from "astro:content";
-import Layout from "../layouts/Layout.astro";
-import ActionBar from "./ActionBar.astro";
-import ChecklistRunner from "./ChecklistRunner.astro";
-import ChecklistPrivateNote from "./ChecklistPrivateNote.astro";
-import Comments from "./Comments.astro";
-import { SITE_TITLE } from "../consts";
+import { getEntry, render } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import KnowhowBaseMedia from './KnowhowBaseMedia.astro';
+import ChecklistRunner from './ChecklistRunner.astro';
+import ChecklistPrivateNote from './ChecklistPrivateNote.astro';
+import { SITE_TITLE } from '../consts';
+import type { ChecklistTemplate } from '../scripts/checklist-state';
 
-const { knowhow, prev, next, navigationItems = [] } = Astro.props;
-const { Content } = await render(knowhow);
-const checklistEntry = await getEntry("checklists", knowhow.data.checklistId);
-if (!checklistEntry || checklistEntry.data.status !== "published") {
-	throw new Error("公開中のチェックリスト原本がありません: " + knowhow.data.checklistId);
+type DetailTab = 'base' | 'desc' | 'progress' | 'memo';
+
+interface Props {
+	knowhow: any;
+	prev?: any;
+	next?: any;
+	navigationItems?: Array<{ id: string; checklistId: string; timelineOrder?: number }>;
+	detailTab?: DetailTab;
 }
-const checklist = checklistEntry.data;
+
+const {
+	knowhow,
+	prev,
+	next,
+	navigationItems = [],
+	detailTab = 'desc',
+} = Astro.props as Props;
+const { Content } = await render(knowhow);
+const checklistEntry = await getEntry('checklists', knowhow.data.checklistId);
+if (!checklistEntry || checklistEntry.data.status !== 'published') {
+	throw new Error('公開中のチェックリスト原本がありません: ' + knowhow.data.checklistId);
+}
+const checklist = checklistEntry.data as ChecklistTemplate;
 const isPrivateDetail = Astro.url.pathname.startsWith('/my-knowhow/');
+const activeTab: DetailTab = detailTab;
 const detailRoutePrefix = isPrivateDetail ? '/my-knowhow/' : '/knowhow/';
-const prevUrl = prev ? `${detailRoutePrefix}${prev.id}/` : '';
-const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
+const privateBasePath = `/my-knowhow/${knowhow.id}/`;
+const publicBasePath = `/knowhow/${knowhow.id}/`;
+const tabUrls = {
+	desc: `${isPrivateDetail ? privateBasePath : publicBasePath}description/`,
+	progress: `${privateBasePath}progress/`,
+	memo: `${privateBasePath}memo/`,
+};
+const navigationSuffix = activeTab === 'desc' ? 'description/' : activeTab === 'progress' ? 'progress/' : activeTab === 'memo' ? 'memo/' : '';
+const navigationUrl = (id: string) => `${detailRoutePrefix}${id}/${navigationSuffix}`;
+const prevUrl = prev ? navigationUrl(prev.id) : '';
+const nextUrl = next ? navigationUrl(next.id) : '';
+const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
+
+const panelOpenClass = 'translate-y-0 lg:w-[400px] lg:opacity-100 lg:ml-0';
 ---
 
 <Layout
 	title={`${knowhow.data.title} | ${SITE_TITLE}`}
 	description={knowhow.data.description}
-	image={knowhow.data.coverImage}
-    fullScreen={true}
+	image={activeTab === 'base' ? knowhow.data.coverImage : undefined}
+	fullScreen={true}
+	showShareModal={activeTab === 'base'}
 >
-	<div class="relative w-full h-[100dvh] bg-[#111315] flex items-center justify-center overflow-hidden"
-         id="knowhow-modal-container"
-		 data-knowhow-id={knowhow.id}
-		 data-checklist-id={checklist.checklistId}
-         data-prev={prevUrl}
-         data-next={nextUrl}
-		 data-private-navigation={isPrivateDetail ? JSON.stringify(navigationItems) : undefined}
-		 data-private-state-loaded={isPrivateDetail ? 'false' : 'true'}>
+	<div
+		class="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#111315]"
+		id="knowhow-modal-container"
+		data-knowhow-id={knowhow.id}
+		data-checklist-id={checklist.checklistId}
+		data-detail-tab={activeTab}
+		data-prev={prevUrl}
+		data-next={nextUrl}
+		data-private-navigation={isPrivateDetail ? JSON.stringify(navigationItems) : undefined}
+		data-private-state-loaded={isPrivateDetail ? 'false' : 'true'}
+	>
+		<button data-media-ui data-go-back class="fixed left-4 top-4 z-[80] flex h-10 w-10 items-center justify-center text-white outline-none transition-colors hover:text-gray-200 active:scale-95 lg:hidden" aria-label="チェックリスト一覧へ戻る">
+			<span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">arrow_back_ios_new</span>
+		</button>
 
-		<!-- PC Back Button -->
-		<button data-media-ui data-go-back class="hidden lg:flex absolute top-6 left-6 z-50 text-white hover:text-gray-300 transition-colors w-12 h-12 items-center justify-center cursor-pointer outline-none">
+		<button data-media-ui data-go-back class="absolute left-6 top-6 z-50 hidden h-12 w-12 items-center justify-center text-white outline-none transition-colors hover:text-gray-300 lg:flex" aria-label="チェックリスト一覧へ戻る">
 			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
 		</button>
 
-		<div class="flex flex-row items-stretch justify-center h-[100dvh] lg:h-[85dvh] lg:max-h-[900px] w-full max-w-[1200px] mx-auto lg:py-6 relative transition-all duration-300" id="main-content-wrapper">
+		<div id="main-content-wrapper" class="relative flex h-[100dvh] w-full max-w-[1200px] flex-row items-stretch justify-center transition-all duration-300 lg:h-[85dvh] lg:max-h-[900px] lg:py-6">
+			{activeTab === 'base' && <KnowhowBaseMedia knowhow={knowhow} checklist={checklist} isPrivateDetail={isPrivateDetail} />}
 
-            <!-- Media + ActionBar Container -->
-            <div class="flex flex-row items-end h-full shrink-0 relative transition-all duration-300 w-full lg:w-auto justify-center">
-                <!-- Main Media Area -->
-                <div id="knowhow-media-area" class="relative w-full lg:w-[450px] h-full bg-[#1a1a1a] shadow-xl shrink-0 overflow-hidden lg:rounded-xl" transition:name="knowhow-media">
-                    <!-- Mobile Back Button -->
-                    <button data-media-ui data-go-back class="lg:hidden absolute top-4 left-4 z-50 flex h-10 w-10 cursor-pointer items-center justify-center text-white outline-none transition-colors hover:text-gray-200 active:scale-95" aria-label="チェックリスト一覧へ戻る">
-                        <span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">arrow_back_ios_new</span>
-                    </button>
-
-                    {knowhow.data.coverImage ? (
-                        <img
-                            src={knowhow.data.coverImage}
-                            alt={knowhow.data.title}
-                            class="w-full h-full object-contain pointer-events-none"
-                        />
-                    ) : (
-                        <div class="w-full h-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-gray-700 text-5xl">image</span>
-                        </div>
-                    )}
-
-                    <!-- Floating Caption (Bottom Left) -->
-                    <div data-media-ui class="absolute bottom-0 left-0 w-full p-4 lg:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none pb-8 lg:pb-6 z-10">
-                        <div class="pointer-events-auto cursor-pointer" data-panel-tab="desc">
-                            <h1 class="text-white font-bold text-lg mb-2 drop-shadow-md leading-snug pr-16">{knowhow.data.title}</h1>
-                            <div class="text-white/90 text-sm drop-shadow-md prose prose-invert prose-sm max-w-none pr-16 line-clamp-2" id="caption-content">
-                                <Content />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Floating Action Bar (Mobile only) -->
-                    <div data-media-ui class="lg:hidden absolute bottom-6 right-2 flex flex-col items-center gap-6 z-20 pb-4 pointer-events-auto">
-                        <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} privateDetail={isPrivateDetail} />
-                    </div>
-                </div>
-
-                <!-- Floating Action Bar (PC only) -->
-                <div data-media-ui class="hidden lg:flex flex-col items-center justify-end pb-8 shrink-0 ml-4 relative z-20">
-                    <ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} privateDetail={isPrivateDetail} />
-                </div>
-            </div>
-
-            <!-- Unified Info Panel -->
-            <div
-                id="info-panel"
-                class="fixed inset-0 h-[100dvh] w-full bg-[#262626] z-[60] transform translate-y-full transition-all duration-300 ease-out flex flex-col overflow-hidden opacity-100 shadow-2xl pb-[env(safe-area-inset-bottom)] lg:relative lg:inset-auto lg:h-full lg:w-0 lg:z-10 lg:translate-y-0 lg:rounded-xl lg:pb-0 lg:opacity-0 lg:ml-0 lg:shadow-xl"
-            >
-                <div class="relative flex items-center justify-between border-b border-gray-600 bg-[#343434] pl-4 pr-14 pt-[env(safe-area-inset-top)] shrink-0 min-w-[320px] lg:pt-0">
-					<div class="flex-grow flex items-stretch justify-center w-full" role="tablist" aria-label="チェックリストの詳細">
-						<button id="tab-btn-desc" role="tab" aria-selected="true" aria-controls="tab-content-desc" tabindex="0" class="h-14 flex-1 px-2 sm:px-6 flex items-center justify-center text-sm sm:text-base font-bold text-white border-b-2 border-white tab-btn whitespace-nowrap" data-target="tab-content-desc" data-panel-tab="desc">説明</button>
-						<button id="tab-btn-progress" role="tab" aria-selected="false" aria-controls="tab-content-progress" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-progress" data-panel-tab="progress">進捗</button>
-						<button id="tab-btn-memo" role="tab" aria-selected="false" aria-controls="tab-content-memo" tabindex="-1" data-private-tab class="hidden h-14 flex-1 px-2 sm:px-4 items-center justify-center text-sm sm:text-base font-bold text-gray-400 border-b-2 border-transparent tab-btn whitespace-nowrap" data-target="tab-content-memo" data-panel-tab="memo">メモ</button>
-                    </div>
-                    <button data-toggle-info class="absolute bottom-4 right-4 text-gray-300 hover:text-white" aria-label="詳細パネルを閉じる">
-                        <span class="material-symbols-outlined font-light">close</span>
-                    </button>
-                </div>
-
-                <!-- Description Content -->
-				<div id="tab-content-desc" role="tabpanel" aria-labelledby="tab-btn-desc" class="flex-grow overflow-y-auto p-4 sm:p-6 content-area bg-[#262626] text-gray-100 overscroll-contain min-w-[320px]">
-                    <h1 class="text-[1.25rem] font-bold text-white leading-snug mb-4">{knowhow.data.title}</h1>
-                    <p class="text-[0.95rem] text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">{knowhow.data.description}</p>
-					<Content />
-					<button type="button" data-public-only data-start-checklist class="mt-7 w-full rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">このチェックリストを始める</button>
+			{activeTab !== 'base' && (
+			<div
+				id="info-panel"
+				class={`fixed inset-0 z-[60] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#262626] pb-[env(safe-area-inset-bottom)] opacity-100 shadow-2xl transition-all duration-300 ease-out lg:relative lg:inset-auto lg:h-full lg:z-10 lg:rounded-xl lg:pb-0 lg:shadow-xl ${panelOpenClass}`}
+			>
+				<div class="relative flex shrink-0 items-center justify-between border-b border-gray-600 bg-[#343434] pl-4 pr-14 pt-[env(safe-area-inset-top)] lg:pt-0">
+					<nav id="detail-tabs" class="flex w-full flex-grow items-stretch justify-center" role="tablist" aria-label="チェックリストの詳細">
+						<a id="tab-btn-desc" role="tab" aria-selected={activeTab === 'desc' ? 'true' : 'false'} aria-controls="tab-content-desc" tabindex={activeTab === 'desc' ? '0' : '-1'} href={tabUrls.desc} data-detail-nav data-panel-tab="desc" class={`flex h-14 flex-1 items-center justify-center whitespace-nowrap border-b-2 px-2 text-sm font-bold transition-colors sm:px-6 sm:text-base ${activeTab === 'desc' ? 'border-white text-white' : 'border-transparent text-gray-400'}`}>説明</a>
+						{isPrivateDetail && (
+							<>
+								<a id="tab-btn-progress" role="tab" aria-selected={activeTab === 'progress' ? 'true' : 'false'} aria-controls="tab-content-progress" tabindex={activeTab === 'progress' ? '0' : '-1'} href={tabUrls.progress} data-private-tab data-detail-nav data-panel-tab="progress" class={`flex h-14 flex-1 items-center justify-center whitespace-nowrap border-b-2 px-2 text-sm font-bold transition-colors sm:px-4 sm:text-base ${activeTab === 'progress' ? 'border-white text-white' : 'border-transparent text-gray-400'}`}>進捗</a>
+								<a id="tab-btn-memo" role="tab" aria-selected={activeTab === 'memo' ? 'true' : 'false'} aria-controls="tab-content-memo" tabindex={activeTab === 'memo' ? '0' : '-1'} href={tabUrls.memo} data-private-tab data-detail-nav data-panel-tab="memo" class={`flex h-14 flex-1 items-center justify-center whitespace-nowrap border-b-2 px-2 text-sm font-bold transition-colors sm:px-4 sm:text-base ${activeTab === 'memo' ? 'border-white text-white' : 'border-transparent text-gray-400'}`}>メモ</a>
+							</>
+						)}
+					</nav>
+					<button data-toggle-info class="absolute bottom-4 right-4 text-gray-300 hover:text-white" aria-label="詳細パネルを閉じる">
+						<span class="material-symbols-outlined font-light">close</span>
+					</button>
 				</div>
 
-                <!-- Checklist Progress Content -->
-				<div id="tab-content-progress" role="tabpanel" aria-labelledby="tab-btn-progress" hidden class="flex-grow overflow-hidden hidden bg-[#262626] min-w-[320px]">
-                    <ChecklistRunner checklist={checklist} />
-                </div>
+				{activeTab === 'desc' && (
+					<section id="tab-content-desc" role="tabpanel" aria-labelledby="tab-btn-desc" class="content-area min-w-[320px] flex-grow overflow-y-auto overscroll-contain bg-[#262626] p-4 text-gray-100 sm:p-6">
+						<h1 class="mb-4 text-[1.25rem] font-bold leading-snug text-white">{knowhow.data.title}</h1>
+						<p class="mb-6 whitespace-pre-wrap text-[0.95rem] leading-relaxed text-gray-300">{knowhow.data.description}</p>
+						<Content />
+						{!isPrivateDetail && (
+							<button type="button" data-public-only data-start-checklist class="mt-7 w-full rounded-full bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">このチェックリストを始める</button>
+						)}
+					</section>
+				)}
 
-                <!-- Comments Content (Hidden background component) -->
-				<div id="tab-content-comments" role="tabpanel" aria-labelledby="tab-btn-comments" hidden class="hidden bg-[#262626] flex-col min-w-[320px]">
-					<Comments slug={`knowhow/${knowhow.id}`} variant="reels" />
-				</div>
+				{activeTab === 'progress' && (
+					<section id="tab-content-progress" role="tabpanel" aria-labelledby="tab-btn-progress" class="min-w-[320px] flex-grow overflow-hidden bg-[#262626]">
+						<ChecklistRunner checklist={checklist} />
+					</section>
+				)}
 
-				<div id="tab-content-memo" role="tabpanel" aria-labelledby="tab-btn-memo" hidden class="flex-grow overflow-hidden hidden bg-[#262626] min-w-[320px]">
-					<ChecklistPrivateNote checklistId={checklist.checklistId} />
-				</div>
-            </div>
+				{activeTab === 'memo' && (
+					<section id="tab-content-memo" role="tabpanel" aria-labelledby="tab-btn-memo" class="min-w-[320px] flex-grow overflow-hidden bg-[#262626]">
+						<ChecklistPrivateNote checklistId={checklist.checklistId} />
+					</section>
+				)}
+			</div>
+			)}
 		</div>
 	</div>
+
+	{(activeTab === 'base' || activeTab === 'desc') && <script is:inline type="application/json" data-checklist-template set:html={templateJson}></script>}
 </Layout>
 
 <script>
@@ -141,36 +142,16 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 	import { readKnowhowListCache } from '../scripts/knowhow-list-cache';
 	import { onPageLoad } from '../scripts/page-lifecycle';
 
-	type PanelTab = 'desc' | 'progress' | 'comments' | 'memo';
 	type DetailMode = 'public' | 'private';
+	type DetailTab = 'base' | 'desc' | 'progress' | 'memo';
 
 	declare global {
 		interface Window {
 			startChecklist: (options?: { skipLike?: boolean }) => Promise<void>;
 			removeChecklistFromMyList: () => Promise<void>;
-			toggleInfoPanel: () => void;
-			toggleTab: (tab: PanelTab) => void;
-			switchTab: (tab: PanelTab) => void;
-			goBackFromKnowhow: () => void;
-			_knowhowStartRequest?: (event: Event) => void;
 		}
 	}
 
-	window.goBackFromKnowhow = () => {
-		let returnUrl = '';
-		try {
-			returnUrl = sessionStorage.getItem('knowhow:return-url') ?? '';
-			sessionStorage.removeItem('knowhow:return-url');
-		} catch {
-			// Session storage may be unavailable in strict privacy modes.
-		}
-		const destination = returnUrl.startsWith('/knowhow') || returnUrl.startsWith('/my-knowhow') ? returnUrl : '/';
-			window.location.assign(destination);
-	};
-
-	// Astro replaces the document during client navigation. Carry the wheel/swipe
-	// direction into the incoming document so both transition snapshots use the
-	// same vertical animation instead of falling back to an instant swap.
 	document.addEventListener('astro:before-swap', (event) => {
 		const direction = document.documentElement.dataset.scrollDirection;
 		const transitionEvent = event as Event & { newDocument: Document };
@@ -179,23 +160,76 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		}
 	});
 
-	function initReels() {
+	function initDetailPage() {
 		const container = document.getElementById('knowhow-modal-container');
-		if (!container || container.dataset.reelsInitialized) return;
+		if (!container || container.dataset.reelsInitialized === 'true') return;
 		container.dataset.reelsInitialized = 'true';
 
-        const isMobile = () => window.innerWidth < 1024;
-		const mediaArea = document.getElementById('knowhow-media-area');
-		mediaArea?.addEventListener('click', (event) => {
-			const target = event.target as HTMLElement;
-			if (target.closest('[data-media-ui], button, a, input, textarea, select, label, [role="button"]')) return;
-			const hidden = container.dataset.mediaChromeHidden === 'true';
-			container.dataset.mediaChromeHidden = String(!hidden);
-		});
-		const knowhowId = container.dataset.knowhowId;
-		const detailBasePath = `/knowhow/${knowhowId}/`;
-		const privateDetailBasePath = `/my-knowhow/${knowhowId}/`;
+		const knowhowId = container.dataset.knowhowId ?? '';
+		const checklistId = container.dataset.checklistId ?? '';
+		const currentTab = (container.dataset.detailTab as DetailTab | undefined) ?? 'desc';
 		const isPrivateDetailPath = window.location.pathname.startsWith('/my-knowhow/');
+		const privateBasePath = `/my-knowhow/${knowhowId}/`;
+		const publicBasePath = `/knowhow/${knowhowId}/`;
+		const descriptionUrl = `${isPrivateDetailPath ? privateBasePath : publicBasePath}description/`;
+		const legacyTab = new URLSearchParams(window.location.search).get('tab');
+		if (isPrivateDetailPath && window.location.pathname === privateBasePath && legacyTab) {
+			const legacyUrl = legacyTab === 'progress'
+				? `${privateBasePath}progress/`
+				: legacyTab === 'memo'
+					? `${privateBasePath}memo/`
+					: descriptionUrl;
+			window.location.replace(legacyUrl);
+			return;
+		}
+		let currentMode: DetailMode = isPrivateDetailPath || new URLSearchParams(window.location.search).get('mode') === 'my'
+			? 'private'
+			: 'public';
+		let isNavigating = false;
+		let removingChecklist = false;
+		let startingChecklist = false;
+
+		const infoPanel = () => document.getElementById('info-panel');
+
+		const goBackFromKnowhow = () => {
+			let returnUrl = '';
+			try {
+				returnUrl = sessionStorage.getItem('knowhow:return-url') ?? '';
+				sessionStorage.removeItem('knowhow:return-url');
+			} catch {
+				// Session storage may be unavailable in strict privacy modes.
+			}
+			const destination = returnUrl.startsWith('/knowhow') || returnUrl.startsWith('/my-knowhow') ? returnUrl : '/';
+			window.location.assign(destination);
+		};
+
+		const applyModeUi = () => {
+			const isPrivate = currentMode === 'private';
+			document.querySelectorAll<HTMLElement>('[data-public-actions]').forEach((element) => {
+				element.classList.toggle('hidden', isPrivate);
+				element.classList.toggle('contents', !isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-private-actions]').forEach((element) => {
+				element.classList.toggle('hidden', !isPrivate);
+				element.classList.toggle('contents', isPrivate);
+			});
+			document.querySelectorAll<HTMLElement>('[data-public-only]').forEach((element) => element.classList.toggle('hidden', isPrivate));
+			document.querySelectorAll<HTMLElement>('[data-private-only]').forEach((element) => element.classList.toggle('hidden', !isPrivate));
+		};
+
+		const getCachedPrivateListState = () => {
+			if (!isPrivateDetailPath) return null;
+			const cached = readKnowhowListCache();
+			if (!cached || cached.view !== 'my') return null;
+			try {
+				const returnPath = sessionStorage.getItem('knowhow:return-url') ?? '';
+				if (!returnPath.startsWith('/my-knowhow/') || cached.sourcePath !== returnPath) return null;
+			} catch {
+				return null;
+			}
+			return cached;
+		};
+
 		type DetailNavigationItem = { id: string; checklistId: string; timelineOrder?: number };
 		const privateNavigationItems = (() => {
 			try {
@@ -217,319 +251,17 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 				return [];
 			}
 		})();
-		const getCachedPrivateListState = () => {
-			if (!isPrivateDetailPath) return null;
-			const cached = readKnowhowListCache();
-			if (!cached || cached.view !== 'my') return null;
-			try {
-				const returnPath = sessionStorage.getItem('knowhow:return-url') ?? '';
-				if (!returnPath.startsWith('/my-knowhow/') || cached.sourcePath !== returnPath) return null;
-			} catch {
-				return null;
-			}
-			return cached;
+
+		const privateNavigationUrl = (id: string) => {
+			const suffix = currentTab === 'desc'
+				? 'description/'
+				: currentTab === 'progress'
+					? 'progress/'
+					: currentTab === 'memo'
+						? 'memo/'
+						: '';
+			return `/my-knowhow/${id}/${suffix}`;
 		};
-		
-		const urlParams = new URLSearchParams(window.location.search);
-		let currentMode: DetailMode = urlParams.get('mode') === 'my' ? 'private' : 'public';
-		// Optional: if the URL itself still implies "my-knowhow", handle it cleanly:
-		if (window.location.pathname.includes('/my-knowhow') || window.location.pathname.includes('/my/')) {
-			currentMode = 'private';
-		}
-		
-		const tabsByMode: Record<DetailMode, PanelTab[]> = {
-			public: ['desc'],
-			private: ['desc', 'progress', 'memo'],
-		};
-
-		const readDetailRoute = (): { mode: DetailMode; tab: PanelTab; shouldOpen: boolean } => {
-			const params = new URLSearchParams(window.location.search);
-			const segments = window.location.pathname.split('/').filter(Boolean);
-			const privateRouteIndex = segments.indexOf('my-knowhow');
-			const legacyPrivateRouteIndex = segments.indexOf('my');
-			const isPrivatePath = privateRouteIndex >= 0 || legacyPrivateRouteIndex >= 0;
-			const mode: DetailMode = params.get('mode') === 'my' || isPrivatePath ? 'private' : 'public';
-			const pathTab = privateRouteIndex >= 0
-				? segments[privateRouteIndex + 2]
-				: legacyPrivateRouteIndex >= 0
-					? segments[legacyPrivateRouteIndex + 1]
-					: undefined;
-			const requestedTab = params.get('tab') ?? (pathTab === 'description' ? 'desc' : pathTab);
-			const tab = requestedTab && tabsByMode[mode].includes(requestedTab as PanelTab)
-				? requestedTab as PanelTab
-				: 'desc';
-
-			return { mode, tab, shouldOpen: mode === 'private' && tab !== 'desc' };
-		};
-
-		const setUrlTab = (tab: PanelTab | null) => {
-			const params = new URLSearchParams(window.location.search);
-			params.delete('mode');
-			params.delete('tab');
-			const basePath = currentMode === 'private' ? privateDetailBasePath : detailBasePath;
-			const pathSuffix = currentMode === 'private' && tab && tab !== 'desc' ? `${tab}/` : '';
-
-			const queryString = params.toString();
-			const newPath = basePath + pathSuffix + (queryString ? `?${queryString}` : '');
-			
-			if (newPath !== window.location.pathname + window.location.search) {
-				history.replaceState(null, '', newPath);
-			}
-		};
-
-		const getActiveTab = (): PanelTab => {
-			if (!document.getElementById('tab-content-progress')?.classList.contains('hidden')) return 'progress';
-			if (!document.getElementById('tab-content-comments')?.classList.contains('hidden')) return 'comments';
-			if (!document.getElementById('tab-content-memo')?.classList.contains('hidden')) return 'memo';
-			return 'desc';
-		};
-
-		window.switchTab = (tab: PanelTab) => {
-			window.dispatchEvent(new CustomEvent('checklist-edit-cancel'));
-			const allowedTabs = tabsByMode[currentMode];
-			const resolvedTab = allowedTabs.includes(tab) ? tab : 'desc';
-			const tabs: PanelTab[] = ['desc', 'progress', 'comments', 'memo'];
-			for (const candidate of tabs) {
-				const active = candidate === resolvedTab;
-				const button = document.getElementById('tab-btn-' + candidate) as HTMLButtonElement | null;
-				const content = document.getElementById('tab-content-' + candidate) as HTMLElement | null;
-				button?.classList.toggle('text-white', active);
-				button?.classList.toggle('text-gray-400', !active);
-				button?.classList.toggle('border-white', active);
-				button?.classList.toggle('border-transparent', !active);
-				button?.setAttribute('aria-selected', String(active));
-				if (button) button.tabIndex = active ? 0 : -1;
-				content?.classList.toggle('hidden', !active);
-				if (content) content.hidden = !active;
-				if (candidate !== 'desc') content?.classList.toggle('flex', active);
-			}
-
-			if (resolvedTab === 'comments') {
-				document.dispatchEvent(new CustomEvent('comments:activate'));
-				const comments = document.getElementById('tab-content-comments');
-				const form = comments?.querySelector('textarea[name="content"]') as HTMLTextAreaElement | null;
-				window.setTimeout(() => form?.focus(), 150);
-			}
-        };
-
-		const applyModeUi = () => {
-			const isPrivate = currentMode === 'private';
-			document.querySelectorAll<HTMLElement>('[data-public-tab]').forEach((element) => {
-				element.classList.toggle('hidden', isPrivate);
-				element.classList.toggle('flex', !isPrivate);
-			});
-			document.querySelectorAll<HTMLElement>('[data-private-tab]').forEach((element) => {
-				element.classList.toggle('hidden', !isPrivate);
-				element.classList.toggle('flex', isPrivate);
-			});
-			document.querySelectorAll<HTMLElement>('[data-public-actions]').forEach((element) => {
-				element.classList.toggle('hidden', isPrivate);
-				element.classList.toggle('contents', !isPrivate);
-			});
-			document.querySelectorAll<HTMLElement>('[data-private-actions]').forEach((element) => {
-				element.classList.toggle('hidden', !isPrivate);
-				element.classList.toggle('contents', isPrivate);
-			});
-			document.querySelectorAll<HTMLElement>('[data-public-only]').forEach((element) => element.classList.toggle('hidden', isPrivate));
-			document.querySelectorAll<HTMLElement>('[data-private-only]').forEach((element) => element.classList.toggle('hidden', !isPrivate));
-		};
-
-        window.toggleInfoPanel = () => {
-            const infoPanel = document.getElementById('info-panel');
-            if (!infoPanel) return;
-            const mobile = isMobile();
-
-            if (mobile) {
-                infoPanel.classList.toggle('translate-y-full');
-            } else {
-                // PC: Toggle width and opacity
-                if (infoPanel.classList.contains('lg:w-0')) {
-                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-                } else {
-                    infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                    infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-                }
-            }
-
-            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
-            if (isOpened) {
-                setUrlTab(getActiveTab());
-            } else {
-                setUrlTab(null);
-            }
-        };
-
-        window.toggleTab = (tab: PanelTab) => {
-            const infoPanel = document.getElementById('info-panel');
-            if (!infoPanel) return;
-            const mobile = isMobile();
-            const isOpened = mobile ? !infoPanel.classList.contains('translate-y-full') : !infoPanel.classList.contains('lg:w-0');
-
-			if (isOpened) {
-                // Switch if already open
-                window.switchTab(tab);
-                setUrlTab(tab);
-            } else {
-                // Open and switch
-                window.switchTab(tab);
-                if (mobile) {
-                    infoPanel.classList.remove('translate-y-full');
-                } else {
-                    infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                    infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-                }
-                setUrlTab(tab);
-            }
-        };
-
-		let removingChecklist = false;
-		window.removeChecklistFromMyList = async () => {
-			if (removingChecklist || currentMode !== 'private') return;
-			const checklistId = container.dataset.checklistId;
-			if (!checklistId) return;
-			removingChecklist = true;
-			container.querySelectorAll<HTMLButtonElement>('[data-private-action-trigger]').forEach((button) => {
-				button.disabled = true;
-			});
-			try {
-				const deleted = await deletePrivateListByChecklistId(checklistId);
-				if (!deleted) {
-					removingChecklist = false;
-					return;
-				}
-				await navigate('/my-knowhow/');
-			} catch {
-				window.alert('マイリストから削除できませんでした。もう一度お試しください。');
-				removingChecklist = false;
-				container.querySelectorAll<HTMLButtonElement>('[data-private-action-trigger]').forEach((button) => {
-					button.disabled = false;
-				});
-			}
-		};
-
-		let startingChecklist = false;
-		window.startChecklist = async (options) => {
-			if (startingChecklist) return;
-			startingChecklist = true;
-			try {
-				const templateSource = container.querySelector<HTMLScriptElement>('[data-checklist-template]');
-				if (!templateSource?.textContent) throw new Error('template-missing');
-				const template = JSON.parse(templateSource.textContent) as ChecklistTemplate;
-				await initializePrivateDb();
-				const storedRuns = await getPrivateChecklistRunsByChecklistId(template.checklistId);
-				const existing = storedRuns.find((run) => !run.deletedAt);
-				if (!existing) {
-					await savePrivateChecklistRun(createChecklistRun(template));
-				}
-
-				// A checklist start is the first public action that creates a like.
-				// A like-button initiated start already owns this request, so avoid a
-				// second increment in that path.
-				if (storedRuns.length === 0 && !options?.skipLike) {
-					try {
-						const likeState = await getCurrentArticleLikeState(`knowhow/${knowhowId}`);
-						if (!likeState.liked) {
-							const nextLikeState = await setArticleLikeState(`knowhow/${knowhowId}`, true);
-							notifyArticleLikeChanged(nextLikeState);
-						}
-					} catch {
-						// Starting the checklist must remain available if the like API is unavailable.
-					}
-				}
-				await navigate(`${privateDetailBasePath}progress/`);
-			} catch {
-				window.alert('チェックリストを開始できませんでした。端末の保存設定をご確認ください。');
-			} finally {
-				startingChecklist = false;
-			}
-		};
-		container.querySelectorAll<HTMLButtonElement>('[data-start-checklist], [data-start-checklist-action]').forEach((button) => {
-			button.addEventListener('click', () => void window.startChecklist());
-		});
-
-		container.addEventListener('click', (event) => {
-			const target = event.target as HTMLElement;
-			if (target.closest('[data-go-back]')) {
-				window.goBackFromKnowhow();
-				return;
-			}
-			if (target.closest('[data-remove-checklist]')) {
-				void window.removeChecklistFromMyList();
-				return;
-			}
-			if (target.closest('[data-toggle-info]')) {
-				window.toggleInfoPanel();
-				return;
-			}
-			const memoRoute = target.closest<HTMLElement>('[data-private-memo-route]')?.dataset.privateMemoRoute;
-			if (memoRoute) {
-				event.preventDefault();
-				window.location.assign(memoRoute);
-				return;
-			}
-			const panelTarget = target.closest<HTMLElement>('[data-panel-tab]');
-			const panelTab = panelTarget?.dataset.panelTab as PanelTab | undefined;
-			if (panelTarget && panelTab && panelTarget.tagName !== 'A') {
-				event.preventDefault();
-				window.toggleTab(panelTab);
-			}
-		});
-
-		const startRequestHandler = (event: Event) => {
-			const detail = (event as CustomEvent<{ slug?: string; skipLike?: boolean }>).detail;
-			if (detail?.slug !== `knowhow/${knowhowId}`) return;
-			void window.startChecklist({ skipLike: detail.skipLike === true });
-		};
-		if (window._knowhowStartRequest) {
-			window.removeEventListener('checklist-start-requested', window._knowhowStartRequest);
-		}
-		window._knowhowStartRequest = startRequestHandler;
-		window.addEventListener('checklist-start-requested', startRequestHandler);
-
-		let startAfterOpen = false;
-		let startAfterOpenSkipLike = false;
-		try {
-			if (sessionStorage.getItem('knowhow:start-after-open') === knowhowId) {
-				startAfterOpen = true;
-				startAfterOpenSkipLike = sessionStorage.getItem('knowhow:start-after-open-skip-like') === 'true';
-				sessionStorage.removeItem('knowhow:start-after-open');
-				sessionStorage.removeItem('knowhow:start-after-open-skip-like');
-			}
-		} catch {
-			// Session storage may be unavailable in strict privacy modes.
-		}
-		// Close panel if clicked outside
-		const handleOutsideClick = (e: MouseEvent) => {
-			const target = e.target as HTMLElement;
-			const currentContainer = document.getElementById('knowhow-modal-container');
-			if (!currentContainer) return;
-            const infoPanel = document.getElementById('info-panel');
-			if (currentContainer.contains(target) &&
-				(!infoPanel || !infoPanel.contains(target)) &&
-				!target.closest('button, a, input, textarea, select, label, [role="button"]') &&
-				!target.closest('[data-panel-tab], [data-panel-trigger], [data-private-action-trigger]') &&
-				!target.closest('.like-btn') &&
-				!target.closest('[data-media-ui]')
-			) {
-				if (infoPanel) {
-					if (window.innerWidth < 1024) infoPanel.classList.add('translate-y-full');
-					else {
-                        infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-                        infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-                    }
-				}
-				setUrlTab(null);
-			}
-		};
-		// @ts-ignore
-		if (window._knowhowOutsideClick) document.removeEventListener('click', window._knowhowOutsideClick);
-		// @ts-ignore
-		window._knowhowOutsideClick = handleOutsideClick;
-		document.addEventListener('click', handleOutsideClick);
-
-        // Navigation logic for standalone page (wheel/swipe)
-        let isNavigating = false;
 		const clearPrivateNavigation = () => {
 			if (!isPrivateDetailPath) return;
 			container.removeAttribute('data-prev');
@@ -559,171 +291,186 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 				clearPrivateNavigation();
 				return;
 			}
-
 			const previous = navigationItemsForView[currentIndex - 1];
 			const nextItem = navigationItemsForView[currentIndex + 1];
-			if (previous) container.setAttribute('data-prev', `/my-knowhow/${previous.id}/`);
+			if (previous) container.setAttribute('data-prev', privateNavigationUrl(previous.id));
 			else container.removeAttribute('data-prev');
-			if (nextItem) container.setAttribute('data-next', `/my-knowhow/${nextItem.id}/`);
+			if (nextItem) container.setAttribute('data-next', privateNavigationUrl(nextItem.id));
 			else container.removeAttribute('data-next');
 		};
+
 		const navigateTo = (direction: 'next' | 'prev') => {
-			if (isNavigating) return;
-			if (isPrivateDetailPath && container.dataset.privateStateLoaded !== 'true') return;
-
+			if (isNavigating || (isPrivateDetailPath && container.dataset.privateStateLoaded !== 'true')) return;
 			const url = container.getAttribute(`data-${direction}`);
-            if (url) {
-                isNavigating = true;
-                // AstroのView Transitions用にスクロール方向を記録
-                document.documentElement.dataset.scrollDirection = direction;
+			if (!url) return;
+			isNavigating = true;
+			document.documentElement.dataset.scrollDirection = direction;
+			void navigate(url);
+		};
 
-                // navigate() を使用してSPA遷移
-				navigate(url);
-            }
-        };
+		const mediaArea = document.getElementById('knowhow-media-area');
+		mediaArea?.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement;
+			if (target.closest('[data-media-ui], button, a, input, textarea, select, label, [role="button"]')) return;
+			container.dataset.mediaChromeHidden = String(container.dataset.mediaChromeHidden !== 'true');
+		});
 
 		let wheelLocked = false;
-        const handleScrollEvent = (deltaY: number, target: HTMLElement) => {
-            const infoPanel = document.getElementById('info-panel');
-            if (infoPanel && infoPanel.contains(target)) return false;
+		container.addEventListener('wheel', (event) => {
+			const target = event.target as HTMLElement;
+			const panel = infoPanel();
+			if ((panel && panel.contains(target)) || wheelLocked) return;
+			if (!event.deltaY) return;
+			navigateTo(event.deltaY > 0 ? 'next' : 'prev');
+			wheelLocked = true;
+			window.setTimeout(() => { wheelLocked = false; }, 700);
+		}, { passive: true });
 
-			if (wheelLocked || deltaY === 0) return false;
-			if (deltaY > 0) {
-				navigateTo('next');
-				return true;
-			} else {
-				navigateTo('prev');
-				return true;
-			}
-        };
+		let touchStartY = 0;
+		let touchEndY = 0;
+		let touchMoved = false;
+		container.addEventListener('touchstart', (event) => {
+			touchStartY = event.touches[0]?.clientY ?? 0;
+			touchEndY = touchStartY;
+			touchMoved = false;
+		}, { passive: true });
+		container.addEventListener('touchmove', (event) => {
+			touchEndY = event.touches[0]?.clientY ?? touchEndY;
+			touchMoved = true;
+		}, { passive: true });
+		container.addEventListener('touchend', (event) => {
+			const target = event.target as HTMLElement;
+			const panel = infoPanel();
+			if ((panel && panel.contains(target)) || target.closest('button, a, input, textarea, select, label, [role="button"], [contenteditable="true"]')) return;
+			if (!touchMoved) return;
+			const distance = touchStartY - touchEndY;
+			if (distance > 50) navigateTo('next');
+			else if (distance < -50) navigateTo('prev');
+			touchMoved = false;
+		});
+		container.addEventListener('touchcancel', () => { touchMoved = false; }, { passive: true });
 
-        container.addEventListener('wheel', (e) => {
-            const target = e.target as HTMLElement;
-            const infoPanel = document.getElementById('info-panel');
-            // If scrolling inside panel, ignore
-            if (infoPanel && infoPanel.contains(target)) return;
+		const closeDetail = () => {
+			void navigate(isPrivateDetailPath ? privateBasePath : publicBasePath);
+		};
 
-			const navigated = handleScrollEvent(e.deltaY, target);
-			if (navigated) {
-				wheelLocked = true;
-				setTimeout(() => { wheelLocked = false; }, 700);
-			}
-        }, { passive: true });
-
-        // Touch swipe
-        let touchStartY = 0;
-        let touchEndY = 0;
-        let touchMoved = false;
-        container.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-            touchEndY = touchStartY;
-            touchMoved = false;
-        }, { passive: true });
-
-        container.addEventListener('touchmove', (e) => {
-            touchEndY = e.touches[0].clientY;
-            touchMoved = true;
-        }, { passive: true });
-
-        container.addEventListener('touchend', (e) => {
-            const target = e.target as HTMLElement;
-            const infoPanel = document.getElementById('info-panel');
-            if (infoPanel && infoPanel.contains(target)) return;
-            if (target.closest('button, a, input, textarea, select, label, [role="button"]')) return;
-            if (!touchMoved) return;
-
-            const distance = touchStartY - touchEndY;
-            if (distance > 50) navigateTo('next');
-            else if (distance < -50) navigateTo('prev');
-
-            touchMoved = false;
-        });
-
-        container.addEventListener('touchcancel', () => {
-            touchMoved = false;
-        }, { passive: true });
-
-		const syncDetailStateFromUrl = () => {
-			const route = readDetailRoute();
-			currentMode = route.mode;
-			applyModeUi();
-			window.switchTab(route.tab);
-			const infoPanel = document.getElementById('info-panel');
-			if (infoPanel) {
-				if (route.shouldOpen) {
-					if (window.innerWidth < 1024) {
-						infoPanel.classList.remove('translate-y-full');
-						infoPanel.classList.add('translate-y-0');
-					} else {
-						infoPanel.classList.remove('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-						infoPanel.classList.add('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
-					}
-				} else {
-					if (window.innerWidth < 1024) {
-						infoPanel.classList.add('translate-y-full');
-						infoPanel.classList.remove('translate-y-0');
-					} else {
-						infoPanel.classList.add('lg:w-0', 'lg:opacity-0', 'lg:ml-0');
-						infoPanel.classList.remove('lg:w-[400px]', 'lg:opacity-100', 'lg:ml-4');
+		const startChecklist = async (options?: { skipLike?: boolean }) => {
+			if (startingChecklist) return;
+			startingChecklist = true;
+			try {
+				const templateSource = container.parentElement?.parentElement?.querySelector<HTMLScriptElement>('[data-checklist-template]')
+					?? document.querySelector<HTMLScriptElement>('[data-checklist-template]');
+				if (!templateSource?.textContent) throw new Error('template-missing');
+				const template = JSON.parse(templateSource.textContent) as ChecklistTemplate;
+				await initializePrivateDb();
+				const storedRuns = await getPrivateChecklistRunsByChecklistId(template.checklistId);
+				const existing = storedRuns.find((run) => !run.deletedAt);
+				if (!existing) await savePrivateChecklistRun(createChecklistRun(template));
+				if (storedRuns.length === 0 && !options?.skipLike) {
+					try {
+						const likeState = await getCurrentArticleLikeState(`knowhow/${knowhowId}`);
+						if (!likeState.liked) {
+							notifyArticleLikeChanged(await setArticleLikeState(`knowhow/${knowhowId}`, true));
+						}
+					} catch {
+						// Starting the checklist remains available when the like API is unavailable.
 					}
 				}
+				await navigate(`${privateBasePath}progress/`);
+			} catch {
+				window.alert('チェックリストを開始できませんでした。端末の保存設定をご確認ください。');
+			} finally {
+				startingChecklist = false;
+			}
+		};
+		window.startChecklist = startChecklist;
+
+		window.removeChecklistFromMyList = async () => {
+			if (removingChecklist || currentMode !== 'private' || !checklistId) return;
+			removingChecklist = true;
+			container.querySelectorAll<HTMLButtonElement>('[data-private-action-trigger]').forEach((button) => { button.disabled = true; });
+			try {
+				const deleted = await deletePrivateListByChecklistId(checklistId);
+				if (deleted) await navigate('/my-knowhow/');
+			} catch {
+				window.alert('マイリストから削除できませんでした。もう一度お試しください。');
+				removingChecklist = false;
+				container.querySelectorAll<HTMLButtonElement>('[data-private-action-trigger]').forEach((button) => { button.disabled = false; });
 			}
 		};
 
-		const tabList = container.querySelector<HTMLElement>('[role="tablist"]');
-		tabList?.addEventListener('keydown', (event) => {
-			if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-			const buttons = tabsByMode[currentMode]
-				.map((tab) => document.getElementById(`tab-btn-${tab}`) as HTMLButtonElement | null)
-				.filter((button): button is HTMLButtonElement => Boolean(button));
-			if (buttons.length === 0) return;
-			const currentIndex = Math.max(0, buttons.indexOf(document.activeElement as HTMLButtonElement));
-			let nextIndex = currentIndex;
-			if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % buttons.length;
-			if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
-			if (event.key === 'Home') nextIndex = 0;
-			if (event.key === 'End') nextIndex = buttons.length - 1;
-			event.preventDefault();
-			buttons[nextIndex].focus();
-			window.toggleTab(buttons[nextIndex].id.replace('tab-btn-', '') as PanelTab);
+		container.querySelectorAll<HTMLButtonElement>('[data-start-checklist], [data-start-checklist-action]').forEach((button) => {
+			button.addEventListener('click', () => void startChecklist());
 		});
-		// @ts-ignore
-		if (window._knowhowPopstate) window.removeEventListener('popstate', window._knowhowPopstate);
-		// @ts-ignore
-		window._knowhowPopstate = syncDetailStateFromUrl;
-		window.addEventListener('popstate', syncDetailStateFromUrl);
-		syncDetailStateFromUrl();
+		const startRequestHandler = (event: Event) => {
+			const detail = (event as CustomEvent<{ slug?: string; skipLike?: boolean }>).detail;
+			if (detail?.slug === `knowhow/${knowhowId}`) void startChecklist({ skipLike: detail.skipLike === true });
+		};
+		window.addEventListener('checklist-start-requested', startRequestHandler);
+
+		container.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement;
+			if (target.closest('[data-go-back]')) {
+				goBackFromKnowhow();
+				return;
+			}
+			if (target.closest('[data-remove-checklist]')) {
+				void window.removeChecklistFromMyList();
+				return;
+			}
+			if (target.closest('[data-toggle-info]')) {
+				event.preventDefault();
+				closeDetail();
+				return;
+			}
+			const panelTarget = target.closest<HTMLElement>('[data-panel-tab]');
+			if (panelTarget && !target.closest('a') && panelTarget.dataset.panelTab === 'desc') {
+				event.preventDefault();
+				void navigate(descriptionUrl);
+			}
+		});
+
+		let startAfterOpen = false;
+		let startAfterOpenSkipLike = false;
+		try {
+			if (sessionStorage.getItem('knowhow:start-after-open') === knowhowId) {
+				startAfterOpen = true;
+				startAfterOpenSkipLike = sessionStorage.getItem('knowhow:start-after-open-skip-like') === 'true';
+				sessionStorage.removeItem('knowhow:start-after-open');
+				sessionStorage.removeItem('knowhow:start-after-open-skip-like');
+			}
+		} catch {
+			// Session storage may be unavailable in strict privacy modes.
+		}
 
 		const syncPrivateStateFromStoredRuns = async () => {
 			try {
 				await initializePrivateDb();
-				const runs = await getPrivateChecklistRunsByChecklistId(container.dataset.checklistId ?? '');
-				const hasActiveRun = runs.some((run) => !run.deletedAt);
+				const ownRuns = await getPrivateChecklistRunsByChecklistId(checklistId);
+				const hasActiveRun = ownRuns.some((run) => !run.deletedAt);
 				if (isPrivateDetailPath) syncPrivateNavigation(await getPrivateChecklistRuns());
 				if (hasActiveRun && currentMode === 'public') {
 					currentMode = 'private';
 					applyModeUi();
 				}
 			} catch {
-				// The public detail remains usable when private storage is unavailable.
 				clearPrivateNavigation();
 			} finally {
 				container.dataset.privateStateLoaded = 'true';
 				if (startAfterOpen) {
 					startAfterOpen = false;
-					void window.startChecklist({ skipLike: startAfterOpenSkipLike });
+					void startChecklist({ skipLike: startAfterOpenSkipLike });
 				}
 			}
 		};
+
+		applyModeUi();
 		void syncPrivateStateFromStoredRuns();
 	}
 
 	onPageLoad(() => {
-		// Keep the direction through the view-transition snapshot, then clean it up.
-		window.setTimeout(() => {
-			document.documentElement.removeAttribute('data-scroll-direction');
-		}, 500);
-		initReels();
+		window.setTimeout(() => document.documentElement.removeAttribute('data-scroll-direction'), 500);
+		initDetailPage();
 	});
 </script>
 
@@ -738,13 +485,12 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		opacity: 0;
 	}
 
-	#caption-content h3, .content-area h3 { font-weight: bold; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.2rem; }
+	#caption-content h3, .content-area h3 { margin-top: 0.5rem; margin-bottom: 0.2rem; font-size: 1rem; font-weight: bold; }
 	#caption-content p, .content-area p { margin-bottom: 0.5rem; }
 	#caption-content a, .content-area a { color: #60a5fa; text-decoration: underline; }
 
-    /* Keep the surrounding UI fixed and animate only the media region. */
-    ::view-transition-old(root),
-    ::view-transition-new(root) {
+	::view-transition-old(root),
+	::view-transition-new(root) {
 		animation: none;
 	}
 
@@ -754,34 +500,13 @@ const nextUrl = next ? `${detailRoutePrefix}${next.id}/` : '';
 		overflow: hidden;
 	}
 
-    html[data-scroll-direction="next"]::view-transition-old(knowhow-media) {
-        animation: slideUpOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
-    }
-    html[data-scroll-direction="next"]::view-transition-new(knowhow-media) {
-        animation: slideUpIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
-    }
+	html[data-scroll-direction="next"]::view-transition-old(knowhow-media) { animation: slideUpOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both; }
+	html[data-scroll-direction="next"]::view-transition-new(knowhow-media) { animation: slideUpIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both; }
+	html[data-scroll-direction="prev"]::view-transition-old(knowhow-media) { animation: slideDownOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both; }
+	html[data-scroll-direction="prev"]::view-transition-new(knowhow-media) { animation: slideDownIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both; }
 
-    html[data-scroll-direction="prev"]::view-transition-old(knowhow-media) {
-        animation: slideDownOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
-    }
-    html[data-scroll-direction="prev"]::view-transition-new(knowhow-media) {
-        animation: slideDownIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
-    }
-
-    @keyframes slideUpOut {
-        from { transform: translateY(0); }
-        to { transform: translateY(-100%); }
-    }
-    @keyframes slideUpIn {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
-    }
-    @keyframes slideDownOut {
-        from { transform: translateY(0); }
-        to { transform: translateY(100%); }
-    }
-    @keyframes slideDownIn {
-        from { transform: translateY(-100%); }
-        to { transform: translateY(0); }
-    }
+	@keyframes slideUpOut { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+	@keyframes slideUpIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+	@keyframes slideDownOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
+	@keyframes slideDownIn { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 </style>

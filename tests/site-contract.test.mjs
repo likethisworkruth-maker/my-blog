@@ -46,26 +46,44 @@ test('ルートをチェックリスト一覧にし、旧案内ページを廃�
 
 test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	const detail = read('src/components/KnowhowDetailPage.astro');
+	const baseMedia = read('src/components/KnowhowBaseMedia.astro');
+	const privateIndex = read('src/pages/my-knowhow/[id]/index.astro');
+	const privateDescription = read('src/pages/my-knowhow/[id]/description.astro');
+	const privateProgress = read('src/pages/my-knowhow/[id]/progress.astro');
+	const privateMemo = read('src/pages/my-knowhow/[id]/memo.astro');
 	const actionBar = read('src/components/ActionBar.astro');
 	const runner = read('src/components/ChecklistRunner.astro');
 	const privateNote = read('src/components/ChecklistPrivateNote.astro');
 	const deleteModule = read('src/scripts/private-list-delete.ts');
-	assert.doesNotMatch(detail, /id="tab-btn-comments"[^>]*class="[^"]*flex/);
+	assert.doesNotMatch(detail, /tab-content-comments|tab-btn-comments/);
 	assert.match(detail, /id="info-panel"[\s\S]*h-\[100dvh\]/);
 	assert.doesNotMatch(detail, /h-\[65dvh\]|rounded-t-3xl/);
-	assert.match(detail, /id="knowhow-media-area"/);
+	assert.doesNotMatch(detail, /<img|id="knowhow-media-area"|relative flex h-full w-full shrink-0 flex-row items-end/);
+	assert.match(detail, /activeTab === 'base' && <KnowhowBaseMedia/);
+	assert.match(baseMedia, /id="knowhow-media-area"/);
+	assert.match(baseMedia, /<img src={knowhow\.data\.coverImage}/);
 	assert.match(detail, /data-media-ui/);
 	assert.match(detail, /mediaChromeHidden/);
 	assert.match(detail, /data-media-chrome-hidden="true"/);
-	assert.match(detail, /lg:hidden[^"]*text-white[^"]*active:scale-95/);
+	assert.match(detail, /data-go-back/);
 	assert.match(detail, /arrow_back_ios_new<\/span>/);
 	assert.match(detail, /drop-shadow-\[0_2px_5px_rgba\(0,0,0,0\.8\)\]/);
 	assert.match(detail, /data-private-tab[^>]*>進捗</);
 	assert.match(detail, /data-private-tab[^>]*>メモ</);
 	assert.match(detail, /role="tablist"/);
 	assert.match(detail, /aria-selected=/);
-	assert.match(detail, /privateDetailBasePath =/);
-	assert.match(detail, /readDetailRoute/);
+	assert.match(detail, /detailTab\?: DetailTab/);
+	assert.match(detail, /activeTab === 'desc'/);
+	assert.match(detail, /activeTab === 'progress'/);
+	assert.match(detail, /activeTab === 'memo'/);
+	assert.match(detail, /href=\{tabUrls\.desc\}/);
+	assert.match(detail, /href=\{tabUrls\.progress\}/);
+	assert.match(detail, /href=\{tabUrls\.memo\}/);
+	assert.ok(privateIndex.includes('detailTab="base"'));
+	assert.ok(privateDescription.includes('detailTab="desc"'));
+	assert.ok(privateProgress.includes('detailTab="progress"'));
+	assert.ok(privateMemo.includes('detailTab="memo"'));
+	assert.doesNotMatch(detail, /readDetailRoute|window\.switchTab|window\.toggleTab/);
 	assert.match(detail, /getPrivateChecklistRunsByChecklistId/);
 	assert.match(detail, /privateStateLoaded/);
 	assert.match(detail, /data-private-navigation/);
@@ -77,10 +95,12 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	assert.match(actionBar, /data-panel-trigger[\s\S]*data-panel-tab="desc"/);
 	assert.match(actionBar, />info</);
 	assert.match(actionBar, />説明</);
+	assert.match(actionBar, /privateProgressUrl/);
 	assert.match(actionBar, /privateMemoUrl/);
+	assert.match(actionBar, /href=\{privateProgressUrl\}/);
 	assert.match(actionBar, /data-private-memo-route=\{privateMemoUrl\}/);
 	assert.match(actionBar, /data-private-action-trigger data-private-list-delete/);
-	assert.doesNotMatch(runner, /data-delete-list/);
+	assert.doesNotMatch(runner, /data-edit-checklist|data-cancel-edit|data-save-edit|data-delete-list|drag_indicator|pointermove|createDragHandle|textarea/);
 	assert.match(detail, /deletePrivateListByChecklistId/);
 	assert.match(deleteModule, /PRIVATE_LIST_DELETE_CONFIRM_MESSAGE/);
 	assert.match(detail, /navigate\('\/my-knowhow\/'\)/);
@@ -89,7 +109,10 @@ test('公開詳細とprivate詳細のタブを構造的に分離する', () => {
 	assert.match(privateNote, /readEditorText/);
 	assert.doesNotMatch(privateNote, /<textarea|maxlength=\"3000\"|data-note-count|保存中/);
 	assert.ok(!existsSync(new URL('../src/pages/knowhow/[id]/comments.astro', import.meta.url)));
-	assert.ok(existsSync(new URL('../src/pages/my-knowhow/[id]/[tab].astro', import.meta.url)));
+	assert.ok(existsSync(new URL('../src/pages/my-knowhow/[id]/description.astro', import.meta.url)));
+	assert.ok(existsSync(new URL('../src/pages/my-knowhow/[id]/progress.astro', import.meta.url)));
+	assert.ok(existsSync(new URL('../src/pages/my-knowhow/[id]/memo.astro', import.meta.url)));
+	assert.equal(existsSync(new URL('../src/pages/my-knowhow/[id]/[tab].astro', import.meta.url)), false);
 });
 
 test('チェックリスト一覧は時期・場面・マイリストをURLとIndexedDB設定で統合する', () => {
@@ -183,42 +206,22 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 		assert.ok(read('src/scripts/checklist-state.ts').includes(label));
 	}
 	assert.ok(runner.includes('data-review-guidance'));
-	assert.ok(runner.includes('data-edit-checklist'));
-	assert.ok(runner.includes('編集中'));
-	assert.ok(runner.includes('data-cancel-edit'));
-	assert.ok(runner.includes('data-save-edit'));
-	assert.ok(runner.includes('変更を保存'));
-	assert.match(runner, /data-save-edit[^>]*rounded-xl[^>]*border/);
-	assert.ok(runner.includes('cancelEditing'));
-	assert.ok(runner.includes('editSnapshot = cloneRun(run)'));
-	assert.ok(runner.includes('run = cloneRun(editSnapshot)'));
-	assert.ok(runner.includes('if (editing) label.append(text)'));
+	assert.ok(runner.includes('data-item-editor'));
+	assert.ok(runner.includes('contentEditable = \'true\''));
+	assert.ok(runner.includes('data-add-item-editor'));
+	assert.ok(runner.includes('schedulePersist'));
+	assert.ok(runner.includes('checklist-edit-cancel'));
 	assert.ok(runner.includes('scrollbar-width: none'));
 	assert.ok(runner.includes('.checklist-runner::-webkit-scrollbar'));
-	assert.ok(runner.includes("symbol.textContent = 'drag_indicator'"));
-	assert.ok(runner.includes("window.addEventListener('pointermove'"));
-	assert.ok(runner.includes('dragListeners?.abort()'));
-	assert.ok(runner.includes('new AbortController()'));
-	assert.equal(runner.includes("button.addEventListener('pointermove'"), false);
-	assert.ok(runner.includes('syncItemOrderFromDom'));
-	assert.ok(runner.includes('requestAnimationFrame(updateDragPosition)'));
-	assert.ok(runner.includes('animateItemReorder'));
-	assert.ok(runner.includes('candidateRows.find'));
-	assert.equal(runner.includes('document.elementFromPoint'), false);
-	assert.ok(runner.includes('followPointer(pointY)'));
-	assert.ok(runner.includes('row.style.translate'));
-	assert.equal(runner.includes("symbol.textContent = 'back_hand'"), false);
-	assert.ok(runner.includes('.checklist-item-dragging'));
-	assert.equal(runner.includes('@keyframes drag-handle-grip'), false);
-	assert.ok(runner.includes("document.createElement('textarea')"));
 	assert.ok(runner.includes("editor.addEventListener('input'"));
-	assert.ok(runner.includes('を削除しますか？'));
-	assert.ok(
-		runner.indexOf("createIconButton('delete'") < runner.indexOf('createDragHandle(item, row)'),
-	);
-	assert.equal(runner.includes("createIconButton('arrow_upward'"), false);
-	assert.equal(runner.includes("createIconButton('arrow_downward'"), false);
-	assert.equal(runner.includes('visibility_off'), false);
+	assert.ok(runner.includes("checkbox.type = 'checkbox'"));
+	assert.ok(runner.includes("text?.classList.toggle('line-through'"));
+	assert.match(runner, /row\.className = 'checklist-item-row border-b border-white\/10 bg-transparent px-4'/);
+	assert.doesNotMatch(runner, /row\.className = '[^']*rounded/);
+	assert.match(runner, /data-add-item-row[^>]*border-b border-white\/10/);
+	assert.ok(runner.includes("checkbox.className = 'reminder-checkbox"));
+	assert.equal(runner.includes('保存中'), false);
+	assert.equal(runner.includes('編集ボタン'), false);
 	assert.ok(runner.includes('実際に使った'));
 	assert.ok(runner.includes('持っていったが使わなかった'));
 	assert.ok(runner.includes('持たずに困った'));
@@ -279,9 +282,7 @@ test('コメントは公開RPCだけを使用し、ログイン投稿だけ本�
 	assert.match(comments, /pendingContent = content/);
 	assert.match(comments, /comments:activate/);
 	assert.ok(comments.includes("panel.hidden || panel.classList.contains('hidden')"));
-	assert.ok(
-		read('src/components/KnowhowDetailPage.astro').includes("new CustomEvent('comments:activate')"),
-	);
+	assert.doesNotMatch(read('src/components/KnowhowDetailPage.astro'), /comments:activate/);
 	assert.match(comments, /コメントを受け付けました。\\n運営による確認後に掲載されます。/);
 	assert.doesNotMatch(comments, /\.from\(['"]comments['"]\)/);
 });

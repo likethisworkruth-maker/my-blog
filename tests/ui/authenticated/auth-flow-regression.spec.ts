@@ -113,7 +113,7 @@ test('A-113 authenticated private list→detail→memoの操作列を維持す�
 	await seedPrivateRuns(page, [makeRegressionRun('night-memo'), makeRegressionRun('family-log')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await openPrivateDetailFromList(page, '001-night-memo');
-	await visiblePrivateAction(page, 'このチェックリストのメモを開く').click();
+	await page.locator('#tab-btn-memo:visible').click();
 	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/memo\/?$/);
 	await expect(page.locator('#tab-btn-memo')).toHaveAttribute('aria-selected', 'true');
 	await expectSignedIn(page);
@@ -126,7 +126,6 @@ test('A-114 authenticated private list→detail→progress→memo→closeを完�
 	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await openPrivateDetailFromList(page, '001-night-memo');
-	await visiblePrivateAction(page, 'チェックリストの進捗を開く').click();
 	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
 	await expect(page.locator('#tab-btn-progress')).toHaveAttribute('aria-selected', 'true');
 	await page.locator('#tab-btn-memo').click();

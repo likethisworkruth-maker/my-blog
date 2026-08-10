@@ -4,22 +4,22 @@ import { makeRegressionRun, openPrivateDetailFromList, seedPrivateRuns } from '.
 
 test.use({ storageState: path.resolve('tests/fixtures/auth/anonymous.storageState.json') });
 
-const visibleMemoButton = (page: import('@playwright/test').Page) => page.locator('button[aria-label="このチェックリストのメモを開く"]:visible');
+const visibleMemoButton = (page: import('@playwright/test').Page) => page.locator('a[aria-label="このチェックリストのメモを開く"]:visible');
+const visibleMemoTab = (page: import('@playwright/test').Page) => page.locator('#tab-btn-memo:visible');
 
 test.describe('Knowhow Detail Page Navigation', () => {
   test('private詳細のURL直接アクセスからメモアイコン押下処理', async ({ page }) => {
     await page.goto('/my-knowhow/002-family-log/');
     await expect(page.locator('#knowhow-modal-container')).toBeVisible();
 
-    const infoPanel = page.locator('#info-panel');
-    await expect(infoPanel).toHaveClass(/translate-y-full/);
+    await expect(page.locator('#info-panel')).toHaveCount(0);
 
     const memoButton = visibleMemoButton(page);
     await expect(memoButton).toHaveCount(1);
     await memoButton.click();
 
     await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/memo\/?$/);
-    await expect(infoPanel).toHaveClass(/translate-y-0/);
+    await expect(page.locator('#info-panel')).toHaveClass(/translate-y-0/);
 
     await expect(page.locator('#tab-content-memo')).toBeVisible();
   });
@@ -45,7 +45,7 @@ test.describe('Knowhow Detail Page Navigation', () => {
     await openPrivateDetailFromList(page, '001-night-memo');
     await expect(page.locator('#knowhow-modal-container')).toBeVisible();
 
-    const memoButton = visibleMemoButton(page);
+    const memoButton = visibleMemoTab(page);
     await expect(memoButton).toHaveCount(1);
     await memoButton.click();
 

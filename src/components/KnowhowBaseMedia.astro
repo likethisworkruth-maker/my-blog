@@ -1,0 +1,43 @@
+---
+import { render } from 'astro:content';
+import ActionBar from './ActionBar.astro';
+import type { ChecklistTemplate } from '../scripts/checklist-state';
+
+interface Props {
+	knowhow: any;
+	checklist: ChecklistTemplate;
+	isPrivateDetail: boolean;
+}
+
+const { knowhow, checklist, isPrivateDetail } = Astro.props as Props;
+const { Content } = await render(knowhow);
+---
+
+<div class="relative flex h-full w-full shrink-0 flex-row items-end justify-center transition-all duration-300 lg:w-auto">
+	<div id="knowhow-media-area" class="relative h-full w-full shrink-0 overflow-hidden bg-[#1a1a1a] shadow-xl lg:w-[450px] lg:rounded-xl" transition:name="knowhow-media">
+		{knowhow.data.coverImage ? (
+			<img src={knowhow.data.coverImage} alt={knowhow.data.title} class="pointer-events-none h-full w-full object-contain" />
+		) : (
+			<div class="flex h-full w-full items-center justify-center">
+				<span class="material-symbols-outlined text-5xl text-gray-700">image</span>
+			</div>
+		)}
+
+		<div data-media-ui class="pointer-events-none absolute bottom-0 left-0 z-10 w-full bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 pb-8 lg:p-6 lg:pb-6">
+			<div class="pointer-events-auto cursor-pointer" data-panel-tab="desc">
+				<h1 class="mb-2 pr-16 text-lg font-bold leading-snug text-white drop-shadow-md">{knowhow.data.title}</h1>
+				<div id="caption-content" class="line-clamp-2 max-w-none pr-16 text-sm text-white/90 prose prose-invert prose-sm drop-shadow-md">
+					<Content />
+				</div>
+			</div>
+		</div>
+
+		<div data-media-ui class="absolute bottom-6 right-2 z-20 flex flex-col items-center gap-6 pb-4 lg:hidden">
+			<ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} privateDetail={isPrivateDetail} activeTab="base" />
+		</div>
+	</div>
+
+	<div data-media-ui class="relative z-20 hidden shrink-0 flex-col items-center justify-end pb-8 lg:ml-4 lg:flex">
+		<ActionBar slug={`knowhow/${knowhow.id}`} variant="reels" checklistId={checklist.checklistId} startOnLike={!isPrivateDetail} privateDetail={isPrivateDetail} activeTab="base" />
+	</div>
+</div>

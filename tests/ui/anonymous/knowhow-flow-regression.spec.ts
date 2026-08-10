@@ -419,6 +419,29 @@ test('H-006/H-007 一覧カードから正しい公開詳細へ遷移する', as
 	await expectNoPageErrors(errors);
 });
 
+test('H-028 マイリストはheadlineを進捗、gridを説明へ遷移させる', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+
+	await page.goto('/my-knowhow/?mode=headline_view');
+	await expectListState(page, 1);
+	await page.locator('[data-open-checklist="001-night-memo"]:visible').click();
+	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await expect(page.locator('#tab-content-progress')).toBeVisible();
+
+	await page.goto('/my-knowhow/?mode=grid_view');
+	await expectListState(page, 1);
+	await page.locator('[data-open-checklist="001-night-memo"]:visible').click();
+	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/?$/);
+	await expect(page.locator('#tab-content-desc')).toHaveCount(0);
+	await expect(page.locator('#tab-content-progress')).toHaveCount(0);
+	await expect(page.locator('#tab-content-memo')).toHaveCount(0);
+	await expect(page.locator('#knowhow-media-area')).toBeVisible();
+	await expectNoPageErrors(errors);
+});
+
 test('H-027 公開一覧の♡は開始と同時にいいねし、同じ開始を繰り返しても一度だけ送信する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	const addLikeRequests: string[] = [];
@@ -617,11 +640,12 @@ test('D-030 マイリストの絞り込み・並び替えと削除済み表示�
 	const container = page.locator('#knowhow-modal-container');
 	await expect(container).toHaveAttribute('data-private-state-loaded', 'true');
 	await expect(container).not.toHaveAttribute('data-prev');
-	await expect(container).toHaveAttribute('data-next', '/my-knowhow/001-night-memo/');
+	await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/progress\/?$/);
+	await expect(container).toHaveAttribute('data-next', '/my-knowhow/001-night-memo/progress/');
 	await container.dispatchEvent('wheel', { deltaY: 120 });
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
-	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-prev', '/my-knowhow/002-family-log/');
+	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-prev', '/my-knowhow/002-family-log/progress/');
 	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-next');
 	await expectNoPageErrors(errors);
 });
@@ -641,7 +665,7 @@ for (const item of ids) {
 
 	test(`D-007/D-008 ${item.id} public detailでは説明だけが公開される`, async ({ page }) => {
 		const errors = collectPageErrors(page);
-		await page.goto(`/knowhow/${item.id}/`);
+		await page.goto(`/knowhow/${item.id}/description/`);
 		await expect(page.locator('#tab-btn-desc')).toHaveAttribute('aria-selected', 'true');
 		await expect(page.locator('#tab-content-desc')).toContainText(item.title);
 		await expect(page.locator('[data-start-checklist]:visible')).toHaveCount(1);
@@ -655,7 +679,32 @@ for (const item of ids) {
 			await page.goto(`/my-knowhow/${item.id}/${tab}/`);
 			await expect(page.locator('#knowhow-modal-container')).toBeVisible();
 			await expectTab(page, tab);
+			await expect(page.locator('#knowhow-media-area')).toHaveCount(0);
+			await expect(page.locator('#knowhow-modal-container img')).toHaveCount(0);
 			await expect(page.locator('[data-private-tab]:visible')).toHaveCount(2);
+		}
+		await expectNoPageErrors(errors);
+	});
+
+	test(`D-031 ${item.id} 説明のroot/descriptionディープリンクとHTML分離`, async ({ page }) => {
+		const errors = collectPageErrors(page);
+		for (const route of ['', 'description/'] as const) {
+			await page.goto(`/my-knowhow/${item.id}/${route}`);
+			if (route === '') {
+				await expect(page.locator('#tab-content-desc')).toHaveCount(0);
+				await expect(page.locator('#knowhow-media-area')).toHaveCount(1);
+				await expect(page.locator('#knowhow-modal-container img')).toHaveCount(1);
+			} else {
+				await expect(page.locator('#tab-content-desc')).toBeVisible();
+				await expect(page.locator('#knowhow-media-area')).toHaveCount(0);
+				await expect(page.locator('#knowhow-modal-container img')).toHaveCount(0);
+			}
+			await expect(page.locator('#tab-content-progress')).toHaveCount(0);
+			await expect(page.locator('#tab-content-memo')).toHaveCount(0);
+			if (route === 'description/') {
+				await expect(page.locator('#tab-btn-desc')).toHaveAttribute('aria-selected', 'true');
+				await expect(page.locator('#tab-btn-progress')).toHaveAttribute('href', `/my-knowhow/${item.id}/progress/`);
+			}
 		}
 		await expectNoPageErrors(errors);
 	});
@@ -769,7 +818,7 @@ test('D-023 private list→detail→一覧へ戻るでreturn-urlを使う', asyn
 	await openPrivateDetailFromList(page, '001-night-memo');
 	const isMobileViewport = await page.evaluate(() => window.innerWidth < 1024);
 	if (isMobileViewport) {
-		const mobileBackButton = page.locator('button[aria-label="チェックリスト一覧へ戻る"]');
+		const mobileBackButton = page.locator('button[aria-label="チェックリスト一覧へ戻る"]:visible');
 		await expect(mobileBackButton).toBeVisible();
 		await mobileBackButton.click();
 	} else {
@@ -801,6 +850,34 @@ test('K-001/K-004 private progressのtemplateと6項目が一致する', async (
 	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
 	await expect.poll(() => page.locator('#tab-content-progress [data-checklist-item-id]').count(), { timeout: 8000 }).toBe(6);
 	await expect(page.locator('#tab-content-progress [data-checklist-item-id] input[type="checkbox"]')).toHaveCount(6);
+	const rows = page.locator('#tab-content-progress [data-checklist-item-id]');
+	const rowPresentation = await rows.first().evaluate((row) => {
+		const rowStyle = getComputedStyle(row);
+		const lineStyle = getComputedStyle(row.firstElementChild as Element);
+		const checkboxStyle = getComputedStyle(row.querySelector('input[type="checkbox"]') as Element);
+		return {
+			backgroundColor: rowStyle.backgroundColor,
+			borderBottomWidth: rowStyle.borderBottomWidth,
+			borderRadius: rowStyle.borderRadius,
+			checkboxAppearance: checkboxStyle.appearance,
+			checkboxBorderRadius: checkboxStyle.borderRadius,
+			lineDisplay: lineStyle.display,
+		};
+	});
+	expect(rowPresentation).toEqual({
+		backgroundColor: 'rgba(0, 0, 0, 0)',
+		borderBottomWidth: '1px',
+		borderRadius: '0px',
+		checkboxAppearance: 'none',
+		checkboxBorderRadius: '9999px',
+		lineDisplay: 'flex',
+	});
+	const firstRowGap = await rows.evaluateAll((elements) => {
+		const first = elements[0]?.getBoundingClientRect();
+		const second = elements[1]?.getBoundingClientRect();
+		return first && second ? second.top - first.bottom : null;
+	});
+	expect(firstRowGap).toBe(0);
 	await expectNoPageErrors(errors);
 });
 
@@ -849,14 +926,15 @@ test('K-007/K-008 progress編集→保存→reloadで項目文言を維持する
 	await page.goto('/');
 	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
 	await page.goto('/my-knowhow/001-night-memo/progress/');
-	await expect(page.locator('[data-edit-checklist]:visible')).toBeVisible();
-	await page.locator('[data-edit-checklist]:visible').click();
 	const editor = page.locator('[data-item-editor]').first();
+	await expect(editor).toHaveAttribute('contenteditable', 'true');
 	await editor.fill('E2Eで変更した項目');
-	await page.locator('[data-save-edit]:visible').click();
-	await expect(page.locator('[data-item-editor]')).toHaveCount(0);
+	await expect.poll(async () => {
+		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; items: Array<{ label: string }> }>;
+		return runs.find((run) => run.checklistId === 'night-memo')?.items[0]?.label;
+	}, { timeout: 8000 }).toBe('E2Eで変更した項目');
 	await page.reload();
-	await expect(page.locator('#tab-content-progress')).toContainText('E2Eで変更した項目');
+	await expect(page.locator('[data-item-editor]').first()).toContainText('E2Eで変更した項目');
 	await expectNoPageErrors(errors);
 });
 
@@ -865,12 +943,9 @@ test('K-011 progress編集→custom item追加→保存で追加項目を表示�
 	await page.goto('/');
 	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
 	await page.goto('/my-knowhow/001-night-memo/progress/');
-	await page.locator('[data-edit-checklist]:visible').click();
-	await page.locator('[data-add-item] input[name="label"]').fill('E2E追加項目');
-	await page.locator('[data-add-item] button[type="submit"]').click();
+	await page.locator('[data-add-item-editor]').fill('E2E追加項目');
+	await page.locator('[data-add-item-button]').click();
 	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
-	await page.locator('[data-save-edit]:visible').click();
-	await expect(page.locator('[data-item-editor]')).toHaveCount(0);
-	await expect(page.locator('#tab-content-progress')).toContainText('E2E追加項目');
+	await expect(page.locator('[data-item-editor]').last()).toContainText('E2E追加項目');
 	await expectNoPageErrors(errors);
 });

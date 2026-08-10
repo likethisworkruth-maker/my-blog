@@ -1,26 +1,24 @@
 ---
 import { getCollection } from 'astro:content';
-import KnowhowDetailPage from "../../../components/KnowhowDetailPage.astro";
+import KnowhowDetailPage from '../../../components/KnowhowDetailPage.astro';
 
 export async function getStaticPaths() {
 	const knowhow = await getCollection('knowhow');
 	const navigationItems = knowhow
 		.map((entry) => ({ id: entry.id, checklistId: entry.data.checklistId, timelineOrder: entry.data.timelineOrder }))
 		.sort((left, right) => left.timelineOrder - right.timelineOrder);
-	const privateTabs = ['description', 'progress', 'memo'] as const;
-	return knowhow.flatMap((item, index) => privateTabs.map((tab) => ({
-		params: { id: item.id, tab },
+	return knowhow.map((item, index) => ({
+		params: { id: item.id },
 		props: {
 			knowhow: item,
 			prev: knowhow[index - 1] || null,
 			next: knowhow[index + 1] || null,
 			navigationItems,
 		},
-	})));
+	}));
 }
 
 const { knowhow, prev, next, navigationItems = [] } = Astro.props;
-const { tab } = Astro.params;
 ---
 
-<KnowhowDetailPage knowhow={knowhow} prev={prev} next={next} navigationItems={navigationItems} initialTab={tab} />
+<KnowhowDetailPage knowhow={knowhow} prev={prev} next={next} navigationItems={navigationItems} detailTab="memo" />

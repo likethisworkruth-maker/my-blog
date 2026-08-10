@@ -156,7 +156,7 @@ export async function expectListState(page: Page, expectedCount: number) {
 export async function openPrivateDetailFromList(page: Page, id: string) {
 	const pageLoadPromise = page.evaluate(() => new Promise<void>((resolve) => document.addEventListener('astro:page-load', () => resolve(), { once: true })));
 	await page.locator(`[data-open-checklist="${id}"]:visible`).click();
-	await expect(page).toHaveURL(new RegExp(`/my-knowhow/${id}/?$`));
+	await expect(page).toHaveURL(new RegExp(`/my-knowhow/${id}/progress/?$`));
 	await pageLoadPromise;
 	await expect(page.locator('#knowhow-modal-container')).toBeVisible();
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-reels-initialized', 'true');
@@ -164,5 +164,5 @@ export async function openPrivateDetailFromList(page: Page, id: string) {
 }
 
 export function visiblePrivateAction(page: Page, label: string) {
-	return page.locator(`button[aria-label="${label}"]:visible`);
+	return page.locator(`button[aria-label="${label}"]:visible, a[aria-label="${label}"]:visible`);
 }

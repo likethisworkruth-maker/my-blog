@@ -371,7 +371,9 @@ const initialDisplayMode = getInitialDisplayMode(
 				const isPrivateListItem = currentListView === 'my'
 					&& (Boolean(checklistId && startedChecklistIds.has(checklistId)) || isDeletedOnly);
 				const destination = isPrivateListItem
-					? `/my-knowhow/${id}/`
+					? currentDisplayMode === 'headline_view'
+						? `/my-knowhow/${id}/progress/`
+						: `/my-knowhow/${id}/`
 					: `/knowhow/${id}/`;
 				await navigate(destination);
 			} finally {
