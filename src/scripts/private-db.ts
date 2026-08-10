@@ -1,6 +1,10 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import {
 	CHECKLIST_STORAGE_KEY,
+	deleteChecklistRunsByChecklistId,
+	isChecklistRunCompleted,
+	purgeDeletedChecklistRuns as purgeDeletedChecklistRunsFromStorage,
+	syncChecklistRunCompletion,
 	type ChecklistOutcome,
 	type ChecklistRun,
 	type ChecklistRunItem,
@@ -141,13 +145,14 @@ export function normalizeChecklistRun(value: unknown): ChecklistRun | null {
 		}];
 	});
 
-	return {
+	const normalizedRun: ChecklistRun = {
 		runId: candidate.runId,
 		checklistId: candidate.checklistId,
 		templateVersion: candidate.templateVersion as number,
 		status: candidate.status === 'prepared' || candidate.status === 'review_pending' || candidate.status === 'completed'
 			? candidate.status
 			: 'in_progress',
+		isCompleted: false,
 		items,
 		note: typeof candidate.note === 'string' ? candidate.note : '',
 		createdAt,
@@ -159,6 +164,8 @@ export function normalizeChecklistRun(value: unknown): ChecklistRun | null {
 		updatedAt: runUpdatedAt,
 		revision: Number.isInteger(candidate.revision) && Number(candidate.revision) >= 0 ? Number(candidate.revision) : 0,
 	};
+	normalizedRun.isCompleted = isChecklistRunCompleted(normalizedRun);
+	return normalizedRun;
 }
 
 async function readSetting<T>(key: string): Promise<T | undefined> {
@@ -224,12 +231,31 @@ export async function migrateLegacyChecklistData(storage?: Storage) {
 	await transaction.done;
 }
 
+async function purgeLegacySoftDeletedRuns(storage?: Storage) {
+	const database = await getDatabase();
+	const deletedRuns = (await database.getAll('runs')).filter((run) => Boolean(run.deletedAt));
+	if (deletedRuns.length > 0) {
+		const transaction = database.transaction(['runs', 'backupQueue', 'settings'], 'readwrite');
+		for (const run of deletedRuns) {
+			await transaction.objectStore('runs').delete(run.runId);
+			await transaction.objectStore('backupQueue').delete(run.runId);
+		}
+		const revisionSetting = await transaction.objectStore('settings').get(LOCAL_REVISION_KEY);
+		const localRevision = (typeof revisionSetting?.value === 'number' ? revisionSetting.value : 0) + 1;
+		await transaction.objectStore('settings').put({ key: LOCAL_REVISION_KEY, value: localRevision });
+		await transaction.done;
+	}
+	purgeDeletedChecklistRunsFromStorage(storage);
+}
+
 export function initializePrivateDb() {
 	if (!initializationPromise) {
-		initializationPromise = migrateLegacyChecklistData().catch((error) => {
+		initializationPromise = migrateLegacyChecklistData()
+			.then(() => purgeLegacySoftDeletedRuns())
+			.catch((error) => {
 			initializationPromise = undefined;
 			throw error;
-		});
+			});
 	}
 	return initializationPromise;
 }
@@ -259,21 +285,28 @@ export async function getPrivateChecklistRunsByChecklistId(checklistId: string):
 
 export async function getActivePrivateChecklistRun(checklistId: string): Promise<ChecklistRun | null> {
 	const runs = await getPrivateChecklistRunsByChecklistId(checklistId);
-	return runs.find((run) => !run.deletedAt && run.status !== 'completed')
-		?? runs.find((run) => !run.deletedAt)
+	return runs.find((run) => run.status !== 'completed')
+		?? runs[0]
 		?? null;
 }
 export async function savePrivateChecklistRun(run: ChecklistRun, options?: { queueBackup?: boolean }) {
 	await initializePrivateDb();
 	const database = await getDatabase();
 	const now = new Date().toISOString();
+	syncChecklistRunCompletion(run);
 	const normalized = normalizeChecklistRun({
 		...run,
+		deletedAt: undefined,
 		updatedAt: now,
 		revision: Math.max(0, run.revision ?? 0) + 1,
 	});
 	if (!normalized) throw new Error('チェックリストの保存データが不正です。');
-	Object.assign(run, normalized);
+	// UIのイベントハンドラが参照しているitemを保つため、run/items全体は差し替えない。
+	// 保存処理の途中で差し替えると、直後のチェック操作が古いitemへ書き込まれて失われる。
+	run.isCompleted = normalized.isCompleted;
+	run.updatedAt = normalized.updatedAt;
+	run.revision = normalized.revision;
+	run.deletedAt = undefined;
 	const transaction = database.transaction(['runs', 'backupQueue', 'settings'], 'readwrite');
 	await transaction.objectStore('runs').put(normalized);
 	const revisionSetting = await transaction.objectStore('settings').get(LOCAL_REVISION_KEY);
@@ -304,7 +337,7 @@ export async function importPrivateChecklistRuns(runs: ChecklistRun[], options?:
 	}
 	for (const value of runs) {
 		const run = normalizeChecklistRun(value);
-		if (!run) continue;
+		if (!run || run.deletedAt) continue;
 		const existing = await transaction.objectStore('runs').get(run.runId);
 		if (
 			existing
@@ -335,42 +368,30 @@ export async function deletePrivateChecklistRun(runId: string) {
 	const revisionSetting = await transaction.objectStore('settings').get(LOCAL_REVISION_KEY);
 	const localRevision = typeof revisionSetting?.value === 'number' ? revisionSetting.value + 1 : 1;
 	await transaction.objectStore('settings').put({ key: LOCAL_REVISION_KEY, value: localRevision });
-	await transaction.objectStore('backupQueue').put({
-		runId,
-		revision: localRevision,
-		updatedAt: new Date().toISOString(),
-	});
+	await transaction.objectStore('backupQueue').delete(runId);
 	await transaction.done;
 	notifyChecklistChange(run?.checklistId);
 }
 
 export async function deletePrivateChecklistRunsByChecklistId(checklistId: string) {
 	await initializePrivateDb();
-	const runs = (await getPrivateChecklistRunsByChecklistId(checklistId)).filter((run) => !run.deletedAt);
-	if (runs.length === 0) return 0;
+	const runs = await getPrivateChecklistRunsByChecklistId(checklistId);
+	if (runs.length === 0) {
+		if (typeof window !== 'undefined') deleteChecklistRunsByChecklistId(checklistId, window.localStorage);
+		return 0;
+	}
 
 	const database = await getDatabase();
 	const transaction = database.transaction(['runs', 'backupQueue', 'settings'], 'readwrite');
 	const revisionSetting = await transaction.objectStore('settings').get(LOCAL_REVISION_KEY);
 	const localRevision = (typeof revisionSetting?.value === 'number' ? revisionSetting.value : 0) + 1;
-	const updatedAt = new Date().toISOString();
 	for (const run of runs) {
-		const deletedRun = normalizeChecklistRun({
-			...run,
-			deletedAt: updatedAt,
-			updatedAt,
-			revision: run.revision + 1,
-		});
-		if (!deletedRun) continue;
-		await transaction.objectStore('runs').put(deletedRun);
-		await transaction.objectStore('backupQueue').put({
-			runId: deletedRun.runId,
-			revision: deletedRun.revision,
-			updatedAt,
-		});
+		await transaction.objectStore('runs').delete(run.runId);
+		await transaction.objectStore('backupQueue').delete(run.runId);
 	}
 	await transaction.objectStore('settings').put({ key: LOCAL_REVISION_KEY, value: localRevision });
 	await transaction.done;
+	if (typeof window !== 'undefined') deleteChecklistRunsByChecklistId(checklistId, window.localStorage);
 	notifyChecklistChange(checklistId);
 	return runs.length;
 }

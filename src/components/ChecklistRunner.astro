@@ -21,17 +21,12 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		<button type="button" data-create-run class="mt-5 rounded-xl bg-mint-500 px-6 py-3 text-sm font-bold text-white hover:bg-mint-600">このリストを始める</button>
 	</div>
 
-	<div data-checklist-active class="hidden py-2">
+	<div data-checklist-active class="hidden min-h-full flex flex-col py-1">
 		<p data-review-guidance class="mx-4 mb-3 hidden rounded-xl border border-mint-300/20 bg-mint-300/10 p-3 text-xs leading-5 text-mint-100">
 			実際に使った結果を項目ごとに選んでください。回答はこの端末に保存されます。
 		</p>
-		<ul data-checklist-items class="border-t border-white/10"></ul>
-		<div data-add-item-row class="flex min-h-14 items-center gap-3 border-b border-white/10 px-4">
-			<button type="button" data-add-item-button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-mint-500 text-[#262626] transition-colors hover:bg-mint-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint-500" aria-label="項目を追加">
-				<span class="material-symbols-outlined text-xl" aria-hidden="true">add</span>
-			</button>
-			<div data-add-item-editor contenteditable="true" role="textbox" aria-label="項目を追加" data-placeholder="新規リマインダー" class="min-h-14 min-w-0 flex-1 py-4 text-[0.95rem] leading-6 text-white outline-none"></div>
-		</div>
+		<ul data-checklist-items></ul>
+		<button type="button" data-add-item-area class="min-h-24 w-full flex-1 cursor-text bg-transparent text-left" aria-label="新しい項目を追加"></button>
 	</div>
 
 	<p data-run-message class="mx-4 mt-3 min-h-5 text-center text-sm text-red-300" aria-live="assertive"></p>
@@ -44,6 +39,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		type ChecklistTemplate,
 		createChecklistRun,
 		createUuid,
+		syncChecklistRunCompletion,
 	} from '../scripts/checklist-state';
 	import {
 		getActivePrivateChecklistRun,
@@ -68,9 +64,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		const missing = root.querySelector<HTMLElement>('[data-checklist-missing]');
 		const active = root.querySelector<HTMLElement>('[data-checklist-active]');
 		const itemsContainer = root.querySelector<HTMLElement>('[data-checklist-items]');
-		const addItemRow = root.querySelector<HTMLElement>('[data-add-item-row]');
-		const addItemEditor = root.querySelector<HTMLElement>('[data-add-item-editor]');
-		const addItemButton = root.querySelector<HTMLButtonElement>('[data-add-item-button]');
+		const addItemArea = root.querySelector<HTMLButtonElement>('[data-add-item-area]');
 		const reviewGuidance = root.querySelector<HTMLElement>('[data-review-guidance]');
 		const runMessage = root.querySelector<HTMLElement>('[data-run-message]');
 		let run: ChecklistRun | null = null;
@@ -130,6 +124,71 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			text?.classList.toggle('text-gray-500', item.checked);
 			text?.classList.toggle('line-through', item.checked);
 		};
+		const focusItemEditor = (itemId: string, placeCaretAtEnd = true) => {
+			requestAnimationFrame(() => {
+				const editor = Array.from(root.querySelectorAll<HTMLElement>('[data-item-editor]'))
+					.find((candidate) => candidate.dataset.itemEditor === itemId);
+				if (!editor) return;
+				editor.focus();
+				if (!placeCaretAtEnd) return;
+				const selection = window.getSelection();
+				const range = document.createRange();
+				range.selectNodeContents(editor);
+				range.collapse(false);
+				selection?.removeAllRanges();
+				selection?.addRange(range);
+			});
+		};
+		const normalizeItemOrder = () => {
+			if (!run) return;
+			run.items.sort((a, b) => a.order - b.order);
+			run.items.forEach((item, index) => { item.order = index; });
+		};
+		const createBlankItem = (afterItemId?: string) => {
+			if (!run || run.status === 'review_pending' || run.status === 'completed') return;
+			const ordered = [...run.items].sort((a, b) => a.order - b.order);
+			const afterIndex = afterItemId
+				? ordered.findIndex((item) => item.id === afterItemId)
+				: ordered.length - 1;
+			const now = new Date().toISOString();
+			const item: ChecklistRunItem = {
+				id: createUuid(),
+				itemKey: `custom-${createUuid()}`,
+				groupId: 'custom',
+				groupLabel: '自分用',
+				label: '',
+				origin: 'custom',
+				phase: 'prepare',
+				order: Math.max(0, afterIndex + 1),
+				checked: false,
+				hidden: false,
+				note: '',
+				updatedAt: now,
+			};
+			ordered.splice(Math.max(0, afterIndex + 1), 0, item);
+			ordered.forEach((orderedItem, index) => { orderedItem.order = index; });
+			run.items = ordered;
+			markEdited(item);
+			syncChecklistRunCompletion(run);
+			render();
+			focusItemEditor(item.id);
+		};
+		const removeItem = async (itemId: string, focusDirection: 'previous' | 'next' = 'previous') => {
+			if (!run) return;
+			const visible = run.items.filter((item) => !item.hidden).sort((a, b) => a.order - b.order);
+			const visibleIndex = visible.findIndex((item) => item.id === itemId);
+			if (visibleIndex < 0) return;
+			const focusTarget = focusDirection === 'next'
+				? visible[visibleIndex + 1] ?? visible[visibleIndex - 1]
+				: visible[visibleIndex - 1] ?? visible[visibleIndex + 1];
+			run.items = run.items.filter((item) => item.id !== itemId);
+			normalizeItemOrder();
+			markEdited();
+			syncChecklistRunCompletion(run);
+			render();
+			if (focusTarget) focusItemEditor(focusTarget.id);
+			await persistImmediately();
+		};
 
 		const createItemEditor = (item: ChecklistRunItem, row: HTMLElement) => {
 			const editor = document.createElement('div');
@@ -138,7 +197,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			editor.dataset.itemEditor = item.id;
 			editor.dataset.placeholder = '項目名を入力';
 			editor.setAttribute('aria-label', `${item.label || '項目'}を編集`);
-			editor.className = 'min-w-0 flex-1 py-4 text-[0.95rem] font-normal leading-6 text-white outline-none';
+			editor.className = 'min-h-10 min-w-0 flex-1 py-2 text-[0.95rem] font-normal leading-6 text-white outline-none';
 			editor.textContent = item.label;
 			editor.addEventListener('input', () => {
 				item.label = readSingleLine(editor);
@@ -147,15 +206,31 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 				schedulePersist();
 			});
 			editor.addEventListener('keydown', (event) => {
-				if (event.key === 'Enter') event.preventDefault();
+				const label = readSingleLine(editor).trim();
+				if (event.key === 'Enter') {
+					event.preventDefault();
+					if (label) createBlankItem(item.id);
+					return;
+				}
+				if ((event.key === 'Backspace' || event.key === 'Delete') && !label) {
+					event.preventDefault();
+					void removeItem(item.id, event.key === 'Delete' ? 'next' : 'previous');
+				}
 			});
-			editor.addEventListener('blur', () => { void persistImmediately(); });
+			editor.addEventListener('blur', () => {
+				item.label = readSingleLine(editor);
+				if (!item.label.trim()) {
+					void removeItem(item.id);
+					return;
+				}
+				void persistImmediately();
+			});
 			return editor;
 		};
 
 		const createReviewSelect = (item: ChecklistRunItem) => {
 			const review = document.createElement('label');
-			review.className = 'mt-2 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs text-gray-300';
+			review.className = 'flex items-center justify-between gap-3 pb-2 pl-8 text-xs text-gray-300';
 			const prompt = document.createElement('span');
 			prompt.textContent = '実際の結果';
 			const select = document.createElement('select');
@@ -188,19 +263,20 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		const renderItem = (item: ChecklistRunItem) => {
 			const row = document.createElement('li');
 			row.dataset.checklistItemId = item.id;
-			row.className = 'checklist-item-row border-b border-white/10 bg-transparent px-4';
+			row.className = 'checklist-item-row bg-transparent px-4';
 			const line = document.createElement('div');
-			line.className = 'flex min-h-14 min-w-0 items-start gap-3';
+			line.className = 'flex min-h-10 min-w-0 items-start gap-2.5';
 			const checkbox = document.createElement('input');
 			checkbox.type = 'checkbox';
 			checkbox.checked = item.checked;
 			checkbox.disabled = run?.status === 'completed';
-			checkbox.className = 'reminder-checkbox mt-4 h-6 w-6 shrink-0';
+			checkbox.className = 'reminder-checkbox mt-2.5 h-5 w-5 shrink-0';
 			checkbox.setAttribute('aria-label', `${item.label}を完了にする`);
 			checkbox.addEventListener('change', () => {
 				item.checked = checkbox.checked;
 				item.checkedAt = item.checked ? new Date().toISOString() : undefined;
 				markEdited(item);
+				if (run) syncChecklistRunCompletion(run);
 				updateCheckedStyle(row, item);
 				void persist();
 			});
@@ -210,7 +286,7 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 				: createItemEditor(item, row);
 			if (reviewLocked) {
 				text.dataset.itemLabel = 'true';
-				text.className = 'min-w-0 flex-1 py-4 text-[0.95rem] font-normal leading-6 text-white';
+				text.className = 'min-h-10 min-w-0 flex-1 py-2 text-[0.95rem] font-normal leading-6 text-white';
 				text.textContent = item.label;
 			}
 			line.append(checkbox, text);
@@ -218,31 +294,6 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			updateCheckedStyle(row, item);
 			if (run?.status === 'review_pending' || run?.status === 'completed') row.append(createReviewSelect(item));
 			return row;
-		};
-
-		const addItem = async () => {
-			if (!run || !addItemEditor || run.status === 'review_pending' || run.status === 'completed') return;
-			const label = readSingleLine(addItemEditor).trim();
-			if (!label) return;
-			const now = new Date().toISOString();
-			run.items.push({
-				id: createUuid(),
-				itemKey: `custom-${createUuid()}`,
-				groupId: 'custom',
-				groupLabel: '自分用',
-				label,
-				origin: 'custom',
-				phase: 'prepare',
-				order: run.items.length,
-				checked: false,
-				hidden: false,
-				note: '',
-				updatedAt: now,
-			});
-			addItemEditor.textContent = '';
-			markEdited();
-			render();
-			await persistImmediately();
 		};
 
 		const render = () => {
@@ -253,19 +304,11 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 			const visible = run.items.filter((item) => !item.hidden).sort((a, b) => a.order - b.order);
 			itemsContainer?.replaceChildren(...visible.map(renderItem));
 			const reviewLocked = run.status === 'review_pending' || run.status === 'completed';
-			addItemRow?.classList.toggle('hidden', reviewLocked);
+			addItemArea?.classList.toggle('hidden', reviewLocked);
 			reviewGuidance?.classList.toggle('hidden', run.status !== 'review_pending');
 		};
 
-		addItemButton?.addEventListener('click', () => { void addItem(); });
-		addItemEditor?.addEventListener('keydown', (event) => {
-			if (event.key !== 'Enter') return;
-			event.preventDefault();
-			void addItem();
-		});
-		addItemEditor?.addEventListener('blur', () => {
-			if (readSingleLine(addItemEditor).trim()) void addItem();
-		});
+		addItemArea?.addEventListener('click', () => { createBlankItem(); });
 		window.addEventListener('checklist-edit-cancel', cancelPendingSave);
 		document.addEventListener('astro:before-swap', cancelPendingSave, { once: true });
 		window.addEventListener('pagehide', cancelPendingSave, { once: true });
@@ -305,15 +348,10 @@ const templateJson = JSON.stringify(checklist).replace(/</g, '\\u003c');
 		display: none;
 	}
 
-	.checklist-runner [data-item-editor]:empty::before,
-	.checklist-runner [data-add-item-editor]:empty::before {
+	.checklist-runner [data-item-editor]:empty::before {
 		content: attr(data-placeholder);
 		color: rgb(148 163 184);
 		pointer-events: none;
-	}
-
-	.checklist-runner .checklist-item-row {
-		transition: border-color 140ms ease;
 	}
 
 	.checklist-runner .reminder-checkbox {

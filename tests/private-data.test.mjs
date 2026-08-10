@@ -116,17 +116,17 @@ test('競合した同一runを両方残し、片方を別runとして保持す�
 	assert.deepEqual(new Set(runs.map((run) => run.note)), new Set(['', 'Drive側で更新したメモ']));
 });
 
-test('run削除もrevisionを進めてDrive反映待ちにする', async () => {
+test('run削除は本体とバックアップ待ちデータを完全削除する', async () => {
 	await clearPrivateChecklistData();
 	const run = createChecklistRun(template);
 	await savePrivateChecklistRun(run);
 	const before = await getPrivateDataRevision();
 	await deletePrivateChecklistRun(run.runId);
 	assert.equal(await getPrivateDataRevision(), before + 1);
-	assert.equal((await getBackupQueue()).some((entry) => entry.runId === run.runId), true);
+	assert.equal((await getBackupQueue()).some((entry) => entry.runId === run.runId), false);
 });
 
-test('マイリストからの削除は履歴を削除済みとして残し、通常一覧から除外する', async () => {
+test('マイリストからの削除は対象履歴とバックアップ待ちデータを完全削除する', async () => {
 	await clearPrivateChecklistData();
 	const first = createChecklistRun(template);
 	const second = duplicateChecklistRun(first);
@@ -137,14 +137,38 @@ test('マイリストからの削除は履歴を削除済みとして残し、�
 	const before = await getPrivateDataRevision();
 	assert.equal(await deletePrivateChecklistRunsByChecklistId(template.checklistId), 2);
 	const runs = await getPrivateChecklistRuns();
-	assert.equal(runs.length, 3);
-	assert.equal(runs.filter((run) => run.checklistId === template.checklistId && run.deletedAt).length, 2);
+	assert.equal(runs.length, 1);
+	assert.equal(runs.filter((run) => run.checklistId === template.checklistId).length, 0);
 	assert.equal(await getActivePrivateChecklistRun(template.checklistId), null);
 	assert.equal((await getActivePrivateChecklistRun('other-checklist'))?.checklistId, 'other-checklist');
 	assert.equal(await getPrivateDataRevision(), before + 1);
 	const queued = await getBackupQueue();
-	assert.equal(queued.some((entry) => entry.runId === first.runId), true);
-	assert.equal(queued.some((entry) => entry.runId === second.runId), true);
+	assert.equal(queued.some((entry) => entry.runId === first.runId), false);
+	assert.equal(queued.some((entry) => entry.runId === second.runId), false);
+});
+
+test('保存時にチェック状態から完了フラグを再計算する', async () => {
+	await clearPrivateChecklistData();
+	const run = createChecklistRun(template);
+	run.items[0].checked = true;
+	await savePrivateChecklistRun(run);
+	assert.equal((await getPrivateChecklistRuns())[0].isCompleted, true);
+
+	run.items.push({
+		...run.items[0],
+		id: '12345678-1234-4123-8123-123456789012',
+		itemKey: 'custom-item',
+		label: '追加項目',
+		origin: 'custom',
+		order: 1,
+		checked: false,
+	});
+	await savePrivateChecklistRun(run);
+	assert.equal((await getPrivateChecklistRuns())[0].isCompleted, false);
+
+	run.items.pop();
+	await savePrivateChecklistRun(run);
+	assert.equal((await getPrivateChecklistRuns())[0].isCompleted, true);
 });
 
 test('端末データの削除でrunとrevisionを消す', async () => {

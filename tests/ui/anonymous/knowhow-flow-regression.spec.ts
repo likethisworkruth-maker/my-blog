@@ -5,7 +5,7 @@ import {
 	collectPageErrors,
 	expectListState,
 	expectNoPageErrors,
-	makeDeletedRegressionRun,
+	makeCompletedRegressionRun,
 	makeRegressionRun,
 	openPrivateDetailFromList,
 	readPrivateRuns,
@@ -439,6 +439,9 @@ test('H-028 マイリストはheadlineを進捗、gridを説明へ遷移させ�
 	await expect(page.locator('#tab-content-progress')).toHaveCount(0);
 	await expect(page.locator('#tab-content-memo')).toHaveCount(0);
 	await expect(page.locator('#knowhow-media-area')).toBeVisible();
+	if (await page.evaluate(() => window.innerWidth < 1024)) {
+		await expect(page.locator('button[aria-label="チェックリスト一覧へ戻る"]:visible')).toHaveCount(1);
+	}
 	await expectNoPageErrors(errors);
 });
 
@@ -455,8 +458,8 @@ test('H-027 公開一覧の♡は開始と同時にいいねし、同じ開始�
 	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
 	await expectTab(page, 'progress');
 	expect(addLikeRequests).toHaveLength(1);
-	let runs = await readPrivateRuns(page) as Array<{ checklistId: string; deletedAt?: string }>;
-	expect(runs.filter((run) => run.checklistId === 'night-memo' && !run.deletedAt)).toHaveLength(1);
+	let runs = await readPrivateRuns(page) as Array<{ checklistId: string }>;
+	expect(runs.filter((run) => run.checklistId === 'night-memo')).toHaveLength(1);
 
 	await page.goto('/knowhow/001-night-memo/');
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
@@ -467,8 +470,35 @@ test('H-027 公開一覧の♡は開始と同時にいいねし、同じ開始�
 	});
 	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
 	expect(addLikeRequests).toHaveLength(1);
-	runs = await readPrivateRuns(page) as Array<{ checklistId: string; deletedAt?: string }>;
-	expect(runs.filter((run) => run.checklistId === 'night-memo' && !run.deletedAt)).toHaveLength(1);
+	runs = await readPrivateRuns(page) as Array<{ checklistId: string }>;
+	expect(runs.filter((run) => run.checklistId === 'night-memo')).toHaveLength(1);
+	await expectNoPageErrors(errors);
+});
+
+test('H-031 headline_viewは開始済みチェックリストのハートを赤く表示する', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await page.goto('/?mode=headline_view');
+	const startedCard = page.locator('.knowhow-card[data-checklist-id="night-memo"]');
+	const notStartedCard = page.locator('.knowhow-card[data-checklist-id="family-log"]');
+	await expect(startedCard).toHaveAttribute('data-started', 'true');
+	await expect(notStartedCard).toHaveAttribute('data-started', 'false');
+	const startedHeart = startedCard.locator('.knowhow-list-view .like-btn .icon-filled');
+	await expect(startedHeart).toHaveCSS('opacity', '1');
+	const heartColors = await startedHeart.evaluate((element) => {
+		const probe = document.createElement('span');
+		probe.style.color = 'var(--color-red-500)';
+		document.body.appendChild(probe);
+		const colors = {
+			actual: getComputedStyle(element).color,
+			expected: getComputedStyle(probe).color,
+		};
+		probe.remove();
+		return colors;
+	});
+	expect(heartColors.actual).toBe(heartColors.expected);
 	await expectNoPageErrors(errors);
 });
 
@@ -487,13 +517,14 @@ test('D-028 公開詳細は既存マイリストを検出して始める導線�
 	await expectNoPageErrors(errors);
 });
 
-test('M-001 マイリストの左スワイプ→削除→削除済み絞り込みを一連で完走する', async ({ page }) => {
+test('M-001 マイリストの左スワイプ削除はrunと関連セッションを完全削除する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
 	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await expectListState(page, 1);
+	await page.evaluate(() => sessionStorage.setItem('knowhow:stale-test', 'night-memo'));
 	await swipeMyListRow(page, 'night-memo');
 	const row = page.locator('.knowhow-card[data-checklist-id="night-memo"] [data-my-list-swipe-row]');
 	await expect(row).toHaveAttribute('data-swipe-open', 'true');
@@ -501,17 +532,12 @@ test('M-001 マイリストの左スワイプ→削除→削除済み絞り込�
 	page.once('dialog', (dialog) => void dialog.accept());
 	await row.locator('[data-my-list-delete]').click();
 	await expectListState(page, 0);
-	const deletedRun = await readPrivateRuns(page) as Array<{ checklistId: string; deletedAt?: string }>;
-	expect(deletedRun.filter((run) => run.checklistId === 'night-memo' && run.deletedAt)).toHaveLength(1);
-
+	const remainingRuns = await readPrivateRuns(page) as Array<{ checklistId: string }>;
+	expect(remainingRuns.filter((run) => run.checklistId === 'night-memo')).toHaveLength(0);
+	expect(await page.evaluate(() => sessionStorage.getItem('knowhow:stale-test'))).toBeNull();
 	await openFilterSheet(page);
-	await expect(page.locator('#sheet-deleted-only-row')).toBeVisible();
-	await page.locator('#sheet-deleted-only').check();
-	await page.locator('#sheet-apply-btn').click();
-	await expect(page).toHaveURL(/\/my-knowhow\/\?mode=headline_view&deleted=1$/);
-	await expectListState(page, 1);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夜泣き対応メモ');
-	await expect(page.locator('.knowhow-card:visible [data-my-list-delete]:visible')).toHaveCount(0);
+	await expect(page.locator('#sheet-completed-only-row')).toBeVisible();
+	await expect(page.locator('#sheet-deleted-only')).toHaveCount(0);
 	await expectNoPageErrors(errors);
 });
 
@@ -528,8 +554,8 @@ test('M-004 公開一覧のheadline_viewでも保存済みrunの左スワイプ�
 	await expect(row.locator('[data-my-list-delete]')).toBeVisible();
 	page.once('dialog', (dialog) => void dialog.accept());
 	await row.locator('[data-my-list-delete]').click();
-	const deletedRun = await readPrivateRuns(page) as Array<{ checklistId: string; deletedAt?: string }>;
-	expect(deletedRun.filter((run) => run.checklistId === 'night-memo' && run.deletedAt)).toHaveLength(1);
+	const remainingRuns = await readPrivateRuns(page) as Array<{ checklistId: string }>;
+	expect(remainingRuns.filter((run) => run.checklistId === 'night-memo')).toHaveLength(0);
 	await expect(row.locator('[data-my-list-delete]')).toBeHidden();
 	await expectNoPageErrors(errors);
 });
@@ -555,54 +581,75 @@ test('M-003 grid_viewでは削除UIと揺れを表示しない', async ({ page }
 	expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(swipeTransform);
 	await expectNoPageErrors(errors);
 });
-test('M-002 削除済み表示は削除済みと未削除を同時に表示する', async ({ page }) => {
+test('M-002 完了済み表示は全項目チェック済みのリストだけ表示する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeDeletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeCompletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await expectListState(page, 1);
 	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夫婦共有ログ');
 	await openFilterSheet(page);
-	await expect(page.locator('#sheet-deleted-only-row')).toBeVisible();
-	await page.locator('#sheet-deleted-only').check();
+	await expect(page.locator('#sheet-completed-only-row')).toBeVisible();
+	await page.locator('#sheet-completed-only').check();
 	await page.locator('#sheet-apply-btn').click();
-	await expect(page).toHaveURL(/deleted=1/);
-	await expectListState(page, 2);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText(['夜泣き対応メモ', '夫婦共有ログ']);
-	await expect(page.locator('.knowhow-card[data-checklist-id="night-memo"] [data-my-list-delete]')).toBeHidden();
-	await expect(page.locator('.knowhow-card[data-checklist-id="family-log"] [data-my-list-delete]')).toBeVisible();
+	await expect(page).toHaveURL(/completed=1/);
+	await expectListState(page, 1);
+	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夜泣き対応メモ');
 	await expectNoPageErrors(errors);
 });
 
-test('M-005 マイリストの表示条件はお気に入りと削除済みをORで評価する', async ({ page }) => {
+test('M-005 完了済みはheadlineとgridのハートを丸いチェックへ置き換える', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeDeletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
-	await page.goto('/my-knowhow/?mode=grid_view');
-	await expectListState(page, 1);
-	await page.evaluate(() => {
-		window.dispatchEvent(new CustomEvent('article-like-changed', {
-			detail: { slug: 'knowhow/002-family-log', liked: true, likeCount: 1 },
-		}));
+	await seedPrivateRuns(page, [makeCompletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await page.goto('/?mode=headline_view');
+	await expectListState(page, 2);
+	const completedCard = page.locator('.knowhow-card[data-checklist-id="night-memo"]');
+	const incompleteCard = page.locator('.knowhow-card[data-checklist-id="family-log"]');
+	await expect(completedCard.locator('[data-panel-completed]')).toBeVisible();
+	await expect(completedCard.locator('[data-panel-completed]')).toContainText('check_circle');
+	await expect(completedCard.locator('[data-panel-like]')).toBeHidden();
+	await expect(incompleteCard.locator('[data-panel-completed]')).toBeHidden();
+	await expect(incompleteCard.locator('[data-panel-like]')).toBeVisible();
+
+	await page.goto('/?mode=grid_view');
+	await expect(completedCard.locator('[data-grid-completed]')).toBeVisible();
+	await expect(completedCard.locator('[data-grid-completed]')).toContainText('check_circle');
+	await expect(completedCard.locator('[data-grid-like]')).toBeHidden();
+	await expect(incompleteCard.locator('[data-grid-completed]')).toBeHidden();
+	await expect(incompleteCard.locator('[data-grid-like]')).toBeVisible();
+	const gridColors = await page.evaluate(() => {
+		const completedIcon = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="night-memo"] [data-grid-completed]');
+		const emptyHeart = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="family-log"] [data-grid-like] .icon-empty');
+		const likeCount = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="family-log"] [data-grid-like] .like-count');
+		const mintProbe = document.createElement('span');
+		mintProbe.style.color = 'var(--color-mint-500)';
+		document.body.appendChild(mintProbe);
+		const colors = {
+			completed: completedIcon ? getComputedStyle(completedIcon).color : '',
+			expectedCompleted: getComputedStyle(mintProbe).color,
+			heart: emptyHeart ? getComputedStyle(emptyHeart).color : '',
+			count: likeCount ? getComputedStyle(likeCount).color : '',
+		};
+		mintProbe.remove();
+		return colors;
 	});
-	await page.locator('#open-filter-sheet-btn').click();
-	await page.locator('#sheet-fav-only').check();
-	await page.locator('#sheet-deleted-only').check();
-	await page.locator('#sheet-apply-btn').click();
-	await expectListState(page, 2);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText(['夜泣き対応メモ', '夫婦共有ログ']);
+	expect(gridColors.completed).toBe(gridColors.expectedCompleted);
+	expect(gridColors.heart).toBe('rgb(255, 255, 255)');
+	expect(gridColors.count).toBe('rgb(255, 255, 255)');
 	await expectNoPageErrors(errors);
 });
 
-test('D-030 マイリストの絞り込み・並び替えと削除済み表示を上下移動へ引き継ぐ', async ({ page }) => {
+test('D-030 マイリストの完了済み絞り込み・並び替えを上下移動へ引き継ぐ', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeDeletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeCompletedRegressionRun('night-memo'), makeCompletedRegressionRun('family-log')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
-	await expectListState(page, 1);
+	await expectListState(page, 0);
+	await expect(page.locator('#knowhow-empty')).toContainText('未完了のチェックリストはありません。');
 	await page.evaluate(() => {
 		window.dispatchEvent(new CustomEvent('article-like-changed', {
 			detail: { slug: 'knowhow/002-family-log', liked: true, likeCount: 10 },
@@ -610,7 +657,7 @@ test('D-030 マイリストの絞り込み・並び替えと削除済み表示�
 	});
 
 	await openFilterSheet(page);
-	await page.locator('#sheet-deleted-only').check();
+	await page.locator('#sheet-completed-only').check();
 	await page.locator('#sheet-apply-btn').click();
 	await expectListState(page, 2);
 	await expect(page.locator('#filter-sheet-modal[open]')).toHaveCount(0);
@@ -630,8 +677,9 @@ test('D-030 マイリストの絞り込み・並び替えと削除済み表示�
 	});
 	expect(listState.titles).toEqual(['夫婦共有ログ', '夜泣き対応メモ']);
 	expect(listState.cache).toMatchObject({
+		version: 2,
 		view: 'my',
-		deletedDisplay: true,
+		completedOnly: true,
 		sort: 'popular',
 		orderedIds: ['002-family-log', '001-night-memo'],
 	});
@@ -682,6 +730,9 @@ for (const item of ids) {
 			await expect(page.locator('#knowhow-media-area')).toHaveCount(0);
 			await expect(page.locator('#knowhow-modal-container img')).toHaveCount(0);
 			await expect(page.locator('[data-private-tab]:visible')).toHaveCount(2);
+			if (await page.evaluate(() => window.innerWidth < 1024)) {
+				await expect(page.locator('button[aria-label="チェックリスト一覧へ戻る"]:visible')).toHaveCount(0);
+			}
 		}
 		await expectNoPageErrors(errors);
 	});
@@ -701,6 +752,9 @@ for (const item of ids) {
 			}
 			await expect(page.locator('#tab-content-progress')).toHaveCount(0);
 			await expect(page.locator('#tab-content-memo')).toHaveCount(0);
+			if (route === 'description/' && await page.evaluate(() => window.innerWidth < 1024)) {
+				await expect(page.locator('button[aria-label="チェックリスト一覧へ戻る"]:visible')).toHaveCount(0);
+			}
 			if (route === 'description/') {
 				await expect(page.locator('#tab-btn-desc')).toHaveAttribute('aria-selected', 'true');
 				await expect(page.locator('#tab-btn-progress')).toHaveAttribute('href', `/my-knowhow/${item.id}/progress/`);
@@ -794,18 +848,23 @@ test('D-019 private002の末尾wheelで不正な次URLへ進まない', async ({
 	await expectNoPageErrors(errors);
 });
 
-test('D-029 削除済みprivate詳細から上下移動で別のマイリスト項目へ進まない', async ({ page }) => {
+test('D-029 完了済み絞り込み中は未完了のprivate詳細へ上下移動しない', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeDeletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
-	await page.goto('/my-knowhow/001-night-memo/');
+	await seedPrivateRuns(page, [makeCompletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await page.goto('/my-knowhow/?mode=headline_view');
+	await openFilterSheet(page);
+	await page.locator('#sheet-completed-only').check();
+	await page.locator('#sheet-apply-btn').click();
+	await expectListState(page, 1);
+	await openPrivateDetailFromList(page, '001-night-memo');
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-next');
 	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-prev');
 	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
 	await page.waitForTimeout(400);
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
 	await expectNoPageErrors(errors);
 });
 
@@ -819,8 +878,8 @@ test('D-023 private list→detail→一覧へ戻るでreturn-urlを使う', asyn
 	const isMobileViewport = await page.evaluate(() => window.innerWidth < 1024);
 	if (isMobileViewport) {
 		const mobileBackButton = page.locator('button[aria-label="チェックリスト一覧へ戻る"]:visible');
-		await expect(mobileBackButton).toBeVisible();
-		await mobileBackButton.click();
+		await expect(mobileBackButton).toHaveCount(0);
+		await page.goBack({ waitUntil: 'domcontentloaded' });
 	} else {
 		await page.goBack({ waitUntil: 'domcontentloaded' });
 	}
@@ -859,6 +918,7 @@ test('K-001/K-004 private progressのtemplateと6項目が一致する', async (
 			backgroundColor: rowStyle.backgroundColor,
 			borderBottomWidth: rowStyle.borderBottomWidth,
 			borderRadius: rowStyle.borderRadius,
+			rowHeight: row.getBoundingClientRect().height,
 			checkboxAppearance: checkboxStyle.appearance,
 			checkboxBorderRadius: checkboxStyle.borderRadius,
 			lineDisplay: lineStyle.display,
@@ -866,8 +926,9 @@ test('K-001/K-004 private progressのtemplateと6項目が一致する', async (
 	});
 	expect(rowPresentation).toEqual({
 		backgroundColor: 'rgba(0, 0, 0, 0)',
-		borderBottomWidth: '1px',
+		borderBottomWidth: '0px',
 		borderRadius: '0px',
+		rowHeight: 40,
 		checkboxAppearance: 'none',
 		checkboxBorderRadius: '9999px',
 		lineDisplay: 'flex',
@@ -943,9 +1004,83 @@ test('K-011 progress編集→custom item追加→保存で追加項目を表示�
 	await page.goto('/');
 	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
 	await page.goto('/my-knowhow/001-night-memo/progress/');
-	await page.locator('[data-add-item-editor]').fill('E2E追加項目');
-	await page.locator('[data-add-item-button]').click();
+	await page.locator('[data-add-item-area]').click();
+	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
+	await expect(page.locator('[data-item-editor]').last()).toBeFocused();
+	await page.locator('[data-item-editor]').last().fill('E2E追加項目');
+	await page.locator('[data-item-editor]').last().press('Enter');
+	await expect(page.locator('[data-item-editor]')).toHaveCount(8);
+	await expect(page.locator('[data-item-editor]').last()).toBeFocused();
+	await page.locator('[data-item-editor]').first().focus();
+	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
+	await expect.poll(async () => {
+		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; items: Array<{ label: string }> }>;
+		return runs.find((run) => run.checklistId === 'night-memo')?.items.some((item) => item.label === 'E2E追加項目');
+	}, { timeout: 8000 }).toBe(true);
+	await page.reload();
 	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
 	await expect(page.locator('[data-item-editor]').last()).toContainText('E2E追加項目');
+	await expectNoPageErrors(errors);
+});
+
+test('K-012 progressの空行はblurまたはDeleteで削除される', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await page.goto('/my-knowhow/001-night-memo/progress/');
+	await page.locator('[data-add-item-area]').click();
+	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
+	await page.locator('[data-item-editor]').first().focus();
+	await expect(page.locator('[data-item-editor]')).toHaveCount(6);
+	await page.locator('[data-item-editor]').last().fill('');
+	await page.locator('[data-item-editor]').last().press('Delete');
+	await expect(page.locator('[data-item-editor]')).toHaveCount(5);
+	await expect.poll(async () => {
+		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; items: Array<unknown> }>;
+		return runs.find((run) => run.checklistId === 'night-memo')?.items.length;
+	}, { timeout: 8000 }).toBe(5);
+	await page.reload();
+	await expect(page.locator('[data-item-editor]')).toHaveCount(5);
+	await expectNoPageErrors(errors);
+});
+
+test('K-013 行追加で既存チェックを維持し、全件チェックと行削除で完了状態を再計算する', async ({ page }) => {
+	const errors = collectPageErrors(page);
+	await page.goto('/');
+	await clearPrivateRuns(page);
+	await seedPrivateRuns(page, [makeRegressionRun('night-memo', 3)]);
+	await page.goto('/my-knowhow/001-night-memo/progress/');
+	const checkboxes = page.locator('[data-checklist-items] input[type="checkbox"]');
+	await checkboxes.nth(0).check();
+	await checkboxes.nth(1).check();
+
+	await page.locator('[data-add-item-area]').click();
+	await expect(checkboxes).toHaveCount(4);
+	await expect(checkboxes.nth(0)).toBeChecked();
+	await expect(checkboxes.nth(1)).toBeChecked();
+	await page.locator('[data-item-editor]').last().fill('完了判定用の追加項目');
+	await page.locator('[data-item-editor]').first().focus();
+	for (const checkbox of await checkboxes.all()) {
+		if (!(await checkbox.isChecked())) await checkbox.check();
+	}
+	await expect.poll(async () => {
+		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; isCompleted: boolean }>;
+		return runs.find((run) => run.checklistId === 'night-memo')?.isCompleted;
+	}, { timeout: 8000 }).toBe(true);
+
+	await page.locator('[data-add-item-area]').click();
+	await page.locator('[data-item-editor]').last().fill('未完了の追加項目');
+	await page.locator('[data-item-editor]').first().focus();
+	await expect.poll(async () => {
+		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; isCompleted: boolean }>;
+		return runs.find((run) => run.checklistId === 'night-memo')?.isCompleted;
+	}, { timeout: 8000 }).toBe(false);
+
+	await page.locator('[data-item-editor]').last().fill('');
+	await page.locator('[data-item-editor]').last().press('Delete');
+	await expect.poll(async () => {
+		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; isCompleted: boolean }>;
+		return runs.find((run) => run.checklistId === 'night-memo')?.isCompleted;
+	}, { timeout: 8000 }).toBe(true);
 	await expectNoPageErrors(errors);
 });

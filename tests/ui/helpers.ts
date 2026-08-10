@@ -30,6 +30,7 @@ export function makeRegressionRun(checklistId: string, itemCount = 6) {
 		checklistId,
 		templateVersion: 1,
 		status: 'in_progress',
+		isCompleted: false,
 		items: Array.from({ length: itemCount }, (_, index) => ({
 			id: `e2e-${checklistId}-item-${index + 1}`,
 			itemKey: `${checklistId}-item-${index + 1}`,
@@ -52,12 +53,18 @@ export function makeRegressionRun(checklistId: string, itemCount = 6) {
 	};
 }
 
-export function makeDeletedRegressionRun(checklistId: string, itemCount = 6) {
+export function makeCompletedRegressionRun(checklistId: string, itemCount = 6) {
 	const run = makeRegressionRun(checklistId, itemCount);
 	return {
 		...run,
-		runId: `e2e-deleted-${checklistId}`,
-		deletedAt: '2026-08-08T00:01:00.000Z',
+		runId: `e2e-completed-${checklistId}`,
+		isCompleted: true,
+		items: run.items.map((item) => ({
+			...item,
+			checked: true,
+			checkedAt: '2026-08-08T00:01:00.000Z',
+			updatedAt: '2026-08-08T00:01:00.000Z',
+		})),
 		updatedAt: '2026-08-08T00:01:00.000Z',
 		revision: 2,
 	};

@@ -57,6 +57,7 @@ export interface ChecklistRun {
 	checklistId: string;
 	templateVersion: number;
 	status: ChecklistStatus;
+	isCompleted: boolean;
 	items: ChecklistRunItem[];
 	note: string;
 	createdAt: string;
@@ -115,7 +116,9 @@ export function readChecklistStore(storage?: Storage): ChecklistStore {
 		}
 
 		const runs = Object.fromEntries(
-			Object.entries(parsed.runs).filter((entry): entry is [string, ChecklistRun] => isChecklistRun(entry[1])),
+			Object.entries(parsed.runs)
+				.filter((entry): entry is [string, ChecklistRun] => isChecklistRun(entry[1]))
+				.map(([runId, run]) => [runId, { ...run, isCompleted: isChecklistRunCompleted(run) }]),
 		);
 		const activeRunIds = parsed.activeRunIds && typeof parsed.activeRunIds === 'object'
 			? Object.fromEntries(
@@ -218,6 +221,36 @@ export function deleteChecklistRun(runId: string, storage?: Storage) {
 	writeChecklistStore(store, storage, run.checklistId);
 }
 
+export function deleteChecklistRunsByChecklistId(checklistId: string, storage?: Storage) {
+	const store = readChecklistStore(storage);
+	const runIds = Object.values(store.runs)
+		.filter((run) => run.checklistId === checklistId)
+		.map((run) => run.runId);
+	if (runIds.length === 0) return 0;
+	for (const runId of runIds) delete store.runs[runId];
+	delete store.activeRunIds[checklistId];
+	writeChecklistStore(store, storage, checklistId);
+	return runIds.length;
+}
+
+export function purgeDeletedChecklistRuns(storage?: Storage) {
+	const store = readChecklistStore(storage);
+	const deletedRuns = Object.values(store.runs).filter((run) => Boolean(run.deletedAt));
+	if (deletedRuns.length === 0) return 0;
+	for (const run of deletedRuns) {
+		delete store.runs[run.runId];
+		if (store.activeRunIds[run.checklistId] === run.runId) delete store.activeRunIds[run.checklistId];
+	}
+	for (const checklistId of new Set(deletedRuns.map((run) => run.checklistId))) {
+		const latest = Object.values(store.runs)
+			.filter((run) => run.checklistId === checklistId)
+			.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+		if (latest) store.activeRunIds[checklistId] = latest.runId;
+	}
+	writeChecklistStore(store, storage);
+	return deletedRuns.length;
+}
+
 export function createUuid(): string {
 	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
 		return crypto.randomUUID();
@@ -237,6 +270,7 @@ export function createChecklistRun(template: ChecklistTemplate): ChecklistRun {
 		checklistId: template.checklistId,
 		templateVersion: template.version,
 		status: 'in_progress',
+		isCompleted: false,
 		items: template.groups.flatMap((group) => group.items.map((item) => ({
 			id: createUuid(),
 			itemKey: item.id,
@@ -276,6 +310,7 @@ export function duplicateChecklistRun(run: ChecklistRun): ChecklistRun {
 		...run,
 		runId: createUuid(),
 		status: 'in_progress',
+		isCompleted: false,
 		items: run.items.map((item, order) => ({
 			...item,
 			id: createUuid(),
@@ -308,6 +343,18 @@ export function getChecklistProgress(run: ChecklistRun | null) {
 		total,
 		percent: total === 0 ? 0 : Math.round((completed / total) * 100),
 	};
+}
+
+export function isChecklistRunCompleted(run: Pick<ChecklistRun, 'items'>) {
+	const activeItems = run.items.filter((item) => !item.hidden);
+	return activeItems.length > 0 && activeItems.every((item) => item.checked);
+}
+
+export function syncChecklistRunCompletion(run: ChecklistRun) {
+	const completed = isChecklistRunCompleted(run);
+	const changed = run.isCompleted !== completed;
+	run.isCompleted = completed;
+	return changed;
 }
 
 export function getChecklistStatusLabel(status: ChecklistStatus) {

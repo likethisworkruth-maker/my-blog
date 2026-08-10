@@ -1,4 +1,5 @@
 import { deletePrivateChecklistRunsByChecklistId } from './private-db';
+import { clearKnowhowListCache } from './knowhow-list-cache';
 
 export const PRIVATE_LIST_DELETE_CONFIRM_MESSAGE =
   'このチェックリストをマイリストから削除しますか？\n保存した進捗とメモも削除されます。';
@@ -8,12 +9,25 @@ type ConfirmFn = (message: string) => boolean;
 const defaultConfirm: ConfirmFn = (message) =>
   typeof window !== 'undefined' ? window.confirm(message) : false;
 
+const clearChecklistSessionState = () => {
+	clearKnowhowListCache();
+	if (typeof window === 'undefined') return;
+	try {
+		for (const key of Object.keys(window.sessionStorage)) {
+			if (key.startsWith('knowhow:')) window.sessionStorage.removeItem(key);
+		}
+	} catch {
+		// Session storage can be unavailable in strict privacy modes.
+	}
+};
+
 export async function deletePrivateListByChecklistId(
 	checklistId: string,
 	confirmFn: ConfirmFn = defaultConfirm,
 ): Promise<boolean> {
 	if (!checklistId || !confirmFn(PRIVATE_LIST_DELETE_CONFIRM_MESSAGE)) return false;
 	await deletePrivateChecklistRunsByChecklistId(checklistId);
+	clearChecklistSessionState();
 	return true;
 }
 

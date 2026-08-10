@@ -67,9 +67,11 @@ const panelOpenClass = 'translate-y-0 lg:w-[400px] lg:opacity-100 lg:ml-0';
 		data-private-navigation={isPrivateDetail ? JSON.stringify(navigationItems) : undefined}
 		data-private-state-loaded={isPrivateDetail ? 'false' : 'true'}
 	>
-		<button data-media-ui data-go-back class="fixed left-4 top-4 z-[80] flex h-10 w-10 items-center justify-center text-white outline-none transition-colors hover:text-gray-200 active:scale-95 lg:hidden" aria-label="チェックリスト一覧へ戻る">
-			<span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">arrow_back_ios_new</span>
-		</button>
+		{activeTab === 'base' && (
+			<button data-media-ui data-go-back class="fixed left-4 top-4 z-[80] flex h-10 w-10 items-center justify-center text-white outline-none transition-colors hover:text-gray-200 active:scale-95 lg:hidden" aria-label="チェックリスト一覧へ戻る">
+				<span class="material-symbols-outlined text-[2rem] font-light drop-shadow-[0_2px_5px_rgba(0,0,0,0.8)]">arrow_back_ios_new</span>
+			</button>
+		)}
 
 		<button data-media-ui data-go-back class="absolute left-6 top-6 z-50 hidden h-12 w-12 items-center justify-center text-white outline-none transition-colors hover:text-gray-300 lg:flex" aria-label="チェックリスト一覧へ戻る">
 			<span class="material-symbols-outlined font-bold">arrow_back_ios_new</span>
@@ -267,19 +269,25 @@ const panelOpenClass = 'translate-y-0 lg:w-[400px] lg:opacity-100 lg:ml-0';
 			container.removeAttribute('data-prev');
 			container.removeAttribute('data-next');
 		};
-		const syncPrivateNavigation = (runs: Array<{ checklistId: string; deletedAt?: string }>) => {
+		const syncPrivateNavigation = (runs: Array<{ checklistId: string; isCompleted: boolean }>) => {
 			if (!isPrivateDetailPath) return;
-			const activeChecklistIds = new Set(runs.filter((run) => !run.deletedAt).map((run) => run.checklistId));
-			const deletedChecklistIds = new Set(
-				runs
-					.filter((run) => Boolean(run.deletedAt) && !activeChecklistIds.has(run.checklistId))
-					.map((run) => run.checklistId),
+			const latestRuns = new Map<string, { checklistId: string; isCompleted: boolean }>();
+			for (const run of runs) {
+				if (!latestRuns.has(run.checklistId)) latestRuns.set(run.checklistId, run);
+			}
+			const activeChecklistIds = new Set(latestRuns.keys());
+			const completedChecklistIds = new Set(
+				Array.from(latestRuns.values()).filter((run) => run.isCompleted).map((run) => run.checklistId),
 			);
 			const cachedListState = getCachedPrivateListState();
 			const navigationById = new Map(privateNavigationItems.map((item) => [item.id, item]));
 			const isAvailablePrivateItem = (item: DetailNavigationItem) => (
 				activeChecklistIds.has(item.checklistId)
-				|| Boolean(cachedListState?.deletedDisplay && deletedChecklistIds.has(item.checklistId))
+					&& (!cachedListState || (
+						cachedListState.completedOnly
+							? completedChecklistIds.has(item.checklistId)
+							: !completedChecklistIds.has(item.checklistId)
+					))
 			);
 			const navigationItemsForView = cachedListState
 				? cachedListState.orderedIds
@@ -364,7 +372,7 @@ const panelOpenClass = 'translate-y-0 lg:w-[400px] lg:opacity-100 lg:ml-0';
 				const template = JSON.parse(templateSource.textContent) as ChecklistTemplate;
 				await initializePrivateDb();
 				const storedRuns = await getPrivateChecklistRunsByChecklistId(template.checklistId);
-				const existing = storedRuns.find((run) => !run.deletedAt);
+				const existing = storedRuns[0];
 				if (!existing) await savePrivateChecklistRun(createChecklistRun(template));
 				if (storedRuns.length === 0 && !options?.skipLike) {
 					try {
@@ -447,7 +455,7 @@ const panelOpenClass = 'translate-y-0 lg:w-[400px] lg:opacity-100 lg:ml-0';
 			try {
 				await initializePrivateDb();
 				const ownRuns = await getPrivateChecklistRunsByChecklistId(checklistId);
-				const hasActiveRun = ownRuns.some((run) => !run.deletedAt);
+				const hasActiveRun = ownRuns.length > 0;
 				if (isPrivateDetailPath) syncPrivateNavigation(await getPrivateChecklistRuns());
 				if (hasActiveRun && currentMode === 'public') {
 					currentMode = 'private';

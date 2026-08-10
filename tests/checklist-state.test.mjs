@@ -9,9 +9,11 @@ import {
 	getChecklistActionLabel,
 	getChecklistProgress,
 	getChecklistRuns,
+	isChecklistRunCompleted,
 	readChecklistStore,
 	resetChecklistRun,
 	saveChecklistRun,
+	syncChecklistRunCompletion,
 } from '../src/scripts/checklist-state.ts';
 
 class MemoryStorage {
@@ -62,6 +64,7 @@ const template = {
 test('原本から開始状態を作成し、非表示項目を進捗の母数から除く', () => {
 	const run = createChecklistRun(template);
 	assert.equal(run.status, 'in_progress');
+	assert.equal(run.isCompleted, false);
 	assert.equal(run.items.length, 2);
 
 	run.items[0].checked = true;
@@ -71,6 +74,38 @@ test('原本から開始状態を作成し、非表示項目を進捗の母数�
 		total: 1,
 		percent: 100,
 	});
+});
+
+test('表示中の全項目がチェック済みのときだけ完了フラグを立てる', () => {
+	const run = createChecklistRun(template);
+	run.items[0].checked = true;
+	syncChecklistRunCompletion(run);
+	assert.equal(run.isCompleted, false);
+
+	run.items[1].checked = true;
+	syncChecklistRunCompletion(run);
+	assert.equal(run.isCompleted, true);
+	assert.equal(isChecklistRunCompleted(run), true);
+
+	run.items.push({
+		id: '12345678-1234-4123-8123-123456789012',
+		itemKey: 'custom-item',
+		groupId: 'custom',
+		groupLabel: '自分で追加',
+		label: '追加項目',
+		origin: 'custom',
+		phase: 'prepare',
+		order: 3,
+		checked: false,
+		hidden: false,
+		note: '',
+	});
+	syncChecklistRunCompletion(run);
+	assert.equal(run.isCompleted, false);
+
+	run.items.pop();
+	syncChecklistRunCompletion(run);
+	assert.equal(run.isCompleted, true);
 });
 
 test('同じチェックリストの履歴を残しながら、複製版をアクティブにする', () => {
@@ -85,6 +120,7 @@ test('同じチェックリストの履歴を残しながら、複製版をア�
 	assert.equal(getChecklistRuns(storage).length, 2);
 	assert.equal(getActiveChecklistRun(template.checklistId, storage)?.runId, duplicated.runId);
 	assert.equal(duplicated.status, 'in_progress');
+	assert.equal(duplicated.isCompleted, false);
 	assert.ok(duplicated.items.every((item) => !item.checked && !item.outcome));
 
 	deleteChecklistRun(duplicated.runId, storage);

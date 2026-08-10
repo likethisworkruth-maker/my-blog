@@ -175,8 +175,11 @@ const initialDisplayMode = getInitialDisplayMode(
 										<!-- Image Bottom Overlay (Smooth Gradient) -->
 										<div class="absolute inset-x-0 bottom-0 pt-10 pb-3 px-3.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex items-end justify-between text-white pointer-events-none">
 											<span class="truncate mr-2 text-[0.85rem] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">{post.data.title}</span>
-											<div class="pointer-events-auto text-white">
+											<div data-grid-like class="pointer-events-auto text-white">
 												<LikeButton slug={`knowhow/${post.id}`} variant="compact" startOnLike={true} />
+											</div>
+											<div data-grid-completed hidden class="text-mint-500" role="img" aria-label="完了済み">
+												<span class="material-symbols-outlined text-[1.4rem] leading-none" aria-hidden="true">check_circle</span>
 											</div>
 										</div>
 									</div>
@@ -191,13 +194,14 @@ const initialDisplayMode = getInitialDisplayMode(
 										<div class="min-w-0 flex-1 px-4 py-4">
 											<div class="flex items-start justify-between gap-2">
 												<h2 class="text-[0.95rem] font-bold leading-snug text-navy-900 flex-1">{post.data.title}</h2>
-												<div class="pointer-events-auto shrink-0">
+												<div data-panel-like class="pointer-events-auto shrink-0">
 													<LikeButton slug={`knowhow/${post.id}`} variant="compact" startOnLike={true} />
 												</div>
+												<span data-panel-completed hidden class="material-symbols-outlined shrink-0 text-[1.4rem] leading-none text-mint-500" role="img" aria-label="完了済み">check_circle</span>
 											</div>
 										<p class="knowhow-summary mt-2 line-clamp-2 text-[0.8rem] leading-relaxed text-gray-600" set:text={post.data.description}></p>
 										</div>
-										<div class="flex h-[104px] w-[120px] shrink-0 items-center justify-center overflow-hidden border-l border-gray-100 bg-gray-50">
+										<div class="relative flex h-[104px] w-[120px] shrink-0 items-center justify-center overflow-hidden border-l border-gray-100 bg-gray-50">
 											{post.data.coverImage ? (
 														<img src={post.data.coverImage} alt="" draggable="false" class="h-full w-full object-cover object-top" />
 											) : (
@@ -268,10 +272,10 @@ const initialDisplayMode = getInitialDisplayMode(
 				</label>
 			</div>
 
-			<div id="sheet-deleted-only-row" class="hidden">
+			<div id="sheet-completed-only-row" class="hidden">
 				<label class="flex items-center gap-2 text-sm cursor-pointer font-medium text-gray-700">
-					<input type="checkbox" id="sheet-deleted-only" class="w-4 h-4 rounded text-red-600 border-gray-300 focus:ring-red-500" />
-					<span>削除済み表示</span>
+					<input type="checkbox" id="sheet-completed-only" class="w-4 h-4 rounded text-mint-600 border-gray-300 focus:ring-mint-500" />
+					<span>完了済み表示</span>
 				</label>
 			</div>
 
@@ -369,7 +373,7 @@ const initialDisplayMode = getInitialDisplayMode(
 				const checklistId = cardsById.get(id)?.dataset.checklistId;
 				persistListState();
 				const isPrivateListItem = currentListView === 'my'
-					&& (Boolean(checklistId && startedChecklistIds.has(checklistId)) || isDeletedOnly);
+					&& Boolean(checklistId && startedChecklistIds.has(checklistId));
 				const destination = isPrivateListItem
 					? currentDisplayMode === 'headline_view'
 						? `/my-knowhow/${id}/progress/`
@@ -477,20 +481,20 @@ const initialDisplayMode = getInitialDisplayMode(
 				phases: phasesFromRoute,
 				scene,
 				hasPhase: phasesFromRoute.length > 0,
-				deletedOnly: view === 'my' && ['1', 'true'].includes(params.get('deleted') ?? ''),
+				completedOnly: view === 'my' && ['1', 'true'].includes(params.get('completed') ?? ''),
 			};
 		};
 
 		const initialRoute = readListRoute();
 		const initialModeFromUrl = getModeFromUrl();
 		let currentListView: 'discover' | 'my' = initialRoute.view;
-		const hasInitialDeletedOnly = initialRoute.deletedOnly;
+		const hasInitialCompletedOnly = initialRoute.completedOnly;
 		let currentPhases = new Set<PhaseFilter>(initialRoute.phases);
 		const hasInitialPhase = initialRoute.hasPhase;
 		let currentScene: SceneFilter = initialRoute.scene;
 		let currentDisplayMode: DisplayMode = initialModeFromUrl || 'headline_view';
 		let startedChecklistIds = new Set<string>();
-		let deletedChecklistIds = new Set<string>();
+		let completedChecklistIds = new Set<string>();
 		let userLikedSlugs = new Set<string>();
 		const userLikeOverrides = new Map<string, { isLiked: boolean; likeCount: number }>();
 		let isPrivateDbLoaded = false;
@@ -505,7 +509,7 @@ const initialDisplayMode = getInitialDisplayMode(
 				phases: Array.from(currentPhases),
 				scene: currentScene,
 				favoriteOnly: isFavOnly,
-				deletedDisplay: isDeletedOnly,
+				completedOnly: isCompletedOnly,
 				searchKeyword: searchKeyword.trim(),
 				sort: currentSort,
 				orderedIds: orderedIds.filter(Boolean),
@@ -528,8 +532,9 @@ const initialDisplayMode = getInitialDisplayMode(
 				params.delete('view_mode');
 			}
 
-			if (currentListView === 'my' && isDeletedOnly) params.set('deleted', '1');
-			else params.delete('deleted');
+			params.delete('deleted');
+			if (currentListView === 'my' && isCompletedOnly) params.set('completed', '1');
+			else params.delete('completed');
 
 			const queryString = params.toString();
 			const newPath = window.location.pathname + (queryString ? `?${queryString}` : '');
@@ -580,7 +585,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			currentListView = route.view;
 			currentPhases = new Set(route.phases);
 			currentScene = route.scene;
-			isDeletedOnly = route.deletedOnly;
+			isCompletedOnly = route.completedOnly;
 			restoreCachedTransientState();
 			const urlMode = getModeFromUrl();
 			if (urlMode) {
@@ -601,8 +606,8 @@ const initialDisplayMode = getInitialDisplayMode(
 		const sortSheetResetBtn = document.getElementById('sort-sheet-reset-btn');
 		const sortSheetApplyBtn = document.getElementById('sort-sheet-apply-btn');
 		const sheetFavOnlyCheckbox = document.getElementById('sheet-fav-only') as HTMLInputElement | null;
-		const sheetDeletedOnlyRow = document.getElementById('sheet-deleted-only-row');
-		const sheetDeletedOnlyCheckbox = document.getElementById('sheet-deleted-only') as HTMLInputElement | null;
+		const sheetCompletedOnlyRow = document.getElementById('sheet-completed-only-row');
+		const sheetCompletedOnlyCheckbox = document.getElementById('sheet-completed-only') as HTMLInputElement | null;
 		const searchInput = document.getElementById('search-keyword-input') as HTMLInputElement | null;
 		const activeChipsContainer = document.getElementById('active-chips-container');
 		const sheetPhaseButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-sheet-phase]'));
@@ -615,7 +620,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		let currentSort: SortOption = 'recommend';
 		let searchKeyword = '';
 		let isFavOnly = false;
-		let isDeletedOnly = hasInitialDeletedOnly;
+		let isCompletedOnly = hasInitialCompletedOnly;
 
 		const restoreCachedTransientState = () => {
 			if (currentListView !== 'my') return;
@@ -633,7 +638,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		const INACTIVE_THEME_CLASSES = ['text-gray-700'];
 
 		const updateButtonActiveStates = () => {
-			const isFilterActive = currentPhases.size > 0 || currentScene !== 'all' || isFavOnly || isDeletedOnly || searchKeyword.trim() !== '';
+			const isFilterActive = currentPhases.size > 0 || currentScene !== 'all' || isFavOnly || isCompletedOnly || searchKeyword.trim() !== '';
 			ACTIVE_THEME_CLASSES.forEach((cls) => openFilterBtn?.classList.toggle(cls, isFilterActive));
 			INACTIVE_THEME_CLASSES.forEach((cls) => openFilterBtn?.classList.toggle(cls, !isFilterActive));
 
@@ -687,10 +692,10 @@ const initialDisplayMode = getInitialDisplayMode(
 			});
 
 			if (sheetFavOnlyCheckbox && !filterSheetModal?.open) sheetFavOnlyCheckbox.checked = isFavOnly;
-			sheetDeletedOnlyRow?.classList.toggle('hidden', currentListView !== 'my');
+			sheetCompletedOnlyRow?.classList.toggle('hidden', currentListView !== 'my');
 			// 非同期のIndexedDB更新で一覧を再描画しても、開いているシート内の
 			// ユーザー選択を上書きしない。開く瞬間は上のopenSheetModalで同期する。
-			if (sheetDeletedOnlyCheckbox && !filterSheetModal?.open) sheetDeletedOnlyCheckbox.checked = isDeletedOnly;
+			if (sheetCompletedOnlyCheckbox && !filterSheetModal?.open) sheetCompletedOnlyCheckbox.checked = isCompletedOnly;
 		}
 
 		function renderActiveChips() {
@@ -729,17 +734,17 @@ const initialDisplayMode = getInitialDisplayMode(
 				});
 			}
 
-			if (isFavOnly && currentListView !== 'my') {
+			if (isFavOnly) {
 				chips.push({
 					label: 'お気に入りのみ',
 					onRemove: () => { isFavOnly = false; updateView(); },
 				});
 			}
 
-			if (isDeletedOnly && currentListView === 'my') {
+			if (isCompletedOnly && currentListView === 'my') {
 				chips.push({
-					label: '削除済み表示',
-					onRemove: () => { isDeletedOnly = false; updateUrl(true); updateView(); },
+					label: '完了済み表示',
+					onRemove: () => { isCompletedOnly = false; updateUrl(true); updateView(); },
 				});
 			}
 
@@ -809,6 +814,24 @@ const initialDisplayMode = getInitialDisplayMode(
 			swipeController?.refresh();
 		};
 
+		const updateCompletionUi = () => {
+			cards.forEach((card) => {
+				const checklistId = card.dataset.checklistId;
+				const started = Boolean(checklistId && startedChecklistIds.has(checklistId));
+				const completed = Boolean(checklistId && completedChecklistIds.has(checklistId));
+				card.dataset.started = String(started);
+				card.dataset.completed = String(completed);
+				const gridLike = card.querySelector<HTMLElement>('[data-grid-like]');
+				const gridCompleted = card.querySelector<HTMLElement>('[data-grid-completed]');
+				const panelLike = card.querySelector<HTMLElement>('[data-panel-like]');
+				const panelCompleted = card.querySelector<HTMLElement>('[data-panel-completed]');
+				if (gridLike) gridLike.hidden = completed;
+				if (gridCompleted) gridCompleted.hidden = !completed;
+				if (panelLike) panelLike.hidden = completed;
+				if (panelCompleted) panelCompleted.hidden = !completed;
+			});
+		};
+
 		function updateView() {
 			if (currentListView === 'my' && !isPrivateDbLoaded) {
 				cards.forEach(card => card.style.display = 'none');
@@ -820,6 +843,7 @@ const initialDisplayMode = getInitialDisplayMode(
 			updateButtonActiveStates();
 			updateSheetUi();
 			renderActiveChips();
+			updateCompletionUi();
 
 			const keywordLower = searchKeyword.trim().toLowerCase();
 
@@ -836,18 +860,15 @@ const initialDisplayMode = getInitialDisplayMode(
 				const desc = card.querySelector('.knowhow-summary')?.textContent?.toLowerCase() || '';
 
 				const activeMatch = Boolean(checklistId && startedChecklistIds.has(checklistId));
-				const deletedMatch = Boolean(checklistId && deletedChecklistIds.has(checklistId) && !startedChecklistIds.has(checklistId));
+				const completedMatch = Boolean(checklistId && completedChecklistIds.has(checklistId));
 				const favoriteMatch = Boolean(cardId && userLikedSlugs.has(`knowhow/${cardId}`));
 				let viewMatch = true;
 				if (currentListView === 'discover') {
 					viewMatch = !isFavOnly || favoriteMatch;
-				} else if (!isFavOnly && !isDeletedOnly) {
-					viewMatch = activeMatch;
 				} else {
-					// マイリストの表示条件はANDではなく、選択された条件のORで評価する。
-					const favoriteSelection = isFavOnly && activeMatch && favoriteMatch;
-					const deletedSelection = isDeletedOnly && (activeMatch || deletedMatch);
-					viewMatch = favoriteSelection || deletedSelection;
+					viewMatch = activeMatch
+						&& (!isFavOnly || favoriteMatch)
+						&& (isCompletedOnly ? completedMatch : !completedMatch);
 				}
 
 				let searchMatch = true;
@@ -887,7 +908,13 @@ const initialDisplayMode = getInitialDisplayMode(
 				if (visibleCards.length === 0) {
 					emptyState.classList.remove('hidden');
 					if (emptyMessage) {
-						if (currentListView === 'my') emptyMessage.textContent = isDeletedOnly ? '表示できるチェックリストはありません。' : 'まだ始めたチェックリストはありません。';
+						if (currentListView === 'my') {
+							emptyMessage.textContent = isCompletedOnly
+								? '完了済みのチェックリストはありません。'
+								: startedChecklistIds.size > 0
+									? '未完了のチェックリストはありません。'
+									: 'まだ始めたチェックリストはありません。';
+						}
 						else emptyMessage.textContent = '条件に一致するチェックリストが見つかりませんでした。';
 					}
 				} else {
@@ -918,7 +945,7 @@ const initialDisplayMode = getInitialDisplayMode(
 
 		filterSheetResetBtn?.addEventListener('click', () => {
 			isFavOnly = false;
-			isDeletedOnly = false;
+			isCompletedOnly = false;
 			searchKeyword = '';
 			if (searchInput) searchInput.value = '';
 			setPhases([]);
@@ -928,7 +955,7 @@ const initialDisplayMode = getInitialDisplayMode(
 
 		filterSheetApplyBtn?.addEventListener('click', () => {
 			if (sheetFavOnlyCheckbox) isFavOnly = sheetFavOnlyCheckbox.checked;
-			isDeletedOnly = currentListView === 'my' && Boolean(sheetDeletedOnlyCheckbox?.checked);
+			isCompletedOnly = currentListView === 'my' && Boolean(sheetCompletedOnlyCheckbox?.checked);
 			updateUrl(true);
 			updateView();
 			closeSheetModal(filterSheetModal);
@@ -966,8 +993,14 @@ const initialDisplayMode = getInitialDisplayMode(
 		const refreshFromSavedRuns = async () => {
 			const runs = await getPrivateChecklistRuns();
 			if (destroyed) return;
-			startedChecklistIds = new Set(runs.filter((run) => !run.deletedAt).map((run) => run.checklistId));
-			deletedChecklistIds = new Set(runs.filter((run) => Boolean(run.deletedAt)).map((run) => run.checklistId));
+			const latestRuns = new Map<string, (typeof runs)[number]>();
+			for (const run of runs) {
+				if (!latestRuns.has(run.checklistId)) latestRuns.set(run.checklistId, run);
+			}
+			startedChecklistIds = new Set(latestRuns.keys());
+			completedChecklistIds = new Set(
+				Array.from(latestRuns.values()).filter((run) => run.isCompleted).map((run) => run.checklistId),
+			);
 			isPrivateDbLoaded = true;
 			knowhowContainer.dataset.privateStateLoaded = 'true';
 			updateView();
@@ -1090,6 +1123,13 @@ const initialDisplayMode = getInitialDisplayMode(
 		display: none;
 	}
 
+	[data-grid-like][hidden],
+	[data-grid-completed][hidden],
+	[data-panel-like][hidden],
+	[data-panel-completed][hidden] {
+		display: none !important;
+	}
+
 
 	#knowhow-container[data-display-mode="grid_view"] .my-list-delete-action {
 		display: none !important;
@@ -1121,6 +1161,15 @@ const initialDisplayMode = getInitialDisplayMode(
 		-webkit-user-drag: none;
 		user-drag: none;
 		pointer-events: none;
+	}
+
+	:global(#knowhow-container[data-display-mode="grid_view"] [data-grid-like] .like-btn .icon-empty),
+	:global(#knowhow-container[data-display-mode="grid_view"] [data-grid-like] .like-btn .like-count) {
+		color: #fff !important;
+	}
+
+	:global(#knowhow-container[data-display-mode="grid_view"] [data-grid-completed]) {
+		color: var(--color-mint-500) !important;
 	}
 
 	.knowhow-list-view {
@@ -1179,6 +1228,15 @@ const initialDisplayMode = getInitialDisplayMode(
 		display: flex;
 		flex-direction: row;
 		align-items: stretch;
+	}
+
+	:global(#knowhow-container[data-display-mode="headline_view"] .knowhow-card[data-started="true"] .knowhow-list-view .like-btn .icon-empty) {
+		opacity: 0 !important;
+	}
+
+	:global(#knowhow-container[data-display-mode="headline_view"] .knowhow-card[data-started="true"] .knowhow-list-view .like-btn .icon-filled) {
+		opacity: 1 !important;
+		color: var(--color-red-500) !important;
 	}
 
 </style>

@@ -7,6 +7,7 @@ import {
 	expectNoPageErrors,
 	makeRegressionRun,
 	openPrivateDetailFromList,
+	readPrivateRuns,
 	seedPrivateRuns,
 	swipeMyListRow,
 	visiblePrivateAction,
@@ -215,7 +216,7 @@ test('A-120 authenticated 公開詳細は既存マイリストをprivate操作�
 	await expectNoPageErrors(errors);
 });
 
-test('A-121 authenticated マイリストの削除済み絞り込みまでの操作列を維持する', async ({ page }) => {
+test('A-121 authenticated マイリスト削除は保存runを完全削除する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await expectSignedIn(page);
@@ -229,12 +230,11 @@ test('A-121 authenticated マイリストの削除済み絞り込みまでの操
 	page.once('dialog', (dialog) => void dialog.accept());
 	await row.locator('[data-my-list-delete]').click();
 	await expectListState(page, 0);
+	const runs = await readPrivateRuns(page) as Array<{ checklistId: string }>;
+	expect(runs.filter((run) => run.checklistId === 'family-log')).toHaveLength(0);
 	await page.locator('#open-filter-sheet-btn').click();
-	await page.locator('#sheet-deleted-only').check();
-	await page.locator('#sheet-apply-btn').click();
-	await expect(page).toHaveURL(/deleted=1/);
-	await expectListState(page, 1);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夫婦共有ログ');
+	await expect(page.locator('#sheet-completed-only-row')).toBeVisible();
+	await expect(page.locator('#sheet-deleted-only')).toHaveCount(0);
 	await expectSignedIn(page);
 	await expectNoPageErrors(errors);
 });
