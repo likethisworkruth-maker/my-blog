@@ -1,0 +1,217 @@
+{
+  "case_id": "CASE-QA-24893911",
+  "generated_at": "2026-08-13T00:00:00+09:00",
+  "execution_scope": "source_verified_derived_preview_fixture",
+  "production_database_written": false,
+  "production_ai_calls": 0,
+  "human_approval_records": 0,
+  "article_manager_imported": false,
+  "warning": "source以下は実データ。stagesの派生値は明示されたlocal function結果を除きcase review fixtureであり、本番実行ログではない",
+  "saved_as": "docs/content-strategy-case-study/case-data.json",
+  "source": {
+    "question_id": 24893911,
+    "question_row_id": 47212,
+    "source_html_sha256": "4153027b8ea95e212eb791f089c5f227820267f03fab02a79b9b356837e2b4c2",
+    "parser_version": "1.1",
+    "title": "生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。",
+    "body": "生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？\nやはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？\nベビーカー嫌がって使わなかった人いますか？",
+    "answers": [
+      {"source_answer_id": 148182294, "position": 1, "body": "AB型レンタルして試したものの嫌がって乗らず、腰がすわってからB型買いました！B型は3歳の今も使ってます！"},
+      {"source_answer_id": 148182322, "position": 2, "body": "サイベックスのオルフェオを買って3ヶ月目から使用しました。新生児インレーもあるので対面じゃないのが気にならなければ車の足元にも置けるコンパクトサイズで便利です。新生児から大きくなってまで使い勝手のよいメリオが人気な理由はわかります。我が家はサイズ感で選びました。"},
+      {"source_answer_id": 148182877, "position": 3, "body": "上2人はABのみ、3人目は自転車移動も多くてB型追加しました☺️"},
+      {"source_answer_id": 148182481, "position": 4, "body": "B型への変更はしなかったです！！\nずっとAB型でした！\nB型友達が貸してくれたんですけど寝る時あまり頭が倒れなくてうちの子は角度が気に食わなくて逆にギャン泣きでした笑ガッツリ倒して寝たいタイプだったみたいでAB型だと頭フラットに倒れて寝やすかったみたいです！"}
+    ],
+    "replies": [
+      {"reply_row_id": 101344, "source_answer_id": 148182294, "position": 1, "body": "参考にさせていただきます！", "source_created_display": "6月1日"},
+      {"reply_row_id": 101345, "source_answer_id": 148182322, "position": 1, "body": "参考にさせてもらいます！", "source_created_display": "6月1日"},
+      {"reply_row_id": 101346, "source_answer_id": 148182877, "position": 1, "body": "参考にさせてもらいます！", "source_created_display": "6月1日"},
+      {"reply_row_id": 101347, "source_answer_id": 148182481, "position": 1, "body": "参考にさせてもらいます！", "source_created_display": "6月1日"}
+    ]
+  },
+  "stages": [
+    {
+      "stage": 6,
+      "name": "build_analysis_input",
+      "operation": "WRITE_CASE_FIXTURE_FILE",
+      "complete_record_file": "stage-06-analysis-input.json",
+      "production_ai_calls": 0,
+      "reads": ["mamari_qa_questions:47212", "mamari_qa_question_contents:47212"],
+      "does_not_read": ["mamari_qa_answers", "mamari_qa_answer_replies"],
+      "source_rows_updated": 0,
+      "output": {
+        "question_id": 24893911,
+        "age_signals": ["生後1か月"],
+        "category": "子育て・グッズ",
+        "answer_bodies_included": false,
+        "public_use": "forbidden"
+      }
+    },
+    {
+      "stage": 7,
+      "name": "extract_atomic_needs",
+      "operation": "HOST_MODEL_REVIEW_FIXTURE_VALIDATE_WRITE_CASE_FILES",
+      "request_file": "stage-07-ai-request.json",
+      "raw_response_file": "stage-07-ai-response.json",
+      "saved_records_file": "stage-07-saved-records.json",
+      "production_provider_call_id": null,
+      "production_database_written": false,
+      "input_count": 1,
+      "output_count": 2,
+      "source_rows_updated": 0,
+      "outputs": [
+        {
+          "mention_key": "M-24893911-01",
+          "question_id": 24893911,
+          "audience": "生後1か月の子がいる、初めてベビーカー購入を検討している家庭",
+          "life_stage": "生後1か月",
+          "scene": "低月齢期の外出手段としてベビーカーの購入時期と型を決める場面",
+          "central_problem": "A型またはAB型を今購入して後からB型へ変更するか、B型を使用できる時期まで待つか決められない",
+          "obstacle": "型ごとの使用開始時期、買い替えの必要性、自分の利用条件に合う判断材料が不足している",
+          "desired_change": "今A型またはAB型を買う、B型まで待つ、購入前に試す、の中から次の行動を一つ選べる",
+          "risk_lane": "normal",
+          "evidence_spans": [{"field": "body", "start": 0, "end": 80, "sha256": "b2b5f6a63b62e730cd1d4790f9361de1288905aaed4708af6062e92790ef487d"}],
+          "cluster_eligible": true,
+          "status": "candidate"
+        },
+        {
+          "mention_key": "M-24893911-02",
+          "question_id": 24893911,
+          "audience": "生後1か月の子がいる、ベビーカー購入前の家庭",
+          "life_stage": "生後1か月",
+          "scene": "購入後に子どもがベビーカーを嫌がって使えない可能性を検討する場面",
+          "central_problem": "購入しても子どもがベビーカーを嫌がり、使えない可能性が不安",
+          "obstacle": "子どもの反応は個人差が大きく、この質問だけでは購入前に予測できない",
+          "desired_change": "購入前に試す方法と、購入を見送る条件を決められる",
+          "risk_lane": "normal",
+          "evidence_spans": [{"field": "body", "start": 81, "end": 102, "sha256": "33cbc26d22e8a5c070a1a24503aa4b94d852d4a0e263d14be29184e7c18d6227"}],
+          "cluster_eligible": false,
+          "status": "review"
+        }
+      ]
+    },
+    {
+      "stage": 8,
+      "name": "build_candidate_pairs",
+      "operation": "WRITE_CASE_PAIR_PREVIEWS",
+      "candidate_retrieval_run_id": null,
+      "pair_provider_call_id": null,
+      "human_approved": false,
+      "input_mention": "M-24893911-01",
+      "source_rows_updated": 0,
+      "output_count": 8,
+      "outputs": [
+        {"candidate_question_id": 25014306, "label": "same", "effect": "cluster_edge"},
+        {"candidate_question_id": 24805347, "label": "same", "effect": "cluster_edge"},
+        {"candidate_question_id": 24513135, "label": "same", "effect": "cluster_edge"},
+        {"candidate_question_id": 25074261, "label": "same", "effect": "cluster_edge"},
+        {"candidate_question_id": 25105029, "label": "related_but_different_goal", "effect": "exclude_from_cluster"},
+        {"candidate_question_id": 25111106, "label": "conflicting_condition", "effect": "exclude_from_cluster"},
+        {"candidate_question_id": 25100123, "label": "conflicting_condition", "effect": "exclude_from_cluster"},
+        {"candidate_question_id": 24935876, "label": "related_but_different_goal", "effect": "exclude_from_cluster"}
+      ]
+    },
+    {
+      "stage": 9,
+      "name": "create_problem_cluster",
+      "operation": "WRITE_PROVISIONAL_CLUSTER_PREVIEW",
+      "same_edges_read": 4,
+      "source_rows_updated": 0,
+      "output": {
+        "cluster_id": "PC-STROLLER-LOWAGE-001",
+        "member_question_ids": [24893911, 25014306, 24805347, 24513135, 25074261],
+        "audience": "生後1〜5か月の子がいる家庭",
+        "scene": "低月齢期の外出手段を準備する",
+        "problem": "今A/AB型を買うかB型まで待つか決められない",
+        "completion_outcome": "自分の条件に合う次の行動を一つ選べる"
+        ,"status": "provisional",
+        "human_approved": false
+      }
+    },
+    {
+      "stage": 10,
+      "name": "aggregate_problem_group_and_answer_signals",
+      "operation": "READ_REAL_DB_WRITE_CASE_AGGREGATE_FIXTURE",
+      "complete_record_file": "stage-10-cluster-aggregate.json",
+      "production_rows_updated": 0,
+      "input_question_ids": [24893911, 25014306, 24805347, 24513135, 25074261],
+      "output": {
+        "sample_question_count": 5,
+        "questions_with_answers": 5,
+        "answer_count": 28,
+        "answer_upvote_sum": 42,
+        "answer_reply_count": 30,
+        "source_recommended_answer_count": 0,
+        "age_signal_question_count": 5,
+        "age_distribution": {"1_month": 1, "3_months": 1, "4_months": 2, "5_months": 1},
+        "answer_signal_refs": [146866407, 147898987, 148182294, 148610596, 148819259],
+        "priority_rank": null
+      },
+      "official_evidence_required_for_every_article": false,
+      "official_evidence_fixture_refs_for_this_article": ["SG-S0001-06", "CYBEX-MELIO-20260813", "CYBEX-LIBELLE-20260813"]
+    },
+    {
+      "stage": 11,
+      "name": "create_content_brief",
+      "operation": "WRITE_UNAPPROVED_BRIEF_PREVIEW",
+      "input_refs": ["PC-STROLLER-LOWAGE-001", "SG-S0001-06", "CYBEX-MELIO-20260813", "CYBEX-LIBELLE-20260813"],
+      "output": {"brief_id": "BR-STROLLER-TIMING-001", "primary_reader_outcome": "choose_path", "decision_path_count": 3, "primary_cta_count": 1, "human_approved": false, "content_kind": null}
+    },
+    {
+      "stage": 12,
+      "name": "classify_content_kind",
+      "operation": "EXECUTE_LOCAL_CLASSIFIER_READ_ONLY",
+      "complete_record_file": "stage-12-content-kind.json",
+      "production_rows_updated": 0,
+      "actual_current_result": {"status": "unclassified", "content_kind": null, "reasons": ["cluster_not_human_approved"], "generation_allowed": false},
+      "walkthrough_shape_check_result": {"status": "proposed", "content_kind": "decision_guide", "matched_rule_ids": ["CK-D01"], "generation_allowed": false}
+    },
+    {
+      "stage": 13,
+      "name": "route_media_targets",
+      "operation": "WRITE_ROUTING_PREVIEWS_NOT_QUEUE",
+      "complete_record_file": "stage-13-routing.json",
+      "input_brief_count": 1,
+      "output_count": 4,
+      "production_queue_rows": 0,
+      "outputs": {
+        "blog": "markdown_article_and_checklist_json",
+        "instagram": "single_checklist_image_and_caption_txt",
+        "threads": "plain_text_posts_txt",
+        "note": "not_created_first_hand_experience_missing"
+      }
+    },
+    {
+      "stage": 14,
+      "name": "generate_blog_artifact",
+      "operation": "WRITE_UNAPPROVED_BLOG_PREVIEW",
+      "complete_record_files": ["stage-14-blog-preview.md", "stage-14-checklist-preview.json"],
+      "input_refs": ["BR-STROLLER-TIMING-001", "SG-S0001-06", "CYBEX-MELIO-20260813", "CYBEX-LIBELLE-20260813"],
+      "production_provider_call_id": null,
+      "output": {"article_file": "stage-14-blog-preview.md", "checklist_file": "stage-14-checklist-preview.json", "status": "preview_only_unapproved", "verbatim_mamari_included": false}
+    },
+    {
+      "stage": 15,
+      "name": "generate_social_artifacts",
+      "operation": "WRITE_UNAPPROVED_SOCIAL_PREVIEWS",
+      "complete_record_files": ["stage-15-instagram-checklist.png", "stage-15-instagram-checklist.svg", "stage-15-instagram-caption.txt", "stage-15-threads-posts.txt"],
+      "output_count": 3,
+      "outputs": ["instagram_single_checklist_image", "instagram_caption_text", "threads_two_post_text"]
+    },
+    {
+      "stage": 16,
+      "name": "prepare_human_review_files",
+      "operation": "LIST_COPY_READY_FILES",
+      "complete_record_file": "stage-16-review-files.json",
+      "output": {
+        "blog_article": "stage-14-blog-preview.md",
+        "blog_checklist": "stage-14-checklist-preview.json",
+        "instagram_image": "stage-15-instagram-checklist.png",
+        "instagram_caption": "stage-15-instagram-caption.txt",
+        "threads_posts": "stage-15-threads-posts.txt",
+        "note": null,
+        "publication_gate": "human_go_required",
+        "commercial_gate": "active_offer_missing"
+      }
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">媒体振り分けエンジンの判定フロー</title>
+  <desc id="desc">利用区分、コンテンツ条件、共通ゲート、媒体適合、必要入力、人間の生成選択を順に判定し、eligible、blocked、not applicable、生成の状態へ振り分ける。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8d9995"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#34b995"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf7; }
+      .title { fill: #172033; font: 700 42px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; letter-spacing: -1.4px; }
+      .subtitle { fill: #667085; font: 400 20px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .step { fill: #34b995; font: 700 15px Inter, "Noto Sans JP", sans-serif; letter-spacing: 1px; }
+      .heading { fill: #173153; font: 700 21px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .body { fill: #5e6975; font: 400 16px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .micro { fill: #7a838d; font: 400 14px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .mono { fill: #45525f; font: 700 14px Consolas, "SFMono-Regular", monospace; }
+      .card { fill: #fff; stroke: #dfe4e1; stroke-width: 2; }
+      .main-line { fill: none; stroke: #34b995; stroke-width: 4; marker-end: url(#arrowGreen); }
+      .branch { fill: none; stroke: #8d9995; stroke-width: 3; marker-end: url(#arrow); }
+      .yes { fill: #18785f; font: 700 13px Inter, sans-serif; }
+      .no { fill: #8a5b14; font: 700 13px Inter, sans-serif; }
+      .blocked { fill: #fff7e6; stroke: #e3c68d; stroke-width: 2; }
+      .na { fill: #f0f2f2; stroke: #cfd5d3; stroke-width: 2; }
+      .ready { fill: #eaf8f3; stroke: #9bd8c6; stroke-width: 2; }
+      .generate { fill: #173153; }
+      .status-title { font: 700 18px Inter, "Noto Sans JP", sans-serif; }
+      .status-body { font: 400 14px Inter, "Noto Sans JP", sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1600" height="1000"/>
+  <text class="step" x="52" y="57">ELIGIBILITY BEFORE PRIORITY</text>
+  <text class="title" x="52" y="112">「作りたい」より先に、「作ってよい」を判定する</text>
+  <text class="subtitle" x="52" y="151">各判定結果と不足理由をartifact planへ保存し、GO時にも再検証</text>
+
+  <rect class="card" x="40" y="210" width="220" height="190" rx="16"/>
+  <text class="step" x="62" y="244">G0</text>
+  <text class="heading" x="62" y="278">利用区分は明確？</text>
+  <text class="body" x="62" y="314">source・取得時点</text>
+  <text class="body" x="62" y="340">公開可否・原文なし</text>
+  <text class="micro" x="62" y="375">Mamari＝planning_only</text>
+
+  <path class="main-line" d="M260 305 H284"/>
+  <text class="yes" x="265" y="291">YES</text>
+
+  <rect class="card" x="290" y="210" width="220" height="190" rx="16"/>
+  <text class="step" x="312" y="244">KIND</text>
+  <text class="heading" x="312" y="278">型の最低条件は？</text>
+  <text class="body" x="312" y="314">trigger・完了基準</text>
+  <text class="body" x="312" y="340">項目数・選定軸</text>
+  <text class="micro" x="312" y="375">content_kind別に判定</text>
+
+  <path class="main-line" d="M510 305 H534"/>
+  <text class="yes" x="515" y="291">YES</text>
+
+  <rect class="card" x="540" y="210" width="220" height="190" rx="16"/>
+  <text class="step" x="562" y="244">G1—G4</text>
+  <text class="heading" x="562" y="278">共通ゲート通過？</text>
+  <text class="body" x="562" y="314">privacy・evidence</text>
+  <text class="body" x="562" y="340">独自価値・商用</text>
+  <text class="micro" x="562" y="375">high riskは人間確認</text>
+
+  <path class="main-line" d="M760 305 H784"/>
+  <text class="yes" x="765" y="291">YES</text>
+
+  <rect class="card" x="790" y="210" width="220" height="190" rx="16"/>
+  <text class="step" x="812" y="244">TARGET</text>
+  <text class="heading" x="812" y="278">媒体特性に合う？</text>
+  <text class="body" x="812" y="314">視覚化・会話性</text>
+  <text class="body" x="812" y="340">文脈・検索意図</text>
+  <text class="micro" x="812" y="375">4媒体を個別に判定</text>
+
+  <path class="main-line" d="M1010 305 H1034"/>
+  <text class="yes" x="1015" y="291">YES</text>
+
+  <rect class="card" x="1040" y="210" width="220" height="190" rx="16"/>
+  <text class="step" x="1062" y="244">INPUT</text>
+  <text class="heading" x="1062" y="278">必要入力は揃った？</text>
+  <text class="body" x="1062" y="314">公式事実・本人体験</text>
+  <text class="body" x="1062" y="340">現行offer・画像権利</text>
+  <text class="micro" x="1062" y="375">required_inputsを保存</text>
+
+  <path class="main-line" d="M1260 305 H1284"/>
+  <text class="yes" x="1265" y="291">YES</text>
+
+  <rect class="card" x="1290" y="210" width="260" height="190" rx="16"/>
+  <text class="step" x="1312" y="244">HUMAN CHOICE</text>
+  <text class="heading" x="1312" y="278">今回生成する？</text>
+  <text class="mono" x="1312" y="316">requested = true</text>
+  <text class="body" x="1312" y="348">人間が成果物を選ぶ</text>
+  <text class="micro" x="1312" y="375">未指定はfalse</text>
+
+  <path class="branch" d="M150 400 V463"/>
+  <text class="no" x="163" y="436">NO</text>
+  <rect class="blocked" x="40" y="475" width="220" height="116" rx="14"/>
+  <text class="status-title" x="60" y="510" fill="#9e620e">blocked</text>
+  <text class="mono" x="60" y="539">rights_unreviewed</text>
+  <text class="status-body" x="60" y="567" fill="#7a5c2c">利用区分を設定</text>
+
+  <path class="branch" d="M400 400 V463"/>
+  <text class="no" x="413" y="436">NO</text>
+  <rect class="blocked" x="290" y="475" width="220" height="116" rx="14"/>
+  <text class="status-title" x="310" y="510" fill="#9e620e">blocked</text>
+  <text class="mono" x="310" y="539">insufficient_support</text>
+  <text class="status-body" x="310" y="567" fill="#7a5c2c">型を変える / 情報追加</text>
+
+  <path class="branch" d="M650 400 V463"/>
+  <text class="no" x="663" y="436">NO</text>
+  <rect class="blocked" x="540" y="475" width="220" height="116" rx="14"/>
+  <text class="status-title" x="560" y="510" fill="#9e620e">blocked</text>
+  <text class="mono" x="560" y="539">reason_code</text>
+  <text class="status-body" x="560" y="567" fill="#7a5c2c">不足ゲートを明示</text>
+
+  <path class="branch" d="M900 400 V463"/>
+  <text class="no" x="913" y="436">NO</text>
+  <rect class="na" x="790" y="475" width="220" height="116" rx="14"/>
+  <text class="status-title" x="810" y="510" fill="#646d75">not_applicable</text>
+  <text class="status-body" x="810" y="542" fill="#646d75">その媒体では作らない</text>
+  <text class="status-body" x="810" y="567" fill="#7d858c">水増ししない</text>
+
+  <path class="branch" d="M1150 400 V463"/>
+  <text class="no" x="1163" y="436">NO</text>
+  <rect class="blocked" x="1040" y="475" width="220" height="116" rx="14"/>
+  <text class="status-title" x="1060" y="510" fill="#9e620e">blocked</text>
+  <text class="mono" x="1060" y="539">firsthand_missing</text>
+  <text class="status-body" x="1060" y="567" fill="#7a5c2c">入力後に再判定</text>
+
+  <path class="branch" d="M1380 400 V463"/>
+  <text class="no" x="1393" y="436">FALSE</text>
+  <rect class="ready" x="1270" y="475" width="250" height="116" rx="14"/>
+  <text class="status-title" x="1290" y="510" fill="#18785f">eligible / 待機</text>
+  <text class="mono" x="1290" y="539">requested = false</text>
+  <text class="status-body" x="1290" y="567" fill="#397060">生成せず保存</text>
+
+  <path class="main-line" d="M1520 400 V650 H1370 V678"/>
+  <text class="yes" x="1510" y="436" text-anchor="end">TRUE</text>
+  <rect class="generate" x="1190" y="690" width="360" height="150" rx="18"/>
+  <text x="1220" y="735" fill="#94e4cf" font-family="Inter, sans-serif" font-size="15" font-weight="700" letter-spacing="1">GENERATE</text>
+  <text x="1220" y="779" fill="#ffffff" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="27" font-weight="700">その成果物だけ生成</text>
+  <text x="1220" y="812" fill="#c6d4df" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="16">GO時にも全条件を再検証</text>
+
+  <rect x="40" y="690" width="1080" height="150" rx="18" fill="#f1f4f2"/>
+  <text class="step" x="68" y="730">STATUS CONTRACT</text>
+  <circle cx="82" cy="775" r="8" fill="#34b995"/>
+  <text class="heading" x="104" y="783">eligible</text>
+  <text class="body" x="214" y="783">作成可能</text>
+  <circle cx="382" cy="775" r="8" fill="#c98219"/>
+  <text class="heading" x="404" y="783">blocked</text>
+  <text class="body" x="516" y="783">追加入力で回復可能</text>
+  <circle cx="764" cy="775" r="8" fill="#8c949b"/>
+  <text class="heading" x="786" y="783">not_applicable</text>
+  <text class="body" x="963" y="783">媒体不適合</text>
+
+  <text class="micro" x="68" y="818">priority_score は eligible になった成果物にだけ計算する</text>
+  <text class="micro" x="52" y="915">代表的なblocked reason：</text>
+  <text class="mono" x="278" y="915">official_evidence_missing · firsthand_missing · current_facts_missing · not_visualizable · destination_missing</text>
+</svg>

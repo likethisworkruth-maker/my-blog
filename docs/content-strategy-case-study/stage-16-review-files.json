@@ -1,0 +1,14 @@
+{
+  "artifact_type": "human_review_file_manifest",
+  "status": "preview_only_unapproved",
+  "note": "人間が確認する実ファイルの一覧",
+  "review_files": [
+    "stage-14-blog-preview.md",
+    "stage-14-checklist-preview.json",
+    "stage-15-instagram-checklist.png",
+    "stage-15-instagram-caption.txt",
+    "stage-15-threads-posts.txt"
+  ],
+  "article_manager_imported": false,
+  "published": false
+}

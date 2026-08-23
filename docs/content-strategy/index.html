@@ -1,0 +1,2297 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="LikeThisのThreads・Instagram・note・ブログにおけるコンテンツ定義、媒体振り分け条件、データ利用ルールをまとめた実装仕様。">
+  <title>LikeThis コンテンツ戦略 — 媒体定義と振り分け仕様</title>
+  <style>
+    :root {
+      --paper: #fbfaf7;
+      --surface: #ffffff;
+      --surface-soft: #f5f7f6;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #e6e8e7;
+      --navy: #173153;
+      --navy-soft: #edf3f8;
+      --mint: #34b995;
+      --mint-soft: #eaf8f3;
+      --coral: #ef7f72;
+      --coral-soft: #fff0ed;
+      --lilac: #8f75ba;
+      --lilac-soft: #f4effa;
+      --green: #61a768;
+      --green-soft: #edf7ee;
+      --amber: #c98219;
+      --amber-soft: #fff7e6;
+      --red: #c2414b;
+      --red-soft: #fff0f1;
+      --radius: 14px;
+      --content: 920px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 84px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, "Noto Sans JP", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.78;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration-color: #aab3bd;
+      text-underline-offset: 3px;
+    }
+
+    a:hover {
+      text-decoration-color: var(--mint);
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .skip-link {
+      position: fixed;
+      left: 12px;
+      top: -64px;
+      z-index: 1000;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--navy);
+      color: #fff;
+      transition: top .2s;
+    }
+
+    .skip-link:focus {
+      top: 12px;
+    }
+
+    .reading-progress {
+      position: fixed;
+      inset: 0 auto auto 0;
+      z-index: 999;
+      width: 0;
+      height: 3px;
+      background: var(--mint);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(230, 232, 231, .88);
+      background: rgba(251, 250, 247, .92);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 58px;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 9px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-action {
+      display: inline-flex;
+      min-height: 34px;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: #45515f;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .top-action:hover {
+      border-color: #bdc7c3;
+      background: #f9fbfa;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, var(--content));
+      gap: 56px;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 50px 24px 96px;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 92px;
+      align-self: start;
+    }
+
+    .sidebar-label {
+      margin: 0 0 10px 10px;
+      color: #98a1ac;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .toc {
+      display: grid;
+      gap: 2px;
+    }
+
+    .toc a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      color: #707986;
+      font-size: 12.5px;
+      font-weight: 650;
+      line-height: 1.45;
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+
+    .toc a::before {
+      width: 17px;
+      color: #adb4bc;
+      content: attr(data-index);
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toc a:hover,
+    .toc a[aria-current="true"] {
+      background: #eeefec;
+      color: var(--ink);
+    }
+
+    .toc a[aria-current="true"]::before {
+      color: var(--mint);
+    }
+
+    .sidebar-meta {
+      margin-top: 20px;
+      padding: 14px 10px 0;
+      border-top: 1px solid var(--line);
+      color: #8b939d;
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 27px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+      color: #66717d;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .pill.ready {
+      border-color: #bde6d9;
+      background: var(--mint-soft);
+      color: #18785f;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 800px;
+      margin-bottom: 16px;
+      font-size: clamp(2.2rem, 6vw, 4.25rem);
+      line-height: 1.08;
+      letter-spacing: -.055em;
+    }
+
+    .lead {
+      max-width: 710px;
+      margin-bottom: 30px;
+      color: #5e6875;
+      font-size: clamp(1rem, 2.3vw, 1.18rem);
+      line-height: 1.85;
+    }
+
+    .hero-figure {
+      margin: 0 0 24px;
+    }
+
+    .hero-figure img,
+    .diagram-figure img,
+    .evidence-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid #e3e4df;
+      border-radius: 18px;
+      background: #f3f0e9;
+    }
+
+    figcaption {
+      margin-top: 8px;
+      color: #8a929b;
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .diagram-figure {
+      margin: 22px 0 24px;
+    }
+
+    .decision {
+      position: relative;
+      overflow: hidden;
+      margin: 28px 0 12px;
+      padding: 28px 30px;
+      border-radius: 16px;
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .decision::after {
+      position: absolute;
+      right: -48px;
+      bottom: -76px;
+      width: 210px;
+      height: 210px;
+      border: 32px solid rgba(62, 199, 166, .15);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .decision-kicker {
+      margin-bottom: 8px;
+      color: #94e4cf;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .13em;
+    }
+
+    .decision strong {
+      position: relative;
+      z-index: 1;
+      display: block;
+      max-width: 720px;
+      font-size: clamp(1.28rem, 3vw, 1.72rem);
+      line-height: 1.5;
+      letter-spacing: -.02em;
+    }
+
+    .formula {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .formula span {
+      padding: 6px 9px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 7px;
+      background: rgba(255,255,255,.08);
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .formula b {
+      color: #94e4cf;
+      font-size: 15px;
+    }
+
+    .key-decisions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .key-decision {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--surface);
+    }
+
+    .key-decision b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--navy);
+      font-size: 13px;
+    }
+
+    .key-decision span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    section {
+      margin-top: 88px;
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: 39px minmax(0, 1fr);
+      gap: 13px;
+      align-items: start;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-number {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 9px;
+      background: #eef0ed;
+      color: #69737e;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    h2 {
+      margin-bottom: 4px;
+      font-size: clamp(1.55rem, 4vw, 2.05rem);
+      line-height: 1.3;
+      letter-spacing: -.035em;
+    }
+
+    .section-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    h3 {
+      margin-bottom: 10px;
+      font-size: 1rem;
+      line-height: 1.5;
+      letter-spacing: -.01em;
+    }
+
+    .callout {
+      display: flex;
+      gap: 12px;
+      margin: 18px 0;
+      padding: 15px 17px;
+      border: 1px solid #d9e4df;
+      border-radius: 11px;
+      background: #f3faf7;
+      color: #39584e;
+      font-size: 13px;
+    }
+
+    .callout-icon {
+      flex: 0 0 auto;
+      font-size: 16px;
+    }
+
+    .funnel {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+      margin: 26px 0 12px;
+    }
+
+    .funnel-step {
+      position: relative;
+      min-width: 0;
+      padding: 16px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    .funnel-step:not(:last-child)::after {
+      position: absolute;
+      top: 50%;
+      right: -16px;
+      color: #b4babf;
+      content: "→";
+      font-weight: 850;
+      transform: translateY(-50%);
+    }
+
+    .funnel-step .num {
+      display: block;
+      margin-bottom: 10px;
+      color: #a2a9b1;
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .08em;
+    }
+
+    .funnel-step b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--navy);
+      font-size: 13px;
+    }
+
+    .funnel-step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .funnel-step.revenue {
+      border-color: #f0d8aa;
+      background: var(--amber-soft);
+    }
+
+    .channel-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .channel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+
+    .channel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 17px 18px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .channel-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .channel-icon {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .channel-title h3 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .channel-role {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+
+    .channel-body {
+      padding: 16px 18px 18px;
+    }
+
+    .channel dl {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 9px 10px;
+      margin: 0;
+      font-size: 12px;
+    }
+
+    .channel dt {
+      color: #99a1aa;
+      font-weight: 800;
+    }
+
+    .channel dd {
+      margin: 0;
+      color: #4c5663;
+      line-height: 1.65;
+    }
+
+    .channel.threads .channel-icon { background: var(--lilac-soft); color: var(--lilac); }
+    .channel.threads .channel-role { color: var(--lilac); }
+    .channel.instagram .channel-icon { background: var(--coral-soft); color: var(--coral); }
+    .channel.instagram .channel-role { color: var(--coral); }
+    .channel.note .channel-icon { background: var(--green-soft); color: var(--green); }
+    .channel.note .channel-role { color: var(--green); }
+    .channel.blog .channel-icon { background: var(--navy-soft); color: #356b9e; }
+    .channel.blog .channel-role { color: #356b9e; }
+
+    .do-not {
+      display: inline-flex;
+      margin-top: 12px;
+      padding: 4px 7px;
+      border-radius: 6px;
+      background: #f4f5f4;
+      color: #7c848d;
+      font-size: 10px;
+      font-weight: 750;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    th,
+    td {
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+      text-align: left;
+    }
+
+    th {
+      background: #f5f6f4;
+      color: #66707b;
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:hover {
+      background: #fafbf9;
+    }
+
+    td:first-child {
+      color: var(--navy);
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .cell-main {
+      color: #237a63;
+      font-weight: 850;
+    }
+
+    .cell-reuse {
+      color: #6e5b91;
+      font-weight: 750;
+    }
+
+    .cell-conditional {
+      color: #ad6e12;
+      font-weight: 750;
+    }
+
+    .cell-na {
+      color: #adb3ba;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin: 10px 2px 0;
+      color: #7a838c;
+      font-size: 10px;
+    }
+
+    .routing-flow {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 18px;
+      margin: 26px 0;
+    }
+
+    .routing-step {
+      position: relative;
+      padding: 15px 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      text-align: center;
+    }
+
+    .routing-step:not(:last-child)::after {
+      position: absolute;
+      top: 50%;
+      right: -14px;
+      color: #b4babf;
+      content: "›";
+      font-size: 23px;
+      transform: translateY(-52%);
+    }
+
+    .routing-step span {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--mint);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .routing-step b {
+      display: block;
+      color: var(--navy);
+      font-size: 11.5px;
+      line-height: 1.45;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .status-card {
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .status-card b {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .status-card p {
+      margin: 0;
+      color: #5f6872;
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .status-card.eligible { background: var(--mint-soft); }
+    .status-card.eligible b { color: #17765d; }
+    .status-card.blocked { background: var(--amber-soft); }
+    .status-card.blocked b { color: #9e620e; }
+    .status-card.na { background: #f0f2f2; }
+    .status-card.na b { color: #6c747c; }
+
+    .rule {
+      margin: 20px 0;
+      padding: 16px 18px;
+      border-left: 4px solid var(--mint);
+      border-radius: 0 10px 10px 0;
+      background: var(--surface);
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .example {
+      margin-top: 24px;
+      padding: 20px;
+      border: 1px solid #dfe4e1;
+      border-radius: 14px;
+      background: #f7f9f8;
+    }
+
+    .example-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .example-title h3 {
+      margin: 0;
+    }
+
+    .example-badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #e8ecea;
+      color: #707982;
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .example-context {
+      margin-bottom: 14px;
+      color: #5e6872;
+      font-size: 12px;
+    }
+
+    .artifact-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .artifact {
+      display: grid;
+      grid-template-columns: 105px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--surface);
+      font-size: 11px;
+    }
+
+    .artifact-target {
+      color: var(--navy);
+      font-weight: 850;
+    }
+
+    .artifact-reason {
+      color: #66707a;
+    }
+
+    .status {
+      padding: 3px 7px;
+      border-radius: 999px;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 9px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .status.ok { background: var(--mint-soft); color: #16745b; }
+    .status.wait { background: var(--amber-soft); color: #9f620d; }
+
+    .evidence-figure {
+      margin: 18px 0 22px;
+    }
+
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .source-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--surface);
+    }
+
+    .source-card .source-type {
+      display: inline-flex;
+      margin-bottom: 9px;
+      padding: 3px 7px;
+      border-radius: 5px;
+      background: #f0f2f1;
+      color: #6f7881;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 9.5px;
+      font-weight: 800;
+    }
+
+    .source-card h3 {
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .source-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .source-card .ban {
+      display: block;
+      margin-top: 8px;
+      color: var(--red);
+      font-size: 10px;
+      font-weight: 750;
+    }
+
+    .architecture {
+      display: grid;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .layer {
+      display: grid;
+      grid-template-columns: 165px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--surface);
+    }
+
+    .layer-name {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--navy);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .layer-num {
+      display: grid;
+      width: 24px;
+      height: 24px;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--navy-soft);
+      color: #3e6b91;
+      font-size: 9px;
+    }
+
+    .layer p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .layer code {
+      color: #42505f;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+    }
+
+    .architecture-note {
+      margin: 12px 0 0;
+      color: #7a838c;
+      font-size: 11px;
+    }
+
+    details {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--surface);
+    }
+
+    summary {
+      position: relative;
+      padding: 14px 42px 14px 16px;
+      color: #4d5762;
+      font-size: 12px;
+      font-weight: 800;
+      list-style: none;
+      cursor: pointer;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      color: #8a929b;
+      content: "＋";
+      font-size: 16px;
+      transform: translateY(-50%);
+    }
+
+    details[open] summary::after {
+      content: "−";
+    }
+
+    .details-body {
+      padding: 0 16px 16px;
+      border-top: 1px solid var(--line);
+      color: #606a75;
+      font-size: 12px;
+    }
+
+    .details-body ul,
+    .details-body ol {
+      margin: 14px 0 0;
+      padding-left: 20px;
+    }
+
+    .details-body li + li {
+      margin-top: 6px;
+    }
+
+    .code-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .code-block {
+      overflow-x: auto;
+      padding: 13px;
+      border-radius: 9px;
+      background: #f4f5f3;
+      color: #46515d;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 10.5px;
+      line-height: 1.7;
+      white-space: pre;
+    }
+
+    .roadmap {
+      position: relative;
+      display: grid;
+      gap: 0;
+      margin-top: 20px;
+    }
+
+    .roadmap::before {
+      position: absolute;
+      top: 17px;
+      bottom: 17px;
+      left: 16px;
+      width: 1px;
+      background: #d9dedb;
+      content: "";
+    }
+
+    .phase {
+      position: relative;
+      display: grid;
+      grid-template-columns: 34px 110px minmax(0, 1fr);
+      gap: 12px;
+      padding: 10px 0;
+    }
+
+    .phase-dot {
+      z-index: 1;
+      display: grid;
+      width: 33px;
+      height: 33px;
+      place-items: center;
+      border: 5px solid var(--paper);
+      border-radius: 50%;
+      background: var(--mint);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .phase-title {
+      padding-top: 5px;
+      color: var(--navy);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .phase p {
+      margin: 0;
+      padding-top: 4px;
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.65;
+    }
+
+    .pilot {
+      margin-top: 22px;
+      padding: 19px;
+      border: 1px solid #cde7de;
+      border-radius: 13px;
+      background: var(--mint-soft);
+    }
+
+    .pilot h3 {
+      color: #176f59;
+    }
+
+    .pilot p {
+      margin-bottom: 12px;
+      color: #43675c;
+      font-size: 12px;
+    }
+
+    .pilot-output {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .pilot-output span {
+      padding: 5px 8px;
+      border: 1px solid rgba(23,111,89,.14);
+      border-radius: 7px;
+      background: rgba(255,255,255,.64);
+      color: #286451;
+      font-size: 10px;
+      font-weight: 750;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 9px;
+      align-items: start;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      color: #525d68;
+      font-size: 11.5px;
+      line-height: 1.6;
+    }
+
+    .check-mark {
+      display: grid;
+      width: 20px;
+      height: 20px;
+      place-items: center;
+      border-radius: 6px;
+      background: var(--mint-soft);
+      color: #19775f;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .next-action {
+      margin-top: 28px;
+      padding: 24px;
+      border-radius: 14px;
+      background: #eef1ef;
+    }
+
+    .next-action h3 {
+      margin-bottom: 6px;
+      font-size: 1.05rem;
+    }
+
+    .next-action p {
+      margin: 0;
+      color: #5e6872;
+      font-size: 12px;
+    }
+
+    footer {
+      margin-top: 90px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: #818a94;
+      font-size: 11px;
+    }
+
+    .references {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px 14px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 1050px) {
+      .layout {
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 32px;
+      }
+
+      .routing-flow {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .routing-step:nth-child(3)::after {
+        display: none;
+      }
+    }
+
+    @media (max-width: 780px) {
+      html {
+        scroll-padding-top: 112px;
+      }
+
+      .topbar-inner {
+        padding: 0 16px;
+      }
+
+      .top-action.print {
+        display: none;
+      }
+
+      .layout {
+        display: block;
+        padding: 24px 16px 72px;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 58px;
+        z-index: 90;
+        width: calc(100% + 32px);
+        margin: 0 -16px 34px;
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(251, 250, 247, .96);
+        backdrop-filter: blur(10px);
+      }
+
+      .sidebar-label,
+      .sidebar-meta {
+        display: none;
+      }
+
+      .toc {
+        display: flex;
+        gap: 3px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .toc::-webkit-scrollbar {
+        display: none;
+      }
+
+      .toc a {
+        flex: 0 0 auto;
+        padding: 6px 9px;
+        white-space: nowrap;
+      }
+
+      .toc a::before {
+        width: auto;
+      }
+
+      h1 {
+        font-size: clamp(2.25rem, 12vw, 3.35rem);
+      }
+
+      .decision {
+        padding: 22px 20px;
+      }
+
+      .key-decisions,
+      .channel-grid,
+      .source-grid,
+      .check-grid,
+      .code-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .funnel {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .funnel-step:not(:last-child)::after {
+        top: auto;
+        right: 50%;
+        bottom: -18px;
+        content: "↓";
+        transform: translateX(50%);
+      }
+
+      .routing-flow {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .routing-step:nth-child(3)::after {
+        display: block;
+      }
+
+      .routing-step:nth-child(2n)::after {
+        display: none;
+      }
+
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .artifact {
+        grid-template-columns: 1fr auto;
+      }
+
+      .artifact-reason {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .layer {
+        grid-template-columns: 1fr;
+        gap: 7px;
+      }
+
+      .phase {
+        grid-template-columns: 34px 1fr;
+      }
+
+      .phase-title {
+        align-self: center;
+      }
+
+      .phase p {
+        grid-column: 2;
+        padding-top: 0;
+      }
+    }
+
+    @media (max-width: 440px) {
+      .brand span:last-child {
+        display: none;
+      }
+
+      .lead {
+        font-size: .96rem;
+      }
+
+      .routing-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .routing-step:nth-child(n)::after {
+        top: auto;
+        right: 50%;
+        bottom: -18px;
+        display: block;
+        content: "↓";
+        transform: translateX(50%);
+      }
+
+      .routing-step:last-child::after {
+        display: none;
+      }
+    }
+
+    @media print {
+      @page {
+        margin: 14mm;
+      }
+
+      body {
+        background: #fff;
+        font-size: 11px;
+      }
+
+      .topbar,
+      .sidebar,
+      .reading-progress,
+      .top-actions {
+        display: none !important;
+      }
+
+      .layout {
+        display: block;
+        max-width: none;
+        padding: 0;
+      }
+
+      section {
+        margin-top: 44px;
+        break-inside: avoid;
+      }
+
+      .hero-figure img,
+      .diagram-figure img,
+      .evidence-figure img {
+        max-height: 120mm;
+        object-fit: cover;
+      }
+
+      details {
+        break-inside: avoid;
+      }
+
+      details:not([open]) .details-body {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">本文へ移動</a>
+  <div class="reading-progress" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">L</span>
+        <span>LikeThis / Content OS</span>
+      </div>
+      <div class="top-actions">
+        <a class="top-action" href="../content-strategy-routing-spec.md">正本MD</a>
+        <button class="top-action print" type="button" onclick="window.print()">印刷 / PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="目次">
+      <p class="sidebar-label">Contents</p>
+      <nav class="toc">
+        <a href="#overview" data-index="01">結論</a>
+        <a href="#funnel" data-index="02">収益導線</a>
+        <a href="#channels" data-index="03">4媒体の役割</a>
+        <a href="#content-kinds" data-index="04">コンテンツ定義</a>
+        <a href="#routing" data-index="05">振り分け条件</a>
+        <a href="#evidence" data-index="06">データ利用</a>
+        <a href="#architecture" data-index="07">DB構成</a>
+        <a href="#roadmap" data-index="08">実装順</a>
+        <a href="#acceptance" data-index="09">完了条件</a>
+      </nav>
+      <div class="sidebar-meta">
+        Version 1.1<br>
+        2026-08-13<br>
+        実装前の基準仕様
+      </div>
+    </aside>
+
+    <main id="main">
+      <article>
+        <header id="overview">
+          <div class="eyebrow">
+            <span class="pill ready"><span class="dot"></span>方針確定</span>
+            <span class="pill">Executive spec</span>
+            <span class="pill">読了目安 5分</span>
+          </div>
+          <h1>媒体を先に決めない。<br>作れる根拠から、届け先を選ぶ。</h1>
+          <p class="lead">
+            Threads・Instagram・note・ブログを、同じ原稿の転載先ではなく、
+            それぞれ別の仕事をする4つの出口として再定義します。
+            最終ゴールは、育児の困りごとを解決する商品・アプリ選びを支え、ブログで収益化することです。
+          </p>
+
+          <figure class="hero-figure">
+            <img
+              src="./assets/01-content-system.png"
+              alt="データの役割、問題クラスター、公開ゲート、媒体別判定からなるLikeThisコンテンツ運用モデル"
+              width="1600"
+              height="900"
+            >
+            <figcaption>図解01：データから媒体別成果物までの全体構造</figcaption>
+          </figure>
+
+          <div class="decision">
+            <div class="decision-kicker">CORE DECISION</div>
+            <strong>
+              six-packの一括生成をやめ、各媒体を個別に
+              <em>eligible</em> 判定する。
+            </strong>
+            <div class="formula" aria-label="生成条件">
+              <span>eligibility = eligible</span>
+              <b>∧</b>
+              <span>requested = true</span>
+              <b>→</b>
+              <span>generate</span>
+            </div>
+          </div>
+
+          <div class="key-decisions">
+            <div class="key-decision">
+              <b>収益はBlogに集約</b>
+              <span>フェーズ1のアフィリエイトCTAはブログだけ。SNSとnoteは送客・信頼形成。</span>
+            </div>
+            <div class="key-decision">
+              <b>原文は公開に使わない</b>
+              <span>Mamariは需要シグナル専用。引用・言い換え・体験談化・推薦根拠化をしない。</span>
+            </div>
+            <div class="key-decision">
+              <b>人間レビューを必須化</b>
+              <span>権利、事実、体験、商用条件を確認し、承認済みManifestだけを公開する。</span>
+            </div>
+          </div>
+        </header>
+
+        <section id="funnel">
+          <div class="section-heading">
+            <span class="section-number">02</span>
+            <div>
+              <h2>収益導線</h2>
+              <p>「困った」に気づく入口から、必要条件を整理し、納得できる選択へつなげる。</p>
+            </div>
+          </div>
+
+          <figure class="diagram-figure">
+            <img
+              src="./assets/02-revenue-funnel.png"
+              alt="ThreadsとInstagramでの発見から、ブログでの整理、条件確定、商品比較、アフィリエイト収益までの5段階導線"
+              width="1600"
+              height="900"
+              loading="lazy"
+            >
+            <figcaption>図解02：育児便利グッズアフィリエイトの収益導線</figcaption>
+          </figure>
+
+          <div class="callout">
+            <span class="callout-icon" aria-hidden="true">↳</span>
+            <div>
+              チェックリストから特定商品へ直結させません。
+              まず読者自身の必要条件を確定し、カテゴリ選定ガイドを経由して商品候補へ進めます。
+            </div>
+          </div>
+        </section>
+
+        <section id="channels">
+          <div class="section-heading">
+            <span class="section-number">03</span>
+            <div>
+              <h2>4媒体のコンテンツ契約</h2>
+              <p>同じテーマでも、役割・適格条件・CTAを媒体ごとに変える。</p>
+            </div>
+          </div>
+
+          <div class="channel-grid">
+            <article class="channel threads">
+              <div class="channel-head">
+                <div class="channel-title">
+                  <span class="channel-icon">T</span>
+                  <h3>Threads</h3>
+                </div>
+                <span class="channel-role">発見・会話</span>
+              </div>
+              <div class="channel-body">
+                <dl>
+                  <dt>作る</dt>
+                  <dd>困りごとを一つに絞った問い、承認済み手順の1〜3点、公開・改訂通知。</dd>
+                  <dt>条件</dt>
+                  <dd>個人情報なしで答えられる。一般化しない。リンク先が公開済み。</dd>
+                  <dt>CTA</dt>
+                  <dd>会話を優先。必要な投稿だけブログ完全版へ。</dd>
+                </dl>
+                <span class="do-not">禁止：QA言い換え、架空体験、商品名だけの宣伝</span>
+              </div>
+            </article>
+
+            <article class="channel instagram">
+              <div class="channel-head">
+                <div class="channel-title">
+                  <span class="channel-icon">◎</span>
+                  <h3>Instagram</h3>
+                </div>
+                <span class="channel-role">保存・視覚理解</span>
+              </div>
+              <div class="channel-body">
+                <dl>
+                  <dt>作る</dt>
+                  <dd>5〜9項目の保存版、3軸以上の比較、条件分岐、タイムライン。</dd>
+                  <dt>条件</dt>
+                  <dd>短縮しても誤解しにくい。1枚1メッセージ。画像利用権を確認済み。</dd>
+                  <dt>CTA</dt>
+                  <dd>最後のスライドからプロフィール・ブログ完全版へ。</dd>
+                </dl>
+                <span class="do-not">禁止：水増し、危険な要約、他サイト画像の再利用</span>
+              </div>
+            </article>
+
+            <article class="channel note">
+              <div class="channel-head">
+                <div class="channel-title">
+                  <span class="channel-icon">n</span>
+                  <h3>note</h3>
+                </div>
+                <span class="channel-role">一次体験・編集思想</span>
+              </div>
+              <div class="channel-body">
+                <dl>
+                  <dt>作る</dt>
+                  <dd>なぜ作ったか、試して分かったこと、失敗、採否の判断、改善記録。</dd>
+                  <dt>条件</dt>
+                  <dd>本人の体験5要素、または固有の編集判断を人間が入力・確認済み。</dd>
+                  <dt>CTA</dt>
+                  <dd>末尾で関連ブログへ1回。フェーズ1は直接アフィリエイトなし。</dd>
+                </dl>
+                <span class="do-not">禁止：第三者体験の借用、AI製の感想、一般論の引き延ばし</span>
+              </div>
+            </article>
+
+            <article class="channel blog">
+              <div class="channel-head">
+                <div class="channel-title">
+                  <span class="channel-icon">B</span>
+                  <h3>Blog</h3>
+                </div>
+                <span class="channel-role">検索・実用・選択・収益</span>
+              </div>
+              <div class="channel-body">
+                <dl>
+                  <dt>作る</dt>
+                  <dd>完了判定できるチェックリスト、判断ガイド、選定ガイド、本人レビュー。</dd>
+                  <dt>条件</dt>
+                  <dd>公式根拠・現行情報・対象外条件を保持。承認済みManifestだけ公開。</dd>
+                  <dt>CTA</dt>
+                  <dd>active offer、開示、rel=sponsored、クリックevent IDが揃った時だけ。</dd>
+                </dl>
+                <span class="do-not">禁止：調査記事を本人レビューとして表現すること</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="content-kinds">
+          <div class="section-heading">
+            <span class="section-number">04</span>
+            <div>
+              <h2>content_kindを具体的に分類する</h2>
+              <p>媒体や素材の単語ではなく、「読者が読み終えた時の完了状態」を正本にする。</p>
+            </div>
+          </div>
+
+          <div class="callout">
+            <span class="callout-icon" aria-hidden="true">!</span>
+            <div>
+              一つの問題クラスターから複数のbriefを作れますが、
+              <strong>一つのbriefは一つの主content_kindだけ</strong>です。
+              複数の完了状態が残る場合は先勝ちにせず、briefを分割します。
+            </div>
+          </div>
+
+          <figure class="diagram-figure">
+            <img
+              src="./assets/05-content-kind-classifier.png"
+              alt="読者の完了状態によって同じテーマを8種類のcontent kindへ分類する具体例"
+              width="1600"
+              height="1080"
+              loading="lazy"
+            >
+            <figcaption>図解05：同じ「短時間外出」テーマを8種類へ分ける判定基準</figcaption>
+          </figure>
+
+          <h3>8種類を分ける必須条件</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>content_kind</th>
+                  <th>読者の完了状態</th>
+                  <th>最低条件</th>
+                  <th>短時間外出の例</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>problem_prompt</td>
+                  <td>未知条件を一つ回答する</td>
+                  <td>一問・一条件軸・安全に回答可能・利用目的あり</td>
+                  <td>外出準備で一番迷う点を一問だけ聞く</td>
+                </tr>
+                <tr>
+                  <td>action_checklist</td>
+                  <td>一連の行動を完了する</td>
+                  <td>trigger・完了状態・action 3〜12・全項目の完了基準</td>
+                  <td>出発15分前の8項目でバッグ準備を終える</td>
+                </tr>
+                <tr>
+                  <td>decision_guide</td>
+                  <td>条件から方針を一つ選ぶ</td>
+                  <td>一つの問い・2経路以上・各経路の条件と終点</td>
+                  <td>抱っこ紐・ベビーカー・併用を条件で選ぶ</td>
+                </tr>
+                <tr>
+                  <td>product_selection_guide</td>
+                  <td>必要な商品条件を持つ</td>
+                  <td>選定軸3以上・代替策2以上・公式仕様・確認日</td>
+                  <td>短時間外出用バッグを3軸で比較する</td>
+                </tr>
+                <tr>
+                  <td>first_hand_review</td>
+                  <td>本人の使用評価を理解する</td>
+                  <td>本人使用・期間・場面・長所・弱点・合わない条件</td>
+                  <td>本人が3週間使ったバッグを条件付きで評価する</td>
+                </tr>
+                <tr>
+                  <td>evidence_explainer</td>
+                  <td>根拠の意味と範囲を理解する</td>
+                  <td>一つの問い・公式根拠・claim対応・適用範囲・確認日</td>
+                  <td>折りたたみサイズ表記の読み方を整理する</td>
+                </tr>
+                <tr>
+                  <td>personal_story</td>
+                  <td>本人の過程と学びを追う</td>
+                  <td>本人入力・出来事3つ以上・試行・結果・学び・期間</td>
+                  <td>初外出で詰めすぎ、リストを直した経緯を書く</td>
+                </tr>
+                <tr>
+                  <td>update_notice</td>
+                  <td>変更を知り完全版へ移動する</td>
+                  <td>変更event・before/after・対象者・公開済みURL</td>
+                  <td>外出チェックリストv2の変更点を知らせる</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <details>
+            <summary>境界で迷いやすい4組の分け方</summary>
+            <div class="details-body">
+              <ul>
+                <li><strong>checklist / decision guide：</strong>行動を全部終えるなら前者、条件から方針を一つ選ぶなら後者。両方ある場合はbriefを分割。</li>
+                <li><strong>selection guide / review：</strong>公式仕様と選定軸なら前者、本人が使った対象の評価なら後者。商品がsubjectというだけでは分類しない。</li>
+                <li><strong>explainer / checklist：</strong>意味と適用範囲の理解なら前者、照合・設定・準備の完了なら後者。</li>
+                <li><strong>personal story / review：</strong>出来事・試行錯誤・学びが主役なら前者、特定商品・アプリの使用評価が主役なら後者。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>分類器が止めるべき入力例</summary>
+            <div class="details-body">
+              <ul>
+                <li>Mamari回答の箇条書き → checklistにせず <code>insufficient(raw_source_only)</code>。</li>
+                <li>口コミ大賞の商品一覧 → selection guideにせず、shortlistのまま。</li>
+                <li>「おむつ・ミルク・着替え」 → actionと完了基準がないため未分類。</li>
+                <li>メーカー仕様だけ → reviewにせず、explainer候補または内部evidence。</li>
+                <li>移動方法の選択と荷造り完了が同居 → 先勝ちにせずbriefを二つへ分割。</li>
+                <li>候補0件は <code>insufficient</code>、候補2件以上は <code>ambiguous</code>。どちらも生成を停止。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>現行データから、どのkind候補を提案できるか</summary>
+            <div class="details-body">
+              <ul>
+                <li><strong>Mamari集計：</strong><code>problem_prompt</code> は提案可能。他kindにはproblem・audience・scene候補だけを渡し、actionや推薦は作らない。</li>
+                <li><strong>Mamari QA本文：</strong>内部検証だけ。公開kindの本文・引用・言い換えには使わない。</li>
+                <li><strong>口コミ大賞：</strong>商品subjectのshortlistだけ。selection guideの選定軸やreview評価にはしない。</li>
+                <li><strong>公的・公式情報：</strong><code>evidence_explainer</code> を提案可能。他kindにはfactとして接続。</li>
+                <li><strong>本人の使用記録：</strong>対象評価が主なら <code>first_hand_review</code>、出来事と学びが主なら <code>personal_story</code>。</li>
+                <li><strong>approved成果物の変更event：</strong><code>update_notice</code> を提案可能。</li>
+                <li><strong>affiliate offer：</strong>Blog CTAの準備状況だけ。content_kindや編集評価は決めない。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>最低限実装する分類器テスト10件</summary>
+            <div class="details-body">
+              <ol>
+                <li>action 8件でもtriggerなし → <code>insufficient</code>。</li>
+                <li>triggerありでも名詞だけ → completion criterion不足。</li>
+                <li>条件と終点を持つ3経路 → <code>decision_guide</code>。</li>
+                <li>商品subjectでも選定軸2件 → <code>insufficient</code>。reviewへfallbackしない。</li>
+                <li>公式仕様あり・本人未使用 → review候補にしない。</li>
+                <li>本人使用あり・弱点なし → <code>insufficient</code>。</li>
+                <li>行動完了と方針選択が同格 → <code>ambiguous / split_brief</code>。</li>
+                <li>Mamari回答の箇条書きだけ → <code>insufficient(raw_source_only)</code>。</li>
+                <li>変更点あり・公開URLなし → destination不足。</li>
+                <li>候補1件でも人間未確認 → 生成不可。</li>
+              </ol>
+            </div>
+          </details>
+
+          <h3>分類後にだけ媒体を割り当てる</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>content_kind</th>
+                  <th>仕事</th>
+                  <th>Threads</th>
+                  <th>Instagram</th>
+                  <th>note</th>
+                  <th>Blog</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>problem_prompt</td>
+                  <td>未知条件を会話で集める</td>
+                  <td class="cell-main">主</td>
+                  <td class="cell-na">—</td>
+                  <td class="cell-na">—</td>
+                  <td class="cell-na">内部企画</td>
+                </tr>
+                <tr>
+                  <td>action_checklist</td>
+                  <td>行動を完了させる</td>
+                  <td class="cell-reuse">1〜3点</td>
+                  <td class="cell-conditional">5〜9項目</td>
+                  <td class="cell-conditional">編集背景あり</td>
+                  <td class="cell-main">主</td>
+                </tr>
+                <tr>
+                  <td>decision_guide</td>
+                  <td>条件分岐で選択肢を絞る</td>
+                  <td class="cell-reuse">問い</td>
+                  <td class="cell-conditional">視覚化可能</td>
+                  <td class="cell-conditional">編集判断あり</td>
+                  <td class="cell-main">主</td>
+                </tr>
+                <tr>
+                  <td>product_selection_guide</td>
+                  <td>商品・アプリの選定軸を示す</td>
+                  <td class="cell-reuse">抜粋</td>
+                  <td class="cell-conditional">3軸以上</td>
+                  <td class="cell-na">原則 —</td>
+                  <td class="cell-main">主・収益</td>
+                </tr>
+                <tr>
+                  <td>first_hand_review</td>
+                  <td>本人が使った条件と結果を示す</td>
+                  <td class="cell-reuse">抜粋</td>
+                  <td class="cell-conditional">視覚素材あり</td>
+                  <td class="cell-main">主</td>
+                  <td class="cell-main">主・収益</td>
+                </tr>
+                <tr>
+                  <td>evidence_explainer</td>
+                  <td>公式情報を整理して説明する</td>
+                  <td class="cell-reuse">注意点</td>
+                  <td class="cell-conditional">安全に短縮可能</td>
+                  <td class="cell-conditional">人間の論考あり</td>
+                  <td class="cell-main">主</td>
+                </tr>
+                <tr>
+                  <td>personal_story</td>
+                  <td>本人の試行錯誤と学びを残す</td>
+                  <td class="cell-reuse">抜粋</td>
+                  <td class="cell-conditional">視覚素材あり</td>
+                  <td class="cell-main">主</td>
+                  <td class="cell-conditional">log任意</td>
+                </tr>
+                <tr>
+                  <td>update_notice</td>
+                  <td>公開・改訂・検証結果を知らせる</td>
+                  <td class="cell-main">主</td>
+                  <td class="cell-na">原則 —</td>
+                  <td class="cell-conditional">任意</td>
+                  <td class="cell-na">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="legend">
+            <span class="cell-main">主＝主成果物</span>
+            <span class="cell-reuse">抜粋＝承認済み核から再編集</span>
+            <span class="cell-conditional">条件付き＝追加入力が必要</span>
+            <span class="cell-na">—＝not_applicable</span>
+          </div>
+
+          <div class="callout">
+            <span class="callout-icon" aria-hidden="true">i</span>
+            <div>
+              product / app / service は記事型ではなく <strong>subject_type</strong> です。
+              たとえばアプリでも「選定ガイド」「本人レビュー」「手順解説」を分けて作ります。
+              媒体は <strong>target</strong> であり、content_kindの代わりにはなりません。
+            </div>
+          </div>
+        </section>
+
+        <section id="routing">
+          <div class="section-heading">
+            <span class="section-number">05</span>
+            <div>
+              <h2>振り分けエンジン</h2>
+              <p>優先順位の前に、作ってよいかを判定。足りない根拠は理由コードとして保存する。</p>
+            </div>
+          </div>
+
+          <figure class="diagram-figure">
+            <img
+              src="./assets/03-routing-engine.png"
+              alt="利用区分、コンテンツ条件、共通ゲート、媒体適合、必要入力、生成選択を順に評価する振り分けフロー"
+              width="1600"
+              height="1000"
+              loading="lazy"
+            >
+            <figcaption>図解03：eligible・blocked・not_applicableの判定フロー</figcaption>
+          </figure>
+
+          <div class="status-grid">
+            <div class="status-card eligible">
+              <b><span class="dot"></span>eligible</b>
+              <p>必要条件が揃い、その媒体で安全・有用に表現できる。</p>
+            </div>
+            <div class="status-card blocked">
+              <b><span class="dot"></span>blocked</b>
+              <p>公式根拠や本人入力などを追加すれば、将来eligibleになれる。</p>
+            </div>
+            <div class="status-card na">
+              <b><span class="dot"></span>not_applicable</b>
+              <p>その内容は媒体特性に合わない。無理に成果物を作らない。</p>
+            </div>
+          </div>
+
+          <div class="rule">未指定 target は requested = false。既定ONにしない。</div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>content_kind候補</th>
+                  <th>最低条件</th>
+                  <th>不足時</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>problem_prompt</td>
+                  <td>一つの困りごと＋答えやすい一問。閾値未満でも「よくある」と断定しない。</td>
+                  <td><span class="status wait">insufficient_support</span></td>
+                </tr>
+                <tr>
+                  <td>action_checklist</td>
+                  <td>trigger、completion_outcome、独立action 3〜12、全項目の完了基準、例外条件。</td>
+                  <td><span class="status wait">insufficient_support</span></td>
+                </tr>
+                <tr>
+                  <td>decision_guide</td>
+                  <td>判断条件と分岐があり、読者が選択肢を減らせる。事実は一次情報へ接続。</td>
+                  <td><span class="status wait">official_evidence_missing</span></td>
+                </tr>
+                <tr>
+                  <td>product_selection_guide</td>
+                  <td>選定軸3以上、比較対象・代替策2以上、現行仕様を公式情報で確認。</td>
+                  <td><span class="status wait">current_facts_missing</span></td>
+                </tr>
+                <tr>
+                  <td>first_hand_review</td>
+                  <td>本人使用、場面・期間、良い点・弱点、合わない条件、現行仕様。</td>
+                  <td><span class="status wait">firsthand_missing</span></td>
+                </tr>
+                <tr>
+                  <td>personal_story</td>
+                  <td>本人の一次体験または編集過程。人間が本文の事実関係を確認。</td>
+                  <td><span class="status wait">firsthand_missing</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <details>
+            <summary>全媒体より先に通す5つのグローバルゲート</summary>
+            <div class="details-body">
+              <ol>
+                <li><strong>権利：</strong>sourceと取得時点を追跡し、第三者原文を公開物へ含めない。</li>
+                <li><strong>プライバシー：</strong>投稿者を推定できる再構成をしない。自社回答も集計最小数を守る。</li>
+                <li><strong>根拠：</strong>安全・仕様は一次情報へ接続。商品情報には確認日を持つ。</li>
+                <li><strong>独自価値：</strong>条件分岐、実行機能、一次体験、比較軸、改善履歴のいずれかを持つ。</li>
+                <li><strong>商用：</strong>active offer、媒体許可、開示、sponsored属性、event IDを確認する。</li>
+              </ol>
+            </div>
+          </details>
+
+          <div class="example">
+            <div class="example-title">
+              <h3>仮想判定例：生後0〜3か月の短時間外出</h3>
+              <span class="example-badge">媒体数を埋めない</span>
+            </div>
+            <p class="example-context">
+              trigger＝近所へ初めて出かける前 ／ completion＝条件に合う持ち物をバッグへ入れ終える
+            </p>
+            <div class="artifact-list">
+              <div class="artifact">
+                <span class="artifact-target">Threads</span>
+                <span class="artifact-reason">一つの困りごとを聞く problem_prompt</span>
+                <span class="status ok">eligible</span>
+              </div>
+              <div class="artifact">
+                <span class="artifact-target">Instagram</span>
+                <span class="artifact-reason">5〜9項目に収まる保存版カルーセル</span>
+                <span class="status ok">eligible</span>
+              </div>
+              <div class="artifact">
+                <span class="artifact-target">note</span>
+                <span class="artifact-reason">本人の初外出体験が未入力</span>
+                <span class="status wait">firsthand_missing</span>
+              </div>
+              <div class="artifact">
+                <span class="artifact-target">Blog checklist</span>
+                <span class="artifact-reason">trigger・完了基準・条件付き項目を満たす</span>
+                <span class="status ok">eligible</span>
+              </div>
+              <div class="artifact">
+                <span class="artifact-target">Blog product</span>
+                <span class="artifact-reason">公式仕様・offer・比較軸が未整備</span>
+                <span class="status wait">current_facts_missing</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="evidence">
+          <div class="section-heading">
+            <span class="section-number">06</span>
+            <div>
+              <h2>データは「役割」を固定して使う</h2>
+              <p>AIによる言い換えを権利処理とみなさず、需要・事実・体験・商用条件を混ぜない。</p>
+            </div>
+          </div>
+
+          <figure class="evidence-figure">
+            <img
+              src="./assets/04-evidence-architecture.png"
+              alt="5種類の入力をRaw Archive、Research DB、Editorial DB、Publication Manifestへ分けて流すデータ利用区分と公開境界"
+              width="1600"
+              height="1050"
+              loading="lazy"
+            >
+            <figcaption>図解04：データ利用区分、RDB4層、公開境界</figcaption>
+          </figure>
+
+          <div class="source-grid">
+            <article class="source-card">
+              <span class="source-type">planning_only</span>
+              <h3>Mamari Q&amp;A</h3>
+              <p>集計した困りごと・場面候補として、企画発見だけに使う。</p>
+              <span class="ban">公開引用・言い換え・体験談化・推薦根拠化は禁止</span>
+            </article>
+            <article class="source-card">
+              <span class="source-type">discovery_shortlist</span>
+              <h3>Mamari口コミ大賞</h3>
+              <p>商品カテゴリと候補棚の発見に使う。現在の順位や提携可否は別途確認。</p>
+              <span class="ban">自動推薦・「現在No.1」・本人評価は禁止</span>
+            </article>
+            <article class="source-card">
+              <span class="source-type">claim_evidence</span>
+              <h3>公的機関・メーカー公式</h3>
+              <p>安全、制度、仕様、対応条件の一次根拠。確認日とURLを保持する。</p>
+              <span class="ban">公式コピーの大量転載や独立評価の代用は禁止</span>
+            </article>
+            <article class="source-card">
+              <span class="source-type">owner_firsthand</span>
+              <h3>運営者本人の入力</h3>
+              <p>使用場面、期間、試したこと、結果、弱点、合わない条件を記録する。</p>
+              <span class="ban">入力のない感想・家族会話をAIで補わない</span>
+            </article>
+          </div>
+
+          <div class="rule">aggregate_signal だけでは、具体的な推奨・効果・本人の感想を生成しない。</div>
+
+          <details>
+            <summary>現状監査で、この分離が必要と分かった理由</summary>
+            <div class="details-body">
+              <ul>
+                <li>QA本文62,697件に対し、年齢分類は77.9%不明、商品カテゴリは96.2%不明。</li>
+                <li>分類confidenceは全件0.72で、品質判定の差として機能していない。</li>
+                <li>現行six-pack候補15件はすべてdraftで、Content Studio適格候補は0件。</li>
+                <li>Bundle import時に根拠・候補ID・版・媒体計画が失われ、1本のraw textへ縮退する。</li>
+                <li>監査中のsuggest呼び出しでdraft候補29件が保存されたため、previewとpersistを分離する必要がある。</li>
+              </ul>
+            </div>
+          </details>
+        </section>
+
+        <section id="architecture">
+          <div class="section-heading">
+            <span class="section-number">07</span>
+            <div>
+              <h2>RDBを4層に整理する</h2>
+              <p>原本、分析、編集判断、公開物を混ぜず、公開に近づくほどデータを絞る。</p>
+            </div>
+          </div>
+
+          <div class="architecture">
+            <div class="layer">
+              <div class="layer-name"><span class="layer-num">01</span>Raw Archive</div>
+              <p>HTML / metadata / hash。原本を変更しない。<code>childcare-data-aggregator-data</code></p>
+            </div>
+            <div class="layer">
+              <div class="layer-name"><span class="layer-num">02</span>Research DB</div>
+              <p>第三者データの解析、集計、source lineage。公開本文を持たない。</p>
+            </div>
+            <div class="layer">
+              <div class="layer-name"><span class="layer-num">03</span>Editorial DB</div>
+              <p>採用企画、根拠参照、媒体適格性、required inputs、成果物、レビューを保持。</p>
+            </div>
+            <div class="layer">
+              <div class="layer-name"><span class="layer-num">04</span>Publication Manifest</div>
+              <p>approvedな公開データだけをmy-blogへexport。ビルド時にも拒否条件を再検証。</p>
+            </div>
+          </div>
+          <p class="architecture-note">
+            HermesはResearch DBを直接読んで原稿化せず、Editorial DBで採用・検証されたbriefだけを生成します。
+          </p>
+
+          <details>
+            <summary>Editorial DBの最小10テーブル</summary>
+            <div class="details-body">
+              <div class="code-grid">
+                <div class="code-block">evidence_units
+evidence_sources
+content_briefs
+brief_evidence
+artifact_plans</div>
+                <div class="code-block">artifacts
+entities
+offers
+content_relations
+review_events</div>
+              </div>
+              <ul>
+                <li><strong>content_briefs</strong> がprimary reader outcome、classification status、候補kind、rule version、不足理由、人間確認を保持。</li>
+                <li><strong>artifact_plans</strong> が媒体判定の正本。target、eligibility、requested、blocked reasons、required inputsを保持。</li>
+                <li><strong>review_events</strong> は0件でも削除しない。権利・事実・体験・商用・公開の恒久ゲート。</li>
+                <li>revisionは根拠件数ではなく、企画判断・本文・成果物が変わった時だけ増やす。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>ディレクトリごとの責務</summary>
+            <div class="details-body">
+              <ul>
+                <li><strong>childcare-data-aggregator-data：</strong>Raw Archive。公開原稿・AI下書き・媒体判定を置かない。</li>
+                <li><strong>datassette_gpt_plugin：</strong>Research DBの検索・解析・preview。明示persist以外は書き込まない。</li>
+                <li><strong>Hermes：</strong>Editorial DB、適格性判定、生成、審査。blockedはGO時にも止める。</li>
+                <li><strong>my-blog：</strong>approved Manifestの検証・公開・CTA・計測。raw QAへ接続しない。</li>
+              </ul>
+            </div>
+          </details>
+        </section>
+
+        <section id="roadmap">
+          <div class="section-heading">
+            <span class="section-number">08</span>
+            <div>
+              <h2>実装順</h2>
+              <p>テーブル削除やAI生成の改善より先に、契約と公開ゲートを固定する。</p>
+            </div>
+          </div>
+
+          <div class="roadmap">
+            <div class="phase">
+              <span class="phase-dot">0</span>
+              <span class="phase-title">凍結・棚卸し</span>
+              <p>DBバックアップ、suggestのpreview/persist分離、監査生成候補の凍結、公開版とローカル版のIA統一。</p>
+            </div>
+            <div class="phase">
+              <span class="phase-dot">1</span>
+              <span class="phase-title">契約</span>
+              <p>8つのkind rule、classified / ambiguous / insufficient、10件のfixture、Editorial DB、Manifest validatorを実装。</p>
+            </div>
+            <div class="phase">
+              <span class="phase-dot">2</span>
+              <span class="phase-title">振り分け</span>
+              <p>source能力を判定し、8ルールを全件評価。候補0件・複数件を止め、classified後だけ媒体eligibilityを保存。</p>
+            </div>
+            <div class="phase">
+              <span class="phase-dot">3</span>
+              <span class="phase-title">Hermes</span>
+              <p>lossy text adapterを廃止。未指定target=false、blockedをGO時再検証、選定ガイドとレビューを分離。</p>
+            </div>
+            <div class="phase">
+              <span class="phase-dot">4</span>
+              <span class="phase-title">Blog</span>
+              <p>Manifest build gate、コンテンツ関係、広告開示、sponsored属性、クリック計測、構造化データを追加。</p>
+            </div>
+            <div class="phase">
+              <span class="phase-dot">5</span>
+              <span class="phase-title">パイロット</span>
+              <p>低リスクの一テーマで、適格な成果物だけを生成・公開・計測してから拡張。</p>
+            </div>
+          </div>
+
+          <div class="pilot">
+            <h3>最初のパイロット：生後0〜3か月の短時間外出</h3>
+            <p>
+              商品との関係が自然で、チェック完了も定義しやすいテーマ。
+              noteと本人レビューは、実体験が入力された場合だけ追加します。
+            </p>
+            <div class="pilot-output">
+              <span>Blog checklist</span>
+              <span>Blog selection guide</span>
+              <span>Instagram carousel</span>
+              <span>Threads prompt / notice</span>
+              <span>note = conditional</span>
+              <span>review = conditional</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="acceptance">
+          <div class="section-heading">
+            <span class="section-number">09</span>
+            <div>
+              <h2>この状態になれば完了</h2>
+              <p>「自然な記事が出た」ではなく、危険な出力を構造的に止められることを受入条件にする。</p>
+            </div>
+          </div>
+
+          <div class="check-grid">
+            <div class="check"><span class="check-mark">✓</span><span>QA原文を含むManifestはexportできない。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>aggregate signalだけではレビュー・体験談を生成できない。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>本人入力がなければnoteとfirst-hand reviewがblockedになる。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>未指定targetはrequested=falseのまま。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>blocked artifactはGOを押しても生成されない。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>affiliate CTAはoffer・開示・sponsored・event IDなしでbuildできない。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>一つのbriefから必要な媒体だけを生成できる。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>import後もcandidate ID、revision、evidence、eligibilityが保持される。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>content_kind候補0件・複数件は生成されず、不足理由またはsplit_briefを返す。</span></div>
+            <div class="check"><span class="check-mark">✓</span><span>商品subjectや最初のキーワードだけでselection guide / reviewへ分類されない。</span></div>
+          </div>
+
+          <div class="next-action">
+            <h3>次に着手する一点</h3>
+            <p>
+              まずPhase 0〜1だけを実装し、<strong>content_kind rule 1.0.0</strong>、
+              <strong>artifact_plans</strong> と
+              <strong>Publication Manifest validator</strong> を公開可否の正本にします。
+              ここが固定されるまで、生成量を増やしません。
+            </p>
+          </div>
+
+          <details>
+            <summary>最初に固定する10の決定</summary>
+            <div class="details-body">
+              <ol>
+                <li>Mamariはcommunity_need_signal専用。</li>
+                <li>Mamari Awardはdiscovery_shortlist専用。</li>
+                <li>公式情報はclaim evidence専用。</li>
+                <li>本人経験は本人入力からのみ作る。</li>
+                <li>six-packは必須セットではない。</li>
+                <li>noteは本人経験・編集判断がある時だけ。</li>
+                <li>商品本人レビューと商品選定ガイドを分ける。</li>
+                <li>affiliate linkはフェーズ1ではBlogだけ。</li>
+                <li>Blogはapproved Manifestだけを受け取る。</li>
+                <li>人間レビューなしで公開しない。</li>
+              </ol>
+            </div>
+          </details>
+        </section>
+      </article>
+
+      <footer>
+        <div>
+          LikeThis コンテンツ戦略・媒体振り分け仕様 / Version 1.1 / 2026-08-13
+        </div>
+        <div class="references">
+          <a href="../content-strategy-routing-spec.md">詳細仕様MD</a>
+          <a href="./assets/01-content-system.svg">全体構造SVG</a>
+          <a href="./assets/02-revenue-funnel.svg">収益導線SVG</a>
+          <a href="./assets/03-routing-engine.svg">判定フローSVG</a>
+          <a href="./assets/04-evidence-architecture.svg">データ境界SVG</a>
+          <a href="./assets/05-content-kind-classifier.svg">分類基準SVG</a>
+          <a href="https://www.bunka.go.jp/seisaku/bunkashingikai/chosakuken/pdf/94037901_01.pdf">文化庁：AIと著作権</a>
+          <a href="https://mamari.jp/terms">Mamari利用規約</a>
+          <a href="https://www.caa.go.jp/policies/policy/representation/fair_labeling/faq/stealth_marketing/">消費者庁：ステマ規制Q&amp;A</a>
+          <a href="https://developers.google.com/search/docs/crawling-indexing/qualify-outbound-links">Google：リンク属性</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var progress = document.querySelector(".reading-progress");
+      var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+      var targets = links
+        .map(function (link) { return document.querySelector(link.getAttribute("href")); })
+        .filter(Boolean);
+
+      function updateProgress() {
+        var available = document.documentElement.scrollHeight - window.innerHeight;
+        var ratio = available > 0 ? window.scrollY / available : 0;
+        progress.style.width = Math.min(100, Math.max(0, ratio * 100)) + "%";
+      }
+
+      var observer = new IntersectionObserver(function (entries) {
+        var visible = entries
+          .filter(function (entry) { return entry.isIntersecting; })
+          .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; });
+        if (!visible.length) return;
+        var id = "#" + visible[0].target.id;
+        links.forEach(function (link) {
+          if (link.getAttribute("href") === id) {
+            link.setAttribute("aria-current", "true");
+          } else {
+            link.removeAttribute("aria-current");
+          }
+        });
+      }, { rootMargin: "-20% 0px -65% 0px", threshold: [0, .15, .5] });
+
+      targets.forEach(function (target) { observer.observe(target); });
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      updateProgress();
+      if (links[0]) links[0].setAttribute("aria-current", "true");
+    }());
+  </script>
+</body>
+</html>

@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>実データ1件が最終成果物になるまで｜Mamari質問 24893911</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #637087;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --line: #deddd7;
+      --nav: #172033;
+      --nav-muted: #aeb8ca;
+      --blue: #285fc7;
+      --blue-soft: #eaf1ff;
+      --green: #1f7a62;
+      --green-soft: #e8f6f0;
+      --amber: #a66108;
+      --amber-soft: #fff2db;
+      --red: #b34545;
+      --red-soft: #fdebea;
+      --purple: #6b4cc2;
+      --purple-soft: #f0ebff;
+      --shadow: 0 18px 55px rgba(23, 32, 51, .11);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+      line-height: 1.65;
+    }
+
+    button, a { font: inherit; }
+    a { color: var(--blue); text-underline-offset: 3px; }
+    code, pre { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace; }
+
+    .layout { min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 20;
+      width: 296px;
+      display: flex;
+      flex-direction: column;
+      color: #fff;
+      background: var(--nav);
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+
+    .brand {
+      padding: 24px 22px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .brand small {
+      display: block;
+      margin-bottom: 8px;
+      color: #9db8f2;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .brand strong { display: block; font-size: 18px; line-height: 1.45; }
+    .brand .case-id { margin-top: 8px; color: var(--nav-muted); font-size: 12px; }
+
+    .nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 12px 22px;
+    }
+    .nav button {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 10px;
+      align-items: start;
+      margin: 2px 0;
+      padding: 10px 11px;
+      color: var(--nav-muted);
+      background: transparent;
+      border: 0;
+      border-radius: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .nav button:hover { color: #fff; background: rgba(255,255,255,.08); }
+    .nav button.active { color: #fff; background: rgba(86,137,242,.2); }
+    .nav-index {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      color: #c9d9ff;
+      border: 1px solid rgba(201,217,255,.34);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .nav button.active .nav-index { background: #5c88ef; border-color: #5c88ef; color: #fff; }
+    .nav-label { padding-top: 2px; font-size: 12px; font-weight: 700; line-height: 1.4; }
+
+    .sidebar-footer {
+      padding: 14px 18px 18px;
+      border-top: 1px solid rgba(255,255,255,.1);
+      color: var(--nav-muted);
+      font-size: 11px;
+    }
+    .progress-track { height: 4px; margin-bottom: 9px; overflow: hidden; background: rgba(255,255,255,.12); border-radius: 99px; }
+    .progress-bar { width: 5.56%; height: 100%; background: #77a0ff; transition: width .25s ease; }
+
+    main { margin-left: 296px; }
+    .topbar {
+      position: fixed;
+      inset: 0 0 auto 296px;
+      z-index: 15;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 28px;
+      background: rgba(251,250,247,.9);
+      border-bottom: 1px solid rgba(222,221,215,.9);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-title { min-width: 0; font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .controls { display: flex; gap: 8px; }
+    .controls button, .mobile-menu {
+      display: inline-grid;
+      place-items: center;
+      min-width: 38px;
+      height: 38px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      cursor: pointer;
+    }
+    .controls button:hover { border-color: #9cb5e8; color: var(--blue); }
+    .mobile-menu { display: none; }
+
+    .deck { padding: 96px 32px 56px; }
+    .slide {
+      width: min(1180px, 100%);
+      min-height: calc(100vh - 128px);
+      margin: 0 auto;
+      display: none;
+      animation: slideIn .22s ease;
+    }
+    .slide.active { display: block; }
+    @keyframes slideIn { from { opacity: .35; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .slide-head { margin-bottom: 24px; }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 8px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 24px; height: 3px; background: currentColor; border-radius: 4px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 980px; margin-bottom: 18px; font-size: clamp(38px, 5.5vw, 74px); line-height: 1.12; letter-spacing: -.045em; }
+    h2 { max-width: 1000px; margin-bottom: 10px; font-size: clamp(28px, 3.7vw, 48px); line-height: 1.22; letter-spacing: -.035em; }
+    h3 { margin-bottom: 8px; font-size: 18px; line-height: 1.4; }
+    .lead { max-width: 900px; color: var(--muted); font-size: clamp(16px, 1.5vw, 21px); }
+    .fine { color: var(--muted); font-size: 12px; }
+
+    .grid { display: grid; gap: 16px; }
+    .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      padding: 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 6px 24px rgba(23,32,51,.045);
+    }
+    .card.compact { padding: 15px 17px; }
+    .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+    .card.blue { background: var(--blue-soft); border-color: #c9d8fa; }
+    .card.green { background: var(--green-soft); border-color: #c6e7da; }
+    .card.amber { background: var(--amber-soft); border-color: #f0d5a5; }
+    .card.red { background: var(--red-soft); border-color: #efc8c5; }
+    .card.purple { background: var(--purple-soft); border-color: #d9ccfb; }
+    .metric { font-size: clamp(28px, 3.2vw, 46px); font-weight: 900; line-height: 1; letter-spacing: -.04em; }
+    .metric-label { margin-top: 9px; color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      color: #485469;
+      background: #f1f2f5;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .pill.ok { color: #0f684f; background: #ddf3ea; }
+    .pill.warn { color: #8a5207; background: #ffebc7; }
+    .pill.stop { color: #a23c3c; background: #f9dedc; }
+    .pill.info { color: #2454b4; background: #dfebff; }
+
+    .status-line { display: flex; gap: 10px; align-items: flex-start; }
+    .status-dot { flex: none; width: 10px; height: 10px; margin-top: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px var(--green-soft); }
+    .status-dot.warn { background: var(--amber); box-shadow: 0 0 0 5px var(--amber-soft); }
+    .status-dot.stop { background: var(--red); box-shadow: 0 0 0 5px var(--red-soft); }
+
+    .callout {
+      margin: 18px 0;
+      padding: 16px 18px;
+      background: #fff;
+      border-left: 4px solid var(--blue);
+      border-radius: 0 14px 14px 0;
+      box-shadow: 0 3px 16px rgba(23,32,51,.05);
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .callout.warn { border-color: var(--amber); background: #fffaf0; }
+    .callout.stop { border-color: var(--red); background: #fff8f7; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+      align-items: stretch;
+      margin: 24px 0;
+    }
+    .flow-step {
+      position: relative;
+      min-height: 130px;
+      padding: 17px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .flow-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      top: 48%;
+      right: -15px;
+      z-index: 2;
+      width: 16px;
+      color: var(--blue);
+      font-weight: 900;
+      text-align: center;
+    }
+    .flow-step b { display: block; margin-bottom: 8px; color: var(--blue); font-size: 12px; }
+    .flow-step span { font-size: 14px; font-weight: 800; }
+    .flow-step small { display: block; margin-top: 8px; color: var(--muted); }
+
+    .code {
+      position: relative;
+      overflow: auto;
+      max-height: 54vh;
+      padding: 18px 20px;
+      color: #e8eefc;
+      background: #111827;
+      border: 1px solid #28334a;
+      border-radius: 16px;
+      font-size: 12px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .code .key { color: #8cb4ff; }
+    .code .str { color: #a7e4c6; }
+    .code .num { color: #f6cd83; }
+    .code .comment { color: #7f8ba0; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid #ebeae6; text-align: left; vertical-align: top; }
+    th { color: #566176; background: #f6f6f3; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    td strong { color: var(--ink); }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 64px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+    .split-arrow { color: var(--blue); font-size: 32px; font-weight: 900; text-align: center; }
+
+    .transform-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+    .stage-column {
+      min-width: 0;
+      max-height: 62vh;
+      overflow: auto;
+      padding: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+    }
+    .stage-column.before { border-top: 5px solid #7b879b; }
+    .stage-column.after { border-top: 5px solid var(--green); }
+    .stage-label {
+      display: inline-flex;
+      margin-bottom: 12px;
+      padding: 5px 9px;
+      color: #fff;
+      background: #7b879b;
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+    .after .stage-label { background: var(--green); }
+    .action-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--blue);
+      text-align: center;
+    }
+    .action-arrow b { font-size: 24px; line-height: 1; }
+    .action-arrow span { font-size: 10px; font-weight: 900; line-height: 1.35; writing-mode: vertical-rl; }
+    .record {
+      margin: 9px 0;
+      padding: 11px 13px;
+      color: #293349;
+      background: #f6f6f3;
+      border: 1px solid #e6e5df;
+      border-radius: 11px;
+      font-size: 12px;
+    }
+    .record strong { display: block; margin-bottom: 4px; color: var(--ink); }
+    .record.new { background: var(--green-soft); border-color: #c6e7da; }
+    .record.removed { background: var(--red-soft); border-color: #efc8c5; }
+    .processing {
+      margin: 15px 0;
+      padding: 12px 15px;
+      color: #244f9f;
+      background: var(--blue-soft);
+      border: 1px dashed #9eb8ed;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .data-impact {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .impact-cell {
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 11px;
+    }
+    .impact-cell b { display: block; margin-bottom: 3px; color: var(--blue); font-size: 9px; letter-spacing: .07em; }
+
+    .role { display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: start; padding: 14px 0; border-bottom: 1px solid #ecebe7; }
+    .role:last-child { border-bottom: 0; }
+    .role-name { display: inline-flex; justify-content: center; padding: 7px 9px; border-radius: 10px; font-size: 12px; font-weight: 900; }
+    .role-name.python { color: #775000; background: #ffe7a9; }
+    .role-name.ai { color: #2354b5; background: #dfeaff; }
+    .role-name.human { color: #0e654c; background: #dcf2e9; }
+    .role p { margin: 0; font-size: 13px; }
+
+    .source {
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .source + .source { margin-top: 10px; }
+    .source-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+    .source strong { font-size: 14px; }
+    .source p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+
+    .article {
+      max-height: 62vh;
+      overflow-y: auto;
+      padding: 26px clamp(20px, 3vw, 44px);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .article h3 { font-size: 26px; }
+    .article h4 { margin: 24px 0 8px; font-size: 18px; }
+    .article p, .article li { font-size: 14px; }
+    .article .disclosure { padding: 10px 12px; background: #f6f6f3; border-radius: 10px; color: var(--muted); font-size: 11px; }
+
+    .carousel { display: grid; grid-template-columns: repeat(7, minmax(135px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+    .carousel-card {
+      aspect-ratio: 4 / 5;
+      min-width: 135px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 15px;
+      color: #fff;
+      background: linear-gradient(145deg, #1d3972, #2f68cb);
+      border-radius: 16px;
+      box-shadow: 0 7px 20px rgba(24,54,112,.18);
+    }
+    .carousel-card:nth-child(2n) { background: linear-gradient(145deg, #1f6758, #2f9174); }
+    .carousel-card small { color: rgba(255,255,255,.72); font-weight: 800; }
+    .carousel-card b { font-size: 15px; line-height: 1.45; }
+    .carousel-card p { margin: 8px 0 0; font-size: 11px; line-height: 1.55; }
+
+    details {
+      margin: 14px 0;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    details summary { cursor: pointer; color: var(--blue); font-size: 12px; font-weight: 800; }
+    details[open] summary { margin-bottom: 12px; }
+    .social-image {
+      display: block;
+      width: min(430px, 100%);
+      height: auto;
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .post-preview {
+      padding: 18px;
+      white-space: pre-wrap;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .file-list { display: grid; gap: 10px; }
+    .file-item { padding: 14px 16px; background: #fff; border: 1px solid var(--line); border-radius: 13px; }
+    .file-item strong { display: block; margin-bottom: 4px; }
+    .file-item small { color: var(--muted); }
+
+    .footer-note { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .kbd { padding: 2px 7px; border: 1px solid #cfd2d9; border-bottom-width: 2px; border-radius: 6px; background: #fff; font-size: 11px; font-weight: 800; }
+
+    @media (max-width: 980px) {
+      .sidebar { transform: translateX(-100%); transition: transform .22s ease; }
+      body.nav-open .sidebar { transform: translateX(0); box-shadow: 15px 0 45px rgba(0,0,0,.25); }
+      main { margin-left: 0; }
+      .topbar { left: 0; }
+      .mobile-menu { display: inline-grid; }
+      .g3, .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .flow { grid-template-columns: 1fr; }
+      .flow-step:not(:last-child)::after { content: "↓"; top: auto; right: 50%; bottom: -17px; }
+    }
+
+    @media (max-width: 650px) {
+      .deck { padding: 84px 16px 36px; }
+      .topbar { padding: 0 14px; }
+      .g2, .g3, .g4 { grid-template-columns: 1fr; }
+      .split { grid-template-columns: 1fr; }
+      .split-arrow { transform: rotate(90deg); }
+      .transform-grid { grid-template-columns: 1fr; }
+      .data-impact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .action-arrow { min-height: 58px; }
+      .action-arrow span { writing-mode: horizontal-tb; }
+      .slide { min-height: calc(100vh - 100px); }
+      h1 { font-size: 38px; }
+      h2 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="スライドナビゲーション">
+      <div class="brand">
+        <small>LikeThis 実データ事例</small>
+        <strong>実データ1件が<br />最終成果物になるまで</strong>
+        <div class="case-id">質問 24893911 · 原本照合済み／加工結果は確認用</div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div class="sidebar-footer">
+        <div class="progress-track"><div class="progress-bar" id="progress"></div></div>
+        <span id="counter">1 / 18</span>　<span class="kbd">←</span> <span class="kbd">→</span> で移動
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <button class="mobile-menu" id="menu" aria-label="ナビを開く">☰</button>
+          <div class="topbar-title" id="topbarTitle">ケースの結論</div>
+        </div>
+        <div class="controls">
+          <button id="prev" aria-label="前のスライド">←</button>
+          <button id="next" aria-label="次のスライド">→</button>
+        </div>
+      </header>
+
+      <div class="deck">
+        <section class="slide active" data-title="ケースの結論">
+          <div class="eyebrow">01 · 結論</div>
+          <h1>実質問1件は、<br />そのまま記事にならない。</h1>
+          <p class="lead">実データを使い、<strong>原本 → 相談内容の分割 → 似た質問のまとまり → 質問数と回答の集計 → 記事設計書 → 記事タイプ → 媒体別ファイル</strong> の変化を確認するために作った、追跡可能なプレビューです。</p>
+          <div class="grid g3" style="margin-top:28px">
+            <div class="card blue">
+              <div class="metric">1 → 2</div>
+              <div class="metric-label">1質問から2つの困りごとへ分割</div>
+            </div>
+            <div class="card green">
+              <div class="metric">5 → 1</div>
+              <div class="metric-label">5質問を1つの記事で扱う質問群へ</div>
+            </div>
+            <div class="card purple">
+              <div class="metric">1 → 3</div>
+              <div class="metric-label">1つの記事設計書からブログ・Instagram・Threadsへ</div>
+            </div>
+          </div>
+          <div class="callout warn">
+            <strong>到達点を正確に分ける</strong>
+            記事とSNSの内容は確認用成果物として作成済みです。本番AI実行、本番データベース登録、人間承認、記事管理機能への取込、公開は未実施です。自社が利用できる広告案件も未登録です。Mamari側の外部リンクは転用しません。
+          </div>
+          <div class="callout stop">
+            <strong>このケースの加工結果はどこに保存したか</strong>
+            原本HTMLと調査用データベースから読み出した質問・回答・候補質問は実データです。加工1以降は、処理内容を確認するための説明用データです。本番AI実行、本番データベース登録、人間承認はいずれも行っていません。<a href="case-data.json">工程全体の確認用データ</a>は本番実行記録ではありません。
+          </div>
+          <div class="pill-row">
+            <span class="pill ok">原本ハッシュ一致</span>
+            <span class="pill info">実質問5件の質問群案</span>
+            <span class="pill info">実回答28件を集計</span>
+            <span class="pill warn">選択ガイド候補</span>
+            <span class="pill warn">人間の最終承認待ち</span>
+            <span class="pill stop">広告案件は未接続</span>
+          </div>
+        </section>
+
+        <section class="slide" data-title="全体の変換経路">
+          <div class="slide-head">
+            <div class="eyebrow">02 · 全体工程</div>
+            <h2>質問文を加工するのではなく、役割の違うデータへ段階変換する</h2>
+            <p class="lead">公開成果物はMamariの文章から生成せず、問題シグナルと公式根拠を別経路で統合します。</p>
+          </div>
+          <div class="flow">
+            <div class="flow-step"><b>原本</b><span>保存HTML</span><small>改変しない原文<br />照合値・取得日時</small></div>
+            <div class="flow-step"><b>問題整理</b><span>一つずつの困りごと</span><small>誰・場面・問題・ゴール<br />内部分析専用</small></div>
+            <div class="flow-step"><b>編集設計</b><span>質問群 / 記事設計書</span><small>複数質問を集計<br />一つの読後ゴール</small></div>
+            <div class="flow-step"><b>事実確認</b><span>公式情報</span><small>SG基準・メーカー仕様<br />公開する断定の根拠</small></div>
+            <div class="flow-step"><b>成果物</b><span>媒体別コンテンツ</span><small>ブログ・Instagram・Threads<br />noteは条件不足で停止</small></div>
+          </div>
+          <div class="grid g3">
+            <div class="card compact"><h3>プログラム</h3><p>実装上の担当：HTML要素の抽出、表記統一、候補検索、データ形式の確認、判定ルールの実行。このケースで実行確認した範囲は各工程に明記します。</p></div>
+            <div class="card compact"><h3>AI</h3><p>設計上の担当：一つの相談に混ざる困りごとの構造化、近い質問同士の意味比較、記事設計書案、媒体別下書き。この資料では本番AI実行ではなく確認用データを表示します。</p></div>
+            <div class="card compact"><h3>人間</h3><p>困りごとの分割、似た質問のまとまり、読後ゴール、記事タイプ、事実・権利・誘導、最終公開を承認する。</p></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="完走できる1件の選定">
+          <div class="slide-head">
+            <div class="eyebrow">03 · 事例の選定</div>
+            <h2>質問24893911は、最終成果物まで説明できる実例として選定</h2>
+          </div>
+          <div class="grid g2">
+            <div class="card">
+              <h3>この1件を採用した確認条件</h3>
+              <ul>
+                <li>質問内に年齢・月齢の具体表記がある</li>
+                <li>育児用品カテゴリ語と「選ぶ／買う／比較」の意図がある</li>
+                <li>本文45〜420字、質問過多でない、回答3件以上</li>
+                <li>医療・事故・緊急・個人情報など注意度の高い語を除外</li>
+                <li>公式仕様と商品候補へ到達できるカテゴリ</li>
+              </ul>
+              <div class="callout stop"><strong>選定方法の訂正</strong>同じ条件で抽選を再現できるプログラムと候補一覧は存在しません。そのため「抽選」とは扱わず、実データから人間が説明用に選んだ1件と記録します。</div>
+            </div>
+            <div class="card blue">
+              <div class="metric">1件</div>
+              <div class="metric-label">この資料で内容を確認したケース</div>
+              <hr style="border:0;border-top:1px solid #c9d8fa;margin:18px 0" />
+              <h3>選定結果：質問24893911</h3>
+              <p>生後1か月。ベビーカー購入を検討し、A/AB型を今買うか、B型へ後で替えるかを迷う相談。</p>
+              <div class="pill-row">
+                <span class="pill ok">月齢明示</span>
+                <span class="pill ok">注意度は通常</span>
+                <span class="pill ok">選択問題</span>
+                <span class="pill ok">商品候補あり</span>
+              </div>
+            </div>
+          </div>
+          <p class="footer-note">この資料から確認できるのは、質問24893911を選んだ後の加工内容です。全件からこの1件を再選定する処理は、再現用プログラムと候補一覧がないため再現可能とは主張しません。旧分類の一律信頼度0.72は判断根拠にしていません。</p>
+        </section>
+
+        <section class="slide" data-title="原本HTMLとデータベースの照合">
+          <div class="slide-head">
+            <div class="eyebrow">04 · 原本の照合</div>
+            <h2>原本HTML・取得情報・調査用データベースが同じ1件を指す</h2>
+          </div>
+          <div class="grid g2">
+            <div class="card">
+              <h3>保存した原本</h3>
+              <p class="fine">D:\mycode\childcare-data-aggregator-data\qa.mamari.jp\question\24893911\index.html</p>
+              <div class="grid g2">
+                <div><div class="metric">85,817</div><div class="metric-label">HTMLの大きさ（バイト）</div></div>
+                <div><div class="metric">200</div><div class="metric-label">取得結果</div></div>
+              </div>
+              <p style="margin-top:18px"><strong>取得日時</strong><br /><code>2026-08-06T15:53:40.819612+00:00</code></p>
+            </div>
+            <div class="card green">
+              <h3>照合値が一致</h3>
+              <p class="fine">原本HTML／取得情報／質問本文データ</p>
+              <div class="code">4153027b8ea95e212eb791f089c5f227
+820267f03fab02a79b9b356837e2b4c2</div>
+              <div class="status-line" style="margin-top:16px"><span class="status-dot"></span><div><strong>照合済み</strong><br /><span class="fine">解析方式の版 1.1 · 内部質問番号 47212</span></div></div>
+            </div>
+          </div>
+          <div class="callout stop">
+            <strong>公開利用：禁止</strong>
+            原文HTML・質問本文・回答は、人間が抽出結果を監査する内部サンプルです。公開記事の文章、引用、言い換えには使いません。
+          </div>
+        </section>
+
+        <section class="slide" data-title="加工前の原本データ">
+          <div class="slide-head">
+            <div class="eyebrow">05 · 加工前データ</div>
+            <h2>質問ID 24893911の中身は、タイトル・質問・回答4件・返信4件</h2>
+            <p class="lead">ここが加工前です。以下は手元で内容を確認するためのデータであり、公開記事には転載しません。</p>
+          </div>
+          <div class="grid g2">
+            <div class="card">
+              <h3>原本HTMLの実ファイル228〜233行・273〜282行</h3>
+              <p class="fine">属性を削らず、指定した二つの行範囲をそのまま表示しています。85,817バイトの原本全体ではなく、解析プログラムが読み取る質問部分と回答1の部分です。</p>
+              <div class="code" style="max-height:50vh">      &lt;div class="q-main"&gt;
+        &lt;span class="q-category child-category"&gt;子育て・グッズ&lt;/span&gt;
+        &lt;h1 class="q-title" itemprop="name"&gt;生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。&lt;/h1&gt;
+        &lt;p class="q-content" itemprop="text"&gt;生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？&lt;br /&gt;
+やはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？&lt;br /&gt;
+ベビーカー嫌がって使わなかった人いますか？&lt;/p&gt;
+
+                      &lt;section id="a148182294" class="answer-bubble other-reply" itemprop="suggestedAnswer" itemscope itemtype="https://schema.org/Answer"&gt;
+          &lt;meta itemprop="upvoteCount" content="1" /&gt;
+          &lt;meta itemprop="url" content="https://qa.mamari.jp/question/24893911#a148182294" /&gt;
+                      &lt;img src="https://cdn-mamari.imgix.net/static/mamariQ/img/common/default_icon.1b2bca45.png?auto=compress,format&amp;lossless=0&amp;q=90" alt="はじめてのママリ🔰" class="answer-user-icon"&gt;
+            &lt;p class="answer-name" itemprop="author" itemscope itemtype="https://schema.org/Person"&gt;
+              &lt;span class="answer-name--active" itemprop="name"&gt;
+                はじめてのママリ🔰              &lt;/span&gt;
+            &lt;/p&gt;
+                    &lt;div class="answer-content"&gt;
+            &lt;p itemprop="text"&gt;AB型レンタルして試したものの嫌がって乗らず、腰がすわってからB型買いました！B型は3歳の今も使ってます！&lt;/p&gt;</div>
+            </div>
+            <div class="card green" style="max-height:66vh;overflow:auto">
+              <h3>タグを除去した実データ</h3>
+              <div class="record"><strong>タイトル</strong>生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。</div>
+              <div class="record"><strong>質問</strong>生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？<br />やはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？<br />ベビーカー嫌がって使わなかった人いますか？</div>
+              <div class="record"><strong>回答1 · 回答ID 148182294</strong>AB型レンタルして試したものの嫌がって乗らず、腰がすわってからB型買いました！B型は3歳の今も使ってます！</div>
+              <div class="record"><strong>回答2 · 148182322</strong>サイベックスのオルフェオを買って3ヶ月目から使用しました。新生児インレーもあるので対面じゃないのが気にならなければ車の足元にも置けるコンパクトサイズで便利です。新生児から大きくなってまで使い勝手のよいメリオが人気な理由はわかります。我が家はサイズ感で選びました。</div>
+              <div class="record"><strong>回答3 · 148182877</strong>上2人はABのみ、3人目は自転車移動も多くてB型追加しました☺️</div>
+              <div class="record"><strong>回答4 · 148182481</strong>B型への変更はしなかったです！！<br />ずっとAB型でした！<br />B型友達が貸してくれたんですけど寝る時あまり頭が倒れなくてうちの子は角度が気に食わなくて逆にギャン泣きでした笑ガッツリ倒して寝たいタイプだったみたいでAB型だと頭フラットに倒れて寝やすかったみたいです！</div>
+              <div class="record"><strong>返信1 · 返信ID 101344 · 回答ID 148182294</strong>参考にさせていただきます！</div>
+              <div class="record"><strong>返信2 · 返信ID 101345 · 回答ID 148182322</strong>参考にさせてもらいます！</div>
+              <div class="record"><strong>返信3 · 返信ID 101346 · 回答ID 148182877</strong>参考にさせてもらいます！</div>
+              <div class="record"><strong>返信4 · 返信ID 101347 · 回答ID 148182481</strong>参考にさせてもらいます！</div>
+            </div>
+          </div>
+          <div class="callout"><strong>この「タイトル」はこちらで要約した文ではない</strong>タイトルは原本HTML 230行目にある71文字です。質問本文は231〜233行目にある102文字です。両方を別項目の全文として保持します。</div>
+          <div class="callout stop"><strong>回答は解決策の根拠にしない</strong>4回答はいずれも個人の経験です。問題の理解を人間が確認する用途に限り、公式事実・商品評価・公開文には変換しません。</div>
+        </section>
+
+        <section class="slide" data-title="加工1：質問全文を次工程用に整える">
+          <div class="slide-head"><div class="eyebrow">06 · 加工1</div><h2>HTMLタグを除いた質問を、省略せず次工程用のデータにする</h2></div>
+          <div class="callout stop"><strong>この工程ではAIを使いません</strong>タイトル71文字と質問本文102文字を一字も省略せず、確認用ファイルへ保存します。次の工程へ渡す文章も同じ全文です。途中を「…」で短くした文章は、保存データにも次工程の入力にも使いません。</div>
+          <div class="transform-grid">
+            <div class="stage-column before"><span class="stage-label">加工前 · HTMLタグ除去後の質問</span><div class="record"><strong>質問ID</strong>24893911</div><div class="record"><strong>タイトル</strong>生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。</div><div class="record"><strong>質問本文</strong>生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？<br />やはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？<br />ベビーカー嫌がって使わなかった人いますか？</div><div class="record"><strong>分類</strong>子育て・グッズ</div><div class="record"><strong>付与タグ</strong>生後1ヶ月／ベビーカー／息子</div><div class="record removed"><strong>回答</strong>4件は元データ側に保持し、この入力には含めない</div><div class="record removed"><strong>返信</strong>4件は元データ側に保持し、この入力には含めない</div></div>
+            <div class="action-arrow"><b>→</b><span>全文を確認用ファイルへ保存</span></div>
+            <div class="stage-column after"><span class="stage-label">加工後 · 次工程へ渡す確認用データ</span><div class="code">{
+  <span class="key">"質問ID"</span>: <span class="num">24893911</span>,
+  <span class="key">"タイトル"</span>: <span class="str">"生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。"</span>,
+  <span class="key">"質問本文"</span>: <span class="str">"生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？\nやはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？\nベビーカー嫌がって使わなかった人いますか？"</span>,
+  <span class="key">"年齢・月齢表記"</span>: [<span class="str">"生後1か月"</span>],
+  <span class="key">"分類"</span>: <span class="str">"子育て・グッズ"</span>,
+  <span class="key">"回答本文を含むか"</span>: <span class="str">"いいえ"</span>,
+  <span class="key">"公開利用"</span>: <span class="str">"禁止"</span>,
+  <span class="key">"原文と同じ内容か確認するための値"</span>: <span class="str">"4153027b8ea95e212eb791f089c5f227820267f03fab02a79b9b356837e2b4c2"</span>
+}</div></div>
+          </div>
+          <details class="callout" open><summary><strong>次工程へ渡す文章の確認</strong></summary><div class="code" style="margin-top:12px">{
+  "この工程でAIを使ったか": "いいえ",
+  "タイトル文字数": 71,
+  "質問本文文字数": 102,
+  "挿入した省略記号数": 0,
+  "タイトルが原文と同じか確認するための値": "7417b9b25c8089b23a8db52fb47c919d1926101f184876304222ab915b59b19a",
+  "質問本文が原文と同じか確認するための値": "e88e756b05ac49123e7cd23abf18678e603786bc41b163ea4231e937f63db68a"
+}</div></details>
+          <div class="pill-row"><a class="pill info" href="stage-06-analysis-input.json">加工1の確認用データ全文</a><a class="pill info" href="stage-07-ai-request.json">次工程へ渡す内容全文</a></div>
+          <div class="processing">変化：回答と返信を削除したのではなく、元データ側に残したまま、困りごとを取り出す入力から外しました。タイトルと質問本文は全文を保持しています。</div>
+          <div class="data-impact"><div class="impact-cell"><b>読み取り</b>質問情報 1件</div><div class="impact-cell"><b>保存</b>確認用データ 1件</div><div class="impact-cell"><b>AI利用</b>なし</div><div class="impact-cell"><b>省略</b>0文字</div></div>
+        </section>
+
+        <section class="slide" data-title="加工2：一つの相談を二つの困りごとへ分ける">
+          <div class="slide-head"><div class="eyebrow">07 · 加工2</div><h2>質問全文をAIへ渡し、混在している二つの困りごとを分ける</h2></div>
+          <div class="callout stop"><strong>実行状況</strong>左はAIへ渡す入力全文、下はこの資料用に作ったAI応答例の全文、右は形式と原文位置を確認した後の保存内容です。実運用のAI呼び出しや本番データベースへの登録は行っていません。</div>
+          <div class="transform-grid">
+            <div class="stage-column before"><span class="stage-label">加工前 · AIへ渡す質問1件</span><div class="code">{
+  <span class="key">"質問ID"</span>: <span class="num">24893911</span>,
+  <span class="key">"タイトル"</span>: <span class="str">"生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。"</span>,
+  <span class="key">"質問本文"</span>: <span class="str">"生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？\nやはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？\nベビーカー嫌がって使わなかった人いますか？"</span>,
+  <span class="key">"年齢・月齢表記"</span>: [<span class="str">"生後1か月"</span>],
+  <span class="key">"分類"</span>: <span class="str">"子育て・グッズ"</span>,
+  <span class="key">"回答本文を含むか"</span>: <span class="str">"いいえ"</span>,
+  <span class="key">"公開利用"</span>: <span class="str">"禁止"</span>,
+  <span class="key">"原文と同じ内容か確認するための値"</span>: <span class="str">"4153027b8ea95e212eb791f089c5f227820267f03fab02a79b9b356837e2b4c2"</span>
+}</div></div>
+            <div class="action-arrow"><b>→</b><span>AI応答例を作成し形式確認</span></div>
+            <div class="stage-column after"><span class="stage-label">加工後 · 保存する二つの困りごと</span><div class="code">{
+  <span class="key">"困りごと"</span>: [
+    {
+      <span class="key">"困りごとID"</span>: <span class="str">"M-24893911-01"</span>,
+      <span class="key">"元質問ID"</span>: <span class="num">24893911</span>,
+      <span class="key">"想定読者"</span>: <span class="str">"生後1か月の子がいる、初めてベビーカー購入を検討している家庭"</span>,
+      <span class="key">"年齢・月齢"</span>: <span class="str">"生後1か月"</span>,
+      <span class="key">"利用場面"</span>: <span class="str">"低月齢期の外出手段としてベビーカーの購入時期と型を決める場面"</span>,
+      <span class="key">"中心の困りごと"</span>: <span class="str">"A型またはAB型を今購入して後からB型へ変更するか、B型を使用できる時期まで待つか決められない"</span>,
+      <span class="key">"判断を妨げるもの"</span>: <span class="str">"型ごとの使用開始時期、買い替えの必要性、自分の利用条件に合う判断材料が不足している"</span>,
+      <span class="key">"解決後の状態"</span>: <span class="str">"今買う、B型まで待つ、購入前に試す、の中から次の行動を一つ選べる"</span>,
+      <span class="key">"安全上の注意度"</span>: <span class="str">"通常"</span>,
+      <span class="key">"根拠となる原文位置"</span>: [{<span class="key">"項目"</span>:<span class="str">"質問本文"</span>,<span class="key">"開始文字"</span>:<span class="num">0</span>,<span class="key">"終了文字"</span>:<span class="num">80</span>}],
+      <span class="key">"次の比較工程へ進めるか"</span>: <span class="str">"はい"</span>,
+      <span class="key">"確認状態"</span>: <span class="str">"比較候補"</span>
+    },
+    {
+      <span class="key">"困りごとID"</span>: <span class="str">"M-24893911-02"</span>,
+      <span class="key">"元質問ID"</span>: <span class="num">24893911</span>,
+      <span class="key">"想定読者"</span>: <span class="str">"生後1か月の子がいる、ベビーカー購入前の家庭"</span>,
+      <span class="key">"年齢・月齢"</span>: <span class="str">"生後1か月"</span>,
+      <span class="key">"利用場面"</span>: <span class="str">"購入後に子どもがベビーカーを嫌がって使えない可能性を検討する場面"</span>,
+      <span class="key">"中心の困りごと"</span>: <span class="str">"購入しても子どもがベビーカーを嫌がり、使えない可能性が不安"</span>,
+      <span class="key">"判断を妨げるもの"</span>: <span class="str">"子どもの反応は個人差が大きく、この質問だけでは購入前に予測できない"</span>,
+      <span class="key">"解決後の状態"</span>: <span class="str">"購入前に試す方法と、購入を見送る条件を決められる"</span>,
+      <span class="key">"安全上の注意度"</span>: <span class="str">"通常"</span>,
+      <span class="key">"根拠となる原文位置"</span>: [{<span class="key">"項目"</span>:<span class="str">"質問本文"</span>,<span class="key">"開始文字"</span>:<span class="num">81</span>,<span class="key">"終了文字"</span>:<span class="num">102</span>}],
+      <span class="key">"次の比較工程へ進めるか"</span>: <span class="str">"いいえ"</span>,
+      <span class="key">"確認状態"</span>: <span class="str">"人間確認が必要"</span>
+    }
+  ]
+}</div></div>
+          </div>
+          <details class="callout" open><summary><strong>AIへ渡す指示文と入力全文</strong></summary><div class="code" style="margin-top:12px">処理名: 困りごとの分割
+指示文の版: 1.0.0
+
+AIへの指示:
+1. 質問への回答や助言は生成しない。
+2. 質問者が解決したい中心問題を0件から3件まで抽出する。
+3. 一つの読後ゴールと一つの主な誘導で同時に扱えない中心問題は分割する。
+4. タイトルと質問本文に存在しない事実を推測しない。
+5. 不明な項目は空値にする。
+6. 各困りごとへ、根拠となる質問本文の開始文字と終了文字を付ける。
+7. Mamari回答本文は入力に含まれていないため、回答内容を根拠にしない。
+8. 指定されたデータ形式以外を返さない。
+
+入力:
+{
+  <span class="key">"質問ID"</span>: <span class="num">24893911</span>,
+  <span class="key">"タイトル"</span>: <span class="str">"生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。"</span>,
+  <span class="key">"質問本文"</span>: <span class="str">"生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？\nやはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？\nベビーカー嫌がって使わなかった人いますか？"</span>,
+  <span class="key">"年齢・月齢表記"</span>: [<span class="str">"生後1か月"</span>],
+  <span class="key">"分類"</span>: <span class="str">"子育て・グッズ"</span>,
+  <span class="key">"回答本文を含むか"</span>: <span class="str">"いいえ"</span>,
+  <span class="key">"公開利用"</span>: <span class="str">"禁止"</span>
+}
+
+返却形式:
+{"困りごと":[{"想定読者":"文字列または空値","年齢・月齢":"文字列または空値","利用場面":"文字列または空値","中心の困りごと":"文字列","判断を妨げるもの":"文字列または空値","解決後の状態":"文字列","安全上の注意度":"通常・注意・高リスク・情報不足","根拠となる原文位置":[{"項目":"質問本文","開始文字":"整数","終了文字":"整数"}]}]}</div></details>
+          <details class="callout" open><summary><strong>この資料用に作ったAI応答例の全文</strong></summary><p class="fine">実運用のAI実行記録ではありません。上の指示文に対する確認用の応答例を、一字も省略せず表示しています。</p><div class="code" style="margin-top:12px">{
+  <span class="key">"困りごと"</span>: [
+    {<span class="key">"想定読者"</span>:<span class="str">"生後1か月の子がいる、初めてベビーカー購入を検討している家庭"</span>,<span class="key">"年齢・月齢"</span>:<span class="str">"生後1か月"</span>,<span class="key">"利用場面"</span>:<span class="str">"低月齢期の外出手段としてベビーカーの購入時期と型を決める場面"</span>,<span class="key">"中心の困りごと"</span>:<span class="str">"A型またはAB型を今購入して後からB型へ変更するか、B型を使用できる時期まで待つか決められない"</span>,<span class="key">"判断を妨げるもの"</span>:<span class="str">"型ごとの使用開始時期、買い替えの必要性、自分の利用条件に合う判断材料が不足している"</span>,<span class="key">"解決後の状態"</span>:<span class="str">"今A型またはAB型を買う、B型まで待つ、購入前に試す、の中から次の行動を一つ選べる"</span>,<span class="key">"安全上の注意度"</span>:<span class="str">"通常"</span>,<span class="key">"根拠となる原文位置"</span>:[{<span class="key">"項目"</span>:<span class="str">"質問本文"</span>,<span class="key">"開始文字"</span>:<span class="num">0</span>,<span class="key">"終了文字"</span>:<span class="num">80</span>}]},
+    {<span class="key">"想定読者"</span>:<span class="str">"生後1か月の子がいる、ベビーカー購入前の家庭"</span>,<span class="key">"年齢・月齢"</span>:<span class="str">"生後1か月"</span>,<span class="key">"利用場面"</span>:<span class="str">"購入後に子どもがベビーカーを嫌がって使えない可能性を検討する場面"</span>,<span class="key">"中心の困りごと"</span>:<span class="str">"購入しても子どもがベビーカーを嫌がり、使えない可能性が不安"</span>,<span class="key">"判断を妨げるもの"</span>:<span class="str">"子どもの反応は個人差が大きく、この質問だけでは購入前に予測できない"</span>,<span class="key">"解決後の状態"</span>:<span class="str">"購入前に試す方法と、購入を見送る条件を決められる"</span>,<span class="key">"安全上の注意度"</span>:<span class="str">"通常"</span>,<span class="key">"根拠となる原文位置"</span>:[{<span class="key">"項目"</span>:<span class="str">"質問本文"</span>,<span class="key">"開始文字"</span>:<span class="num">81</span>,<span class="key">"終了文字"</span>:<span class="num">102</span>}]}
+  ]
+}</div></details>
+          <div class="pill-row"><a class="pill info" href="stage-07-ai-request.json">AIへ渡す内容の完全版</a><a class="pill info" href="stage-07-ai-response.json">AI応答例の完全版</a><a class="pill info" href="stage-07-saved-records.json">保存内容の完全版</a></div>
+          <div class="processing">応答例を受け取った後：指定形式になっているか、原文位置が範囲内かを確認し、一つの入力から二つの困りごとを確認用ファイルへ保存しました。1件目は次の比較工程へ進め、2件目は人間確認が必要としました。</div>
+          <div class="data-impact"><div class="impact-cell"><b>入力</b>質問 1件</div><div class="impact-cell"><b>確認済みの出力</b>困りごと 2件</div><div class="impact-cell"><b>本番登録</b>なし</div><div class="impact-cell"><b>保存</b>確認用データ 2件</div></div>
+        </section>
+
+        <section class="slide" data-title="加工3：近い質問を一組ずつ比較する">
+          <div class="slide-head"><div class="eyebrow">08 · 加工3</div><h2>一つ目の困りごとと、実データの候補質問8件を一組ずつ比較する</h2></div>
+          <div class="callout stop"><strong>この8件を選んだ検索記録はありません</strong>候補8質問のタイトルと質問本文は実データの全文です。ただし、8件の選び方と「同じ／別の目的／条件が矛盾」という判断は、この資料で工程を説明するための案です。本番処理の実行結果ではありません。</div>
+          <div class="transform-grid">
+            <div class="stage-column before"><span class="stage-label">加工前 · 基準の困りごと1件＋候補質問8件</span><div class="code">{
+  <span class="key">"困りごとID"</span>: <span class="str">"M-24893911-01"</span>,
+  <span class="key">"元質問ID"</span>: <span class="num">24893911</span>,
+  <span class="key">"想定読者"</span>: <span class="str">"生後1か月の子がいる、初めてベビーカー購入を検討している家庭"</span>,
+  <span class="key">"年齢・月齢"</span>: <span class="str">"生後1か月"</span>,
+  <span class="key">"利用場面"</span>: <span class="str">"低月齢期の外出手段としてベビーカーの購入時期と型を決める場面"</span>,
+  <span class="key">"中心の困りごと"</span>: <span class="str">"A型またはAB型を今購入して後からB型へ変更するか、B型を使用できる時期まで待つか決められない"</span>,
+  <span class="key">"判断を妨げるもの"</span>: <span class="str">"型ごとの使用開始時期、買い替えの必要性、自分の利用条件に合う判断材料が不足している"</span>,
+  <span class="key">"解決後の状態"</span>: <span class="str">"今買う、B型まで待つ、購入前に試す、の中から次の行動を一つ選べる"</span>
+}</div>
+              <div class="record"><strong>候補 25014306 · タイトル</strong>生後3ヶ月の赤ちゃんを抱っこ紐で外出していますが、ベビーカーの購入を迷っています。早めに慣れさせた方が良いでしょうか。また、皆さんは何ヶ月頃からベビーカーを使い始めましたか。抱っこ紐より便利でしょうか。</div><div class="record"><strong>候補 25014306 · 質問本文</strong>生後3ヶ月、最近は抱っこ紐で外出しています。<br />ベビーカーは生まれてからで良いかな？と思っているうちにタイミングを逃して買いそびれている感じです😅<br />(買うとしたらサイベックスかなと思っています)<br />このまま抱っこ紐でB型ベビーカーでも良いかな？とも思っていますが、ベビーカー拒否もよく聞くし…<br />早く買って慣らした方が良いでしょうか？<br />また、皆さんは何ヶ月頃からベビーカーをよく使うようになりましたか？抱っこ紐より便利でしょうか？？<br />教えていただければ嬉しいです！</div>
+              <div class="record"><strong>候補 24805347 · タイトル</strong>大分県の方に質問です。ベビーカーは必要でしょうか？A型かB型のどちらが良いか教えてください。また、梅雨から夏にかけてベビーカーは使っていますか？</div><div class="record"><strong>候補 24805347 · 質問本文</strong>大分県の方、ベビーカー持ってますか？<br />車社会だからいらないかなーと思ってたのですが<br />生後４ヶ月、散歩を始めてから欲しくなってきて、、、<br />A型かB型かも教えてください！<br />あと、梅雨〜夏ってベビーカー使ってますか？🤔</div>
+              <div class="record"><strong>候補 24513135 · タイトル</strong>生後4ヶ月の赤ちゃんにAB型とB型のベビーカーのどちらを選ぶべきか悩んでいます。現在使っているベビーカーが使いづらいため、買い替えを検討中です。腰がすわるまで待つべきか、今すぐAB型を購入すべきか迷っています。皆さんはどのベビーカーを使っていますか。</div><div class="record"><strong>候補 24513135 · 質問本文</strong>生後4ヶ月買うならAB型ベビーカーかB型ベビーカーか。<br />今親戚から譲り受けたベビーカーを使っています。<br />これがコンパクトにならないし、荷物入らないし、走行性悪い（少しの段差で引っかかる）ので買い換えようとしています。<br />今4ヶ月なのであと2ヶ月ほど腰がすわるのを待ってB型を買うべきか今すぐAB型を買うべきかで悩んでいます。<br />腰がすわっても寝てしまったらリクライニングできたほうがいいのかなーとか、対面にした方が顔が見れていいのかなとも思うのでAB型かな…と思ってるんですが、コンパクトさと走行性を考えたらB型がいいのかな…と迷走中です😭💦<br />皆さんはどんなベビーカー使われてますか？！<br />ちなみに車中心の生活をしています！</div>
+              <div class="record"><strong>候補 25074261 · タイトル</strong>生後5ヶ月の子どもがいる女性がAB型ベビーカーの長期使用について悩んでいます。夫の育休が終わる前に外出を増やしたいと考えていますが、賃貸のスペースや腰が座るまでの期間も気にしています。皆さんの意見やおすすめのベビーカーを教えてほしいです。</div><div class="record"><strong>候補 25074261 · 質問本文</strong>まもなく生後5ヶ月の子がいてベビーカーの購入を考えているのですが、実際AB型のベビーカーは長く使えるのでしょうか？<br />それとも月齢が進むにつれてB型ベビーカーにしたいとなるでしょうか🥹<br />もともと夫婦共々出不精で子どもが生まれてから長時間の外出をしていなかったのですが、もう少しで夫の育休が終わるのでその後子どもと2人でずっと家に篭りきりなのもなあと思いそろそろベビーカー買おうかな？と話しています。<br />賃貸で自宅のスペースが広くないので腰がすわるのを待ってB型を買う？とも考えましたがそれまで一切出かけないのもつまらないしな…でも腰すわりまでの間がちょうど真夏だから間違いなく出かける頻度は少ないな…<br />でも夫が育休中の今に大きいショッピングモールとかでお買い物したいならベビーカーあった方がいいかな…などとぐるぐる迷っております。<br />実際AB型が長く使えるのであればもう買ってしまっても良いのですが、皆様ならどうされるかいいねで教えていただきたいです！<br />また、ベビーカーのおすすめがあればコメントで教えていただけると嬉しいです😊<br />すいすい動かしやすくて荷物が少し乗ればいいなと思っています✨</div>
+              <div class="record"><strong>候補 25105029 · タイトル</strong>AB兼用ベビーカーを希望する私と、B型で良いと考える夫の意見が食い違っています。腰が座るまでベビーカーなしでやっていけるでしょうか。</div><div class="record"><strong>候補 25105029 · 質問本文</strong>AB兼用ベビーカーが欲しい私と、B型からでいいと考える夫。理由は自分が半年ごろまで育休をとっているので抱っこできるから、エスカレーターが使えなくて不便、場所を取る、高いなど…<br />私はせっかくお祝い金ももらったし、これから暑くなるからベビーカーがあってもいいかと思うのですが、お金の価値観が合わなくてイライラします。<br />腰が座るまでベビーカーがなくてもやっていけるものでしょうか？</div>
+              <div class="record"><strong>候補 25111106 · タイトル</strong>年末に第二子を出産予定で、1歳の娘のベビーカーについて悩んでいます。2台目を買うべきか、2人乗りにするべきか、または今のベビーカー1台で行くべきか教えてください。</div><div class="record"><strong>候補 25111106 · 質問本文</strong>年子のベビーカー問題アドバイスください！<br />年末に1歳5ヶ月差の第二子を出産予定です。<br />今1歳の娘がAB型のベビーカーを使っているのですが、買い替え、買い足しについて悩んでいます。<br />娘は割とベビーカーに乗ってくれるタイプで、近所の買い物もベビーカーです。下に買い物かごが入るため重宝しています。<br />車は所持していますが、私は免許がないため主人のいる休日にしか乗りません。セダンで広くもないので荷室にベビーカー1台と買い物かごでいっぱいです。<br />チャイルドシート2台乗せることを考えると、2台目を買うなら後部座席の足元に入るようなコンパクトな物(AでもBでも)を買い足すか、2人乗り1台に買い換えるか、今のベビーカー1台でいくか悩んでいます。<br />買い物やお出かけでベビーカー2台となると、大人2人の手が塞がって不便でしょうか？<br />今は娘は基本ベビーカーですが、最近は抱っこしてほしがったりもするので、歩き始めると歩きたい、ベビーカー乗りたい、抱っこしてほしいと気分によって色々になるのかな？と思うとベビーカー2台で抱っこしたり歩かせたりは難しそうと思ったりもします。<br />今のベビーカー1台で下の子は諦めて抱っこ紐移動の方がいいのか、2人乗りがあった方が便利なのか、経験者ママさん達教えてください🙇<br />ちなみに第二子が産まれてから1年半ほどは自宅保育で、その後保育園に入る予定です。<br />なので2人連れて平日に買い物に行くことも想定されます。<br />自転車がないので徒歩で10〜15分になります。<br />みなさんのご経験教えていただきたいです！</div>
+              <div class="record"><strong>候補 25100123 · タイトル</strong>1歳の息子におすすめのB型ベビーカーはありますか？また、今買い足しても無駄にならないでしょうか？</div><div class="record"><strong>候補 25100123 · 質問本文</strong>B型ベビーカーについてご相談です!<br />1歳になったばかりの息子が生まれた時から、アップリカのラクーナを使っていますが、起こせる角度が微妙なことに悩み始めてきました。<br />90度に起こせる方がいいのではないかと思っていますが、おすすめのB型ベビーカーはありますか??<br />また、このタイミングで買い足しても無駄にはならないでしょうか??<br />息子はベビーカー好きなので、外出時はベビーカーばかりです。</div>
+              <div class="record"><strong>候補 24935876 · タイトル</strong>雨の日にベビーカーで外出する際、雨カバーを購入すべきか、防水スプレーで対処できるか教えてください。</div><div class="record"><strong>候補 24935876 · 質問本文</strong>雨の日のベビーカーについて質問です☔️<br />急きょ明日、こどもを連れての外出予定ができたのですが、妊娠7ヶ月なので最近はどこに行くのもAB型のベビーカーを使っています！<br />ですが明日は雨☔️雨避けカバー等のグッズは持っていません😭<br />ベビーカー押しても傘させるよーみたいな棒は持ってますが、使ったことがない＆こどもは濡れるのかな…？(大きめ3歳児なので足出ます)<br />雨の強さによるのは重々承知ですが…<br />雨カバーを事前に買うべきでしょうか？<br />防水スプレーは家にあるので、それでなんとかなると思いますか？<br />降水確率90%、風速3m予報です！<br />雨の日ベビーカー外出されたことある方、教えてください！😭</div>
+            </div>
+            <div class="action-arrow"><b>→</b><span>一組ずつ意味を比較</span></div>
+            <div class="stage-column after"><span class="stage-label">加工後 · 8組の比較結果</span><div class="code">[
+  {<span class="key">"基準の困りごと"</span>:<span class="str">"M-24893911-01"</span>,<span class="key">"比較した質問ID"</span>:<span class="num">25014306</span>,<span class="key">"判定"</span>:<span class="str">"同じ困りごと"</span>,<span class="key">"処理"</span>:<span class="str">"質問群に追加"</span>,<span class="key">"理由"</span>:<span class="str">"低月齢期に今購入するかB型まで待つかを選ぶ同一ゴール"</span>},
+  {<span class="key">"基準の困りごと"</span>:<span class="str">"M-24893911-01"</span>,<span class="key">"比較した質問ID"</span>:<span class="num">24805347</span>,<span class="key">"判定"</span>:<span class="str">"同じ困りごと"</span>,<span class="key">"処理"</span>:<span class="str">"質問群に追加"</span>,<span class="key">"理由"</span>:<span class="str">"生後4か月時点でA型かB型かを選ぶ同一ゴール"</span>},
+  {<span class="key">"基準の困りごと"</span>:<span class="str">"M-24893911-01"</span>,<span class="key">"比較した質問ID"</span>:<span class="num">24513135</span>,<span class="key">"判定"</span>:<span class="str">"同じ困りごと"</span>,<span class="key">"処理"</span>:<span class="str">"質問群に追加"</span>,<span class="key">"理由"</span>:<span class="str">"今AB型へ買い替えるかB型を待つかを選ぶ同一ゴール"</span>},
+  {<span class="key">"基準の困りごと"</span>:<span class="str">"M-24893911-01"</span>,<span class="key">"比較した質問ID"</span>:<span class="num">25074261</span>,<span class="key">"判定"</span>:<span class="str">"同じ困りごと"</span>,<span class="key">"処理"</span>:<span class="str">"質問群に追加"</span>,<span class="key">"理由"</span>:<span class="str">"今AB型を買うか腰すわり後のB型を待つかを選ぶ同一ゴール"</span>},
+  {<span class="key">"基準の困りごと"</span>:<span class="str">"M-24893911-01"</span>,<span class="key">"比較した質問ID"</span>:<span class="num">25105029</span>,<span class="key">"判定"</span>:<span class="str">"関連するが別の目的"</span>,<span class="key">"処理"</span>:<span class="str">"質問群に追加しない"</span>,<span class="key">"理由"</span>:<span class="str">"購入時期に加えて夫婦間のお金の価値観調整が中心問題として残る"</span>},
+  {<span class="key">"基準の困りごと"</span>:<span class="str">"M-24893911-01"</span>,<span class="key">"比較した質問ID"</span>:<span class="num">25111106</span>,<span class="key">"判定"</span>:<span class="str">"条件が矛盾"</span>,<span class="key">"処理"</span>:<span class="str">"質問群に追加しない"</span>,<span class="key">"理由"</span>:<span class="str">"第二子・年子・二人乗りまたは2台運用で読者条件と選択肢が異なる"</span>},
+  {<span class="key">"基準の困りごと"</span>:<span class="str">"M-24893911-01"</span>,<span class="key">"比較した質問ID"</span>:<span class="num">25100123</span>,<span class="key">"判定"</span>:<span class="str">"条件が矛盾"</span>,<span class="key">"処理"</span>:<span class="str">"質問群に追加しない"</span>,<span class="key">"理由"</span>:<span class="str">"1歳時点で既存A型からB型を買い足す問題で生活段階と購入状態が異なる"</span>},
+  {<span class="key">"基準の困りごと"</span>:<span class="str">"M-24893911-01"</span>,<span class="key">"比較した質問ID"</span>:<span class="num">24935876</span>,<span class="key">"判定"</span>:<span class="str">"関連するが別の目的"</span>,<span class="key">"処理"</span>:<span class="str">"質問群に追加しない"</span>,<span class="key">"理由"</span>:<span class="str">"ベビーカー本体の購入時期ではなく雨カバーまたは防水対策を選ぶ問題"</span>}
+]</div></div>
+          </div>
+          <div class="processing">変化：基準の困りごとと候補質問8件を一組ずつ比較する判断案を作りました。「同じ困りごと」とした4件だけを次の質問群へ進めます。本番データベースへの登録は行っていません。</div>
+          <div class="data-impact"><div class="impact-cell"><b>読み取り</b>候補質問 8件</div><div class="impact-cell"><b>保存</b>比較結果案 8件</div><div class="impact-cell"><b>本番登録</b>なし</div><div class="impact-cell"><b>人間承認</b>未実施</div></div>
+        </section>
+
+        <section class="slide" data-title="加工4：似た質問を一つのまとまりにする">
+          <div class="slide-head"><div class="eyebrow">09 · 加工4</div><h2>同じ目的の5質問を「一つの記事で扱う質問群」にまとめる</h2></div>
+          <div class="callout stop"><strong>この工程の目的</strong>読者・利用場面・決めたいことが同じ質問だけを束ね、質問数を数えられる単位を作ります。この資料の5件は説明用の未承認案であり、本番データベースへはまだ登録していません。</div>
+          <div class="transform-grid">
+            <div class="stage-column before"><span class="stage-label">加工前 · 8組の比較結果全文</span><div class="code">[
+  {"比較した質問ID":25014306,"判定":"同じ困りごと","処理":"質問群に追加","理由":"低月齢期に今購入するかB型まで待つかを選ぶ同一ゴール"},
+  {"比較した質問ID":24805347,"判定":"同じ困りごと","処理":"質問群に追加","理由":"生後4か月時点でA型かB型かを選ぶ同一ゴール"},
+  {"比較した質問ID":24513135,"判定":"同じ困りごと","処理":"質問群に追加","理由":"今AB型へ買い替えるかB型を待つかを選ぶ同一ゴール"},
+  {"比較した質問ID":25074261,"判定":"同じ困りごと","処理":"質問群に追加","理由":"今AB型を買うか腰すわり後のB型を待つかを選ぶ同一ゴール"},
+  {"比較した質問ID":25105029,"判定":"関連するが別の目的","処理":"質問群に追加しない","理由":"購入時期に加えて夫婦間のお金の価値観調整が中心問題として残る"},
+  {"比較した質問ID":25111106,"判定":"条件が矛盾","処理":"質問群に追加しない","理由":"第二子・年子・二人乗りまたは2台運用で読者条件と選択肢が異なる"},
+  {"比較した質問ID":25100123,"判定":"条件が矛盾","処理":"質問群に追加しない","理由":"1歳時点で既存A型からB型を買い足す問題で生活段階と購入状態が異なる"},
+  {"比較した質問ID":24935876,"判定":"関連するが別の目的","処理":"質問群に追加しない","理由":"ベビーカー本体の購入時期ではなく雨カバーまたは防水対策を選ぶ問題"}
+]</div><p class="fine">この8行から「質問群に追加」とした4件だけを使います。残り4件は別の問題なので、この質問群には追加しません。</p></div>
+            <div class="action-arrow"><b>→</b><span>質問群の未承認案を作成</span></div>
+            <div class="stage-column after"><span class="stage-label">加工後 · 一つの記事で扱う質問群</span><div class="code">{
+  <span class="key">"質問群ID"</span>: <span class="str">"PC-STROLLER-LOWAGE-001"</span>,
+  <span class="key">"想定読者"</span>: <span class="str">"生後1〜5か月の子がいる家庭"</span>,
+  <span class="key">"利用場面"</span>: <span class="str">"低月齢期の外出手段を準備"</span>,
+  <span class="key">"共通の困りごと"</span>: <span class="str">"今A/AB型を買うかB型まで待つか決められない"</span>,
+  <span class="key">"読後にできること"</span>: <span class="str">"次の行動を一つ選べる"</span>,
+  <span class="key">"元質問ID"</span>: [<span class="num">24893911</span>,<span class="num">25014306</span>,<span class="num">24805347</span>,<span class="num">24513135</span>,<span class="num">25074261</span>],
+  <span class="key">"確認状態"</span>: <span class="str">"人間確認待ち"</span>
+}</div></div>
+          </div>
+          <div class="processing">変化：「同じ困りごと」と判断した4件に基準質問を足し、「一つの記事で扱う質問群」1件と所属質問5件を確認用ファイルへ保存しました。質問本文そのものは質問群へ複製していません。</div>
+          <div class="data-impact"><div class="impact-cell"><b>保存</b>質問群 1件＋所属質問 5件</div><div class="impact-cell"><b>本番登録</b>なし</div><div class="impact-cell"><b>確認状態</b>人間確認待ち</div><div class="impact-cell"><b>人間承認</b>未実施</div></div>
+        </section>
+
+        <section class="slide" data-title="加工5：質問数と回答を集計して保存する">
+          <div class="slide-head"><div class="eyebrow">10 · 加工5</div><h2>質問群ごとに「何件あったか」と回答の状況を集計する</h2></div>
+          <div class="callout"><strong>この工程の目的</strong>質問群を記事にする優先順を決め、記事設計時に回答から解決パターンを探せるようにします。質問件数は収集済みデータ内の重みであり、インターネット全体の検索需要とは呼びません。</div>
+          <div class="transform-grid">
+            <div class="stage-column before"><span class="stage-label">加工前 · 一つの記事で扱う質問群</span><div class="code">{
+  <span class="key">"質問群ID"</span>: <span class="str">"PC-STROLLER-LOWAGE-001"</span>,
+  <span class="key">"共通の困りごと"</span>: <span class="str">"今A/AB型を買うかB型まで待つか決められない"</span>,
+  <span class="key">"元質問ID"</span>: [<span class="num">24893911</span>,<span class="num">25014306</span>,<span class="num">24805347</span>,<span class="num">24513135</span>,<span class="num">25074261</span>]
+}</div><div class="record"><strong>この時点で分からないこと</strong>質問が何件か、何件に回答があるか、公式推奨回答があるか、月齢の分布、他の質問群より先に記事化すべきか。</div></div>
+            <div class="action-arrow"><b>→</b><span>質問・回答を集計</span></div>
+            <div class="stage-column after"><span class="stage-label">加工後 · 困りごとの集計結果</span><div class="code">{
+  <span class="key">"質問群ID"</span>: <span class="str">"PC-STROLLER-LOWAGE-001"</span>,
+  <span class="key">"同じ困りごとの質問数"</span>: <span class="num">5</span>,
+  <span class="key">"回答がある質問数"</span>: <span class="num">5</span>,
+  <span class="key">"回答総数"</span>: <span class="num">28</span>,
+  <span class="key">"回答への反応合計"</span>: <span class="num">42</span>,
+  <span class="key">"回答への返信合計"</span>: <span class="num">30</span>,
+  <span class="key">"公式推奨回答数"</span>: <span class="num">0</span>,
+  <span class="key">"月齢表記がある質問数"</span>: <span class="num">5</span>,
+  <span class="key">"月齢分布"</span>: {<span class="str">"1か月"</span>:<span class="num">1</span>,<span class="str">"3か月"</span>:<span class="num">1</span>,<span class="str">"4か月"</span>:<span class="num">2</span>,<span class="str">"5か月"</span>:<span class="num">1</span>},
+  <span class="key">"優先順位"</span>: <span class="str">"200質問内の全質問群集計後に確定"</span>
+}</div></div>
+          </div>
+          <div class="record"><strong>参考回答候補として保存する参照（本文は複製しない）</strong>24513135→146866407（反応0）／24805347→147898987（反応2）／24893911→148182294（反応1）／25014306→148610596（反応2）／25074261→148819259（反応6）。5件ともMamariの公式推奨回答指定ではないため、記事へそのまま採用せず「解決パターン抽出の候補」に限定します。</div>
+          <div class="record"><strong>保存する内容</strong>「困りごと集計」には件数・月齢分布・優先順位・集計方法の版を1行保存します。「参考回答候補」には質問番号、回答番号、運営推奨か、反応数、利用目的、公開転載禁止を保存します。開発者向けの名前は、人間用の説明には表示しません。</div>
+          <div class="record"><strong>優先順位の決め方</strong>200質問をすべて質問群へ分けた後、まず「同じ困りごとの質問数」の多い順。同数なら「回答がある質問数」→「公式推奨回答がある質問数」→「回答総数」の順で並べます。推奨回答は記事材料の質を示す補助値であり、困りごとの多さへ加算しません。</div>
+          <div class="callout"><strong>公式根拠は全記事に必須ではない</strong>件数・悩みの傾向・回答パターンを整理するだけなら不要です。ただし、この事例のように「A形/B形の適用月齢」「製品重量・対象年齢」など外部事実を記事で断定する場合だけ、SG基準やメーカー公式ページを別の根拠レコードとして接続します。</div>
+          <details><summary>この事例で、記事内の仕様断定に使う公式根拠候補3件（全文）</summary><div class="code">[
+  {"根拠ID":"SG-S0001-06","発行者":"一般財団法人製品安全協会","URL":"https://www.sg-mark.org/wp-content/uploads/2025/06/S0001-06公開版.pdf","確認日":"2026-08-13","確認内容":"A形の適用開始月齢は生後1か月を過ぎてから、B形はお座りできる6〜7か月から"},
+  {"根拠ID":"CYBEX-MELIO-20260813","発行者":"CYBEX","URL":"https://www.cybex-online.com/en/jp/p/10109253.html","確認日":"2026-08-13","商品名":"Melio Carbon","対象":"1か月頃から約3歳","体重上限":"15 kg","製品重量":"5.9 kg"},
+  {"根拠ID":"CYBEX-LIBELLE-20260813","発行者":"CYBEX","URL":"https://www.cybex-online.com/en/jp/p/st-go-libelle-6.html","確認日":"2026-08-13","商品名":"Libelle","対象":"6か月頃から約4歳","体重上限":"22 kg","製品重量":"6 kg"}
+]</div></details>
+          <div class="pill-row"><a class="pill info" href="stage-10-cluster-aggregate.json">集計内容を全文で確認</a></div>
+          <div class="processing">変化：実データから質問5件と回答28件を集計し、確認用ファイルに「困りごと集計」1件と「参考回答候補」5件を保存しました。記事で外部事実を断定するときだけ公式根拠候補3件を接続します。本番データベースにはまだ登録していません。</div>
+          <div class="data-impact"><div class="impact-cell"><b>読み取り</b>質問5件＋回答28件</div><div class="impact-cell"><b>保存</b>集計1件＋回答参照5件</div><div class="impact-cell"><b>本番登録</b>なし</div><div class="impact-cell"><b>公式推奨回答</b>0件</div></div>
+        </section>
+
+        <section class="slide" data-title="加工6：質問群から記事設計書を作る">
+          <div class="slide-head"><div class="eyebrow">11 · 加工6</div><h2>5質問の共通点と集計結果から、記事で何を解決するかを決める</h2></div>
+          <div class="callout"><strong>この工程の目的</strong>「似た質問のまとまり」を、そのまま記事本文にはしません。1記事で扱う範囲、読後に読者ができること、判断の分かれ道、最後に促す行動を決めた<strong>記事設計書</strong>へ変換します。記事設計書はAIへの執筆指示であり、公開本文ではありません。</div>
+          <div class="transform-grid">
+            <div class="stage-column before"><span class="stage-label">加工前 · 質問群＋集計＋必要な根拠</span><div class="code">{
+  <span class="key">"質問群ID"</span>: <span class="str">"PC-STROLLER-LOWAGE-001"</span>,
+  <span class="key">"同じ困りごとの質問数"</span>: <span class="num">5</span>,
+  <span class="key">"想定読者"</span>: <span class="str">"生後1〜5か月の子がいる家庭"</span>,
+  <span class="key">"利用場面"</span>: <span class="str">"低月齢期の外出手段を準備する"</span>,
+  <span class="key">"共通の困りごと"</span>: <span class="str">"今A型またはAB型を買うか、B型を使用できる時期まで待つか決められない"</span>,
+  <span class="key">"回答総数"</span>: <span class="num">28</span>,
+  <span class="key">"公式推奨回答数"</span>: <span class="num">0</span>,
+  <span class="key">"事実断定に必要な公式根拠"</span>: [<span class="str">"SG-S0001-06"</span>,<span class="str">"CYBEX-MELIO-20260813"</span>,<span class="str">"CYBEX-LIBELLE-20260813"</span>],
+  <span class="key">"記事の読後ゴール"</span>: <span class="str">"未設定"</span>,
+  <span class="key">"判断の分かれ道"</span>: [],
+  <span class="key">"最後に促す行動"</span>: <span class="str">"未設定"</span>
+}</div></div>
+            <div class="action-arrow"><b>→</b><span>1記事の解決範囲を設計</span></div>
+            <div class="stage-column after"><span class="stage-label">加工後 · 記事設計書</span><div class="code">{
+  <span class="key">"記事設計書ID"</span>: <span class="str">"BR-STROLLER-TIMING-001"</span>,
+  <span class="key">"元の質問群ID"</span>: <span class="str">"PC-STROLLER-LOWAGE-001"</span>,
+  <span class="key">"記事で扱う範囲"</span>: <span class="str">"生後1〜5か月、今A型を買うかB型まで待つか"</span>,
+  <span class="key">"読後ゴール"</span>: <span class="str">"自分に合う選択肢を一つ選べる"</span>,
+  <span class="key">"記事が答える問い"</span>: <span class="str">"今A型またはAB型を買う、B型を使用できる時期まで待つ、購入前に試す、のどれにするか"</span>,
+  <span class="key">"判断の分かれ道"</span>: [
+    {<span class="key">"選択肢"</span>:<span class="str">"今買う"</span>,<span class="key">"当てはまる条件"</span>:<span class="str">"B型の使用開始目安である6〜7か月より前からベビーカーを継続して使いたい"</span>,<span class="key">"次の行動"</span>:<span class="str">"現在の月齢に対応するA型またはAB型について、公式の適用月齢、折りたたみ寸法、重量、荷物かご、主に走る路面を比較する"</span>,<span class="key">"根拠参照"</span>:[<span class="str">"SG-S0001-06"</span>,<span class="str">"CYBEX-MELIO-20260813"</span>]},
+    {<span class="key">"選択肢"</span>:<span class="str">"B型まで待つ"</span>,<span class="key">"当てはまる条件"</span>:<span class="str">"B型の対象月齢まで抱っこ紐または現在の移動手段で代替でき、収納性と持ち運びやすさを優先したい"</span>,<span class="key">"次の行動"</span>:<span class="str">"使用予定のB型製品について公式の適用月齢を確認し、その月齢まで購入を待つ"</span>,<span class="key">"根拠参照"</span>:[<span class="str">"SG-S0001-06"</span>,<span class="str">"CYBEX-LIBELLE-20260813"</span>]},
+    {<span class="key">"選択肢"</span>:<span class="str">"購入前に試す"</span>,<span class="key">"当てはまる条件"</span>:<span class="str">"実際に使う頻度、保管できるか、子どもが乗るかを購入前に判断できない"</span>,<span class="key">"次の行動"</span>:<span class="str">"店頭試乗または短期レンタルを利用し、玄関からの出し入れ、車への積み下ろし、よく使う道での操作、子どもの反応を確認してから購入を再判断する"</span>,<span class="key">"根拠参照"</span>:[]}
+  ],
+  <span class="key">"最後に促す行動"</span>: <span class="str">"三つの選択肢から自分の条件に合うものを一つ選び、該当製品の公式適用月齢と取扱説明書を確認する"</span>,
+  <span class="key">"事実断定の根拠"</span>: [<span class="str">"SG-S0001-06"</span>,<span class="str">"CYBEX-MELIO-20260813"</span>,<span class="str">"CYBEX-LIBELLE-20260813"</span>],
+  <span class="key">"安全上の注意度"</span>: <span class="str">"通常"</span>,
+  <span class="key">"人間確認"</span>: <span class="str">"未実施"</span>,
+  <span class="key">"記事タイプ"</span>: <span class="str">"未設定"</span>
+}</div></div>
+          </div>
+          <div class="processing">変化：質問群・実集計・必要な公式根拠候補を読み、記事設計書1件を確認用ファイルへ保存しました。5質問を、3つの選択肢と1つの読後ゴールへ変換しています。人間確認はまだです。</div>
+          <div class="data-impact"><div class="impact-cell"><b>保存</b>記事設計書 1件</div><div class="impact-cell"><b>本番登録</b>なし</div><div class="impact-cell"><b>人間確認</b>未実施</div><div class="impact-cell"><b>記事タイプ</b>未判定</div></div>
+        </section>
+
+        <section class="slide" data-title="加工7：記事タイプを判定する">
+          <div class="slide-head"><div class="eyebrow">12 · 加工7</div><h2>記事設計書の形から、どの型の記事として書くかを一つ選ぶ</h2></div>
+          <div class="callout"><strong>この工程の目的</strong>同じ内容をチェックリスト、体験談、商品レビューへ無理に変換しないためです。この事例は「三つの選択肢から自分に合うものを選ぶ」設計なので、記事タイプは<strong>選択ガイド</strong>の候補になります。</div>
+          <div class="transform-grid">
+            <div class="stage-column before"><span class="stage-label">加工前 · 記事タイプが未判定の記事設計書</span><div class="code">{
+  <span class="key">"記事設計書ID"</span>: <span class="str">"BR-STROLLER-TIMING-001"</span>,
+  <span class="key">"記事が答える問い"</span>: <span class="str">"今買う、B型まで待つ、購入前に試す、のどれにするか"</span>,
+  <span class="key">"判断の分かれ道"</span>: [
+    {<span class="key">"選択肢"</span>:<span class="str">"今買う"</span>,<span class="key">"当てはまる条件"</span>:<span class="str">"6〜7か月より前から継続利用したい"</span>},
+    {<span class="key">"選択肢"</span>:<span class="str">"B型まで待つ"</span>,<span class="key">"当てはまる条件"</span>:<span class="str">"それまで別の移動手段で代替できる"</span>},
+    {<span class="key">"選択肢"</span>:<span class="str">"購入前に試す"</span>,<span class="key">"当てはまる条件"</span>:<span class="str">"利用頻度・収納・子どもの反応が判断できない"</span>}
+  ],
+  <span class="key">"人間確認"</span>: <span class="str">"未実施"</span>,
+  <span class="key">"記事タイプ"</span>: <span class="str">"未設定"</span>
+}</div></div>
+            <div class="action-arrow"><b>→</b><span>記事タイプ判定ルールへ照合</span></div>
+            <div class="stage-column after"><span class="stage-label">加工後 · 現在の結果と承認後の候補</span><div class="code">{
+  <span class="key">"現在の結果"</span>: {
+    <span class="key">"表示"</span>: <span class="str">"人間確認待ち・記事タイプ未判定"</span>,
+    <span class="key">"理由"</span>: <span class="str">"元の質問群が人間承認されていない"</span>,
+    <span class="key">"記事タイプ"</span>: <span class="str">"未設定"</span>,
+    <span class="key">"記事生成"</span>: <span class="str">"不可"</span>
+  },
+  <span class="key">"質問群と記事設計書を承認した場合"</span>: {
+    <span class="key">"表示"</span>: <span class="str">"選択ガイドの判定候補"</span>,
+    <span class="key">"記事タイプ"</span>: <span class="str">"選択ガイド"</span>,
+    <span class="key">"判定理由"</span>: <span class="str">"一つの問いに対し、条件付きの選択肢が三つあり、読者が一つを選ぶ設計だから"</span>,
+    <span class="key">"人間の最終確認"</span>: <span class="str">"必要"</span>,
+    <span class="key">"記事生成"</span>: <span class="str">"まだ不可"</span>
+  }
+}</div></div>
+          </div>
+          <div class="record"><strong>状態の意味</strong>「未判定」＝前工程の人間確認が終わっていない。「判定候補」＝ルール上は一つに絞れたが、人間の確定前。「確定」＝人間が記事タイプを確認し、確認者と日時を保存した状態。この事例はまだ「未判定」で、形だけを見ると「選択ガイド候補」です。</div>
+          <div class="callout warn"><strong>実行チェックリストは別の上位コンテンツ</strong>チェックリストは10項目以上を必須とし、一つの記事や一つの質問群からは作りません。複数の承認済み詳細記事を参照し、各項目から対応する詳細記事へ移動できる場合だけ候補になります。今回のベビーカー事例だけではチェックリストを作れず、「選択ガイド」の候補までです。</div>
+          <div class="pill-row"><a class="pill info" href="stage-12-content-kind.json">記事タイプ判定の完全データ</a></div>
+          <div class="processing">変化：記事設計書を判定ルールへ読み取り専用で2回通し、現在は「未判定」、承認済みと仮定した場合は「選択ガイド候補」と確認しました。本番データベースは更新せず、記事生成も開始していません。</div>
+          <div class="data-impact"><div class="impact-cell"><b>試験判定</b>2回</div><div class="impact-cell"><b>本番データベース更新</b>0行</div><div class="impact-cell"><b>現在の状態</b>記事タイプ未判定</div><div class="impact-cell"><b>記事生成</b>不可</div></div>
+        </section>
+
+        <section class="slide archived" data-title="加工8：媒体ごとの成果物を決める">
+          <div class="slide-head"><div class="eyebrow">13 · 加工8</div><h2>「選択ガイド」を、各媒体で何として作るか決める</h2></div>
+          <div class="callout"><strong>この工程の目的</strong>同じデータを全媒体へそのまま流すのではなく、媒体の役割に合う成果物を指定します。人間承認後を仮定した行先案であり、まだ生成は開始していません。</div>
+          <div class="grid g2">
+            <div class="card blue"><h3>ブログ</h3><p><strong>記事本文＋実行用チェックリスト</strong></p><p>判断の3分岐を詳しく説明し、サイト上で実行できる5項目を付ける。</p></div>
+            <div class="card green"><h3>Instagram</h3><p><strong>縦長1枚のチェックリスト画像＋投稿説明文</strong></p><p>保存して見返せる5項目だけを1枚にまとめ、ブログへ誘導する。</p></div>
+            <div class="card purple"><h3>Threads</h3><p><strong>投稿文を2本</strong></p><p>困りごとの問いかけ1本と、ブログ更新案内1本。記事用の「タイトル」「本文」には分けない。</p></div>
+            <div class="card amber"><h3>note</h3><p><strong>今回は作らない</strong></p><p>運営者本人が判断軸を作った背景や、試用・購入経験がないため。</p></div>
+          </div>
+          <div class="pill-row"><a class="pill info" href="stage-13-routing.json">媒体ごとの判定を全文で確認</a></div>
+          <div class="processing">変化：記事設計書1件を、ブログ用の本文とチェックリスト、Instagram用の画像と投稿説明文、Threads用の投稿文へ変換する方針にしました。noteは作成しません。</div>
+        </section>
+
+        <section class="slide archived" data-title="加工9：ブログ記事とチェックリストを作る">
+          <div class="slide-head"><div class="eyebrow">14 · 加工9</div><h2>ブログの既存形式で、記事本文と実行用チェックリストを作る</h2></div>
+          <div class="callout"><strong>ブログの実装を確認した結果</strong>説明本文は記事ファイル、画面上で実行するチェック項目は別のデータファイルとして管理されています。そのため、ブログ成果物を独自形式のデータ1個とする説明は誤りでした。</div>
+          <div class="grid g2">
+            <div class="card blue"><h3>記事本文</h3><p><a href="stage-14-blog-preview.md">記事本文の完全版を開く</a></p><p>記事タイトル、概要、対象月齢、本文見出し、結論を含みます。</p></div>
+            <div class="card green"><h3>サイトで実行するチェック項目</h3><p><a href="stage-14-checklist-preview.json">チェック項目の完全版を開く</a></p><p>ブログの既存形式に合わせた、公開前の確認用データです。</p></div>
+          </div>
+          <div class="article" style="margin-top:16px">
+            <h3>生後1〜5か月、ベビーカーは今買う？ B型まで待つ？ 3つの条件で決める</h3>
+            <p class="disclosure">確認用プレビュー。現時点でアフィリエイトリンクはありません。</p>
+            <p>ベビーカーを今買うか、B型を使える時期まで待つかは、人気順では決められません。使い始めたい時期、代替手段、実際に使う頻度の三点から選びます。</p>
+            <h4>記事の見出し</h4>
+            <ol><li>最初に使用開始月齢を確認する</li><li>今から継続して使うならA型またはAB型を比較する</li><li>対象月齢まで代替できるならB型を待つ</li><li>使う頻度や子どもの反応が読めないなら購入前に試す</li><li>購入前の確認項目</li></ol>
+            <h4>チェックリストの5項目</h4>
+            <ul><li>候補製品の公式適用月齢を確認</li><li>B型まで使える代替手段を確認</li><li>玄関または車へ収納できるか確認</li><li>重量と荷物かごが移動方法に合うか確認</li><li>試乗またはレンタルが必要か判断</li></ul>
+          </div>
+          <div class="processing">変化：記事設計書から、ブログへ置ける記事本文1件と、画面上で実行するチェックリスト1件を作りました。Mamariの質問文・回答文は転記していません。</div>
+        </section>
+
+        <section class="slide archived" data-title="加工10：Instagram画像とThreads文を作る">
+          <div class="slide-head"><div class="eyebrow">15 · 加工10</div><h2>Instagramは1枚画像、Threadsはそのまま貼れる投稿文にする</h2></div>
+          <div class="callout"><strong>媒体ごとの完成形</strong>Instagramは7枚組ではなく、保存用チェックリスト1枚です。Threadsは記事用の「タイトル」「本文」に分けず、そのまま投稿できる文章にします。</div>
+          <div class="grid g2">
+            <div class="card green">
+              <h3>Instagram｜保存用チェックリスト1枚</h3>
+              <img class="social-image" src="stage-15-instagram-checklist.png" alt="ベビーカーを今買うか決める5項目のInstagram用チェックリスト" />
+              <div class="pill-row" style="margin-top:14px"><a class="pill info" href="stage-15-instagram-checklist.png">投稿用画像を開く</a><a class="pill info" href="stage-15-instagram-caption.txt">投稿説明文を開く</a></div>
+            </div>
+            <div class="card purple">
+              <h3>Threads｜そのまま投稿する文</h3>
+              <div class="post-preview"><strong>投稿1｜困りごとの確認</strong><br />生後1〜5か月でベビーカーを検討するとき、いちばん迷うのはどれですか？<br /><br />① 今から使いたい<br />② 収納しやすいB型まで待ちたい<br />③ 買っても使うか分からない<br /><br />番号だけでも教えてください。</div>
+              <div class="post-preview" style="margin-top:12px"><strong>投稿2｜ブログ更新案内</strong><br />ベビーカーを今買うかB型まで待つかを、使用開始月齢・代替手段・利用頻度の3条件で整理しました。<br /><br />自分が「今買う／待つ／先に試す」のどれかを選べる記事です。個別製品は公式の適用月齢を確認してください。<br /><br />詳しくはプロフィールのブログへ。</div>
+              <div class="pill-row" style="margin-top:14px"><a class="pill info" href="stage-15-threads-posts.txt">Threads投稿2本の全文を開く</a></div>
+            </div>
+          </div>
+          <div class="processing">変化：記事設計書の「購入前に確認する5項目」を1枚画像へ配置し、会話を始める問いかけとブログへ誘導する案内をThreads投稿文へ変換しました。noteは本人経験がないため作っていません。</div>
+        </section>
+
+        <section class="slide archived" data-title="加工11：レビューする実ファイルを揃える">
+          <div class="slide-head"><div class="eyebrow">16 · 加工11</div><h2>人間が確認できる媒体別の成果物を並べる</h2></div>
+          <div class="callout"><strong>内部受け渡し用データは最終成果物に含めません</strong>複数の内部データを記事管理機能へ渡すための梱包データは、読者が確認したい成果物ではありません。この工程では、実際に内容を確認して配置するファイルだけを示します。</div>
+          <div class="file-list">
+            <div class="file-item"><strong>ブログ記事</strong><a href="stage-14-blog-preview.md">記事本文の完全版を開く</a></div>
+            <div class="file-item"><strong>ブログ内の実行用チェックリスト</strong><a href="stage-14-checklist-preview.json">チェック項目の完全版を開く</a></div>
+            <div class="file-item"><strong>Instagram保存用画像</strong><a href="stage-15-instagram-checklist.png">投稿用画像を開く</a><br /><small>1080×1350</small></div>
+            <div class="file-item"><strong>Instagram投稿説明文</strong><a href="stage-15-instagram-caption.txt">投稿説明文を開く</a></div>
+            <div class="file-item"><strong>Threads投稿2本</strong><a href="stage-15-threads-posts.txt">投稿文の全文を開く</a></div>
+          </div>
+          <div class="callout warn"><strong>ここで人間が確認すること</strong>原質問の転載になっていないか、チェック項目が質問群の中心問題に答えているか、公式仕様の表現が正しいか、媒体ごとの日本語が自然か、ブログへの導線が適切かを確認します。</div>
+          <div class="pill-row"><a class="pill info" href="stage-16-review-files.json">確認対象の一覧を開く</a></div>
+          <div class="processing">変化：記事生成側の内部データを最終成果物扱いせず、ブログ本文、チェックリスト、Instagram画像、投稿説明文、Threads投稿文という、人間がそのまま確認できる単位へ揃えました。</div>
+        </section>
+
+        <section class="slide archived" data-title="原質問から各媒体の日本語成果物へ">
+          <div class="slide-head"><div class="eyebrow">17 · 最初と最後の比較</div><h2>元の相談が、最終的にどんな日本語コンテンツへ変わったか</h2></div>
+          <div class="card red">
+            <h3>加工前｜Mamariの元質問 24893911</h3>
+            <p><strong>タイトル</strong><br />生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。</p>
+            <p><strong>質問本文</strong><br />生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？<br />やはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？<br />ベビーカー嫌がって使わなかった人いますか？</p>
+          </div>
+          <div class="action-arrow" style="min-height:74px"><b>↓</b><span style="writing-mode:horizontal-tb">同じ目的の実質問5件を集計し、回答28件を参考信号として整理</span></div>
+          <div class="grid g2">
+            <div class="card blue">
+              <h3>ブログ記事候補</h3>
+              <p><strong>生後1〜5か月、ベビーカーは今買う？ B型まで待つ？ 3つの条件で決める</strong></p>
+              <p>使い始めたい時期、B型までの代替手段、購入前に試す必要性から「今買う／待つ／先に試す」を選べる記事。</p>
+              <p><a href="stage-14-blog-preview.md">記事本文の全文を確認</a></p>
+            </div>
+            <div class="card green">
+              <h3>チェックリストの観点</h3>
+              <ol><li>公式適用月齢</li><li>B型までの代替手段</li><li>玄関・車への収納</li><li>重量と荷物かご</li><li>試乗・レンタルの必要性</li></ol>
+              <p><a href="stage-14-checklist-preview.json">ブログ用チェックリストを確認</a></p>
+            </div>
+            <div class="card green">
+              <h3>Instagram</h3>
+              <p>上の5観点を、保存して買い物前に確認できる縦長1枚画像に変換。</p>
+              <img class="social-image" src="stage-15-instagram-checklist.png" alt="Instagram用のベビーカー購入チェックリスト" />
+            </div>
+            <div class="card purple">
+              <h3>Threads</h3>
+              <p><strong>問いかけ</strong><br />生後1〜5か月でベビーカーを検討するとき、いちばん迷うのはどれですか？ ①今から使いたい ②B型まで待ちたい ③買っても使うか分からない</p>
+              <p><strong>ブログ案内</strong><br />使用開始月齢・代替手段・利用頻度の3条件で整理しました。「今買う／待つ／先に試す」を選べる記事です。</p>
+              <p><a href="stage-15-threads-posts.txt">投稿文の全文を確認</a></p>
+            </div>
+          </div>
+          <div class="callout"><strong>変換の中心</strong>一人の「何型を買いましたか？」という質問をそのまま言い換えたのではありません。似た目的の5質問から、繰り返し現れる判断材料を抽出し、「購入時期を決める選択ガイド」と「買う前に確認する5項目」へ変えています。</div>
+        </section>
+
+        <section class="slide archived" data-title="完成状態と人間の役割">
+          <div class="slide-head">
+            <div class="eyebrow">18 · 現在の到達点</div>
+            <h2>この1件は確認用成果物まで。本番処理はまだ実行していない</h2>
+          </div>
+          <div class="grid g2">
+            <div class="card green">
+              <h3>実データで確認できたもの</h3>
+              <ul>
+                <li>原本・取得情報・データベースの照合値を確認</li>
+                <li>タイトル71文字・質問本文102文字を省略せず確認用データ化</li>
+                <li>一つの相談から二つの困りごとを分けた応答例</li>
+                <li>実質問8件との比較案と、質問群の未承認案</li>
+                <li>質問群5件・回答28件・月齢分布を実データベースから集計</li>
+                <li>必要な事実だけに公式根拠候補3件を接続</li>
+                <li>記事タイプ判定ルールを読み取り専用で実行</li>
+                <li>ブログ記事本文＋実行用チェックリスト</li>
+                <li>Instagramの1枚チェックリスト画像</li>
+                <li>Threads投稿文2本</li>
+              </ul>
+            </div>
+            <div class="card amber">
+              <h3>本番処理へ進む前に必要なもの</h3>
+              <ul>
+                <li>一つの質問に混ざる困りごとの分割確認</li>
+                <li>似た質問のまとまりと記事タイプの確認</li>
+                <li>事実・権利・安全・表現の最終レビュー</li>
+                <li>note用の本人経験／編集判断の入力</li>
+                <li>自社で利用できる広告案件、広告表記、読者の移動先の接続</li>
+                <li>GO承認と公開操作</li>
+              </ul>
+            </div>
+          </div>
+          <div class="grid g3" style="margin-top:16px">
+            <div class="card compact"><span class="pill warn">工程確認</span><h3 style="margin-top:10px">可能</h3><p>加工工程と媒体別成果物を確認できます。</p></div>
+            <div class="card compact"><span class="pill stop">本番実行</span><h3 style="margin-top:10px">未実施</h3><p>人間承認・本番実行・データ保存が必要です。</p></div>
+            <div class="card compact"><span class="pill stop">収益化</span><h3 style="margin-top:10px">未接続</h3><p>自社が利用できる広告案件をまだ接続していません。</p></div>
+          </div>
+          <div class="callout"><strong>200件へ拡張するときも単位は同じ</strong>200質問を200記事にはしません。全質問を「使う・複数の困りごとへ分けて使う・除外する」へ確定し、似た質問を質問群へまとめ、優先順位の高い質問群から記事設計書と媒体別ファイルを作ります。</div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide:not(.archived)'));
+    const nav = document.getElementById('nav');
+    const progress = document.getElementById('progress');
+    const counter = document.getElementById('counter');
+    const topbarTitle = document.getElementById('topbarTitle');
+    let current = Math.max(0, Math.min(slides.length - 1, Number(location.hash.replace('#slide-', '')) - 1 || 0));
+
+    slides.forEach((slide, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.innerHTML = `<span class="nav-index">${String(index + 1).padStart(2, '0')}</span><span class="nav-label">${slide.dataset.title}</span>`;
+      button.addEventListener('click', () => show(index));
+      nav.appendChild(button);
+    });
+
+    const navButtons = Array.from(nav.querySelectorAll('button'));
+    function show(index, updateHash = true) {
+      current = (index + slides.length) % slides.length;
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+      navButtons.forEach((button, i) => button.classList.toggle('active', i === current));
+      navButtons[current].scrollIntoView({ block: 'nearest' });
+      progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+      counter.textContent = `${current + 1} / ${slides.length}`;
+      topbarTitle.textContent = slides[current].dataset.title;
+      document.title = `${current + 1}. ${slides[current].dataset.title}｜実データケース`;
+      if (updateHash) history.replaceState(null, '', `#slide-${current + 1}`);
+      document.body.classList.remove('nav-open');
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    document.getElementById('prev').addEventListener('click', () => show(current - 1));
+    document.getElementById('next').addEventListener('click', () => show(current + 1));
+    document.getElementById('menu').addEventListener('click', () => document.body.classList.toggle('nav-open'));
+    document.addEventListener('keydown', (event) => {
+      if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); show(current + 1); }
+      if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); show(current - 1); }
+      if (event.key === 'Home') { event.preventDefault(); show(0); }
+      if (event.key === 'End') { event.preventDefault(); show(slides.length - 1); }
+      if (event.key === 'Escape') document.body.classList.remove('nav-open');
+    });
+    window.addEventListener('hashchange', () => {
+      const value = Number(location.hash.replace('#slide-', ''));
+      if (value >= 1 && value <= slides.length) show(value - 1, false);
+    });
+    show(current, false);
+  </script>
+</body>
+</html>

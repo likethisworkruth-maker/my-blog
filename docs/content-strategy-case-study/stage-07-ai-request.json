@@ -1,0 +1,47 @@
+{
+  "artifact_type": "ai_request_fixture",
+  "execution_status": "host_model_review_fixture",
+  "production_provider_call_id": null,
+  "task": "extract_atomic_needs",
+  "prompt_version": "atomic-need-1.0.0-case-review",
+  "system_instructions": [
+    "質問への回答や助言は生成しない。",
+    "質問者が解決したい中心問題を0件から3件まで抽出する。",
+    "一つの読後ゴールと一つの主CTAで同時に扱えない中心問題は分割する。",
+    "title_textとbody_textに存在しない事実を推測しない。",
+    "不明なフィールドはnullにする。",
+    "各mentionへ根拠となるbody_textのstartとendを付ける。",
+    "Mamari回答本文は入力に含まれていないため、回答内容を根拠にしない。",
+    "指定されたJSON以外を返さない。"
+  ],
+  "input": {
+    "question_id": 24893911,
+    "title_text": "生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。",
+    "body_text": "生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？\nやはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？\nベビーカー嫌がって使わなかった人いますか？",
+    "age_signals": ["生後1か月"],
+    "category": "子育て・グッズ",
+    "answer_bodies_included": false,
+    "public_use": "forbidden",
+    "source_hash": "4153027b8ea95e212eb791f089c5f227820267f03fab02a79b9b356837e2b4c2"
+  },
+  "required_output_shape": {
+    "mentions": [
+      {
+        "audience": "string|null",
+        "life_stage": "string|null",
+        "scene": "string|null",
+        "central_problem": "string",
+        "obstacle": "string|null",
+        "desired_change": "string",
+        "risk_lane": "normal|sensitive|high|insufficient",
+        "evidence_spans": [
+          {
+            "field": "body",
+            "start": "integer",
+            "end": "integer"
+          }
+        ]
+      }
+    ]
+  }
+}

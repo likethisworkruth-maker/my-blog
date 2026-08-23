@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">LikeThis コンテンツ運用モデル</title>
+  <desc id="desc">データの役割を分類し、問題クラスターと根拠ゲートを経て、媒体ごとに適格性を判定する流れ。eligibleかつrequestedの成果物だけを生成する。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#91a09b"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf7; }
+      .title { fill: #172033; font: 700 42px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; letter-spacing: -1.5px; }
+      .subtitle { fill: #667085; font: 400 21px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .step { fill: #34b995; font: 700 17px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; letter-spacing: 1px; }
+      .heading { fill: #173153; font: 700 25px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .label { fill: #344054; font: 700 19px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .body { fill: #667085; font: 400 17px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .micro { fill: #7b8490; font: 400 15px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .mono { fill: #425466; font: 700 16px Consolas, "SFMono-Regular", monospace; }
+      .panel { fill: #ffffff; stroke: #dfe4e1; stroke-width: 2; }
+      .soft { fill: #f2f5f3; }
+      .mint { fill: #eaf8f3; stroke: #9bd8c6; stroke-width: 2; }
+      .blue { fill: #edf3f8; stroke: #b8cedf; stroke-width: 2; }
+      .purple { fill: #f4effa; stroke: #d2c5e4; stroke-width: 2; }
+      .coral { fill: #fff0ed; stroke: #f0c0b9; stroke-width: 2; }
+      .green { fill: #edf7ee; stroke: #bfd9c2; stroke-width: 2; }
+      .line { fill: none; stroke: #91a09b; stroke-width: 3; marker-end: url(#arrow); }
+      .check { fill: #18785f; font: 700 18px Inter, "Noto Sans JP", sans-serif; }
+      .formula-title { fill: #94e4cf; font: 700 16px Inter, "Noto Sans JP", sans-serif; letter-spacing: 1px; }
+      .formula { fill: #ffffff; font: 700 22px Consolas, "SFMono-Regular", monospace; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1600" height="900"/>
+  <text class="step" x="70" y="58">CONTENT OPERATING MODEL</text>
+  <text class="title" x="70" y="112">媒体を起点にせず、作れる根拠から届け先を選ぶ</text>
+  <text class="subtitle" x="70" y="151">同じ原稿を4媒体へ配る six-pack 方式から、媒体別の適格性判定へ</text>
+
+  <text class="step" x="70" y="209">01 · DATA ROLE</text>
+  <rect class="panel" x="70" y="230" width="290" height="435" rx="18"/>
+  <text class="heading" x="96" y="272">データの役割を固定</text>
+
+  <rect class="soft" x="94" y="298" width="242" height="68" rx="11"/>
+  <text class="label" x="112" y="326">需要シグナル</text>
+  <text class="micro" x="112" y="350">Mamari集計・自社反応</text>
+
+  <rect class="blue" x="94" y="378" width="242" height="68" rx="11"/>
+  <text class="label" x="112" y="406">公式事実</text>
+  <text class="micro" x="112" y="430">公的機関・メーカー</text>
+
+  <rect class="green" x="94" y="458" width="242" height="68" rx="11"/>
+  <text class="label" x="112" y="486">本人の体験</text>
+  <text class="micro" x="112" y="510">運営者が入力・確認</text>
+
+  <rect class="coral" x="94" y="538" width="242" height="68" rx="11"/>
+  <text class="label" x="112" y="566">商用条件</text>
+  <text class="micro" x="112" y="590">offer・規約・確認日</text>
+
+  <text class="micro" x="96" y="636">※ 第三者原文は公開物へ渡さない</text>
+
+  <path class="line" d="M360 448 H414"/>
+
+  <text class="step" x="430" y="209">02 · CONTENT BRIEF</text>
+  <rect class="panel" x="430" y="230" width="310" height="435" rx="18"/>
+  <text class="heading" x="456" y="272">問題クラスター</text>
+  <text class="body" x="456" y="304">記事ではなく、4要素を生産単位にする</text>
+
+  <rect class="mint" x="454" y="333" width="262" height="60" rx="11"/>
+  <text class="mono" x="474" y="359">WHO</text>
+  <text class="body" x="558" y="359">誰が / life_stage</text>
+  <text class="micro" x="474" y="381">例：生後0〜3か月の家庭</text>
+
+  <rect class="mint" x="454" y="405" width="262" height="60" rx="11"/>
+  <text class="mono" x="474" y="431">WHEN</text>
+  <text class="body" x="558" y="431">いつ / trigger</text>
+  <text class="micro" x="474" y="453">例：短時間外出の前</text>
+
+  <rect class="mint" x="454" y="477" width="262" height="60" rx="11"/>
+  <text class="mono" x="474" y="503">PAIN</text>
+  <text class="body" x="558" y="503">何に困る</text>
+  <text class="micro" x="474" y="525">例：忘れ物と荷物過多</text>
+
+  <rect class="mint" x="454" y="549" width="262" height="76" rx="11"/>
+  <text class="mono" x="474" y="575">DONE</text>
+  <text class="body" x="558" y="575">何を終える</text>
+  <text class="micro" x="474" y="599">必要な物だけバッグへ</text>
+  <text class="micro" x="474" y="618">入れ終える</text>
+
+  <path class="line" d="M740 448 H794"/>
+
+  <text class="step" x="810" y="209">03 · GLOBAL GATE</text>
+  <rect class="panel" x="810" y="230" width="300" height="435" rx="18"/>
+  <text class="heading" x="836" y="272">公開前の共通ゲート</text>
+  <text class="check" x="838" y="329">✓</text>
+  <text class="label" x="870" y="329">権利・出典</text>
+  <text class="micro" x="870" y="352">原文なし・lineageあり</text>
+  <line x1="836" y1="373" x2="1082" y2="373" stroke="#e5e8e6" stroke-width="2"/>
+
+  <text class="check" x="838" y="416">✓</text>
+  <text class="label" x="870" y="416">プライバシー</text>
+  <text class="micro" x="870" y="439">個人を再構成しない</text>
+  <line x1="836" y1="460" x2="1082" y2="460" stroke="#e5e8e6" stroke-width="2"/>
+
+  <text class="check" x="838" y="503">✓</text>
+  <text class="label" x="870" y="503">根拠・鮮度</text>
+  <text class="micro" x="870" y="526">一次情報・確認日あり</text>
+  <line x1="836" y1="547" x2="1082" y2="547" stroke="#e5e8e6" stroke-width="2"/>
+
+  <text class="check" x="838" y="590">✓</text>
+  <text class="label" x="870" y="590">独自価値・商用</text>
+  <text class="micro" x="870" y="613">判断軸・開示・計測</text>
+  <text class="micro" x="838" y="646">不足は理由コード付き blocked にする</text>
+
+  <path class="line" d="M1110 448 H1164"/>
+
+  <text class="step" x="1180" y="209">04 · PER TARGET</text>
+  <rect class="panel" x="1180" y="230" width="350" height="435" rx="18"/>
+  <text class="heading" x="1206" y="272">媒体ごとに別判定</text>
+
+  <rect class="purple" x="1204" y="300" width="142" height="108" rx="12"/>
+  <text class="label" x="1222" y="331">Threads</text>
+  <text class="body" x="1222" y="359">発見・会話</text>
+  <text class="micro" x="1222" y="385">1投稿1テーマ</text>
+
+  <rect class="coral" x="1360" y="300" width="146" height="108" rx="12"/>
+  <text class="label" x="1378" y="331">Instagram</text>
+  <text class="body" x="1378" y="359">保存・視覚</text>
+  <text class="micro" x="1378" y="385">5〜9項目</text>
+
+  <rect class="green" x="1204" y="424" width="142" height="108" rx="12"/>
+  <text class="label" x="1222" y="455">note</text>
+  <text class="body" x="1222" y="483">体験・信頼</text>
+  <text class="micro" x="1222" y="509">本人入力必須</text>
+
+  <rect class="blue" x="1360" y="424" width="146" height="108" rx="12"/>
+  <text class="label" x="1378" y="455">Blog</text>
+  <text class="body" x="1378" y="483">実用・選択</text>
+  <text class="micro" x="1378" y="509">収益の中心</text>
+
+  <rect class="soft" x="1204" y="552" width="302" height="84" rx="12"/>
+  <text class="mono" x="1222" y="583">eligible / blocked</text>
+  <text class="mono" x="1222" y="610">/ not_applicable</text>
+
+  <rect x="70" y="718" width="1460" height="118" rx="18" fill="#173153"/>
+  <text class="formula-title" x="105" y="758">GENERATION RULE</text>
+  <text class="formula" x="105" y="801">eligible  ∧  requested = true  →  generate</text>
+  <text x="1015" y="775" fill="#ffffff" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="18" font-weight="700">未指定targetは false</text>
+  <text x="1015" y="806" fill="#b8c7d8" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="16">媒体数を埋めるための生成はしない</text>
+</svg>

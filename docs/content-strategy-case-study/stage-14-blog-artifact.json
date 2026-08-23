@@ -1,0 +1,19 @@
+{
+  "artifact_type": "blog_file_manifest",
+  "status": "preview_only_unapproved",
+  "repository_contract_verified_against": "src/content.config.ts",
+  "files": [
+    {
+      "role": "blog_markdown",
+      "preview_file": "stage-14-blog-preview.md",
+      "approved_destination": "src/content/knowhow/stroller-a-or-b.md"
+    },
+    {
+      "role": "executable_checklist",
+      "preview_file": "stage-14-checklist-preview.json",
+      "approved_destination": "src/content/checklists/stroller-a-or-b.json"
+    }
+  ],
+  "verbatim_mamari_included": false,
+  "active_affiliate_offer": null
+}

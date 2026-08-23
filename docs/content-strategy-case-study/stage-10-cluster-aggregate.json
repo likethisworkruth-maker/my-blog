@@ -1,0 +1,56 @@
+{
+  "artifact_type": "problem_group_aggregate_design_fixture",
+  "execution_status": "real_database_read_case_file_written",
+  "production_database_written": false,
+  "source_database": "D:/HermesData/childcare-data-aggregator/childcare.sqlite3",
+  "logical_tables": {
+    "problem_group_aggregate": {
+      "physical_table_name": "mamari_problem_cluster_aggregates",
+      "purpose": "質問群ごとの件数、回答状況、月齢分布、優先順位を1行で保存する",
+      "record": {
+        "cluster_id": "PC-STROLLER-LOWAGE-001",
+        "sample_question_count": 5,
+        "questions_with_answers": 5,
+        "answer_count": 28,
+        "answer_upvote_sum": 42,
+        "answer_reply_count": 30,
+        "source_recommended_answer_count": 0,
+        "questions_with_source_recommended_answer": 0,
+        "age_signal_question_count": 5,
+        "age_distribution": {
+          "1_month": 1,
+          "3_months": 1,
+          "4_months": 2,
+          "5_months": 1
+        },
+        "priority_rank": null,
+        "priority_status": "calculate_after_all_problem_groups_in_200_question_pilot",
+        "aggregation_version": "pilot-0.1"
+      }
+    },
+    "reference_answer_candidates": {
+      "physical_table_name": "mamari_problem_cluster_answer_signals",
+      "purpose": "記事設計で解決パターンを検討する回答参照を保存する。回答本文を複製・公開しない",
+      "records": [
+        {"question_id": 24513135, "source_answer_id": 146866407, "is_source_recommended": false, "upvote_count": 0, "reply_count": 1, "usage": "solution_pattern_candidate", "public_verbatim_use": "forbidden"},
+        {"question_id": 24805347, "source_answer_id": 147898987, "is_source_recommended": false, "upvote_count": 2, "reply_count": 1, "usage": "solution_pattern_candidate", "public_verbatim_use": "forbidden"},
+        {"question_id": 24893911, "source_answer_id": 148182294, "is_source_recommended": false, "upvote_count": 1, "reply_count": 1, "usage": "solution_pattern_candidate", "public_verbatim_use": "forbidden"},
+        {"question_id": 25014306, "source_answer_id": 148610596, "is_source_recommended": false, "upvote_count": 2, "reply_count": 1, "usage": "solution_pattern_candidate", "public_verbatim_use": "forbidden"},
+        {"question_id": 25074261, "source_answer_id": 148819259, "is_source_recommended": false, "upvote_count": 6, "reply_count": 0, "usage": "solution_pattern_candidate", "public_verbatim_use": "forbidden"}
+      ]
+    }
+  },
+  "priority_ordering": [
+    "sample_question_count DESC",
+    "questions_with_answers DESC",
+    "questions_with_source_recommended_answer DESC",
+    "answer_count DESC",
+    "cluster_id ASC"
+  ],
+  "priority_note": "質問件数は収集済み標本内の重みであり、Web全体の検索需要ではない。公式推奨回答は記事材料の補助値で、質問件数へ加算しない",
+  "official_evidence_policy": {
+    "required_for_every_article": false,
+    "not_required_for": ["質問件数の集計", "困りごとの傾向整理", "回答パターンの内部検討"],
+    "required_when_publishing": ["適用月齢の断定", "安全基準の断定", "製品仕様・価格・対象年齢など更新される事実"]
+  }
+}

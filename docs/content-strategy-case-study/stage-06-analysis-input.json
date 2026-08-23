@@ -1,0 +1,26 @@
+{
+  "artifact_type": "analysis_input_fixture",
+  "execution_status": "case_file_written",
+  "production_ai_calls": 0,
+  "production_database_written": false,
+  "source_question_id": 24893911,
+  "input": {
+    "question_id": 24893911,
+    "title_text": "生後1ヶ月の息子がいる方が、ベビーカーの購入について相談しています。AB型とB型の選択や、ベビーカーを嫌がる子どもについて意見を求めています。",
+    "body_text": "生後1ヶ月の息子がいます。ベビーカーの購入を検討していますが、皆さん何型を購入されてますか？\nやはり最初はAB型購入してB型へ変更という感じがいいのでしょうか？\nベビーカー嫌がって使わなかった人いますか？",
+    "age_signals": ["生後1か月"],
+    "category": "子育て・グッズ",
+    "answer_bodies_included": false,
+    "public_use": "forbidden",
+    "source_hash": "4153027b8ea95e212eb791f089c5f227820267f03fab02a79b9b356837e2b4c2"
+  },
+  "transmission_audit": {
+    "sent_to_ai_in_stage_06": false,
+    "next_stage_fixture_file": "stage-07-ai-request.json",
+    "title_text_characters": 71,
+    "body_text_characters": 102,
+    "ellipsis_characters_inserted": 0,
+    "title_text_sha256": "7417b9b25c8089b23a8db52fb47c919d1926101f184876304222ab915b59b19a",
+    "body_text_sha256": "e88e756b05ac49123e7cd23abf18678e603786bc41b163ea4231e937f63db68a"
+  }
+}

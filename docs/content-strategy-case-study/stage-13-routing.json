@@ -1,0 +1,76 @@
+{
+  "artifact_type": "routing_records_fixture",
+  "execution_status": "case_file_written",
+  "production_database_written": false,
+  "input_brief_ref": "BR-STROLLER-TIMING-001",
+  "input_classification_status": "proposed",
+  "generation_allowed": false,
+  "warning": "人間のcontent_kind確認後を仮定したrouting previewであり、生成queueへは登録していない",
+  "records": [
+    {
+      "routing_id": "ROUTE-BLOG-001",
+      "brief_ref": "BR-STROLLER-TIMING-001",
+      "target": "blog",
+      "would_be_eligible": true,
+      "preview_requested": true,
+      "eligibility_reasons": [
+        "content_kindがdecision_guideである",
+        "三つのdecision_pathと一つのprimary_ctaがある",
+        "公開可能なofficial evidenceが三件ある"
+      ],
+      "blocked_reasons": [],
+      "required_inputs": [],
+      "artifact_kind": "markdown_article_and_checklist_json",
+      "status": "preview_not_queued"
+    },
+    {
+      "routing_id": "ROUTE-INSTAGRAM-001",
+      "brief_ref": "BR-STROLLER-TIMING-001",
+      "target": "instagram",
+      "would_be_eligible": true,
+      "preview_requested": true,
+      "eligibility_reasons": [
+        "五つの確認項目を一枚の保存用画像へ配置できる",
+        "Blogのprimary_ctaへ接続できる"
+      ],
+      "blocked_reasons": [],
+      "required_inputs": [],
+      "artifact_kind": "single_checklist_image_1080x1350_and_caption_txt",
+      "status": "preview_not_queued"
+    },
+    {
+      "routing_id": "ROUTE-THREADS-001",
+      "brief_ref": "BR-STROLLER-TIMING-001",
+      "target": "threads",
+      "would_be_eligible": true,
+      "preview_requested": true,
+      "eligibility_reasons": [
+        "decision_pathのうち読者が迷う一点を一問で確認できる",
+        "Blog公開通知を独立した短文として生成できる"
+      ],
+      "blocked_reasons": [],
+      "required_inputs": [],
+      "artifact_kind": "threads_plain_text_posts",
+      "artifact_count": 2,
+      "status": "preview_not_queued"
+    },
+    {
+      "routing_id": "ROUTE-NOTE-001",
+      "brief_ref": "BR-STROLLER-TIMING-001",
+      "target": "note",
+      "would_be_eligible": false,
+      "preview_requested": false,
+      "eligibility_reasons": [],
+      "blocked_reasons": [
+        "editorial_note_missing",
+        "first_hand_experience_missing"
+      ],
+      "required_inputs": [
+        "運営者本人がこの判断軸を作った背景",
+        "運営者本人の試用または購入判断の記録"
+      ],
+      "artifact_kind": null,
+      "status": "blocked"
+    }
+  ]
+}

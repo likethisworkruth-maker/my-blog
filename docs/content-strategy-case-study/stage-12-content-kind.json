@@ -1,0 +1,63 @@
+{
+  "artifact_type": "content_kind_classifier_audit",
+  "execution_status": "local_function_executed_read_only",
+  "production_database_written": false,
+  "classifier_file": "C:/Users/ルース/Documents/Hermes/plugins/childcare-data-aggregator/childcare_core/mamari_problem_content_kind.py",
+  "rule_version": "1.1.0",
+  "input": {
+    "primary_reader_outcome": "choose_path",
+    "decision_question": "今A型またはAB型を買う、B型を使用できる時期まで待つ、購入前に試す、のどれにするか",
+    "decision_paths": [
+      {
+        "path_id": "buy_now",
+        "condition": "B型の使用開始目安である6〜7か月より前からベビーカーを継続して使いたい",
+        "next_action": "現在の月齢に対応するA型またはAB型について、公式の適用月齢、折りたたみ寸法、重量、荷物かご、主に走る路面を比較する",
+        "evidence_refs": ["SG-S0001-06", "CYBEX-MELIO-20260813"]
+      },
+      {
+        "path_id": "wait_b",
+        "condition": "B型の対象月齢まで抱っこ紐または現在の移動手段で代替でき、収納性と持ち運びやすさを優先したい",
+        "next_action": "使用予定のB型製品について公式の適用月齢を確認し、その月齢まで購入を待つ",
+        "evidence_refs": ["SG-S0001-06", "CYBEX-LIBELLE-20260813"]
+      },
+      {
+        "path_id": "try_first",
+        "condition": "実際に使う頻度、保管できるか、子どもが乗るかを購入前に判断できない",
+        "next_action": "店頭試乗または短期レンタルを利用し、玄関からの出し入れ、車への積み下ろし、よく使う道での操作、子どもの反応を確認してから購入を再判断する",
+        "evidence_refs": []
+      }
+    ],
+    "evidence_modes": ["official_fact"],
+    "official_fact_refs": ["SG-S0001-06", "CYBEX-MELIO-20260813", "CYBEX-LIBELLE-20260813"],
+    "risk_level": "normal"
+  },
+  "actual_current_gate_call": {
+    "arguments": {"cluster_approved": false, "brief_approved": false},
+    "result": {
+      "status": "unclassified",
+      "content_kind": null,
+      "candidate_kinds": [],
+      "matched_rule_ids": [],
+      "reasons": ["cluster_not_human_approved"],
+      "missing_fields": [],
+      "required_action": "approve_cluster_first",
+      "generation_allowed": false,
+      "rule_version": "1.1.0"
+    }
+  },
+  "walkthrough_shape_check_call": {
+    "arguments": {"cluster_approved": true, "brief_approved": true},
+    "warning": "承認済みと仮定した形状確認であり、承認記録ではない",
+    "result": {
+      "status": "proposed",
+      "content_kind": "decision_guide",
+      "candidate_kinds": ["decision_guide"],
+      "matched_rule_ids": ["CK-D01"],
+      "reasons": ["single_rule_satisfied"],
+      "missing_fields": [],
+      "required_action": "human_confirm_content_kind",
+      "generation_allowed": false,
+      "rule_version": "1.1.0"
+    }
+  }
+}

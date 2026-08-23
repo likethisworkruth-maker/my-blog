@@ -1,0 +1,1901 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="すくリスのコンテンツデータ収集、企画、制作、公開、収益化までを、過去のやりとりと既存資料から統合したプロセス資料。">
+  <title>コンテンツデータ収集から収益化まで｜すくリス</title>
+  <style>
+    :root {
+      --paper: #f6f4ee;
+      --paper-deep: #ece9df;
+      --surface: #fffefa;
+      --surface-strong: #ffffff;
+      --ink: #18263b;
+      --muted: #687386;
+      --line: #dcded8;
+      --navy: #173153;
+      --navy-2: #244a73;
+      --mint: #2f9f82;
+      --mint-soft: #e8f5ef;
+      --blue: #3268b8;
+      --blue-soft: #eaf1fb;
+      --amber: #ad6f13;
+      --amber-soft: #fff2d8;
+      --coral: #c95f54;
+      --coral-soft: #fcebe8;
+      --violet: #7655a7;
+      --violet-soft: #f1ebfa;
+      --slate-soft: #eef1f4;
+      --green: #397b50;
+      --green-soft: #eaf4ec;
+      --shadow: 0 18px 52px rgba(31, 43, 61, .09);
+      --radius: 20px;
+      --content: 1060px;
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 90px;
+    }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 6% 0%, rgba(47, 159, 130, .09), transparent 28rem),
+        radial-gradient(circle at 96% 12%, rgba(50, 104, 184, .08), transparent 30rem),
+        var(--paper);
+      font-family: Inter, "Noto Sans JP", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", Meiryo, system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+    a {
+      color: var(--navy-2);
+      text-decoration-color: #9eabb9;
+      text-underline-offset: 3px;
+    }
+    a:hover { text-decoration-color: var(--mint); }
+    img { display: block; max-width: 100%; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    code {
+      padding: .14em .38em;
+      border: 1px solid #dce1e5;
+      border-radius: 5px;
+      color: #294360;
+      background: #f1f4f6;
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: .88em;
+    }
+    .skip-link {
+      position: fixed;
+      z-index: 1000;
+      top: -60px;
+      left: 16px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--navy);
+    }
+    .skip-link:focus { top: 12px; }
+    .progress {
+      position: fixed;
+      z-index: 1000;
+      inset: 0 auto auto 0;
+      width: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--mint), #67cdb2);
+    }
+
+    .topbar {
+      position: sticky;
+      z-index: 100;
+      top: 0;
+      border-bottom: 1px solid rgba(220, 222, 216, .88);
+      background: rgba(246, 244, 238, .9);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-inner {
+      display: flex;
+      min-height: 62px;
+      max-width: 1380px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .brand {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .brand-mark {
+      display: grid;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 11px;
+      color: #fff;
+      background: var(--navy);
+      font-weight: 900;
+    }
+    .brand-text {
+      display: grid;
+      line-height: 1.2;
+    }
+    .brand-text strong { font-size: 14px; }
+    .brand-text span { color: var(--muted); font-size: 10px; font-weight: 700; }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    .top-link {
+      display: inline-flex;
+      min-height: 36px;
+      align-items: center;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: #435269;
+      background: rgba(255, 255, 255, .75);
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .top-link:hover { border-color: #aebbb5; background: #fff; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 220px minmax(0, var(--content));
+      gap: 54px;
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 48px 24px 100px;
+    }
+    .sidebar {
+      position: sticky;
+      top: 92px;
+      align-self: start;
+    }
+    .side-label {
+      margin: 0 0 10px 10px;
+      color: #8c96a3;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .toc { display: grid; gap: 2px; }
+    .toc a {
+      display: grid;
+      grid-template-columns: 23px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 9px;
+      border-radius: 8px;
+      color: #697486;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+      text-decoration: none;
+    }
+    .toc a::before {
+      color: #a2a9b2;
+      content: attr(data-no);
+      font-size: 9px;
+      font-variant-numeric: tabular-nums;
+    }
+    .toc a:hover,
+    .toc a[aria-current="true"] {
+      color: var(--ink);
+      background: #ebeae4;
+    }
+    .toc a[aria-current="true"]::before { color: var(--mint); }
+    .side-note {
+      margin-top: 22px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .52);
+      font-size: 10.5px;
+      line-height: 1.6;
+    }
+
+    main { min-width: 0; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 58px;
+      padding: clamp(34px, 6vw, 70px);
+      border-radius: 30px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(18, 42, 73, .98), rgba(27, 65, 96, .96)),
+        var(--navy);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      position: absolute;
+      right: -110px;
+      bottom: -150px;
+      width: 390px;
+      height: 390px;
+      border: 1px solid rgba(255, 255, 255, .13);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 54px rgba(255, 255, 255, .035),
+        0 0 0 108px rgba(255, 255, 255, .025);
+      content: "";
+    }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 16px;
+      color: #91e3cc;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      width: 26px;
+      height: 3px;
+      border-radius: 999px;
+      background: currentColor;
+      content: "";
+    }
+    h1, h2, h3, h4, p { margin-top: 0; }
+    h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 820px;
+      margin-bottom: 20px;
+      font-size: clamp(38px, 6vw, 72px);
+      line-height: 1.09;
+      letter-spacing: -.05em;
+    }
+    .hero-lead {
+      position: relative;
+      z-index: 1;
+      max-width: 740px;
+      margin-bottom: 28px;
+      color: #d9e4ef;
+      font-size: clamp(16px, 2vw, 19px);
+      line-height: 1.85;
+    }
+    .hero-meta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .hero-chip {
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 999px;
+      color: #dce8f3;
+      background: rgba(255, 255, 255, .07);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    section {
+      margin-bottom: 76px;
+      scroll-margin-top: 90px;
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 26px;
+    }
+    .section-no {
+      padding-top: 4px;
+      color: var(--mint);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .14em;
+    }
+    h2 {
+      margin-bottom: 8px;
+      color: var(--navy);
+      font-size: clamp(27px, 4vw, 42px);
+      line-height: 1.2;
+      letter-spacing: -.035em;
+    }
+    .section-intro {
+      max-width: 780px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    h3 {
+      margin-bottom: 8px;
+      color: var(--navy);
+      font-size: 18px;
+      line-height: 1.4;
+      letter-spacing: -.015em;
+    }
+    h4 {
+      margin-bottom: 7px;
+      color: #2b3c53;
+      font-size: 14px;
+    }
+    .card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 254, 250, .92);
+      box-shadow: 0 8px 30px rgba(31, 43, 61, .045);
+    }
+    .card p:last-child,
+    .card ul:last-child { margin-bottom: 0; }
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 16px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .lead-card {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      border: 1px solid #cfe4db;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #f7fcfa, #ecf7f2);
+    }
+    .lead-card::before {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: var(--mint);
+      content: "";
+    }
+    .lead-card strong {
+      display: block;
+      max-width: 810px;
+      color: var(--navy);
+      font-size: clamp(21px, 3vw, 30px);
+      line-height: 1.55;
+      letter-spacing: -.02em;
+    }
+    .principles { margin-top: 16px; }
+    .principle {
+      min-height: 150px;
+      border-top: 4px solid var(--navy);
+    }
+    .principle:nth-child(2) { border-top-color: var(--mint); }
+    .principle:nth-child(3) { border-top-color: var(--amber); }
+    .kicker {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .timeline {
+      position: relative;
+      display: grid;
+      gap: 14px;
+      padding-left: 26px;
+    }
+    .timeline::before {
+      position: absolute;
+      inset: 10px auto 10px 7px;
+      width: 2px;
+      background: #cfd5d2;
+      content: "";
+    }
+    .time-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr);
+      gap: 16px;
+      padding: 20px 22px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    .time-item::before {
+      position: absolute;
+      top: 25px;
+      left: -25px;
+      width: 12px;
+      height: 12px;
+      border: 3px solid var(--paper);
+      border-radius: 50%;
+      background: var(--mint);
+      content: "";
+    }
+    .time-date {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+    .time-item p { margin-bottom: 7px; color: #4e5c70; }
+    .trace {
+      color: #7c8795;
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 9.5px;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .snapshot-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      margin-bottom: 16px;
+      padding: 13px 15px;
+      border: 1px solid #d8d9d3;
+      border-radius: 12px;
+      color: #556277;
+      background: #f0efe9;
+      font-size: 12px;
+    }
+    .status-card { position: relative; min-height: 210px; }
+    .status-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 13px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .status-pill::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+    .ok { color: var(--green); background: var(--green-soft); }
+    .hold { color: var(--amber); background: var(--amber-soft); }
+    .draft { color: var(--blue); background: var(--blue-soft); }
+    .stop { color: var(--coral); background: var(--coral-soft); }
+    .legacy { color: #5f6977; background: var(--slate-soft); }
+    .metric {
+      display: block;
+      margin: 2px 0 8px;
+      color: var(--navy);
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -.04em;
+      font-variant-numeric: tabular-nums;
+    }
+    .status-card p {
+      margin-bottom: 8px;
+      color: #566479;
+      font-size: 12.5px;
+    }
+    .status-card small { color: #87909d; font-size: 10.5px; }
+
+    .lane-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .lane {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    .lane-mark {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      margin-bottom: 13px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .lane:nth-child(1) .lane-mark { color: var(--blue); background: var(--blue-soft); }
+    .lane:nth-child(2) .lane-mark { color: var(--green); background: var(--green-soft); }
+    .lane:nth-child(3) .lane-mark { color: var(--violet); background: var(--violet-soft); }
+    .lane:nth-child(4) .lane-mark { color: var(--amber); background: var(--amber-soft); }
+    .lane p { margin: 0; color: var(--muted); font-size: 12px; }
+    .converge {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      padding: 15px 0;
+      color: #7c8796;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .converge::before {
+      width: 2px;
+      height: 26px;
+      background: #bfc7c5;
+      content: "";
+    }
+    .brief-box {
+      padding: 25px;
+      border: 1px solid #c8d9e9;
+      border-radius: 18px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--navy), var(--navy-2));
+      text-align: center;
+    }
+    .brief-box h3 { margin-bottom: 8px; color: #fff; font-size: 22px; }
+    .brief-box p { max-width: 720px; margin: 0 auto; color: #d8e4ef; font-size: 13px; }
+    .system-flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 28px;
+      margin-top: 20px;
+    }
+    .system-card {
+      position: relative;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+    }
+    .system-card:not(:last-child)::after {
+      position: absolute;
+      top: 50%;
+      right: -21px;
+      color: #9aa5b0;
+      content: "→";
+      font-size: 18px;
+      font-weight: 900;
+      transform: translateY(-50%);
+    }
+    .system-card b { display: block; margin-bottom: 5px; color: var(--navy); font-size: 12px; }
+    .system-card span { color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .system-path {
+      display: block;
+      margin-top: 9px;
+      color: #788393;
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 8.5px;
+      word-break: break-word;
+    }
+    figure {
+      margin: 24px 0 0;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    figure img { width: 100%; border-radius: 10px; }
+    figcaption {
+      margin-top: 10px;
+      color: #778292;
+      font-size: 10.5px;
+      text-align: center;
+    }
+
+    .process-list {
+      display: grid;
+      gap: 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: process;
+    }
+    .process-step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: var(--surface);
+      counter-increment: process;
+    }
+    .step-no {
+      display: grid;
+      min-height: 100%;
+      align-content: start;
+      justify-items: center;
+      padding: 21px 10px;
+      color: #fff;
+      background: var(--navy);
+    }
+    .step-no::before {
+      content: counter(process, decimal-leading-zero);
+      font-size: 18px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .step-no span {
+      margin-top: 4px;
+      color: #a9bdd2;
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+    }
+    .step-body { padding: 21px 22px 22px; }
+    .step-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 13px;
+    }
+    .step-title h3 { margin: 0; font-size: 20px; }
+    .owners { display: flex; flex-wrap: wrap; gap: 5px; }
+    .owner {
+      padding: 4px 7px;
+      border-radius: 6px;
+      color: #526075;
+      background: #edf0f2;
+      font-size: 9px;
+      font-weight: 900;
+    }
+    .owner.program { color: #28598e; background: #e7f0fa; }
+    .owner.ai { color: #664496; background: #eee7f8; }
+    .owner.human { color: #2d765c; background: #e5f3ed; }
+    .step-cols {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1fr;
+      gap: 12px;
+    }
+    .step-cell {
+      padding: 13px;
+      border-radius: 11px;
+      background: #f3f3ef;
+    }
+    .step-cell b {
+      display: block;
+      margin-bottom: 4px;
+      color: #49566a;
+      font-size: 9.5px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .step-cell p { margin: 0; color: #59677a; font-size: 11.5px; line-height: 1.65; }
+    .gate-cell { background: var(--amber-soft); }
+    .gate-cell b { color: var(--amber); }
+    .output-cell { background: var(--mint-soft); }
+    .output-cell b { color: var(--green); }
+
+    .role-table,
+    .channel-table,
+    .source-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      font-size: 12px;
+    }
+    .role-table th,
+    .role-table td,
+    .channel-table th,
+    .channel-table td,
+    .source-table th,
+    .source-table td {
+      padding: 13px 14px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    .role-table th:last-child,
+    .role-table td:last-child,
+    .channel-table th:last-child,
+    .channel-table td:last-child,
+    .source-table th:last-child,
+    .source-table td:last-child { border-right: 0; }
+    .role-table tr:last-child td,
+    .channel-table tr:last-child td,
+    .source-table tr:last-child td { border-bottom: 0; }
+    .role-table thead th,
+    .channel-table thead th,
+    .source-table thead th {
+      color: #4e5d70;
+      background: #eef0ed;
+      font-size: 9.5px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .role-table tbody th {
+      color: var(--navy);
+      background: #fafbf8;
+      font-weight: 900;
+    }
+    .allow { color: var(--green); font-weight: 800; }
+    .deny { color: var(--coral); font-weight: 800; }
+
+    .kind-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .kind {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+    }
+    .kind code { display: inline-block; margin-bottom: 7px; }
+    .kind p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.55; }
+
+    .case-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(230px, .55fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .case-chain {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .case-chain li {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 11px;
+      align-items: start;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .case-chain li span:first-child {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 9px;
+      color: var(--blue);
+      background: var(--blue-soft);
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .case-chain b { display: block; color: var(--navy); font-size: 12px; }
+    .case-chain small { color: var(--muted); font-size: 10.5px; }
+    .case-preview {
+      position: sticky;
+      top: 90px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .case-preview img { border-radius: 11px; }
+    .case-preview p { margin: 10px 2px 0; color: var(--muted); font-size: 10px; }
+    .callout {
+      margin-top: 16px;
+      padding: 17px 19px;
+      border-left: 4px solid var(--amber);
+      border-radius: 0 13px 13px 0;
+      color: #5f5039;
+      background: var(--amber-soft);
+      font-size: 12px;
+    }
+    .callout strong { display: block; margin-bottom: 4px; color: #88590f; }
+    .callout.red {
+      border-left-color: var(--coral);
+      color: #6c4844;
+      background: var(--coral-soft);
+    }
+    .callout.red strong { color: #a64d45; }
+
+    .funnel {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+    .funnel-step {
+      position: relative;
+      min-height: 150px;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+    .funnel-step:not(:last-child)::after {
+      position: absolute;
+      top: 50%;
+      right: -19px;
+      color: #9ba6b0;
+      content: "→";
+      font-size: 17px;
+      font-weight: 900;
+      transform: translateY(-50%);
+    }
+    .funnel-step span {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--mint);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .09em;
+    }
+    .funnel-step h3 { font-size: 15px; }
+    .funnel-step p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.6; }
+    .funnel-step:last-child {
+      color: #fff;
+      border-color: var(--navy);
+      background: var(--navy);
+    }
+    .funnel-step:last-child h3 { color: #fff; }
+    .funnel-step:last-child p { color: #cad7e4; }
+    .gate-grid { margin-top: 16px; }
+    .gate {
+      min-height: 164px;
+      border-top: 4px solid var(--amber);
+    }
+    .gate:nth-child(2) { border-top-color: var(--mint); }
+    .gate:nth-child(3) { border-top-color: var(--blue); }
+    .gate ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: #5b687a;
+      font-size: 11.5px;
+    }
+
+    .gap-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: gap;
+    }
+    .gap-item {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) auto;
+      gap: 15px;
+      align-items: start;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+      counter-increment: gap;
+    }
+    .gap-item::before {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--navy);
+      content: "P" counter(gap);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .gap-item p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .gap-state {
+      padding: 5px 8px;
+      border-radius: 7px;
+      color: var(--coral);
+      background: var(--coral-soft);
+      font-size: 9px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .source-table td:first-child { min-width: 220px; font-weight: 800; }
+    .source-table td:nth-child(2) { min-width: 110px; }
+    .source-table small { display: block; color: #89929d; }
+    .method-note {
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px dashed #bcc4c3;
+      border-radius: 14px;
+      color: #627084;
+      background: rgba(255, 255, 255, .52);
+      font-size: 11.5px;
+    }
+    .footer {
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      color: #7d8794;
+      font-size: 10.5px;
+    }
+    .footer strong { color: #536175; }
+
+    @media (max-width: 1120px) {
+      .shell { grid-template-columns: 185px minmax(0, 1fr); gap: 32px; }
+      .grid-4,
+      .lane-grid,
+      .kind-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .system-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .system-card:nth-child(2)::after { display: none; }
+      .funnel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .funnel-step:nth-child(3)::after { display: none; }
+    }
+    @media (max-width: 820px) {
+      html { scroll-padding-top: 72px; }
+      .topbar-inner { min-height: 56px; padding: 0 16px; }
+      .brand-text span,
+      .top-link.secondary { display: none; }
+      .shell { display: block; padding: 20px 14px 72px; }
+      .sidebar {
+        position: sticky;
+        z-index: 50;
+        top: 56px;
+        overflow-x: auto;
+        margin: 0 -14px 18px;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(246, 244, 238, .94);
+        backdrop-filter: blur(10px);
+      }
+      .side-label,
+      .side-note { display: none; }
+      .toc { display: flex; width: max-content; }
+      .toc a { display: block; padding: 7px 10px; font-size: 10.5px; }
+      .toc a::before { display: none; }
+      .hero { margin-bottom: 45px; padding: 35px 24px; border-radius: 22px; }
+      .hero::after { width: 270px; height: 270px; }
+      .section-head { grid-template-columns: 45px minmax(0, 1fr); gap: 8px; }
+      .grid-3,
+      .step-cols { grid-template-columns: 1fr; }
+      .time-item { grid-template-columns: 1fr; gap: 5px; }
+      .case-layout { grid-template-columns: 1fr; }
+      .case-preview { position: static; max-width: 360px; }
+      .funnel { grid-template-columns: 1fr; gap: 10px; }
+      .funnel-step { min-height: 0; }
+      .funnel-step:not(:last-child)::after { display: none; }
+      .gap-item { grid-template-columns: 44px minmax(0, 1fr); }
+      .gap-state { grid-column: 2; justify-self: start; }
+      .table-wrap { overflow-x: auto; padding-bottom: 5px; }
+      .role-table,
+      .channel-table,
+      .source-table { min-width: 700px; }
+    }
+    @media (max-width: 560px) {
+      body { font-size: 14px; }
+      .grid-2,
+      .grid-4,
+      .lane-grid,
+      .kind-grid,
+      .system-flow { grid-template-columns: 1fr; }
+      .system-card:not(:last-child)::after { display: none; }
+      .hero-meta { display: grid; }
+      .section-head { display: block; }
+      .section-no { display: block; margin-bottom: 5px; }
+      .process-step { grid-template-columns: 49px minmax(0, 1fr); }
+      .step-no { padding: 18px 6px; }
+      .step-no span { display: none; }
+      .step-body { padding: 17px 14px; }
+      .step-title { display: block; }
+      .owners { margin-top: 9px; }
+    }
+    @media print {
+      body { background: #fff; font-size: 10.5pt; }
+      .topbar,
+      .sidebar,
+      .progress,
+      .skip-link { display: none !important; }
+      .shell { display: block; max-width: none; padding: 0; }
+      .hero { break-after: page; box-shadow: none; }
+      section { margin-bottom: 35px; }
+      .card,
+      .process-step,
+      figure,
+      .time-item { break-inside: avoid; box-shadow: none; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">本文へ移動</a>
+  <div class="progress" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark">す</span>
+        <span class="brand-text">
+          <strong>すくリス</strong>
+          <span>Content Business Process</span>
+        </span>
+      </a>
+      <nav class="top-actions" aria-label="関連資料">
+        <a class="top-link secondary" href="../content-strategy/index.html">戦略版HTML</a>
+        <a class="top-link" href="../content-strategy-case-study/index.html">実データ事例</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar" aria-label="目次">
+      <p class="side-label">Contents</p>
+      <nav class="toc">
+        <a href="#overview" data-no="01">結論</a>
+        <a href="#history" data-no="02">方針の変遷</a>
+        <a href="#status" data-no="03">現在地</a>
+        <a href="#architecture" data-no="04">全体設計</a>
+        <a href="#process" data-no="05">実務プロセス</a>
+        <a href="#rules" data-no="06">データ利用ルール</a>
+        <a href="#case-study" data-no="07">実データ事例</a>
+        <a href="#monetization" data-no="08">収益化</a>
+        <a href="#gaps" data-no="09">未接続と次手</a>
+        <a href="#sources" data-no="10">根拠資料</a>
+      </nav>
+      <div class="side-note">
+        調査基準日<br>
+        <strong>2026-08-23 JST</strong><br><br>
+        既存HTML、設計書、過去セッション、DB／プラグインの読み取り結果を統合。
+      </div>
+    </aside>
+
+    <main id="main">
+      <article id="top">
+        <header class="hero">
+          <p class="eyebrow">Research → Editorial → Revenue</p>
+          <h1>コンテンツデータ収集から<br>収益化まで</h1>
+          <p class="hero-lead">
+            過去のやりとりと既存資料をたどり、すくリスが第三者データをどう扱い、
+            どこで人が判断し、何をブログ・SNS・noteへ出し、どう収益へつなぐかを一つに統合しました。
+          </p>
+          <div class="hero-meta">
+            <span class="hero-chip">現行サイト名：すくリス</span>
+            <span class="hero-chip">戦略資料上の旧称：LikeThis</span>
+            <span class="hero-chip">公開用ではなく内部設計資料</span>
+          </div>
+        </header>
+
+        <section id="overview">
+          <div class="section-head">
+            <span class="section-no">01</span>
+            <div>
+              <h2>結論：原文から記事を作る工程ではない</h2>
+              <p class="section-intro">
+                中心にあるのは、役割の違う情報を混ぜずに管理し、公開できる根拠だけで独自コンテンツを組み立てることです。
+              </p>
+            </div>
+          </div>
+
+          <div class="lead-card">
+            <strong>
+              第三者データは「需要を知るためのシグナル」。公開記事は、公式根拠・運営者の実体験・人間の編集判断を足して、別の成果物として作る。
+            </strong>
+          </div>
+
+          <div class="grid-3 principles">
+            <article class="card principle">
+              <span class="kicker">Production unit</span>
+              <h3>媒体より先に企画を決める</h3>
+              <p>Threads、Instagram、note、Blogを最初から一式生成しない。読者の完了状態と根拠から、作れる型と媒体を個別判定します。</p>
+            </article>
+            <article class="card principle">
+              <span class="kicker">Evidence boundary</span>
+              <h3>シグナル・事実・体験を分離する</h3>
+              <p>MamariのQ&amp;A、公式情報、本人の使用記録、広告案件は別レーンです。一つを別の役割へ読み替えません。</p>
+            </article>
+            <article class="card principle">
+              <span class="kicker">Business model</span>
+              <h3>初期収益はBlogへ集約する</h3>
+              <p>SNSは発見、noteは本人経験がある時の信頼形成、Blogは実用・選択・収益。直接アフィリエイトはBlogだけです。</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="history">
+          <div class="section-head">
+            <span class="section-no">02</span>
+            <div>
+              <h2>過去のやりとりで変わった方針</h2>
+              <p class="section-intro">
+                現在のプロセスは、当初案をそのまま実装したものではありません。廃止された案と、今も有効な判断を分けます。
+              </p>
+            </div>
+          </div>
+
+          <div class="timeline">
+            <article class="time-item">
+              <div class="time-date">2026-07-10〜11</div>
+              <div>
+                <h3>自由投稿ではなく、構造化された試行データを検討</h3>
+                <p>一般ユーザーの自由形式育児ログは、比較の難しさと審査負担を理由に採用しない方針でした。</p>
+                <div class="trace">ctx: session 552ef40c-d0f9-7390-a9db-14fe2722a953 / event cc73d3db-7f8c-7dfe-94e9-be981419921d</div>
+              </div>
+            </article>
+            <article class="time-item">
+              <div class="time-date">2026-07-12</div>
+              <div>
+                <h3>「困りごと投稿・横断比較DB」の企画を廃止</h3>
+                <p>困りごと一覧、アンケート、試した方法の横断比較、外部家庭の回答収集をサイトの中心にする案は撤回されました。</p>
+                <div class="trace">ctx: session 115055d2-58fa-778b-8bc2-58513f07c0bc / event 364951c3-20e4-7e88-991b-ba462b31413b</div>
+              </div>
+            </article>
+            <article class="time-item">
+              <div class="time-date">2026-07-15</div>
+              <div>
+                <h3>サイトをチェックリスト中心へ整理</h3>
+                <p>外部回答DBではなく、運営側が編集した記事・チェックリストを使って読者の行動を助ける構成へ移行しました。</p>
+                <div class="trace">ctx: session 402bb7f1-0bb1-7d01-88b4-6342dddd6816 / event ee5ffc20-d256-79b9-af52-0ba394ef8ffe</div>
+              </div>
+            </article>
+            <article class="time-item">
+              <div class="time-date">2026-08-12〜23</div>
+              <div>
+                <h3>収集・根拠・媒体振り分け・収益を別契約へ</h3>
+                <p>一企画から全媒体を自動生成する旧six-pack方式を廃止し、Research DB、Editorial DB、Publication Manifest、Blog収益導線へ分ける設計が作られました。</p>
+                <div class="trace">repo: content-strategy-routing-spec.md / content-strategy-case-study / note market research docs</div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="status">
+          <div class="section-head">
+            <span class="section-no">03</span>
+            <div>
+              <h2>現在地：収集済みと公開可能は別</h2>
+              <p class="section-intro">
+                データ量はありますが、候補・下書き・公開承認・広告接続は別の状態です。数字だけで「運用済み」と判断しません。
+              </p>
+            </div>
+          </div>
+
+          <div class="snapshot-note">
+            <span>●</span>
+            <span>2026-08-23に既存DBとプラグインを読み取り専用で確認したスナップショット。変動する値は観測日を固定して解釈します。</span>
+          </div>
+
+          <div class="grid-4">
+            <article class="card status-card">
+              <div class="status-top">
+                <h3>Mamari Research</h3>
+                <span class="status-pill draft">分析済み</span>
+              </div>
+              <strong class="metric">62,697</strong>
+              <p>解析済み質問本文。回答179,361件、商品候補棚1,121件。</p>
+              <small>企画候補44件はすべてdraft。長時間runningのimport run 8、未解決Award parse error 4件あり。</small>
+            </article>
+            <article class="card status-card">
+              <div class="status-top">
+                <h3>note Market Research</h3>
+                <span class="status-pill ok">収集済み</span>
+              </div>
+              <strong class="metric">100 / 646</strong>
+              <p>候補646件のうち、有料記事100件を取得・解析。価格120、指標200、購入UI100観測。</p>
+              <small>販売根拠は1件だけ。市場ランキングや成功率を推定できる母集団ではありません。</small>
+            </article>
+            <article class="card status-card">
+              <div class="status-top">
+                <h3>企業一次情報</h3>
+                <span class="status-pill hold">収集停止</span>
+              </div>
+              <strong class="metric">0 / 6</strong>
+              <p>登録済み企業記事ソース6件のうち、有効化済みは0件。</p>
+              <small>全件がterms pending／robots unknown。人間の確認前はCollectorを起動しません。</small>
+            </article>
+            <article class="card status-card">
+              <div class="status-top">
+                <h3>GPT Article Manager</h3>
+                <span class="status-pill legacy">旧系統</span>
+              </div>
+              <strong class="metric">1</strong>
+              <p>旧ワークフローの完了記事が1件。site／note／social画像あり。</p>
+              <small>2026-07-22作成。人手確認欄が残り、新しいPublication Manifestの合格実績ではありません。</small>
+            </article>
+          </div>
+
+          <div class="callout red">
+            <strong>現時点で「未接続」</strong>
+            新仕様のEditorial DB、媒体別eligibility、Publication ManifestによるBlogビルド拒否、実広告案件、アフィリエイト計測、実データ事例の本番取込・公開は確認できていません。
+          </div>
+        </section>
+
+        <section id="architecture">
+          <div class="section-head">
+            <span class="section-no">04</span>
+            <div>
+              <h2>全体設計：4種類の入力を1つの企画へ</h2>
+              <p class="section-intro">
+                同じテーマでも、何を証明できる入力かが異なります。まずレーンを分け、Editorial Briefで初めて統合します。
+              </p>
+            </div>
+          </div>
+
+          <div class="lane-grid">
+            <article class="lane">
+              <span class="lane-mark">01</span>
+              <h3>需要シグナル</h3>
+              <p>Mamari Q&amp;A集計、SNS反応、note有料市場の公開メタデータ。困りごと・対象者・場面の候補を見つける。</p>
+            </article>
+            <article class="lane">
+              <span class="lane-mark">02</span>
+              <h3>公式根拠</h3>
+              <p>公的機関、メーカー、規約確認済み企業記事。安全・制度・現行仕様・手順の事実を支える。</p>
+            </article>
+            <article class="lane">
+              <span class="lane-mark">03</span>
+              <h3>本人の一次体験</h3>
+              <p>運営者自身の使用条件、期間、結果、失敗、改善。レビュー・note・個人ストーリーの唯一の土台。</p>
+            </article>
+            <article class="lane">
+              <span class="lane-mark">04</span>
+              <h3>商用オファー</h3>
+              <p>提携先、遷移先、広告条件、開示文、計測ID。編集評価ではなく、CTAの準備状況だけを担う。</p>
+            </article>
+          </div>
+          <div class="converge">役割を保ったまま参照</div>
+          <div class="brief-box">
+            <h3>Editorial Brief</h3>
+            <p>誰が／いつ／何に困る／何を終えたい、作るコンテンツ型、根拠参照、媒体適格性、足りない入力、レビュー状態を保持する正本。</p>
+          </div>
+
+          <div class="system-flow" aria-label="リポジトリとシステムの役割">
+            <article class="system-card">
+              <b>Raw Archive</b>
+              <span>原本HTML・metadata・hash。変更しない。</span>
+              <span class="system-path">childcare-data-aggregator-data</span>
+            </article>
+            <article class="system-card">
+              <b>Research DB / Query</b>
+              <span>解析・集計・source lineage。公開本文を作らない。</span>
+              <span class="system-path">SQLite + datassette_gpt_plugin</span>
+            </article>
+            <article class="system-card">
+              <b>Editorial / Article Manager</b>
+              <span>brief、根拠、成果物、修正、GO、人間レビュー。</span>
+              <span class="system-path">Hermes Content Studio</span>
+            </article>
+            <article class="system-card">
+              <b>Publication / Revenue</b>
+              <span>approved manifestだけを表示。CTAと計測を担当。</span>
+              <span class="system-path">my-blog / すくリス</span>
+            </article>
+          </div>
+
+          <figure>
+            <img src="../content-strategy/assets/04-evidence-architecture.svg" alt="Raw Archive、Research DB、Editorial DB、Publication Manifestを分離する根拠アーキテクチャ">
+            <figcaption>既存戦略資料の図解：原本・調査・編集・公開を物理的に分離する</figcaption>
+          </figure>
+        </section>
+
+        <section id="process">
+          <div class="section-head">
+            <span class="section-no">05</span>
+            <div>
+              <h2>実務プロセス：収集から公開まで8段階</h2>
+              <p class="section-intro">
+                プログラム、AI、人間の責任範囲を分けています。AIだけで次段階へ進む箇所はありません。
+              </p>
+            </div>
+          </div>
+
+          <ol class="process-list">
+            <li class="process-step">
+              <div class="step-no"><span>Discover</span></div>
+              <div class="step-body">
+                <div class="step-title">
+                  <h3>テーマを発見し、問題クラスターを作る</h3>
+                  <div class="owners"><span class="owner program">Program</span><span class="owner human">Human</span></div>
+                </div>
+                <div class="step-cols">
+                  <div class="step-cell">
+                    <b>Input / Action</b>
+                    <p>Mamariの反復シグナル、note市場の公開観測、SNS反応から、対象者・生活段階・場面・困りごとを候補化。</p>
+                  </div>
+                  <div class="step-cell gate-cell">
+                    <b>Gate</b>
+                    <p>単語の同居だけで企画にしない。「よくある」「売れている」は母集団と根拠なしに断定しない。</p>
+                  </div>
+                  <div class="step-cell output-cell">
+                    <b>Output</b>
+                    <p>誰が／いつ／何に困る／何を終えたい、の4要素を持つ問題クラスター。</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="process-step">
+              <div class="step-no"><span>Policy</span></div>
+              <div class="step-body">
+                <div class="step-title">
+                  <h3>収集前に規約・robots・許可範囲を固定する</h3>
+                  <div class="owners"><span class="owner human">Human</span><span class="owner program">Program</span></div>
+                </div>
+                <div class="step-cols">
+                  <div class="step-cell">
+                    <b>Input / Action</b>
+                    <p>人が利用規約とrobots.txtを確認し、URL、日時、確認者、hash、許可／禁止pathをDBへ記録。</p>
+                  </div>
+                  <div class="step-cell gate-cell">
+                    <b>Gate</b>
+                    <p><code>terms=allowed</code>、<code>robots=allowed</code>、<code>enabled=true</code>が揃わなければ収集しない。</p>
+                  </div>
+                  <div class="step-cell output-cell">
+                    <b>Output</b>
+                    <p>監査可能なSource Policyと、許可済みソースだけのURL inventory。</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="process-step">
+              <div class="step-no"><span>Collect</span></div>
+              <div class="step-body">
+                <div class="step-title">
+                  <h3>決定論的に取得し、原本と構造化データを分ける</h3>
+                  <div class="owners"><span class="owner program">Program</span></div>
+                </div>
+                <div class="step-cols">
+                  <div class="step-cell">
+                    <b>Input / Action</b>
+                    <p>URL queue、低速HTTP、claim/checkpoint、再開、重複排除。HTML・sidecar・SHA-256を原本保存し、ローカルParserで解析。</p>
+                  </div>
+                  <div class="step-cell gate-cell">
+                    <b>Gate</b>
+                    <p>内部API、ログイン、購入済み状態、非表示の有料本文を使わない。403/429で停止。価格やlikesは上書きせず時点観測。</p>
+                  </div>
+                  <div class="step-cell output-cell">
+                    <b>Output</b>
+                    <p>取得元へ戻れるRaw Archive、構造化テーブル、parse error、観測履歴。</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="process-step">
+              <div class="step-no"><span>Validate</span></div>
+              <div class="step-body">
+                <div class="step-title">
+                  <h3>根拠候補を検証し、Research Bundleへまとめる</h3>
+                  <div class="owners"><span class="owner program">Program</span><span class="owner ai">AI</span><span class="owner human">Human</span></div>
+                </div>
+                <div class="step-cols">
+                  <div class="step-cell">
+                    <b>Input / Action</b>
+                    <p>企業記事レーンでは最大30件の候補をホストモデルが支持範囲・関連性で判定。広告、逸話、製品固有主張、一般化を拒否。</p>
+                  </div>
+                  <div class="step-cell gate-cell">
+                    <b>Gate</b>
+                    <p>証拠文をAIが書き換えない。受理済み根拠だけでチェック項目を作り、各項目からURLと原文spanへ追跡できること。</p>
+                  </div>
+                  <div class="step-cell output-cell">
+                    <b>Output</b>
+                    <p><code>childcare.research-bundle 1.0</code>。Mamariの現行planning bundleは原文なし・source ID中心で、新仕様ではEditorial Briefへの移行対象。</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="process-step">
+              <div class="step-no"><span>Classify</span></div>
+              <div class="step-body">
+                <div class="step-title">
+                  <h3>読者の完了状態でコンテンツ型を一つ選ぶ</h3>
+                  <div class="owners"><span class="owner program">Program</span><span class="owner human">Human</span></div>
+                </div>
+                <div class="step-cols">
+                  <div class="step-cell">
+                    <b>Input / Action</b>
+                    <p>primary reader outcomeと必須条件を全ルールへ照合し、8種類のうち0件・1件・複数件を判定。</p>
+                  </div>
+                  <div class="step-cell gate-cell">
+                    <b>Gate</b>
+                    <p>0件は<code>insufficient</code>、複数件は<code>ambiguous</code>で停止。最初のキーワードや旧AIラベルを正解にしない。</p>
+                  </div>
+                  <div class="step-cell output-cell">
+                    <b>Output</b>
+                    <p>人が確認したcontent brief、content kind、根拠参照、足りない入力。</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="process-step">
+              <div class="step-no"><span>Route</span></div>
+              <div class="step-body">
+                <div class="step-title">
+                  <h3>媒体ごとに適格性と生成希望を分ける</h3>
+                  <div class="owners"><span class="owner program">Program</span><span class="owner human">Human</span></div>
+                </div>
+                <div class="step-cols">
+                  <div class="step-cell">
+                    <b>Input / Action</b>
+                    <p>Threads、Instagram、note、Blogを個別に<code>eligible</code>／<code>blocked</code>／<code>not_applicable</code>判定。</p>
+                  </div>
+                  <div class="step-cell gate-cell">
+                    <b>Gate</b>
+                    <p>未指定媒体は<code>requested=false</code>。本人経験がないnote／レビュー、商用準備がないCTAはblocked。</p>
+                  </div>
+                  <div class="step-cell output-cell">
+                    <b>Output</b>
+                    <p>媒体別artifact plan、blocked reason、required input、template ID。</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="process-step">
+              <div class="step-no"><span>Create</span></div>
+              <div class="step-body">
+                <div class="step-title">
+                  <h3>Article Managerで生成・修正し、人がGOを出す</h3>
+                  <div class="owners"><span class="owner ai">AI</span><span class="owner human">Human</span></div>
+                </div>
+                <div class="step-cols">
+                  <div class="step-cell">
+                    <b>Input / Action</b>
+                    <p>Research Bundleを情報欠落なくimportし、eligibleかつrequestedな成果物だけをテンプレートで生成。修正、画像生成、再適用を行う。</p>
+                  </div>
+                  <div class="step-cell gate-cell">
+                    <b>Gate</b>
+                    <p>権利、privacy、fact、experience、editorial、commercial、publishを人が確認。Article Manager自身は公開しない。</p>
+                  </div>
+                  <div class="step-cell output-cell">
+                    <b>Output</b>
+                    <p>承認済みartifactと、公開に必要な根拠・レビュー状態を持つPublication Manifest。</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="process-step">
+              <div class="step-no"><span>Publish</span></div>
+              <div class="step-body">
+                <div class="step-title">
+                  <h3>Blogで公開・収益化し、計測を次の企画へ戻す</h3>
+                  <div class="owners"><span class="owner program">Program</span><span class="owner human">Human</span></div>
+                </div>
+                <div class="step-cols">
+                  <div class="step-cell">
+                    <b>Input / Action</b>
+                    <p>my-blogはapproved manifestだけをbuild。SNS・noteからBlogへ送客し、必要条件の整理後に検証済みofferを提示。</p>
+                  </div>
+                  <div class="step-cell gate-cell">
+                    <b>Gate</b>
+                    <p>offer、開示、<code>rel="sponsored"</code>、計測ID、最新の商品条件が欠ければBlog buildを拒否。</p>
+                  </div>
+                  <div class="step-cell output-cell">
+                    <b>Output</b>
+                    <p>公開記事、SNS配布物、affiliate click／CVR／収益データ、改善用の反応シグナル。</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section id="rules">
+          <div class="section-head">
+            <span class="section-no">06</span>
+            <div>
+              <h2>データ利用ルールと媒体契約</h2>
+              <p class="section-intro">
+                「取得できる」と「公開に使える」は同義ではありません。入力ごとに許可用途と禁止用途を固定します。
+              </p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="role-table">
+              <thead>
+                <tr>
+                  <th>入力</th>
+                  <th>許可する役割</th>
+                  <th>公開に使える範囲</th>
+                  <th>禁止</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>Mamari Q&amp;A</th>
+                  <td>困りごと・対象者・場面の内部シグナル</td>
+                  <td class="allow">原文を含まない企画候補</td>
+                  <td class="deny">転載、言い換え、体験談化、助言・効果・人気の根拠</td>
+                </tr>
+                <tr>
+                  <th>Mamari口コミ大賞</th>
+                  <td>商品カテゴリと候補棚</td>
+                  <td class="allow">内部shortlist</td>
+                  <td class="deny">自動推薦、現行No.1、本人評価</td>
+                </tr>
+                <tr>
+                  <th>note市場データ</th>
+                  <td>価格帯、テーマ、販売表示、作者属性の市場観測</td>
+                  <td class="allow">coverageとbias付き集計</td>
+                  <td class="deny">本文転用、売上ランキング、市場全体の成功率</td>
+                </tr>
+                <tr>
+                  <th>公的・メーカー公式</th>
+                  <td>安全、制度、仕様、現行事実</td>
+                  <td class="allow">根拠を付けた説明・比較表の事実</td>
+                  <td class="deny">大量転載、メーカー文言の流用、独立評価の代用</td>
+                </tr>
+                <tr>
+                  <th>運営者本人の記録</th>
+                  <td>一次体験、編集過程</td>
+                  <td class="allow">review、note、personal story</td>
+                  <td class="deny">未体験範囲への一般化、AIによる架空の感情・会話</td>
+                </tr>
+                <tr>
+                  <th>アフィリエイト情報</th>
+                  <td>リンク、取引条件、開示</td>
+                  <td class="allow">Blog CTA</td>
+                  <td class="deny">編集評価、効果・安全性の根拠</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:28px">8つのcontent kind</h3>
+          <div class="kind-grid">
+            <article class="kind"><code>problem_prompt</code><p>未知条件を一問で回収する。</p></article>
+            <article class="kind"><code>action_checklist</code><p>複数の行動を完了／未完了で終える。</p></article>
+            <article class="kind"><code>decision_guide</code><p>条件から方針・手段を一つ選ぶ。</p></article>
+            <article class="kind"><code>product_selection_guide</code><p>必要条件を持ち、商品・アプリ候補を絞る。</p></article>
+            <article class="kind"><code>first_hand_review</code><p>本人使用の条件・結果から適合を判断する。</p></article>
+            <article class="kind"><code>evidence_explainer</code><p>一次情報の意味・適用範囲・限界を理解する。</p></article>
+            <article class="kind"><code>personal_story</code><p>本人の試行錯誤と学びを時間軸で理解する。</p></article>
+            <article class="kind"><code>update_notice</code><p>変更点を知り、更新後の正規コンテンツへ移る。</p></article>
+          </div>
+
+          <h3 style="margin-top:28px">媒体ごとの役割</h3>
+          <div class="table-wrap">
+            <table class="channel-table">
+              <thead>
+                <tr>
+                  <th>媒体</th>
+                  <th>主な役割</th>
+                  <th>CTA</th>
+                  <th>主KPI</th>
+                  <th>直接affiliate</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Threads</strong></td>
+                  <td>問い、共感、未知条件の回収</td>
+                  <td>Blogへ</td>
+                  <td>意味のある返信、Blog遷移</td>
+                  <td class="deny">しない</td>
+                </tr>
+                <tr>
+                  <td><strong>Instagram</strong></td>
+                  <td>保存しやすい一覧・判断軸</td>
+                  <td>profile／Blogへ</td>
+                  <td>保存率、profile遷移</td>
+                  <td class="deny">しない</td>
+                </tr>
+                <tr>
+                  <td><strong>note</strong></td>
+                  <td>本人経験、編集判断、制作背景</td>
+                  <td>末尾でBlogへ1回</td>
+                  <td>読了、Blog遷移</td>
+                  <td class="deny">しない</td>
+                </tr>
+                <tr>
+                  <td><strong>Blog</strong></td>
+                  <td>検索、実用、条件整理、選択、収益</td>
+                  <td>関連コンテンツ／検証済みoffer</td>
+                  <td>完了率、affiliate click、CVR</td>
+                  <td class="allow">する</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="case-study">
+          <div class="section-head">
+            <span class="section-no">07</span>
+            <div>
+              <h2>実データ事例：質問1件は、そのまま記事にならない</h2>
+              <p class="section-intro">
+                既存ケース資料では、Mamari質問24893911を原点に、ベビーカー選びの確認用成果物まで変換しています。
+              </p>
+            </div>
+          </div>
+
+          <div class="case-layout">
+            <div>
+              <ol class="case-chain">
+                <li><span>01</span><div><b>原本とDBを照合</b><small>原本HTML、取得情報、質問IDが同じ1件を指すことを確認。</small></div></li>
+                <li><span>02</span><div><b>質問内の二つの困りごとを分離</b><small>質問文の言い換え記事ではなく、分析対象を分ける。</small></div></li>
+                <li><span>03</span><div><b>関連候補8件と比較</b><small>同じ目的かを一組ずつ確認し、目的が一致する5質問をクラスター化。</small></div></li>
+                <li><span>04</span><div><b>件数と回答状況を集計</b><small>原文を公開せず、企画を選ぶための内部シグナルへ変換。</small></div></li>
+                <li><span>05</span><div><b>公式仕様を追加</b><small>メーカー公式の対象月齢・重量・仕様を別根拠として接続。</small></div></li>
+                <li><span>06</span><div><b>読者の完了状態を決定</b><small>「今買う／B型まで待つ／試して決める」を条件で選ぶ設計書にする。</small></div></li>
+                <li><span>07</span><div><b>content kindを選定</b><small>記事型はselection guide。本人使用がないためfirst-hand reviewにはしない。</small></div></li>
+                <li><span>08</span><div><b>媒体別に生成可否を決定</b><small>Blog、Instagram、Threadsを作成。本人経験がないnoteは停止。</small></div></li>
+                <li><span>09</span><div><b>確認用成果物を出力</b><small>Blog本文、5項目のチェックリスト、Instagram 1枚、Threads投稿文。</small></div></li>
+              </ol>
+
+              <div class="callout">
+                <strong>このケースが証明する範囲</strong>
+                原本から最終成果物へ変わる内容と、各工程の保存データは確認できます。ただし、本番AI実行、Editorial DB登録、人間承認、Article Manager取込、公開、広告案件接続は未実施です。
+              </div>
+              <p style="margin-top:14px"><a href="../content-strategy-case-study/index.html"><strong>18段階の実データケースを開く →</strong></a></p>
+            </div>
+
+            <aside class="case-preview">
+              <img src="../content-strategy-case-study/stage-15-instagram-checklist.png" alt="ベビーカー購入判断のInstagram用チェックリスト画像">
+              <p>確認用Instagram成果物。元質問の本文を転載せず、独自の判断項目へ変換しています。</p>
+            </aside>
+          </div>
+        </section>
+
+        <section id="monetization">
+          <div class="section-head">
+            <span class="section-no">08</span>
+            <div>
+              <h2>収益化：商品へ急がず、必要条件を先に決める</h2>
+              <p class="section-intro">
+                チェックリストから商品リンクへ直結させません。読者が自分の条件を整理した後に、選定ガイドと検証済みofferへ進みます。
+              </p>
+            </div>
+          </div>
+
+          <div class="funnel">
+            <article class="funnel-step">
+              <span>STEP 1</span>
+              <h3>発見・共感</h3>
+              <p>Threads／Instagramで具体的な場面と問いに出会う。</p>
+            </article>
+            <article class="funnel-step">
+              <span>STEP 2</span>
+              <h3>実用</h3>
+              <p>Blogのチェックリストや判断ガイドで行動を進める。</p>
+            </article>
+            <article class="funnel-step">
+              <span>STEP 3</span>
+              <h3>条件の確定</h3>
+              <p>必要な機能、不要な条件、利用場面を言語化する。</p>
+            </article>
+            <article class="funnel-step">
+              <span>STEP 4</span>
+              <h3>選択</h3>
+              <p>商品／アプリの選び方、比較、本人レビューへ進む。</p>
+            </article>
+            <article class="funnel-step">
+              <span>STEP 5</span>
+              <h3>収益</h3>
+              <p>条件が合う時だけ、検証済みアフィリエイトCTAを選ぶ。</p>
+            </article>
+          </div>
+
+          <div class="grid-3 gate-grid">
+            <article class="card gate">
+              <span class="kicker">Commercial gate</span>
+              <h3>CTAを出す条件</h3>
+              <ul>
+                <li>activeなoffer</li>
+                <li>媒体上の提携可否</li>
+                <li>開示文と広告表示</li>
+                <li><code>rel="sponsored"</code></li>
+                <li>click event ID</li>
+              </ul>
+            </article>
+            <article class="card gate">
+              <span class="kicker">Freshness gate</span>
+              <h3>公開直前の再確認</h3>
+              <ul>
+                <li>商品・アプリの現行仕様</li>
+                <li>価格・提供条件</li>
+                <li>遷移先と在庫／配布状態</li>
+                <li>facts checked at</li>
+                <li>記事と体験表現の整合</li>
+              </ul>
+            </article>
+            <article class="card gate">
+              <span class="kicker">Measurement</span>
+              <h3>追う数字</h3>
+              <ul>
+                <li>checklist start／complete</li>
+                <li>related content click</li>
+                <li>affiliate click</li>
+                <li>offer別CVR</li>
+                <li>収益／1,000 sessions</li>
+              </ul>
+            </article>
+          </div>
+
+          <figure>
+            <img src="../content-strategy/assets/02-revenue-funnel.svg" alt="SNSでの発見からブログの選択支援とアフィリエイト収益へ進む導線">
+            <figcaption>既存戦略資料の収益導線。フォロワー数や表示回数だけを事業KPIにしない。</figcaption>
+          </figure>
+        </section>
+
+        <section id="gaps">
+          <div class="section-head">
+            <span class="section-no">09</span>
+            <div>
+              <h2>未接続部分と、実運用へ進む順番</h2>
+              <p class="section-intro">
+                今は「材料がない」のではなく、公開契約と商用ゲートがつながっていない状態です。実装順を崩すと、根拠や権利の境界が再び曖昧になります。
+              </p>
+            </div>
+          </div>
+
+          <ol class="gap-list">
+            <li class="gap-item">
+              <div>
+                <h3>既存Research DBの状態を正常化する</h3>
+                <p>runningのimport run 8を調査し、Award parse error 4件を解消または既知エラーとして固定。candidate 44件はdraftのまま扱う。</p>
+              </div>
+              <span class="gap-state">要対応</span>
+            </li>
+            <li class="gap-item">
+              <div>
+                <h3>企業一次情報ソースを人が審査する</h3>
+                <p>6ソースの利用規約・robots・許可pathをレビュー。allowedになったソースだけで小さなEvidence Runを行う。</p>
+              </div>
+              <span class="gap-state">0 / 6</span>
+            </li>
+            <li class="gap-item">
+              <div>
+                <h3>Editorial DB・分類器・媒体適格性を実装する</h3>
+                <p>8 content kinds、分類停止条件、artifact plan、review event、offer、source lineageを正本化。暗黙のDB書込APIを分離する。</p>
+              </div>
+              <span class="gap-state">設計のみ</span>
+            </li>
+            <li class="gap-item">
+              <div>
+                <h3>Publication ManifestとBlog build gateを接続する</h3>
+                <p>raw原文、未承認レビュー、期限切れfact、未整備CTA、人間未確認の一人称表現をbuild時に拒否する。</p>
+              </div>
+              <span class="gap-state">未接続</span>
+            </li>
+            <li class="gap-item">
+              <div>
+                <h3>アフィリエイトoffer・開示・計測を実装する</h3>
+                <p>Blogだけに商用CTAを置き、広告開示、sponsored属性、campaign／offer ID、click／CVRを一続きにする。</p>
+              </div>
+              <span class="gap-state">案件なし</span>
+            </li>
+            <li class="gap-item">
+              <div>
+                <h3>1テーマのパイロットを本番で一周させる</h3>
+                <p>「生後0〜3か月の短時間外出」など一つに絞り、発見→根拠→生成→人間承認→公開→計測を通してから横展開する。</p>
+              </div>
+              <span class="gap-state">未実施</span>
+            </li>
+          </ol>
+        </section>
+
+        <section id="sources">
+          <div class="section-head">
+            <span class="section-no">10</span>
+            <div>
+              <h2>調査した既存資料と証拠</h2>
+              <p class="section-intro">
+                既存HTMLは削除・上書きせず、この統合版から参照できるようにしています。詳細な仕様や実データは元資料を正本として確認してください。
+              </p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="source-table">
+              <thead>
+                <tr>
+                  <th>資料</th>
+                  <th>時点</th>
+                  <th>このHTMLで使った範囲</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a href="../content-strategy/index.html">コンテンツ戦略HTML</a><small>docs/content-strategy/index.html</small></td>
+                  <td>2026-08-13</td>
+                  <td>媒体定義、収益導線、データ役割、RDB構成、実装順。</td>
+                </tr>
+                <tr>
+                  <td><a href="../content-strategy-case-study/index.html">実データケースHTML</a><small>docs/content-strategy-case-study/index.html</small></td>
+                  <td>2026-08-14</td>
+                  <td>Mamari質問24893911から確認用成果物までの18段階と未実施範囲。</td>
+                </tr>
+                <tr>
+                  <td><a href="../content-strategy-routing-spec.md">コンテンツ戦略・媒体振り分け仕様</a><small>docs/content-strategy-routing-spec.md</small></td>
+                  <td>v1.1 draft</td>
+                  <td>8 content kinds、eligibility、Editorial DB、Manifest、CTA、KPI。</td>
+                </tr>
+                <tr>
+                  <td><a href="../note-parenting-paid-market-research-implementation-plan.md">note育児系有料市場調査 実装計画</a><small>docs/note-parenting-paid-market-research-implementation-plan.md</small></td>
+                  <td>2026-08-20</td>
+                  <td>policy gate、取得境界、Evidenceモデル、市場分析のバイアス。</td>
+                </tr>
+                <tr>
+                  <td><a href="../note-mamari-db-definition-and-samples.md">note／Mamari 研究DB定義</a><small>docs/note-mamari-db-definition-and-samples.md</small></td>
+                  <td>2026-08-23</td>
+                  <td>現行スキーマ、件数、Raw Archive、時点観測、運用上の注意。</td>
+                </tr>
+                <tr>
+                  <td>ctx 過去セッション検索</td>
+                  <td>2026-07</td>
+                  <td>自由投稿を採用しない判断、困りごと比較DBの廃止、チェックリスト中心への移行。</td>
+                </tr>
+                <tr>
+                  <td>プラグイン読み取り結果</td>
+                  <td>2026-08-23</td>
+                  <td>Mamariテーブル件数、候補状態、企業ソースpolicy状態、Article Manager記事数。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="method-note">
+            <strong>調査上の限界：</strong>
+            ctxの現行インデックスで検索できたmy-blogの主セッションは主に2026年7月分でした。
+            2026年8月の設計・実行内容は、タイムスタンプ付きのリポジトリ内成果物と読み取り専用のDB／プラグイン状態を優先して復元しています。
+            本HTMLの「現状」は、公開サイトへのデプロイや実ASP管理画面を確認したものではありません。
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p><strong>作成日：</strong>2026-08-23　<strong>対象：</strong>D:/mycode/my-blog と関連するResearch／Editorialツール群</p>
+          <p>この資料は内部検討用です。第三者投稿本文、個人情報、有料本文は掲載していません。</p>
+        </footer>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const progress = document.querySelector('.progress');
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      const sections = tocLinks
+        .map((link) => document.querySelector(link.getAttribute('href')))
+        .filter(Boolean);
+
+      const updateProgress = () => {
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const ratio = scrollable > 0 ? window.scrollY / scrollable : 0;
+        progress.style.width = Math.min(100, Math.max(0, ratio * 100)) + '%';
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+        tocLinks.forEach((link) => {
+          const active = link.getAttribute('href') === '#' + visible.target.id;
+          if (active) link.setAttribute('aria-current', 'true');
+          else link.removeAttribute('aria-current');
+        });
+      }, { rootMargin: '-18% 0px -65% 0px', threshold: [0, .1, .35] });
+
+      sections.forEach((section) => observer.observe(section));
+      window.addEventListener('scroll', updateProgress, { passive: true });
+      window.addEventListener('resize', updateProgress);
+      updateProgress();
+    })();
+  </script>
+</body>
+</html>

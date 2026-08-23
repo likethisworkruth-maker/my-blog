@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">育児便利グッズアフィリエイトの収益導線</title>
+  <desc id="desc">ThreadsとInstagramで困りごとを発見し、ブログのチェックリストと判断ガイドで必要条件を整理し、商品やアプリを比較した後、ブログ内の検証済みアフィリエイトCTAで収益化する。noteは本人の体験がある場合だけ信頼を補強する。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto">
+      <path d="M0,0 L11,5.5 L0,11 z" fill="#8f9c98"/>
+    </marker>
+    <marker id="arrowMint" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto">
+      <path d="M0,0 L11,5.5 L0,11 z" fill="#34b995"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf7; }
+      .title { fill: #172033; font: 700 43px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; letter-spacing: -1.5px; }
+      .subtitle { fill: #667085; font: 400 21px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .step-no { fill: #8a949f; font: 700 15px Inter, "Noto Sans JP", sans-serif; letter-spacing: 1px; }
+      .heading { fill: #173153; font: 700 25px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .body { fill: #5d6874; font: 400 17px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .micro { fill: #7b8490; font: 400 15px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .white-heading { fill: #fff; font: 700 27px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .white-body { fill: #c8d5e1; font: 400 17px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .card { fill: #fff; stroke: #dfe4e1; stroke-width: 2; }
+      .line { fill: none; stroke: #8f9c98; stroke-width: 4; marker-end: url(#arrow); }
+      .mint-line { fill: none; stroke: #34b995; stroke-width: 4; marker-end: url(#arrowMint); }
+      .lane { fill: #f1f4f2; }
+      .small-label { fill: #45515f; font: 700 16px Inter, "Noto Sans JP", sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1600" height="900"/>
+  <text class="step-no" x="70" y="58">MONETIZATION FUNNEL · PHASE 1</text>
+  <text class="title" x="70" y="112">「困った」から「納得して選ぶ」までを一本につなぐ</text>
+  <text class="subtitle" x="70" y="151">SNSとnoteは入口・信頼、Blogは実用・比較・収益を担当</text>
+
+  <rect class="lane" x="68" y="226" width="1464" height="420" rx="28"/>
+
+  <rect class="card" x="94" y="276" width="240" height="294" rx="18"/>
+  <text class="step-no" x="120" y="314">STEP 01</text>
+  <circle cx="144" cy="366" r="23" fill="#f4effa" stroke="#d2c5e4" stroke-width="2"/>
+  <text x="137" y="374" fill="#7e66a4" font-family="Inter, sans-serif" font-size="23" font-weight="700">T</text>
+  <circle cx="205" cy="366" r="23" fill="#fff0ed" stroke="#f0c0b9" stroke-width="2"/>
+  <text x="196" y="374" fill="#d6675b" font-family="Inter, sans-serif" font-size="22" font-weight="700">◎</text>
+  <text class="heading" x="120" y="420">発見・共感</text>
+  <text class="body" x="120" y="455">困りごとに気づく</text>
+  <text class="micro" x="120" y="491">Threads：会話</text>
+  <text class="micro" x="120" y="518">Instagram：保存</text>
+  <text class="micro" x="120" y="545">商品を売らない</text>
+
+  <path class="line" d="M334 423 H374"/>
+
+  <rect class="card" x="384" y="276" width="240" height="294" rx="18"/>
+  <text class="step-no" x="410" y="314">STEP 02</text>
+  <rect x="410" y="342" width="68" height="50" rx="8" fill="#edf3f8" stroke="#b8cedf" stroke-width="2"/>
+  <path d="M428 359 H460 M428 372 H451" stroke="#356b9e" stroke-width="4" stroke-linecap="round"/>
+  <text class="heading" x="410" y="420">Blogで整理</text>
+  <text class="body" x="410" y="455">行動と判断を完了</text>
+  <text class="micro" x="410" y="491">チェックリスト</text>
+  <text class="micro" x="410" y="518">条件分岐ガイド</text>
+  <text class="micro" x="410" y="545">検索できる正規URL</text>
+
+  <path class="line" d="M624 423 H664"/>
+
+  <rect class="card" x="674" y="276" width="240" height="294" rx="18"/>
+  <text class="step-no" x="700" y="314">STEP 03</text>
+  <circle cx="733" cy="368" r="26" fill="#eaf8f3" stroke="#9bd8c6" stroke-width="2"/>
+  <path d="M721 368 L730 377 L747 356" fill="none" stroke="#25886e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="heading" x="700" y="420">必要条件が決まる</text>
+  <text class="body" x="700" y="455">「欲しい」より先に</text>
+  <text class="micro" x="700" y="491">必要な機能</text>
+  <text class="micro" x="700" y="518">不要な条件</text>
+  <text class="micro" x="700" y="545">代替策を確定</text>
+
+  <path class="line" d="M914 423 H954"/>
+
+  <rect class="card" x="964" y="276" width="240" height="294" rx="18"/>
+  <text class="step-no" x="990" y="314">STEP 04</text>
+  <path d="M993 350 H1055 L1068 382 H1004 Z" fill="#fff7e6" stroke="#d4a24c" stroke-width="2"/>
+  <circle cx="1017" cy="394" r="6" fill="#b87615"/>
+  <circle cx="1055" cy="394" r="6" fill="#b87615"/>
+  <text class="heading" x="990" y="432">比較・選択</text>
+  <text class="body" x="990" y="467">商品・アプリを絞る</text>
+  <text class="micro" x="990" y="503">選定軸3つ以上</text>
+  <text class="micro" x="990" y="530">代替策2つ以上</text>
+  <text class="micro" x="990" y="557">公式仕様を確認</text>
+
+  <path class="mint-line" d="M1204 423 H1244"/>
+
+  <rect x="1254" y="276" width="250" height="294" rx="18" fill="#173153"/>
+  <text x="1280" y="314" fill="#94e4cf" font-family="Inter, sans-serif" font-size="15" font-weight="700" letter-spacing="1">STEP 05</text>
+  <circle cx="1313" cy="369" r="31" fill="#c98219"/>
+  <text x="1297" y="381" fill="#fff" font-family="Inter, 'Yu Gothic', sans-serif" font-size="33" font-weight="700">¥</text>
+  <text class="white-heading" x="1280" y="432">収益化</text>
+  <text class="white-body" x="1280" y="467">Blog内CTAだけ</text>
+  <text class="white-body" x="1280" y="503">active offer</text>
+  <text class="white-body" x="1280" y="530">広告開示・sponsored</text>
+  <text class="white-body" x="1280" y="557">クリック計測</text>
+
+  <rect x="384" y="186" width="820" height="58" rx="14" fill="#edf7ee" stroke="#bfd9c2" stroke-width="2"/>
+  <text class="small-label" x="410" y="221">note（条件付き）</text>
+  <text class="body" x="570" y="221">本人の体験・失敗・編集判断がある時だけ、Blogへの信頼を補強</text>
+  <path d="M794 244 V268" fill="none" stroke="#61a768" stroke-width="3" marker-end="url(#arrowMint)"/>
+
+  <rect x="94" y="696" width="1410" height="120" rx="18" fill="#fff" stroke="#dfe4e1" stroke-width="2"/>
+  <text class="step-no" x="122" y="734">LINK POLICY</text>
+  <text class="heading" x="122" y="775">Threads / Instagram / note</text>
+  <text class="body" x="480" y="775">→ Blogの実用品へ送客</text>
+  <path class="mint-line" d="M754 768 H913"/>
+  <text class="heading" x="945" y="775">Blog</text>
+  <text class="body" x="1026" y="775">→ 検証済みaffiliate CTA</text>
+  <text class="micro" x="122" y="801">チェックリストから特定商品へ直結せず、必要条件の確定とカテゴリ選定を間に置く</text>
+</svg>

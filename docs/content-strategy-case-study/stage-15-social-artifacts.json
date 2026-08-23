@@ -1,0 +1,21 @@
+{
+  "artifact_type": "social_file_manifest",
+  "status": "preview_only_unapproved",
+  "instagram": {
+    "strategy": "single_vertical_checklist_image",
+    "image_file": "stage-15-instagram-checklist.png",
+    "editable_source_file": "stage-15-instagram-checklist.svg",
+    "size": {"width": 1080, "height": 1350},
+    "caption_file": "stage-15-instagram-caption.txt"
+  },
+  "threads": {
+    "strategy": "plain_text_posts",
+    "post_count": 2,
+    "text_file": "stage-15-threads-posts.txt"
+  },
+  "note": {
+    "created": false,
+    "reason": "運営者本人の背景・試用・購入経験がない"
+  },
+  "verbatim_mamari_included": false
+}

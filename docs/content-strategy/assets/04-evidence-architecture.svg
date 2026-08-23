@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
+  <title id="title">データ利用区分とRDB公開境界</title>
+  <desc id="desc">Mamari Q&amp;A、口コミ大賞、公式情報、本人入力、アフィリエイト情報を役割別に分け、Raw Archive、Research DB、Editorial DB、Publication Manifestを経て承認済み成果物だけを媒体へ出す構造。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto">
+      <path d="M0,0 L11,5.5 L0,11 z" fill="#8e9a96"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto">
+      <path d="M0,0 L11,5.5 L0,11 z" fill="#34b995"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf7; }
+      .title { fill: #172033; font: 700 42px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; letter-spacing: -1.4px; }
+      .subtitle { fill: #667085; font: 400 20px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .eyebrow { fill: #34b995; font: 700 15px Inter, sans-serif; letter-spacing: 1px; }
+      .heading { fill: #173153; font: 700 22px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .label { fill: #344054; font: 700 17px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .body { fill: #63707b; font: 400 15px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .micro { fill: #7c858f; font: 400 13px Inter, "Noto Sans JP", "Yu Gothic", sans-serif; }
+      .mono { fill: #465361; font: 700 13px Consolas, "SFMono-Regular", monospace; }
+      .source { fill: #fff; stroke: #dfe4e1; stroke-width: 2; }
+      .layer { fill: #fff; stroke: #dfe4e1; stroke-width: 2; }
+      .line { fill: none; stroke: #8e9a96; stroke-width: 3; marker-end: url(#arrow); }
+      .green-line { fill: none; stroke: #34b995; stroke-width: 4; marker-end: url(#arrowGreen); }
+      .restricted { fill: none; stroke: #c2414b; stroke-width: 3; stroke-dasharray: 9 8; }
+      .role { font: 700 12px Consolas, "SFMono-Regular", monospace; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1600" height="1050"/>
+  <text class="eyebrow" x="60" y="55">EVIDENCE &amp; PUBLICATION BOUNDARY</text>
+  <text class="title" x="60" y="108">第三者データを原稿へ直結させない</text>
+  <text class="subtitle" x="60" y="147">需要・事実・体験・商用条件を別々に保持し、承認済みManifestだけを公開する</text>
+
+  <text class="eyebrow" x="60" y="201">INPUTS · 役割を固定</text>
+
+  <rect class="source" x="60" y="224" width="272" height="150" rx="16"/>
+  <rect x="82" y="246" width="150" height="28" rx="6" fill="#f1f3f2"/>
+  <text class="role" x="94" y="265" fill="#66717c">planning_only</text>
+  <text class="heading" x="82" y="310">Mamari Q&amp;A</text>
+  <text class="body" x="82" y="338">集計した困りごとだけ</text>
+  <text class="micro" x="82" y="361">原文・言い換えは公開不可</text>
+
+  <rect class="source" x="356" y="224" width="272" height="150" rx="16"/>
+  <rect x="378" y="246" width="190" height="28" rx="6" fill="#fff7e6"/>
+  <text class="role" x="390" y="265" fill="#9b6518">discovery_shortlist</text>
+  <text class="heading" x="378" y="310">口コミ大賞</text>
+  <text class="body" x="378" y="338">カテゴリ・候補の発見</text>
+  <text class="micro" x="378" y="361">自動推薦・現在順位は不可</text>
+
+  <rect class="source" x="652" y="224" width="272" height="150" rx="16"/>
+  <rect x="674" y="246" width="150" height="28" rx="6" fill="#edf3f8"/>
+  <text class="role" x="686" y="265" fill="#356b9e">claim_evidence</text>
+  <text class="heading" x="674" y="310">公式情報</text>
+  <text class="body" x="674" y="338">安全・制度・現行仕様</text>
+  <text class="micro" x="674" y="361">URL・取得日・hashを保持</text>
+
+  <rect class="source" x="948" y="224" width="272" height="150" rx="16"/>
+  <rect x="970" y="246" width="160" height="28" rx="6" fill="#edf7ee"/>
+  <text class="role" x="982" y="265" fill="#428048">owner_firsthand</text>
+  <text class="heading" x="970" y="310">運営者本人</text>
+  <text class="body" x="970" y="338">場面・期間・結果・弱点</text>
+  <text class="micro" x="970" y="361">AIで感想を補完しない</text>
+
+  <rect class="source" x="1244" y="224" width="296" height="150" rx="16"/>
+  <rect x="1266" y="246" width="168" height="28" rx="6" fill="#fff0ed"/>
+  <text class="role" x="1278" y="265" fill="#c35e53">commercial_fact</text>
+  <text class="heading" x="1266" y="310">Affiliate / Store</text>
+  <text class="body" x="1266" y="338">offer・媒体規約・遷移先</text>
+  <text class="micro" x="1266" y="361">確認日・開示文・event ID</text>
+
+  <path class="line" d="M196 374 V432 H280"/>
+  <path class="line" d="M492 374 V410 H280 V432"/>
+  <path class="line" d="M788 374 V410 H940 V432"/>
+  <path class="line" d="M1084 374 V432 H940"/>
+  <path class="line" d="M1392 374 V410 H940 V432"/>
+
+  <text class="eyebrow" x="60" y="450">DATA LAYERS · 公開に近づくほど絞る</text>
+
+  <rect class="layer" x="60" y="478" width="300" height="240" rx="18"/>
+  <circle cx="94" cy="518" r="17" fill="#edf3f8"/>
+  <text x="88" y="524" fill="#356b9e" font-family="Inter, sans-serif" font-size="16" font-weight="700">1</text>
+  <text class="heading" x="122" y="526">Raw Archive</text>
+  <text class="body" x="84" y="568">HTML / metadata / hash</text>
+  <text class="body" x="84" y="596">原本を変更しない</text>
+  <line x1="84" y1="622" x2="336" y2="622" stroke="#e6e9e7" stroke-width="2"/>
+  <text class="mono" x="84" y="650">childcare-data-</text>
+  <text class="mono" x="84" y="674">aggregator-data</text>
+  <text class="micro" x="84" y="702">公開原稿を置かない</text>
+
+  <path class="green-line" d="M360 598 H398"/>
+
+  <rect class="layer" x="408" y="478" width="300" height="240" rx="18"/>
+  <circle cx="442" cy="518" r="17" fill="#eaf8f3"/>
+  <text x="436" y="524" fill="#18785f" font-family="Inter, sans-serif" font-size="16" font-weight="700">2</text>
+  <text class="heading" x="470" y="526">Research DB</text>
+  <text class="body" x="432" y="568">解析・集計・source lineage</text>
+  <text class="body" x="432" y="596">active runだけを正本化</text>
+  <line x1="432" y1="622" x2="684" y2="622" stroke="#e6e9e7" stroke-width="2"/>
+  <text class="mono" x="432" y="650">need_signals</text>
+  <text class="mono" x="432" y="674">source_refs</text>
+  <text class="micro" x="432" y="702">公開本文を持たない</text>
+
+  <path class="green-line" d="M708 598 H746"/>
+
+  <rect class="layer" x="756" y="448" width="352" height="300" rx="18" fill="#f7fbf9" stroke="#9bd8c6" stroke-width="3"/>
+  <circle cx="790" cy="488" r="17" fill="#34b995"/>
+  <text x="784" y="494" fill="#fff" font-family="Inter, sans-serif" font-size="16" font-weight="700">3</text>
+  <text class="heading" x="818" y="496">Editorial DB</text>
+  <text class="body" x="780" y="538">採用企画・根拠・媒体判定</text>
+  <text class="body" x="780" y="566">required inputs・成果物・審査</text>
+  <line x1="780" y1="592" x2="1084" y2="592" stroke="#d9e9e3" stroke-width="2"/>
+  <text class="mono" x="780" y="620">content_briefs</text>
+  <text class="mono" x="780" y="646">artifact_plans</text>
+  <text class="mono" x="780" y="672">evidence / offers</text>
+  <text class="mono" x="780" y="698">review_events</text>
+  <text class="micro" x="780" y="730">Hermesはこの層だけを生成入力にする</text>
+
+  <path class="green-line" d="M1108 598 H1146"/>
+
+  <rect class="layer" x="1156" y="478" width="384" height="240" rx="18"/>
+  <circle cx="1190" cy="518" r="17" fill="#173153"/>
+  <text x="1184" y="524" fill="#fff" font-family="Inter, sans-serif" font-size="16" font-weight="700">4</text>
+  <text class="heading" x="1218" y="526">Publication Manifest</text>
+  <text class="body" x="1180" y="568">approvedデータだけをexport</text>
+  <text class="body" x="1180" y="596">Blog build時にも再検証</text>
+  <line x1="1180" y1="622" x2="1516" y2="622" stroke="#e6e9e7" stroke-width="2"/>
+  <text class="mono" x="1180" y="650">rights / evidence / CTA</text>
+  <text class="mono" x="1180" y="674">content relations</text>
+  <text class="micro" x="1180" y="702">blockedはexport不可</text>
+
+  <path class="restricted" d="M196 392 C196 765 822 796 1310 766"/>
+  <circle cx="1322" cy="766" r="18" fill="#fff0f1" stroke="#c2414b" stroke-width="3"/>
+  <path d="M1311 755 L1333 777 M1333 755 L1311 777" stroke="#c2414b" stroke-width="4" stroke-linecap="round"/>
+  <text x="890" y="790" fill="#c2414b" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="16" font-weight="700">raw QA本文 → 生成 / 公開 の直結は禁止</text>
+
+  <path class="green-line" d="M1348 718 V816"/>
+  <rect x="756" y="840" width="784" height="140" rx="18" fill="#173153"/>
+  <text x="784" y="879" fill="#94e4cf" font-family="Inter, sans-serif" font-size="15" font-weight="700" letter-spacing="1">APPROVED OUTPUTS ONLY</text>
+  <rect x="784" y="902" width="150" height="48" rx="10" fill="#f4effa"/>
+  <text x="819" y="934" fill="#695589" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="17" font-weight="700">Threads</text>
+  <rect x="950" y="902" width="170" height="48" rx="10" fill="#fff0ed"/>
+  <text x="980" y="934" fill="#c45c51" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="17" font-weight="700">Instagram</text>
+  <rect x="1136" y="902" width="150" height="48" rx="10" fill="#edf7ee"/>
+  <text x="1188" y="934" fill="#428048" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="17" font-weight="700">note</text>
+  <rect x="1302" y="902" width="210" height="48" rx="10" fill="#edf3f8"/>
+  <text x="1340" y="934" fill="#356b9e" font-family="Inter, 'Noto Sans JP', sans-serif" font-size="17" font-weight="700">Blog + 収益</text>
+
+  <rect x="60" y="840" width="648" height="140" rx="18" fill="#f1f4f2"/>
+  <text class="eyebrow" x="88" y="879">PUBLICATION RULE</text>
+  <text class="heading" x="88" y="920">signal ≠ claim ≠ experience</text>
+  <text class="body" x="88" y="951">役割を混ぜず、根拠と人間判断を最後まで追跡する</text>
+</svg>

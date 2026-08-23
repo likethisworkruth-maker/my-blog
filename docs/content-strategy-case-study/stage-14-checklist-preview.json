@@ -1,0 +1,25 @@
+{
+  "checklistId": "stroller-a-or-b",
+  "title": "ベビーカーを今買うか決めるチェックリスト",
+  "version": 1,
+  "status": "draft",
+  "groups": [
+    {
+      "id": "start-timing",
+      "label": "使い始める時期",
+      "items": [
+        {"id": "confirm-start-age", "label": "使い始めたい月齢が候補製品の公式適用月齢に入っている", "defaultPhase": "prepare"},
+        {"id": "confirm-alternative", "label": "B型の対象月齢まで使える代替手段があるか決める", "defaultPhase": "prepare"}
+      ]
+    },
+    {
+      "id": "daily-fit",
+      "label": "普段の生活に合うか",
+      "items": [
+        {"id": "confirm-storage", "label": "折りたたみ後に玄関または車へ収納できる", "defaultPhase": "prepare"},
+        {"id": "confirm-carrying", "label": "重量と荷物かごが普段の移動方法に合う", "defaultPhase": "prepare"},
+        {"id": "confirm-trial", "label": "試乗またはレンタルが必要か判断する", "defaultPhase": "prepare"}
+      ]
+    }
+  ]
+}

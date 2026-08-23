@@ -1,0 +1,41 @@
+{
+  "artifact_type": "ai_response_fixture",
+  "execution_status": "host_model_review_fixture",
+  "production_provider_call_id": null,
+  "prompt_version": "atomic-need-1.0.0-case-review",
+  "question_id": 24893911,
+  "mentions": [
+    {
+      "audience": "生後1か月の子がいる、初めてベビーカー購入を検討している家庭",
+      "life_stage": "生後1か月",
+      "scene": "低月齢期の外出手段としてベビーカーの購入時期と型を決める場面",
+      "central_problem": "A型またはAB型を今購入して後からB型へ変更するか、B型を使用できる時期まで待つか決められない",
+      "obstacle": "型ごとの使用開始時期、買い替えの必要性、自分の利用条件に合う判断材料が不足している",
+      "desired_change": "今A型またはAB型を買う、B型まで待つ、購入前に試す、の中から次の行動を一つ選べる",
+      "risk_lane": "normal",
+      "evidence_spans": [
+        {
+          "field": "body",
+          "start": 0,
+          "end": 80
+        }
+      ]
+    },
+    {
+      "audience": "生後1か月の子がいる、ベビーカー購入前の家庭",
+      "life_stage": "生後1か月",
+      "scene": "購入後に子どもがベビーカーを嫌がって使えない可能性を検討する場面",
+      "central_problem": "購入しても子どもがベビーカーを嫌がり、使えない可能性が不安",
+      "obstacle": "子どもの反応は個人差が大きく、この質問だけでは購入前に予測できない",
+      "desired_change": "購入前に試す方法と、購入を見送る条件を決められる",
+      "risk_lane": "normal",
+      "evidence_spans": [
+        {
+          "field": "body",
+          "start": 81,
+          "end": 102
+        }
+      ]
+    }
+  ]
+}

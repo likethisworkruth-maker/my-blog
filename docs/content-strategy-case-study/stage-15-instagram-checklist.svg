@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350" role="img" aria-labelledby="title desc">
+  <title id="title">ベビーカーを今買うか決めるチェックリスト</title>
+  <desc id="desc">生後1〜5か月の家庭向けに、ベビーカーを今買うかB型まで待つかを判断する5項目を一枚にまとめた画像</desc>
+  <rect width="1080" height="1350" fill="#f8f6ef"/>
+  <rect x="54" y="54" width="972" height="1242" rx="42" fill="#ffffff" stroke="#d9d7ce" stroke-width="3"/>
+  <rect x="90" y="90" width="232" height="50" rx="25" fill="#e8f6f0"/>
+  <text x="206" y="123" text-anchor="middle" font-family="'Yu Gothic UI','Noto Sans JP',sans-serif" font-size="24" font-weight="700" fill="#1f7a62">保存用・5項目</text>
+  <text x="90" y="213" font-family="'Yu Gothic UI','Noto Sans JP',sans-serif" font-size="54" font-weight="800" fill="#172033">ベビーカーは今買う？</text>
+  <text x="90" y="282" font-family="'Yu Gothic UI','Noto Sans JP',sans-serif" font-size="54" font-weight="800" fill="#172033">B型まで待つ？</text>
+  <text x="90" y="332" font-family="'Yu Gothic UI','Noto Sans JP',sans-serif" font-size="27" font-weight="500" fill="#637087">生後1〜5か月｜候補を見る前に確認</text>
+
+  <g font-family="'Yu Gothic UI','Noto Sans JP',sans-serif">
+    <g transform="translate(90 390)">
+      <rect width="900" height="132" rx="24" fill="#f3f7ff"/>
+      <rect x="30" y="38" width="52" height="52" rx="12" fill="#ffffff" stroke="#285fc7" stroke-width="4"/>
+      <text x="112" y="57" font-size="25" font-weight="800" fill="#285fc7">01　使い始める月齢</text>
+      <text x="112" y="96" font-size="28" font-weight="650" fill="#172033">候補製品の公式適用月齢に入っている</text>
+    </g>
+    <g transform="translate(90 542)">
+      <rect width="900" height="132" rx="24" fill="#eef8f4"/>
+      <rect x="30" y="38" width="52" height="52" rx="12" fill="#ffffff" stroke="#1f7a62" stroke-width="4"/>
+      <text x="112" y="57" font-size="25" font-weight="800" fill="#1f7a62">02　待てるか</text>
+      <text x="112" y="96" font-size="28" font-weight="650" fill="#172033">B型の対象月齢まで代替手段がある</text>
+    </g>
+    <g transform="translate(90 694)">
+      <rect width="900" height="132" rx="24" fill="#fff7e8"/>
+      <rect x="30" y="38" width="52" height="52" rx="12" fill="#ffffff" stroke="#a66108" stroke-width="4"/>
+      <text x="112" y="57" font-size="25" font-weight="800" fill="#a66108">03　収納できるか</text>
+      <text x="112" y="96" font-size="28" font-weight="650" fill="#172033">折りたたみ後に玄関または車へ入る</text>
+    </g>
+    <g transform="translate(90 846)">
+      <rect width="900" height="132" rx="24" fill="#f5f0ff"/>
+      <rect x="30" y="38" width="52" height="52" rx="12" fill="#ffffff" stroke="#6b4cc2" stroke-width="4"/>
+      <text x="112" y="57" font-size="25" font-weight="800" fill="#6b4cc2">04　運び方に合うか</text>
+      <text x="112" y="96" font-size="28" font-weight="650" fill="#172033">重量と荷物かごが普段の移動に合う</text>
+    </g>
+    <g transform="translate(90 998)">
+      <rect width="900" height="132" rx="24" fill="#fff0ef"/>
+      <rect x="30" y="38" width="52" height="52" rx="12" fill="#ffffff" stroke="#b34545" stroke-width="4"/>
+      <text x="112" y="57" font-size="25" font-weight="800" fill="#b34545">05　先に試すか</text>
+      <text x="112" y="96" font-size="28" font-weight="650" fill="#172033">試乗または短期レンタルが必要か決める</text>
+    </g>
+  </g>
+
+  <line x1="90" y1="1172" x2="990" y2="1172" stroke="#deddd7" stroke-width="2"/>
+  <text x="90" y="1225" font-family="'Yu Gothic UI','Noto Sans JP',sans-serif" font-size="28" font-weight="800" fill="#172033">今買う／待つ／先に試す を一つ選ぶ</text>
+  <text x="90" y="1268" font-family="'Yu Gothic UI','Noto Sans JP',sans-serif" font-size="22" font-weight="500" fill="#637087">詳しい判断の分かれ道はプロフィールのBlogへ</text>
+</svg>
