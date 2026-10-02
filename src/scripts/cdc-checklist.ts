@@ -163,11 +163,10 @@ function initChecklist(root: HTMLElement): () => void {
 	let tipsFilter: TipsFilter = "unchecked";
 	let copyStatus: "copied" | "failed" | "" = "";
 	let saveAvailable = true;
-	const desktopQuery = window.matchMedia("(min-width: 900px)");
-	let language: Language = desktopQuery.matches ? storage.language : "ja";
+	let language: Language = storage.language;
 
 	const currentAnswers = (age: string) => storage.milestoneAnswers[age] ?? {};
-	const currentLanguage = () => desktopQuery.matches ? storage.language : "ja";
+	const currentLanguage = () => storage.language;
 	const copy = () => translations[language];
 	const categories = () => categoryNames[language];
 
@@ -239,18 +238,28 @@ function initChecklist(root: HTMLElement): () => void {
 
 	const renderCategoryNavigation = (age: string): string => {
 		const names = categories();
-		return '<nav class="sticky top-0 z-20 -mx-4 grid grid-cols-2 gap-x-3 border-y border-gray-200 bg-white/95 px-4 py-2 backdrop-blur sm:mx-0 sm:flex sm:gap-1 sm:overflow-x-auto sm:px-0 lg:top-[72px]" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
+		return '<nav class="sticky top-0 z-20 -mx-4 flex flex-nowrap gap-1 overflow-x-auto border-y border-gray-200 bg-white/95 px-4 py-0.5 backdrop-blur sm:mx-0 sm:px-0 sm:py-2 lg:top-[72px]" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
 			groupsForAge(age).map((group) => {
 				const selected = group.index === activeCategory;
 				const style = selected ? "border-mint-500 text-mint-600" : "border-transparent text-gray-500 hover:text-navy-900";
-				return '<button type="button" data-category="' + group.index + '" aria-current="' + (selected ? "true" : "false") + '" class="w-full border-b-2 px-2 py-2 text-left text-xs font-semibold sm:w-auto sm:shrink-0 ' + style + '">' + escapeHtml(names[group.index]) + " · " + group.items.length + "</button>";
+				return '<button type="button" data-category="' + group.index + '" aria-current="' + (selected ? "true" : "false") + '" class="shrink-0 whitespace-nowrap border-b-2 px-2 py-2 text-left text-xs font-semibold ' + style + '">' + escapeHtml(names[group.index]) + " · " + group.items.length + "</button>";
 			}).join("") +
 		"</nav>";
 	};
 
-	const renderChecklist = (age: string): string => {
-		const labels = copy();
-		const groups = groupsForAge(age);
+	const renderAgeChips = (selectedAge: string): string => {
+		return '<div id="cdc-age-options" class="cdc-age-chip-row -mx-4 mt-2 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="' + escapeHtml(language === "ja" ? "チェックする年齢" : copy().ageLabel) + '">' +
+			agesData.map((age) => {
+				const selected = selectedAge === age.key;
+				const style = selected
+					? "border-mint-500 bg-mint-50 text-mint-600"
+					: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50";
+				return '<button type="button" data-age-option="' + escapeHtml(age.key) + '" aria-pressed="' + String(selected) + '" class="inline-flex min-h-12 shrink-0 items-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-mint-50 sm:px-3 ' + style + '">' + escapeHtml(ageLabel(age.key, language)) + "</button>";
+			}).join("") +
+		"</div>";
+	};
+
+	const renderProgressSummary = (age: string): string => {
 		const items = detailedMilestonesData[age] ?? [];
 		const answers = currentAnswers(age);
 		const answered = items.reduce((sum, _item, index) => {
@@ -258,22 +267,23 @@ function initChecklist(root: HTMLElement): () => void {
 			return sum + (value === "yes" || value === "notYet" ? 1 : 0);
 		}, 0);
 		const percent = items.length > 0 ? Math.round(answered / items.length * 100) : 0;
-		const summary = '<section class="border-b border-gray-200 pb-4" aria-labelledby="cdc-checklist-heading">' +
-			'<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">' +
-				'<h2 id="cdc-checklist-heading" class="text-lg font-bold text-navy-900">' + escapeHtml(ageLabel(age, language) + labels.checklistHeading) + "</h2>" +
-				'<p class="text-xs text-gray-500">' + escapeHtml(labels.answered) + " <span class=\"font-bold text-navy-900\">" + answered + " / " + items.length + "</span>　" + escapeHtml(labels.total) + " " + items.length + (language === "ja" ? "項目" : " items") + "</p>" +
-			"</div>" +
-			'<div class="mt-3 flex items-center gap-3">' +
-				'<span class="text-xs text-gray-500">' + escapeHtml(labels.progress) + "</span>" +
-				'<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100" role="progressbar" aria-label="' + escapeHtml(labels.progress) + '" aria-valuemin="0" aria-valuemax="' + items.length + '" aria-valuenow="' + answered + '">' +
+		return '<section class="mt-3 border-b border-gray-200 pb-3" aria-labelledby="cdc-checklist-heading">' +
+			'<h2 id="cdc-checklist-heading" class="text-sm font-semibold text-navy-900">' + escapeHtml(ageLabel(age, language) + " " + answered + " / " + items.length + (language === "ja" ? "項目" : " items")) + "</h2>" +
+			'<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100" role="progressbar" aria-label="' + escapeHtml(language === "ja" ? ageLabel(age, language) + "の確認済み項目" : "Milestones reviewed for " + ageLabel(age, language)) + '" aria-valuemin="0" aria-valuemax="' + items.length + '" aria-valuenow="' + answered + '">' +
 					'<span class="block h-full rounded-full bg-mint-500 transition-[width]" style="width:' + percent + '%"></span>' +
-				"</div><span class=\"w-10 text-right text-xs font-semibold text-mint-600\">" + percent + "%</span>" +
 			"</div></section>";
+	};
+
+	const renderChecklist = (age: string): string => {
+		const labels = copy();
+		const groups = groupsForAge(age);
+		const items = detailedMilestonesData[age] ?? [];
+		const answers = currentAnswers(age);
 		const sections = groups.map((group) => {
 			const rows = group.items.map((item, localIndex) => {
 				const index = group.start + localIndex;
 				const text = language === "ja" ? item.ja : item.en;
-				return '<li class="grid gap-2 border-b border-gray-100 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">' +
+				return '<li class="grid gap-2 border-b border-gray-100 py-2 sm:py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">' +
 					'<div class="flex min-w-0 gap-3"><span class="w-6 shrink-0 pt-0.5 text-right text-xs tabular-nums text-gray-400">' + (index + 1) + "</span>" +
 					'<p class="text-sm leading-6 text-navy-900">' + escapeHtml(text) + "</p></div>" +
 					answerButtons(age, String(index), answers[String(index)]) +
@@ -291,7 +301,7 @@ function initChecklist(root: HTMLElement): () => void {
 			: "";
 		const results = showResults && items.length > 0 ? renderResults(age, reviewSections) : "";
 		const dialog = showPreviousReview ? renderPreviousReview(age, reviewSections) : "";
-		return summary + renderCategoryNavigation(age) + sections + empty + resultButton + results + dialog;
+		return renderCategoryNavigation(age) + sections + empty + resultButton + results + dialog;
 	};
 
 	const renderTips = (age: string): string => {
@@ -382,16 +392,11 @@ function initChecklist(root: HTMLElement): () => void {
 		const labels = copy();
 		document.documentElement.lang = language;
 		const age = storage.selectedAge;
-		const options = agesData.map((entry) => {
-			const selected = entry.key === age;
-			return '<option value="' + escapeHtml(entry.key) + '"' + (selected ? " selected" : "") + ">" + escapeHtml(ageLabel(entry.key, language)) + "</option>";
-		}).join("");
 		const viewTabs = (["checklist", "tips"] as const).map((value) => {
 			const selected = view === value;
 			const text = value === "checklist" ? labels.navChecklist : labels.navTips;
 			return '<button type="button" data-view="' + value + '" aria-current="' + String(selected) + '" class="border-b-2 px-3 py-2 text-sm font-semibold transition-colors ' + (selected ? "border-mint-500 text-mint-600" : "border-transparent text-gray-500 hover:text-navy-900") + '">' + escapeHtml(text) + "</button>";
 		}).join("");
-		const languageSwitch = '<button type="button" data-language-switch class="hidden min-[900px]:inline-flex rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-mint-500 hover:text-mint-600" aria-label="' + escapeHtml(labels.switchLanguage) + '">' + escapeHtml(language === "ja" ? "English" : "日本語") + "</button>";
 		const saveNotice = '<p data-save-notice role="status" class="mt-2 min-h-4 text-xs text-red-600">' + escapeHtml(saveAvailable ? "" : (language === "ja" ? "このブラウザーでは保存できません。ページを閉じると回答が消える場合があります。" : "This browser could not save your selections. They may be lost when you leave this page.")) + "</p>";
 		const intro = language === "ja"
 			? "米国疾病予防管理センター（CDC）が公開する発達マイルストーンを参考にした、非公式の日本語チェックリストです。CDCによる監修・承認は受けていません。発達の診断や評価の代わりにはなりません。"
@@ -403,19 +408,14 @@ function initChecklist(root: HTMLElement): () => void {
 		const viewContent = view === "checklist" ? renderChecklist(age) : renderTips(age);
 		root.innerHTML =
 			'<header class="border-b border-gray-200 pb-4">' +
-				'<div class="flex flex-wrap items-center justify-between gap-3">' +
-					'<div><p class="text-xs font-semibold text-mint-600">' + escapeHtml(language === "ja" ? "子どもの発達確認" : "Child development") + '</p><h1 class="mt-1 text-2xl font-bold tracking-tight text-navy-900">' + escapeHtml(language === "ja" ? "CDCチェック" : "CDC Checklist") + "</h1></div>" +
-					languageSwitch +
-				"</div>" +
-				'<div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">' +
-					'<label for="cdc-age" class="text-sm font-semibold text-navy-900">' + escapeHtml(labels.ageLabel) + "</label>" +
-					'<select id="cdc-age" data-age-select class="min-h-10 min-w-32 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-mint-500 focus:outline-none focus:ring-2 focus:ring-mint-50">' + options + "</select>" +
-					'<span class="text-xs text-gray-400">' + (language === "ja" ? "2か月〜5歳の12段階" : "12 ages from 2 months to 5 years") + "</span>" +
-				"</div>" +
+				'<h1 class="sr-only">' + escapeHtml(language === "ja" ? "CDC発達チェック" : "CDC Developmental Checklist") + "</h1>" +
+				renderAgeChips(age) +
+					renderProgressSummary(age) +
 			"</header>" +
 			'<nav class="mb-4 flex border-b border-gray-200" aria-label="' + escapeHtml(language === "ja" ? "表示内容" : "Content") + '">' + viewTabs + "</nav>" +
 			viewContent + saveNotice +
 			'<aside class="mt-8 border-t border-gray-200 pt-3 text-xs leading-5 text-gray-500" aria-label="' + escapeHtml(language === "ja" ? "出典と利用上の注意" : "Source and disclaimer") + '">' +
+				'<h2 class="mb-1 text-sm font-bold text-navy-900">' + escapeHtml(language === "ja" ? "CDCについて" : "About CDC") + "</h2>" +
 				'<p>' + escapeHtml(intro) + " " + escapeHtml(support) + "</p>" +
 				'<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">' + sourceLink + '<span>' + escapeHtml(language === "ja" ? "回答・ヒントのチェック・表示言語はこのブラウザーに保存され、運営者には送信されません。" : "Answers, tip selections, and language are saved in this browser and are not sent to the site operator.") + "</span></div>" +
 			"</aside>";
@@ -472,8 +472,14 @@ function initChecklist(root: HTMLElement): () => void {
 			selectView(button.dataset.view);
 			return;
 		}
-		if (button.hasAttribute("data-language-switch")) {
-			saveAndRender({ ...storage, language: storage.language === "ja" ? "en" : "ja" }, "[data-language-switch]");
+		if (button.dataset.ageOption !== undefined) {
+			const selectedAge = button.dataset.ageOption;
+			if (!agesData.some((age) => age.key === selectedAge)) return;
+			showResults = false;
+			showPreviousReview = false;
+			activeCategory = 0;
+			copyStatus = "";
+			saveAndRender({ ...storage, selectedAge }, 'button[data-age-option="' + selectedAge + '"]');
 			return;
 		}
 		if (button.dataset.category !== undefined) {
@@ -561,19 +567,6 @@ function initChecklist(root: HTMLElement): () => void {
 		}
 	};
 
-	const onChange = (event: Event): void => {
-		const target = event.target;
-		if (target instanceof HTMLSelectElement && target.matches("[data-age-select]")) {
-			const selectedAge = target.value;
-			if (!agesData.some((age) => age.key === selectedAge)) return;
-			showResults = false;
-			showPreviousReview = false;
-			activeCategory = 0;
-			copyStatus = "";
-			saveAndRender({ ...storage, selectedAge }, "[data-age-select]");
-		}
-	};
-
 	const onScroll = (): void => {
 		if (view !== "checklist") return;
 		let current = 0;
@@ -596,15 +589,11 @@ function initChecklist(root: HTMLElement): () => void {
 		showPreviousReview = false;
 		render();
 	};
-	const onViewportChange = (): void => render();
-
 	root.addEventListener("click", onClick);
-	root.addEventListener("change", onChange);
 	window.addEventListener("scroll", onScroll, { passive: true });
 	window.addEventListener("resize", onScroll);
 	window.addEventListener("hashchange", onHashChange);
 	window.addEventListener("popstate", onHashChange);
-	desktopQuery.addEventListener("change", onViewportChange);
 		try {
 			window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
 		} catch {
@@ -614,12 +603,10 @@ function initChecklist(root: HTMLElement): () => void {
 
 	return () => {
 		root.removeEventListener("click", onClick);
-		root.removeEventListener("change", onChange);
 		window.removeEventListener("scroll", onScroll);
 		window.removeEventListener("resize", onScroll);
 		window.removeEventListener("hashchange", onHashChange);
 		window.removeEventListener("popstate", onHashChange);
-		desktopQuery.removeEventListener("change", onViewportChange);
 	};
 }
 
