@@ -224,25 +224,33 @@ function initChecklist(root: HTMLElement): () => void {
 
 	const answerButtons = (age: string, id: string, answer?: Answer): string => {
 		const labels = copy();
-		return '<div class="flex shrink-0 gap-1" role="group" aria-label="' + escapeHtml(language === "ja" ? "項目の回答" : "Milestone answer") + '">' +
+		return '<div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0" role="group" aria-label="' + escapeHtml(language === "ja" ? "項目の回答" : "Milestone answer") + '">' +
 			(["yes", "notYet"] as const).map((value) => {
 				const selected = answer === value;
 				const text = value === "yes" ? labels.yes : labels.notYet;
 				const style = selected
 					? "border-mint-500 bg-mint-50 text-mint-600"
 					: "border-gray-300 bg-white text-gray-600 hover:bg-gray-50";
-				return '<button type="button" data-answer-age="' + escapeHtml(age) + '" data-answer-id="' + escapeHtml(id) + '" data-answer-value="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-9 rounded-lg border px-2.5 text-xs font-semibold transition-colors ' + style + '">' + escapeHtml(text) + "</button>";
+				return '<button type="button" data-answer-age="' + escapeHtml(age) + '" data-answer-id="' + escapeHtml(id) + '" data-answer-value="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-12 w-full rounded-xl border px-3 py-2 text-sm font-bold transition-colors sm:w-auto sm:flex-1 sm:px-4 ' + style + '">' + escapeHtml(text) + "</button>";
 			}).join("") +
 		"</div>";
 	};
 
 	const renderCategoryNavigation = (age: string): string => {
 		const names = categories();
-		return '<nav class="sticky top-0 z-20 -mx-4 flex flex-nowrap gap-1 overflow-x-auto border-y border-gray-200 bg-white/95 px-4 py-0.5 backdrop-blur sm:mx-0 sm:px-0 sm:py-2 lg:top-[72px]" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
+		const shortNames = language === "ja" ? ["社会性", "ことば", "認知", "運動"] : ["Social", "Lang.", "Cog.", "Move"];
+		const desktopNames = language === "ja" ? shortNames : ["Social", "Language", "Cognition", "Movement"];
+		return '<nav class="sticky top-0 z-20 -mx-4 grid grid-cols-4 gap-2 border-y border-gray-200 bg-white/95 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0 lg:top-[72px]" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
 			groupsForAge(age).map((group) => {
 				const selected = group.index === activeCategory;
-				const style = selected ? "border-mint-500 text-mint-600" : "border-transparent text-gray-500 hover:text-navy-900";
-				return '<button type="button" data-category="' + group.index + '" aria-current="' + (selected ? "true" : "false") + '" class="shrink-0 whitespace-nowrap border-b-2 px-2 py-2 text-left text-xs font-semibold ' + style + '">' + escapeHtml(names[group.index]) + " · " + group.items.length + "</button>";
+				const style = selected
+					? "border-mint-500 bg-mint-50 text-mint-600"
+					: "border-gray-200 bg-white text-navy-900 hover:border-gray-300";
+				const accessibleName = language === "ja"
+					? names[group.index] + " " + group.items.length + "項目"
+					: names[group.index] + ": " + group.items.length + (group.items.length === 1 ? " item" : " items");
+				const badgeStyle = selected ? "bg-mint-50 text-mint-600" : "bg-gray-100 text-gray-600";
+				return '<button type="button" data-category="' + group.index + '" aria-label="' + escapeHtml(accessibleName) + '" aria-current="' + (selected ? "true" : "false") + '" class="flex min-h-20 min-w-0 items-center justify-center gap-1 rounded-2xl border px-1 py-2 text-xs font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-mint-50 ' + style + '"><span class="whitespace-nowrap sm:hidden">' + escapeHtml(shortNames[group.index]) + '</span><span class="hidden whitespace-nowrap sm:inline">' + escapeHtml(desktopNames[group.index]) + '</span><span data-category-count aria-hidden="true" class="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-bold ' + badgeStyle + '">' + group.items.length + "</span></button>";
 			}).join("") +
 		"</nav>";
 	};
@@ -267,9 +275,9 @@ function initChecklist(root: HTMLElement): () => void {
 			return sum + (value === "yes" || value === "notYet" ? 1 : 0);
 		}, 0);
 		const percent = items.length > 0 ? Math.round(answered / items.length * 100) : 0;
-		return '<section class="mt-3 border-b border-gray-200 pb-3" aria-labelledby="cdc-checklist-heading">' +
-			'<h2 id="cdc-checklist-heading" class="text-sm font-semibold text-navy-900">' + escapeHtml(ageLabel(age, language) + " " + answered + " / " + items.length + (language === "ja" ? "項目" : " items")) + "</h2>" +
-			'<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100" role="progressbar" aria-label="' + escapeHtml(language === "ja" ? ageLabel(age, language) + "の確認済み項目" : "Milestones reviewed for " + ageLabel(age, language)) + '" aria-valuemin="0" aria-valuemax="' + items.length + '" aria-valuenow="' + answered + '">' +
+		return '<section class="mt-4 border-b border-gray-200 pb-4" aria-labelledby="cdc-checklist-heading">' +
+			'<h2 id="cdc-checklist-heading" class="text-xl font-bold text-navy-900">' + escapeHtml(ageLabel(age, language) + " " + answered + " / " + items.length + (language === "ja" ? "項目" : " items")) + "</h2>" +
+			'<div class="mt-2 h-3 overflow-hidden rounded-full bg-gray-100" role="progressbar" aria-label="' + escapeHtml(language === "ja" ? ageLabel(age, language) + "の確認済み項目" : "Milestones reviewed for " + ageLabel(age, language)) + '" aria-valuemin="0" aria-valuemax="' + items.length + '" aria-valuenow="' + answered + '">' +
 					'<span class="block h-full rounded-full bg-mint-500 transition-[width]" style="width:' + percent + '%"></span>' +
 			"</div></section>";
 	};
@@ -283,15 +291,15 @@ function initChecklist(root: HTMLElement): () => void {
 			const rows = group.items.map((item, localIndex) => {
 				const index = group.start + localIndex;
 				const text = language === "ja" ? item.ja : item.en;
-				return '<li class="grid gap-2 border-b border-gray-100 py-2 sm:py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">' +
-					'<div class="flex min-w-0 gap-3"><span class="w-6 shrink-0 pt-0.5 text-right text-xs tabular-nums text-gray-400">' + (index + 1) + "</span>" +
-					'<p class="text-sm leading-6 text-navy-900">' + escapeHtml(text) + "</p></div>" +
+			return '<li class="grid gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">' +
+					'<div class="flex min-w-0 items-start gap-3"><span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mint-50 text-base font-bold tabular-nums text-mint-600">' + (index + 1) + "</span>" +
+					'<p class="pt-1 text-base leading-7 text-navy-900">' + escapeHtml(text) + "</p></div>" +
 					answerButtons(age, String(index), answers[String(index)]) +
 				"</li>";
 			}).join("");
-			return '<section id="cdc-category-' + group.index + '" data-cdc-category class="scroll-mt-20 pt-5">' +
-				'<h3 class="mb-1 flex items-baseline justify-between gap-3 border-b border-gray-200 pb-2 text-sm font-bold text-navy-900"><span>' + escapeHtml(categories()[group.index]) + '</span><span class="text-xs font-medium text-gray-400">' + group.items.length + (language === "ja" ? "項目" : " items") + "</span></h3>" +
-				'<ul class="m-0 list-none p-0">' + rows + "</ul></section>";
+			return '<section id="cdc-category-' + group.index + '" data-cdc-category class="scroll-mt-24 pt-5">' +
+				'<h3 class="mb-2 flex items-baseline justify-between gap-3 text-xl font-bold text-navy-900"><span>' + escapeHtml(categories()[group.index]) + '</span><span class="text-sm font-semibold text-gray-500">' + group.items.length + (language === "ja" ? "項目" : " items") + "</span></h3>" +
+				'<ul class="m-0 list-none space-y-2 p-0">' + rows + "</ul></section>";
 		}).join("");
 		const empty = items.length === 0 ? '<p class="py-6 text-sm text-gray-500">' + escapeHtml(labels.emptyChecklist) + "</p>" : "";
 		const reviewSections = previousReviewSections(age);
@@ -395,7 +403,7 @@ function initChecklist(root: HTMLElement): () => void {
 		const viewTabs = (["checklist", "tips"] as const).map((value) => {
 			const selected = view === value;
 			const text = value === "checklist" ? labels.navChecklist : labels.navTips;
-			return '<button type="button" data-view="' + value + '" aria-current="' + String(selected) + '" class="border-b-2 px-3 py-2 text-sm font-semibold transition-colors ' + (selected ? "border-mint-500 text-mint-600" : "border-transparent text-gray-500 hover:text-navy-900") + '">' + escapeHtml(text) + "</button>";
+			return '<button type="button" data-view="' + value + '" aria-current="' + String(selected) + '" class="min-h-14 rounded-xl px-2 text-center text-base font-bold transition-colors ' + (selected ? "bg-mint-50 text-mint-600" : "text-gray-500 hover:text-navy-900") + '">' + escapeHtml(text) + "</button>";
 		}).join("");
 		const saveNotice = '<p data-save-notice role="status" class="mt-2 min-h-4 text-xs text-red-600">' + escapeHtml(saveAvailable ? "" : (language === "ja" ? "このブラウザーでは保存できません。ページを閉じると回答が消える場合があります。" : "This browser could not save your selections. They may be lost when you leave this page.")) + "</p>";
 		const intro = language === "ja"
@@ -412,7 +420,7 @@ function initChecklist(root: HTMLElement): () => void {
 				renderAgeChips(age) +
 					renderProgressSummary(age) +
 			"</header>" +
-			'<nav class="mb-4 flex border-b border-gray-200" aria-label="' + escapeHtml(language === "ja" ? "表示内容" : "Content") + '">' + viewTabs + "</nav>" +
+			'<nav class="mb-4 grid grid-cols-2 rounded-2xl border border-gray-200 bg-white p-1" aria-label="' + escapeHtml(language === "ja" ? "表示内容" : "Content") + '">' + viewTabs + "</nav>" +
 			viewContent + saveNotice +
 			'<aside class="mt-8 border-t border-gray-200 pt-3 text-xs leading-5 text-gray-500" aria-label="' + escapeHtml(language === "ja" ? "出典と利用上の注意" : "Source and disclaimer") + '">' +
 				'<h2 class="mb-1 text-sm font-bold text-navy-900">' + escapeHtml(language === "ja" ? "CDCについて" : "About CDC") + "</h2>" +
@@ -434,9 +442,17 @@ function initChecklist(root: HTMLElement): () => void {
 			const selected = Number(button.dataset.category) === activeCategory;
 			button.setAttribute("aria-current", String(selected));
 			button.classList.toggle("border-mint-500", selected);
+			button.classList.toggle("bg-mint-50", selected);
 			button.classList.toggle("text-mint-600", selected);
-			button.classList.toggle("border-transparent", !selected);
-			button.classList.toggle("text-gray-500", !selected);
+			button.classList.toggle("border-gray-200", !selected);
+			button.classList.toggle("bg-white", !selected);
+			button.classList.toggle("text-navy-900", !selected);
+			button.classList.toggle("hover:border-gray-300", !selected);
+			const badge = button.querySelector<HTMLElement>("[data-category-count]");
+			badge?.classList.toggle("bg-mint-50", selected);
+			badge?.classList.toggle("text-mint-600", selected);
+			badge?.classList.toggle("bg-gray-100", !selected);
+			badge?.classList.toggle("text-gray-600", !selected);
 		});
 	};
 
