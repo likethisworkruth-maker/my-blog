@@ -4,10 +4,11 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('PC・モバイルナビを3項目に統一し、既存カテゴリを運営のおうち扱いにする', () => {
+test('PC・モバイルナビにCDCチェックを加え、検索と既存カテゴリの状態を保つ', () => {
 	const header = read('src/components/Header.astro');
 	const footer = read('src/components/Footer.astro');
 	for (const source of [header, footer]) {
+		assert.match(source, /href="\/cdc\/"/);
 		assert.match(source, /href="\/my-knowhow\/"/);
 		assert.match(source, /href="\/recommend\/"/);
 		assert.match(source, /"recommend", "apps", "items", "logs"/);
@@ -15,10 +16,18 @@ test('PC・モバイルナビを3項目に統一し、既存カテゴリを運�
 	}
 	assert.ok(header.includes('UI.headerNav.knowhow'));
 	assert.ok(header.includes('UI.headerNav.myList'));
+	assert.ok(header.includes('UI.headerNav.cdc'));
+	assert.ok(header.indexOf('href="/recommend/"') < header.indexOf('href="/cdc/"'));
+	assert.match(header, /const isChecklistPath = \(pathname === "\/" \|\| pathSegments\[0\] === "knowhow"\)/);
+	assert.match(header, /const isCdcPath = pathSegments\[0\] === "cdc"/);
 	assert.equal(header.includes('UI.headerNav.home'), false);
 	assert.match(header, /<header[\s\S]*class="hidden[^\"]*lg:block/);
 	assert.ok(footer.includes('UI.footerNav.knowhow'));
 	assert.ok(footer.includes('UI.footerNav.myList'));
+	assert.ok(footer.includes('UI.footerNav.cdc'));
+	assert.ok(footer.indexOf('href="/recommend/"') < footer.indexOf('href="/cdc/"'));
+	assert.match(footer, /const isChecklistPath = \(pathname === "\/" \|\| pathSegments\[0\] === "knowhow"\)/);
+	assert.match(footer, /const isCdcPath = pathSegments\[0\] === "cdc"/);
 	assert.equal(footer.includes('UI.footerNav.home'), false);
 });
 

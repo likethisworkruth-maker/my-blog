@@ -17,6 +17,7 @@ const currentPath =
 const pathSegments = pathname.split("/").filter(Boolean);
 const isMyListPath = pathSegments[0] === "my-knowhow";
 const isChecklistPath = (pathname === "/" || pathSegments[0] === "knowhow");
+const isCdcPath = pathSegments[0] === "cdc";
 const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 	currentPath.startsWith(path),
 );
@@ -58,6 +59,12 @@ const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 				class={`font-bold transition-colors pb-1 border-b-2 ${isRecommendPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
 			>
 				{UI.headerNav.rikutsu}
+			</a>
+			<a
+				href="/cdc/"
+				class:list={["font-bold", "transition-colors", "pb-1", "border-b-2", isCdcPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"]}
+			>
+				{UI.headerNav.cdc}
 			</a>
 		</nav>
 

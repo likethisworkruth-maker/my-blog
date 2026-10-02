@@ -2,6 +2,7 @@ export const UI = {
 	headerNav: {
 		knowhow: "探す",
 		myList: "マイリスト",
+		cdc: "CDCチェック",
 		rikutsu: "おすすめ",
 		naraibase: "Naraibase",
 		about: "このサイトについて",
@@ -9,6 +10,7 @@ export const UI = {
 	footerNav: {
 		knowhow: "探す",
 		myList: "マイリスト",
+		cdc: "CDCチェック",
 		rikutsu: "おすすめ",
 		naraibase: "Naraibase",
 		about: "このサイトについて",

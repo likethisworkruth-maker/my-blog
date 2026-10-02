@@ -1,0 +1,21 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { SITE_TITLE } from "../consts";
+---
+
+<Layout
+	title={"CDCチェック | " + SITE_TITLE}
+	description="CDCが公開する発達マイルストーンを参考にした非公式の日本語チェックリストです。年齢別の発達確認項目と関わり方のヒントを表示します。"
+>
+	<article
+		data-cdc-checklist
+		class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:py-10"
+		aria-label="CDCチェック"
+	>
+		<p class="py-10 text-center text-sm text-gray-500">発達項目を読み込んでいます…</p>
+	</article>
+</Layout>
+
+<script>
+	import "../scripts/cdc-checklist";
+</script>
