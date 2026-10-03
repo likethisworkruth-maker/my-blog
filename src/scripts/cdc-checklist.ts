@@ -432,7 +432,7 @@ function initChecklist(root: HTMLElement): () => void {
 		const visible = tips.map((tip, index) => ({ tip, index })).filter(({ index }) => tipsFilter === "all" || !checked.includes(index));
 		const filterButtons = (["unchecked", "all"] as const).map((value) => {
 			const selected = tipsFilter === value;
-			const text = value === "unchecked" ? (language === "ja" ? "チェックなし" : "Unchecked") : (language === "ja" ? "全部" : "All");
+			const text = value === "unchecked" ? (language === "ja" ? "チェックなし" : "Unchecked") : (language === "ja" ? "すべて" : "All");
 			const divider = value === "all" ? "border-l border-gray-300" : "";
 			return '<button type="button" data-tips-filter="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-11 px-4 text-sm font-bold transition-colors focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + divider + " " + (selected ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:bg-gray-50") + '" style="min-height:44px;font-size:14px">' + escapeHtml(text) + "</button>";
 		}).join("");
@@ -440,15 +440,22 @@ function initChecklist(root: HTMLElement): () => void {
 			const selected = checked.includes(index);
 			const text = language === "ja" ? tip.ja : tip.en;
 			const stateLabel = selected ? (language === "ja" ? "チェック済み" : "Checked") : (language === "ja" ? "チェックする" : "Check");
-			return '<li class="grid gap-3 border-b border-gray-100 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center" style="display:grid;gap:12px;padding-top:16px;padding-bottom:16px">' +
+			const checkboxIcon = selected
+				? '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"></path></svg>'
+				: "";
+			const checkboxStyle = selected
+				? "border-mint-500 bg-mint-500 text-white"
+				: "border-gray-300 bg-white text-transparent group-hover:border-mint-500";
+			return '<li class="grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-3 border-b border-gray-100 py-4" style="display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;gap:12px;padding-top:16px;padding-bottom:16px">' +
 				'<p class="min-w-0 text-base leading-7 text-navy-900">' + escapeHtml(text) + "</p>" +
-				'<button type="button" data-tip-index="' + index + '" aria-pressed="' + String(selected) + '" aria-label="' + escapeHtml(stateLabel) + '" class="min-h-12 w-full rounded-xl border px-4 py-3 text-base font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40 ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50") + '" style="min-height:48px;font-size:16px">' + escapeHtml(stateLabel) + "</button>" +
+				'<button type="button" data-tip-index="' + index + '" aria-pressed="' + String(selected) + '" aria-label="' + escapeHtml(stateLabel) + '" class="group inline-flex h-12 min-h-12 w-12 min-w-12 shrink-0 items-center justify-center rounded-xl transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2" style="width:48px;min-width:48px;height:48px;min-height:48px">' +
+					'<span aria-hidden="true" class="inline-flex h-7 w-7 items-center justify-center rounded-md border-2 transition-colors ' + checkboxStyle + '">' + checkboxIcon + "</span></button>" +
 			"</li>";
 		}).join("");
 		const empty = tips.length === 0
 			? '<p class="py-6 text-sm text-gray-500">' + escapeHtml(labels.emptyTips) + "</p>"
 			: visible.length === 0
-				? '<p role="status" class="py-6 text-center text-sm text-gray-500">' + escapeHtml(language === "ja" ? "この年齢のヒントはすべてチェック済みです。「全部」で確認・解除できます。" : "All tips for this age are checked. Choose All to review or uncheck them.") + "</p>"
+				? '<p role="status" class="py-6 text-center text-sm text-gray-500">' + escapeHtml(language === "ja" ? "この年齢のヒントはすべてチェック済みです。「すべて」で確認・解除できます。" : "All tips for this age are checked. Choose All to review or uncheck them.") + "</p>"
 				: "";
 		return '<section aria-label="' + escapeHtml(language === "ja" ? ageLabel(age, language) + "の関わり方のヒント" : "Tips for " + ageLabel(age, language)) + '">' +
 			'<div class="mb-2 flex justify-end"><div class="inline-flex overflow-hidden rounded-lg border border-gray-300">' + filterButtons + "</div></div>" +
