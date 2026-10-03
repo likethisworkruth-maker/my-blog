@@ -149,9 +149,11 @@ function initChecklist(root: HTMLElement): () => void {
 	let activeCategory = 0;
 	let showResults = false;
 	let showPreviousReview = false;
+	let showUnknownAiQuestion = false;
 	let audience: Audience = "doctor";
 	let tipsFilter: TipsFilter = "all";
 	let copyStatus: "copied" | "failed" | "" = "";
+	let copyToastTimer: number | undefined;
 	let saveAvailable = true;
 	let cloudSaveStatus: "idle" | "saving" | "saved" | "failed" | "switching" = "idle";
 	let activeAccountUserId: string | null = null;
@@ -416,9 +418,8 @@ function initChecklist(root: HTMLElement): () => void {
 		}).join("");
 		const empty = items.length === 0 ? '<p class="py-6 text-sm text-gray-500">' + escapeHtml(labels.emptyChecklist) + "</p>" : "";
 		const reviewSections = previousReviewSections(age);
-		const buttonText = showResults ? (language === "ja" ? "結果を閉じる" : "Hide results") : labels.viewResults;
-		const resultButton = items.length > 0
-			? '<button type="button" data-toggle-results aria-expanded="' + String(showResults) + '" class="mt-5 w-full border-y border-gray-200 py-3 text-sm font-bold text-navy-900 hover:text-mint-600">' + escapeHtml(buttonText) + "</button>"
+		const resultButton = items.length > 0 && !showResults
+			? '<button type="button" data-toggle-results aria-expanded="false" class="mt-5 min-h-14 w-full rounded-xl bg-navy-900 px-5 py-4 text-base font-bold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2" style="min-height:56px;font-size:16px">' + escapeHtml(labels.viewResults) + "</button>"
 			: "";
 		const results = showResults && items.length > 0 ? renderResults(age, reviewSections) : "";
 		const dialog = showPreviousReview ? renderPreviousReview(age, reviewSections) : "";
@@ -440,16 +441,14 @@ function initChecklist(root: HTMLElement): () => void {
 			const selected = checked.includes(index);
 			const text = language === "ja" ? tip.ja : tip.en;
 			const stateLabel = selected ? (language === "ja" ? "チェック済み" : "Checked") : (language === "ja" ? "チェックする" : "Check");
-			const checkboxIcon = selected
-				? '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"></path></svg>'
-				: "";
+			const checkboxIcon = selected ? "check_box" : "check_box_outline_blank";
 			const checkboxStyle = selected
-				? "border-mint-500 bg-mint-500 text-white"
-				: "border-gray-300 bg-white text-transparent group-hover:border-mint-500";
+				? "material-symbols-filled text-mint-500"
+				: "material-symbols-outlined text-gray-400 group-hover:text-mint-500";
 			return '<li class="grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-3 border-b border-gray-100 py-4" style="display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;gap:12px;padding-top:16px;padding-bottom:16px">' +
 				'<p class="min-w-0 text-base leading-7 text-navy-900">' + escapeHtml(text) + "</p>" +
 				'<button type="button" data-tip-index="' + index + '" aria-pressed="' + String(selected) + '" aria-label="' + escapeHtml(stateLabel) + '" class="group inline-flex h-12 min-h-12 w-12 min-w-12 shrink-0 items-center justify-center rounded-xl transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2" style="width:48px;min-width:48px;height:48px;min-height:48px">' +
-					'<span aria-hidden="true" class="inline-flex h-7 w-7 items-center justify-center rounded-md border-2 transition-colors ' + checkboxStyle + '">' + checkboxIcon + "</span></button>" +
+					'<span aria-hidden="true" class="text-[2rem] leading-none ' + checkboxStyle + '">' + checkboxIcon + "</span></button>" +
 			"</li>";
 		}).join("");
 		const empty = tips.length === 0
@@ -466,27 +465,61 @@ function initChecklist(root: HTMLElement): () => void {
 		const labels = language === "ja"
 			? { doctor: "先生への相談文", ai: "AIへの質問文" }
 			: { doctor: "Message for a clinician", ai: "Question for AI" };
-		const message = consultationText(age, ageLabel(age, language), resultCategories(age), language, audience);
-		const tabs = (["doctor", "ai"] as const).map((value) => {
-			const selected = audience === value;
-			return '<button type="button" data-audience="' + value + '" role="tab" aria-selected="' + String(selected) + '" class="min-h-14 w-full rounded-xl px-2 py-3 text-center text-lg font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:bg-gray-50 hover:text-navy-900") + '" style="min-height:56px;font-size:clamp(15px,4.6vw,18px)">' + labels[value] + "</button>";
-		}).join("");
-		const copied = copyStatus === "copied"
-			? (language === "ja" ? "文章をコピーしました。" : "Text copied.")
-			: copyStatus === "failed"
-				? (language === "ja" ? "コピーできませんでした。下の文章を選択してコピーしてください。" : "Could not copy. Select the text below to copy it.")
-				: "";
-		const reviewButton = reviewSections.length > 0
-			? '<button type="button" data-open-review class="mt-3 rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-navy-900 hover:border-mint-500">' + escapeHtml(language === "ja" ? ageLabel(agesData[Math.max(0, agesData.findIndex((entry) => entry.key === age) - 1)]?.key ?? "", language) + "の項目を再確認" : "Review the previous-age milestones") + "</button>"
+		const categories = resultCategories(age);
+		const notYetItems = categories.flatMap((category) => category.notYet.map((item) => ({ category: category.title, item })));
+		const unknownCount = categories.reduce((sum, category) => sum + category.unknown.length, 0);
+		const allYes = notYetItems.length === 0 && unknownCount === 0;
+		const resultSummary = allYes
+			? '<section class="rounded-2xl border border-gray-100 bg-white p-4" aria-label="' + escapeHtml(language === "ja" ? "チェック完了" : "Checklist complete") + '">' +
+				'<h3 class="text-lg font-bold text-navy-900">' + escapeHtml(language === "ja" ? ageLabel(age, language) + "のチェックが完了しました" : "The " + ageLabel(age, language) + " checklist is complete") + "</h3>" +
+				'<p class="mt-2 text-sm leading-6 text-gray-700">' + escapeHtml(language === "ja" ? "今回のチェックでは、すべての項目を『できる』と確認しました。" : "In this checklist, every item was marked as a skill your child can do.") + "</p>" +
+				'<p class="mt-3 text-sm leading-6 text-gray-600">' + escapeHtml(language === "ja" ? "このチェックは診断ではありません。日頃気になることがあれば、結果にかかわらず医師などの専門家に相談してください。" : "This checklist is not a diagnosis. If you have ongoing concerns, consult a doctor or other qualified professional regardless of the result.") + "</p></section>"
+			: (unknownCount > 0
+				? '<section class="rounded-2xl border border-gray-100 bg-white p-4" aria-label="' + escapeHtml(language === "ja" ? "未回答の項目" : "Unanswered items") + '">' +
+					'<h3 class="text-lg font-bold text-navy-900">' + escapeHtml(language === "ja" ? "未回答の項目があります" : "Some items are unanswered") + "</h3>" +
+					'<p class="mt-2 text-sm leading-6 text-gray-700">' + escapeHtml(language === "ja" ? "未回答の項目数：" + unknownCount + "項目" : "Unanswered items: " + unknownCount) + "</p></section>"
+				: "") +
+			(notYetItems.length > 0
+				? '<section class="rounded-2xl border border-gray-100 bg-white p-4" aria-label="' + escapeHtml(language === "ja" ? "まだできないと回答した項目" : "Items marked not yet") + '">' +
+					'<h3 class="text-base font-bold text-navy-900">' + escapeHtml(language === "ja" ? "『まだできない』と回答した項目" : "Items marked “not yet”") + "</h3>" +
+					'<ul class="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-gray-700">' + notYetItems.map(({ category, item }) => '<li><span class="font-semibold">' + escapeHtml(category) + "：</span>" + escapeHtml(item) + "</li>").join("") + "</ul></section>"
+				: "");
+		const showAiOnly = notYetItems.length === 0 && unknownCount > 0 && showUnknownAiQuestion;
+		const unknownAiButton = notYetItems.length === 0 && unknownCount > 0 && !showUnknownAiQuestion
+			? '<button type="button" data-open-unknown-ai class="min-h-11 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-navy-900 transition-colors hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2">' + escapeHtml(language === "ja" ? "この結果についてAIに質問" : "Ask AI about this result") + "</button>"
 			: "";
-		return '<section class="mt-5 border-t border-gray-200 pt-4" aria-label="' + escapeHtml(language === "ja" ? "相談に使う文章" : "Text for your consultation") + '">' +
-			reviewButton +
-			'<div class="mt-4 grid grid-cols-2 gap-2" role="tablist" aria-label="' + escapeHtml(language === "ja" ? "文章の用途" : "Choose a message") + '">' + tabs + "</div>" +
-			'<div role="tabpanel" class="pt-3">' +
-				'<div data-consultation-text role="textbox" aria-readonly="true" tabindex="0" aria-label="' + escapeHtml(labels[audience]) + '" class="w-full select-text whitespace-pre-wrap break-words rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text">' + escapeHtml(message) + "</div>" +
-				'<button type="button" data-copy-message class="mt-3 min-h-14 w-full rounded-xl bg-navy-900 px-5 py-4 text-base font-bold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2" style="width:100%;min-height:56px;font-size:16px">' + escapeHtml(language === "ja" ? "文章をコピー" : "Copy message") + "</button>" +
-				'<p data-copy-status role="status" aria-live="polite" class="min-h-5 pt-2 text-xs text-gray-500">' + escapeHtml(copied) + "</p>" +
-			"</div></section>";
+		const canShowConsultation = notYetItems.length > 0 || showAiOnly;
+		let consultationPanel = "";
+		if (canShowConsultation) {
+			const consultationAudience: Audience = notYetItems.length > 0 ? audience : "ai";
+			const message = consultationText(age, ageLabel(age, language), categories, language, consultationAudience);
+			const tabs = notYetItems.length > 0
+				? '<div class="mt-4 grid grid-cols-2 gap-2" role="tablist" aria-label="' + escapeHtml(language === "ja" ? "文章の用途" : "Choose a message") + '">' + (["doctor", "ai"] as const).map((value) => {
+					const selected = audience === value;
+					return '<button type="button" data-audience="' + value + '" role="tab" aria-selected="' + String(selected) + '" class="min-h-14 w-full rounded-xl border px-2 py-3 text-center text-lg font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-navy-900") + '" style="min-height:56px;font-size:clamp(15px,4.6vw,18px)">' + labels[value] + "</button>";
+				}).join("") + "</div>"
+				: "";
+			const copied = copyStatus === "copied"
+				? (language === "ja" ? "文章をコピーしました。" : "Text copied.")
+				: copyStatus === "failed"
+					? (language === "ja" ? "コピーできませんでした。下の文章を選択してコピーしてください。" : "Could not copy. Select the text below to copy it.")
+					: "";
+			const reviewButton = notYetItems.length > 0 && reviewSections.length > 0
+				? '<button type="button" data-open-review class="mt-3 rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-navy-900 hover:border-mint-500">' + escapeHtml(language === "ja" ? ageLabel(agesData[Math.max(0, agesData.findIndex((entry) => entry.key === age) - 1)]?.key ?? "", language) + "の項目を再確認" : "Review the previous-age milestones") + "</button>"
+				: "";
+			const panelHeading = showAiOnly
+				? '<h3 data-unknown-ai-heading tabindex="-1" class="text-base font-bold text-navy-900">' + escapeHtml(language === "ja" ? "AIへの質問文" : "Question for AI") + "</h3>"
+				: "";
+			consultationPanel = '<section class="border-t border-gray-200 pt-4" aria-label="' + escapeHtml(language === "ja" ? "相談に使う文章" : "Text for your consultation") + '">' +
+				panelHeading + reviewButton + tabs +
+				'<div role="tabpanel" class="pt-3">' +
+					'<div data-consultation-text role="textbox" aria-readonly="true" tabindex="0" aria-label="' + escapeHtml(labels[consultationAudience]) + '" class="w-full select-text whitespace-pre-wrap break-words rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text">' + escapeHtml(message) + "</div>" +
+					'<button type="button" data-copy-message class="mt-3 min-h-14 w-full rounded-xl bg-navy-900 px-5 py-4 text-base font-bold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2" style="width:100%;min-height:56px;font-size:16px">' + escapeHtml(language === "ja" ? "文章をコピー" : "Copy message") + "</button>" +
+					'<p data-copy-status role="status" aria-live="polite" aria-atomic="true" class="fixed z-[100] rounded-xl bg-navy-900 px-4 py-3 text-center text-sm font-semibold text-white transition-opacity duration-200 ' + (copied ? "opacity-100" : "pointer-events-none opacity-0") + '" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100vw - 2rem);transition:opacity 200ms">' + escapeHtml(copied) + "</p>" +
+				"</div></section>";
+		}
+		const closeButton = '<button type="button" data-toggle-results aria-expanded="true" class="min-h-14 w-full rounded-xl bg-navy-900 px-5 py-4 text-base font-bold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2" style="min-height:56px;font-size:16px">' + escapeHtml(language === "ja" ? "結果を閉じる" : "Close results") + "</button>";
+		return '<section class="mt-5 space-y-3 border-t border-gray-200 pt-4" aria-label="' + escapeHtml(language === "ja" ? "チェック結果" : "Checklist results") + '">' + resultSummary + unknownAiButton + consultationPanel + closeButton + "</section>";
 	};
 
 	const renderPreviousReview = (age: string, sections: PreviousReviewSection[]): string => {
@@ -529,7 +562,7 @@ function initChecklist(root: HTMLElement): () => void {
 		const viewTabs = (["checklist", "tips"] as const).map((value) => {
 			const selected = view === value;
 			const text = value === "checklist" ? labels.navChecklist : labels.navTips;
-			return '<button type="button" data-view="' + value + '" aria-current="' + String(selected) + '" class="min-h-14 w-full rounded-xl px-2 py-3 text-center text-lg font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:bg-gray-50 hover:text-navy-900") + '" style="min-height:56px;font-size:clamp(15px,4.6vw,18px)">' + escapeHtml(text) + "</button>";
+			return '<button type="button" data-view="' + value + '" aria-current="' + String(selected) + '" class="min-h-14 w-full rounded-xl border px-2 py-3 text-center text-lg font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-navy-900") + '" style="min-height:56px;font-size:clamp(15px,4.6vw,18px)">' + escapeHtml(text) + "</button>";
 		}).join("");
 		const localSaveError = language === "ja"
 			? "このブラウザーでは保存できません。ページを閉じると回答が消える場合があります。"
@@ -624,6 +657,9 @@ function initChecklist(root: HTMLElement): () => void {
 		view = nextView;
 		showResults = false;
 		showPreviousReview = false;
+		showUnknownAiQuestion = false;
+		copyStatus = "";
+		if (copyToastTimer !== undefined) window.clearTimeout(copyToastTimer);
 		const nextHash = "#" + nextView;
 		if (window.location.hash !== nextHash) window.history.pushState(null, "", nextHash);
 		render();
@@ -640,6 +676,31 @@ function initChecklist(root: HTMLElement): () => void {
 		const selection = window.getSelection();
 		selection?.removeAllRanges();
 		selection?.addRange(range);
+	};
+
+	const showCopyToast = (status: "copied" | "failed"): void => {
+		copyStatus = status;
+		if (copyToastTimer !== undefined) window.clearTimeout(copyToastTimer);
+		const toast = root.querySelector<HTMLElement>("[data-copy-status]");
+		if (!toast) {
+			copyStatus = "";
+			return;
+		}
+		toast.textContent = status === "copied"
+			? (language === "ja" ? "文章をコピーしました。" : "Text copied.")
+			: (language === "ja" ? "コピーできませんでした。下の文章を選択してコピーしてください。" : "Could not copy. Select the text below to copy it.");
+		toast.classList.remove("opacity-0", "pointer-events-none");
+		toast.classList.add("opacity-100");
+		copyToastTimer = window.setTimeout(() => {
+			if (copyStatus !== status) return;
+			copyStatus = "";
+			const activeToast = root.querySelector<HTMLElement>("[data-copy-status]");
+			if (!activeToast) return;
+			activeToast.textContent = "";
+			activeToast.classList.remove("opacity-100");
+			activeToast.classList.add("pointer-events-none", "opacity-0");
+			copyToastTimer = undefined;
+		}, status === "copied" ? 2400 : 4500);
 	};
 
 	const onClick = (event: Event): void => {
@@ -665,8 +726,10 @@ function initChecklist(root: HTMLElement): () => void {
 			if (!agesData.some((age) => age.key === selectedAge)) return;
 			showResults = false;
 			showPreviousReview = false;
+			showUnknownAiQuestion = false;
 			activeCategory = 0;
 			copyStatus = "";
+			if (copyToastTimer !== undefined) window.clearTimeout(copyToastTimer);
 			saveAndRender({ ...storage, selectedAge }, 'button[data-age-option="' + selectedAge + '"]');
 			return;
 		}
@@ -683,6 +746,8 @@ function initChecklist(root: HTMLElement): () => void {
 			const forAge = { ...(storage.milestoneAnswers[age] ?? {}) };
 			if (forAge[id] === answer) delete forAge[id];
 			else forAge[id] = answer;
+			showPreviousReview = false;
+			showUnknownAiQuestion = false;
 			const milestoneAnswers = { ...storage.milestoneAnswers, [age]: forAge };
 			saveAndRender({ ...storage, milestoneAnswers }, 'button[data-answer-age="' + age + '"][data-answer-id="' + id + '"][data-answer-value="' + answer + '"]');
 			return;
@@ -707,12 +772,27 @@ function initChecklist(root: HTMLElement): () => void {
 			root.querySelector<HTMLElement>('[data-audience="' + audience + '"]')?.focus({ preventScroll: true });
 			return;
 		}
+		if (button.hasAttribute("data-open-unknown-ai")) {
+			showUnknownAiQuestion = true;
+			copyStatus = "";
+			if (copyToastTimer !== undefined) window.clearTimeout(copyToastTimer);
+			render();
+			root.querySelector<HTMLElement>("[data-unknown-ai-heading]")?.focus({ preventScroll: true });
+			return;
+		}
 		if (button.hasAttribute("data-toggle-results")) {
 			showResults = !showResults;
-			if (!showResults) showPreviousReview = false;
+			if (!showResults) {
+				showPreviousReview = false;
+				showUnknownAiQuestion = false;
+				copyStatus = "";
+				if (copyToastTimer !== undefined) window.clearTimeout(copyToastTimer);
+			}
 			else {
+				showUnknownAiQuestion = false;
 				const sections = previousReviewSections(storage.selectedAge);
-				showPreviousReview = sections.some((section) => section.items.some(({ answer }) => answer !== "yes" && answer !== "notYet"));
+				const hasNotYet = resultCategories(storage.selectedAge).some((category) => category.notYet.length > 0);
+				showPreviousReview = hasNotYet && sections.some((section) => section.items.some(({ answer }) => answer !== "yes" && answer !== "notYet"));
 			}
 			render();
 			root.querySelector<HTMLElement>("[data-toggle-results]")?.focus({ preventScroll: true });
@@ -735,18 +815,14 @@ function initChecklist(root: HTMLElement): () => void {
 			if (!field) return;
 			const message = field.textContent ?? "";
 			if (!navigator.clipboard) {
-				copyStatus = "failed";
-				render();
+				showCopyToast("failed");
 				selectConsultationText();
 				return;
 			}
 			void navigator.clipboard.writeText(message).then(() => {
-				copyStatus = "copied";
-				render();
-				root.querySelector<HTMLElement>("[data-copy-message]")?.focus({ preventScroll: true });
+				showCopyToast("copied");
 			}).catch(() => {
-				copyStatus = "failed";
-				render();
+				showCopyToast("failed");
 				selectConsultationText();
 			});
 		}
@@ -884,6 +960,7 @@ function initChecklist(root: HTMLElement): () => void {
 		window.removeEventListener("hashchange", onHashChange);
 		window.removeEventListener("popstate", onHashChange);
 		window.clearTimeout(suppressAgeClickTimer);
+		if (copyToastTimer !== undefined) window.clearTimeout(copyToastTimer);
 		ageDragState = null;
 	};
 }
