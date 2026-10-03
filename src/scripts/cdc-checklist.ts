@@ -238,7 +238,7 @@ function initChecklist(root: HTMLElement): () => void {
 	const renderCategoryNavigation = (age: string): string => {
 		const names = categories();
 		const shortNames = language === "ja" ? ["社会性", "ことば", "認知", "運動"] : ["Social", "Lang.", "Cog.", "Move"];
-		return '<nav class="sticky top-0 z-20 -mx-4 grid grid-cols-4 gap-2 bg-white/95 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0 lg:top-[72px]" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
+		return '<nav class="sticky top-0 z-20 -mx-4 grid grid-cols-4 gap-1.5 bg-white/95 px-4 py-1.5 backdrop-blur sm:mx-0 sm:px-0 lg:top-[72px]" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
 			groupsForAge(age).map((group) => {
 				const selected = group.index === activeCategory;
 				const style = selected
@@ -247,8 +247,7 @@ function initChecklist(root: HTMLElement): () => void {
 				const accessibleName = language === "ja"
 					? names[group.index] + " " + group.items.length + "項目"
 					: names[group.index] + ": " + group.items.length + (group.items.length === 1 ? " item" : " items");
-				const badgeStyle = selected ? "bg-mint-50 text-mint-600" : "bg-gray-100 text-gray-600";
-				return '<button type="button" data-category="' + group.index + '" aria-label="' + escapeHtml(accessibleName) + '" aria-current="' + (selected ? "true" : "false") + '" class="relative flex min-h-16 min-w-0 items-center justify-center rounded-2xl border py-1 font-bold shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + style + '" style="display:flex;min-height:72px;align-items:center;justify-content:center;position:relative;gap:clamp(2px,1vw,4px);padding-left:0;padding-right:0"><span style="white-space:nowrap;font-size:clamp(12px,4vw,16px);line-height:1.25">' + escapeHtml(shortNames[group.index]) + '</span><span data-category-count aria-hidden="true" class="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-sm font-bold ' + badgeStyle + '" style="height:clamp(20px,6.5vw,28px);min-width:clamp(20px,6.5vw,28px);box-sizing:border-box;padding:0 2px;font-size:clamp(11px,3.6vw,14px);line-height:1">' + group.items.length + '</span></button>';
+				return '<button type="button" data-category="' + group.index + '" aria-label="' + escapeHtml(accessibleName) + '" aria-current="' + (selected ? "true" : "false") + '" class="relative flex min-h-14 min-w-0 items-center justify-center rounded-2xl border py-1 font-bold shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + style + '" style="display:flex;min-height:56px;align-items:center;justify-content:center;position:relative;gap:clamp(2px,0.75vw,3px);padding-left:0;padding-right:0"><span style="white-space:nowrap;font-size:clamp(12px,3.5vw,14px);line-height:1.25">' + escapeHtml(shortNames[group.index]) + '</span><span data-category-count aria-hidden="true" class="inline-flex items-center font-semibold" style="font-size:clamp(10px,3vw,12px);line-height:1">' + group.items.length + '</span></button>';
 			}).join("") +
 		"</nav>";
 	};
@@ -260,7 +259,6 @@ function initChecklist(root: HTMLElement): () => void {
 				const style = selected
 					? "border-mint-500 bg-mint-50 text-mint-600"
 					: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50";
-				const check = selected ? '<span class="flex h-7 w-7 items-center justify-center rounded-full bg-mint-500 text-white"><span class="material-symbols-outlined text-lg" aria-hidden="true">check</span></span>' : "";
 				const fullAgeLabel = ageLabel(age.key, language);
 				let visibleAgeParts = [fullAgeLabel];
 				if (language === "ja" && age.key === "15 mo") visibleAgeParts = ["1歳", "3か月"];
@@ -268,7 +266,7 @@ function initChecklist(root: HTMLElement): () => void {
 				else if (language === "ja" && age.key === "30 mo") visibleAgeParts = ["2歳", "6か月"];
 				else if (language === "en" && age.key.endsWith("mo")) visibleAgeParts = [fullAgeLabel.split(" ")[0], "months"];
 				const visibleAgeMarkup = visibleAgeParts.map((part) => '<span class="block leading-4">' + escapeHtml(part) + "</span>").join("");
-				return '<button type="button" data-age-option="' + escapeHtml(age.key) + '" aria-label="' + escapeHtml(fullAgeLabel) + '" aria-pressed="' + String(selected) + '" class="inline-flex h-20 min-h-20 w-20 min-w-20 max-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-sm font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + style + '" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:80px;min-height:80px;box-sizing:border-box;user-select:none;-webkit-user-select:none">' + check + visibleAgeMarkup + "</button>";
+				return '<button type="button" data-age-option="' + escapeHtml(age.key) + '" aria-label="' + escapeHtml(fullAgeLabel) + '" aria-pressed="' + String(selected) + '" class="inline-flex h-20 min-h-20 w-20 min-w-20 max-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center text-sm font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + style + '" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:80px;min-height:80px;box-sizing:border-box;text-align:center;user-select:none;-webkit-user-select:none">' + visibleAgeMarkup + "</button>";
 			}).join("") +
 		"</div></div>";
 	};
@@ -564,11 +562,6 @@ function initChecklist(root: HTMLElement): () => void {
 			button.classList.toggle("bg-white", !selected);
 			button.classList.toggle("text-navy-900", !selected);
 			button.classList.toggle("hover:border-gray-300", !selected);
-			const badge = button.querySelector<HTMLElement>("[data-category-count]");
-			badge?.classList.toggle("bg-mint-50", selected);
-			badge?.classList.toggle("text-mint-600", selected);
-			badge?.classList.toggle("bg-gray-100", !selected);
-			badge?.classList.toggle("text-gray-600", !selected);
 		});
 	};
 
