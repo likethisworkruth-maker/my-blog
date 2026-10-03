@@ -258,9 +258,16 @@ function initChecklist(root: HTMLElement): () => void {
 		return '<div id="cdc-age-options" class="cdc-age-chip-viewport -mx-4 mt-2 overflow-hidden px-4 pb-1 sm:mx-0 sm:px-0" style="overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab" role="group" aria-label="' + escapeHtml(language === "ja" ? "チェックする年齢" : copy().ageLabel) + '"><div data-age-track class="flex w-max flex-nowrap gap-2" style="display:flex;flex-wrap:nowrap;gap:8px;width:max-content;position:relative;transform:translate3d(0,0,0);transition:transform 220ms ease-out">' +
 			agesData.map((age) => {
 				const selected = selectedAge === age.key;
-				const style = selected
-					? "border-mint-500 bg-mint-50 text-mint-600"
-					: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50";
+				const ageMilestones = detailedMilestonesData[age.key] ?? [];
+				const ageAnswers = currentAnswers(age.key);
+				const complete = ageMilestones.length > 0 && ageMilestones.every((_item, index) => ageAnswers[String(index)] === "yes");
+				const style = complete
+					? selected
+						? "border-2 border-mint-600 bg-mint-50 text-mint-600"
+						: "border-mint-500 bg-mint-50 text-mint-600"
+					: selected
+						? "border-2 border-mint-500 bg-white text-mint-600"
+						: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50";
 				const fullAgeLabel = ageLabel(age.key, language);
 				let visibleAgeParts = [fullAgeLabel];
 				if (language === "ja" && age.key === "15 mo") visibleAgeParts = ["1歳", "3か月"];
@@ -441,9 +448,9 @@ function initChecklist(root: HTMLElement): () => void {
 			const selected = checked.includes(index);
 			const text = language === "ja" ? tip.ja : tip.en;
 			const stateLabel = selected ? (language === "ja" ? "チェック済み" : "Checked") : (language === "ja" ? "チェックする" : "Check");
-			const checkboxIcon = selected ? "check_box" : "check_box_outline_blank";
+			const checkboxIcon = "check_box";
 			const checkboxStyle = selected
-				? "material-symbols-filled text-mint-500"
+				? "material-symbols-outlined material-symbols-filled text-mint-500"
 				: "material-symbols-outlined text-gray-400 group-hover:text-mint-500";
 			return '<li class="grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-3 border-b border-gray-100 py-4" style="display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;gap:12px;padding-top:16px;padding-bottom:16px">' +
 				'<p class="min-w-0 text-base leading-7 text-navy-900">' + escapeHtml(text) + "</p>" +
