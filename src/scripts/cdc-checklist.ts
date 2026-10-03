@@ -224,14 +224,14 @@ function initChecklist(root: HTMLElement): () => void {
 
 	const answerButtons = (age: string, id: string, answer?: Answer): string => {
 		const labels = copy();
-		return '<div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0" role="group" aria-label="' + escapeHtml(language === "ja" ? "項目の回答" : "Milestone answer") + '">' +
+		return '<div class="grid w-full grid-cols-2 gap-3" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%" role="group" aria-label="' + escapeHtml(language === "ja" ? "項目の回答" : "Milestone answer") + '">' +
 			(["yes", "notYet"] as const).map((value) => {
 				const selected = answer === value;
 				const text = value === "yes" ? labels.yes : labels.notYet;
 				const style = selected
 					? "border-mint-500 bg-mint-50 text-mint-600"
 					: "border-gray-300 bg-white text-gray-600 hover:bg-gray-50";
-				return '<button type="button" data-answer-age="' + escapeHtml(age) + '" data-answer-id="' + escapeHtml(id) + '" data-answer-value="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-12 w-full rounded-xl border px-3 py-2 text-sm font-bold transition-colors sm:w-auto sm:flex-1 sm:px-4 ' + style + '">' + escapeHtml(text) + "</button>";
+				return '<button type="button" data-answer-age="' + escapeHtml(age) + '" data-answer-id="' + escapeHtml(id) + '" data-answer-value="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-12 w-full rounded-xl border px-3 py-2 text-sm font-bold transition-colors ' + style + '" style="min-height:48px">' + escapeHtml(text) + "</button>";
 			}).join("") +
 		"</div>";
 	};
@@ -239,8 +239,7 @@ function initChecklist(root: HTMLElement): () => void {
 	const renderCategoryNavigation = (age: string): string => {
 		const names = categories();
 		const shortNames = language === "ja" ? ["社会性", "ことば", "認知", "運動"] : ["Social", "Lang.", "Cog.", "Move"];
-		const desktopNames = language === "ja" ? shortNames : ["Social", "Language", "Cognition", "Movement"];
-		return '<nav class="sticky top-0 z-20 -mx-4 grid grid-cols-4 gap-2 border-y border-gray-200 bg-white/95 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0 lg:top-[72px]" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
+		return '<nav class="sticky top-0 z-20 -mx-4 grid grid-cols-4 gap-2 border-y border-gray-200 bg-white/95 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0 lg:top-[72px]" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
 			groupsForAge(age).map((group) => {
 				const selected = group.index === activeCategory;
 				const style = selected
@@ -250,21 +249,42 @@ function initChecklist(root: HTMLElement): () => void {
 					? names[group.index] + " " + group.items.length + "項目"
 					: names[group.index] + ": " + group.items.length + (group.items.length === 1 ? " item" : " items");
 				const badgeStyle = selected ? "bg-mint-50 text-mint-600" : "bg-gray-100 text-gray-600";
-				return '<button type="button" data-category="' + group.index + '" aria-label="' + escapeHtml(accessibleName) + '" aria-current="' + (selected ? "true" : "false") + '" class="flex min-h-20 min-w-0 items-center justify-center gap-1 rounded-2xl border px-1 py-2 text-xs font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-mint-50 ' + style + '"><span class="whitespace-nowrap sm:hidden">' + escapeHtml(shortNames[group.index]) + '</span><span class="hidden whitespace-nowrap sm:inline">' + escapeHtml(desktopNames[group.index]) + '</span><span data-category-count aria-hidden="true" class="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-bold ' + badgeStyle + '">' + group.items.length + "</span></button>";
+				return '<button type="button" data-category="' + group.index + '" aria-label="' + escapeHtml(accessibleName) + '" aria-current="' + (selected ? "true" : "false") + '" class="relative flex min-h-20 min-w-0 items-center justify-center gap-1 rounded-2xl border px-1 py-2 text-[13px] font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-mint-50 ' + style + '" style="display:flex;min-height:80px;align-items:center;justify-content:center;position:relative;gap:4px"><span class="whitespace-nowrap">' + escapeHtml(shortNames[group.index]) + '</span><span data-category-count aria-hidden="true" class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-bold ' + badgeStyle + '">' + group.items.length + '</span><span data-category-underline aria-hidden="true" class="pointer-events-none absolute bottom-1 left-3 right-3 h-1 rounded-full bg-mint-500" style="display:' + (selected ? "block" : "none") + '"></span></button>';
 			}).join("") +
 		"</nav>";
 	};
 
 	const renderAgeChips = (selectedAge: string): string => {
-		return '<div id="cdc-age-options" class="cdc-age-chip-row -mx-4 mt-2 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="' + escapeHtml(language === "ja" ? "チェックする年齢" : copy().ageLabel) + '">' +
+		return '<div id="cdc-age-options" class="cdc-age-chip-row -mx-4 mt-2 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px" role="group" aria-label="' + escapeHtml(language === "ja" ? "チェックする年齢" : copy().ageLabel) + '">' +
 			agesData.map((age) => {
 				const selected = selectedAge === age.key;
 				const style = selected
 					? "border-mint-500 bg-mint-50 text-mint-600"
 					: "border-gray-200 bg-white text-gray-700 hover:bg-gray-50";
-				return '<button type="button" data-age-option="' + escapeHtml(age.key) + '" aria-pressed="' + String(selected) + '" class="inline-flex min-h-12 shrink-0 items-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-mint-50 sm:px-3 ' + style + '">' + escapeHtml(ageLabel(age.key, language)) + "</button>";
+				const check = selected ? '<span class="flex h-7 w-7 items-center justify-center rounded-full bg-mint-500 text-white"><span class="material-symbols-outlined text-lg" aria-hidden="true">check</span></span>' : "";
+				const fullAgeLabel = ageLabel(age.key, language);
+				let visibleAgeParts = [fullAgeLabel];
+				if (language === "ja" && age.key === "15 mo") visibleAgeParts = ["1歳", "3か月"];
+				else if (language === "ja" && age.key === "18 mo") visibleAgeParts = ["1歳", "6か月"];
+				else if (language === "ja" && age.key === "30 mo") visibleAgeParts = ["2歳", "6か月"];
+				else if (language === "en" && age.key.endsWith("mo")) visibleAgeParts = [fullAgeLabel.split(" ")[0], "months"];
+				const visibleAgeMarkup = visibleAgeParts.map((part) => '<span class="block leading-4">' + escapeHtml(part) + "</span>").join("");
+				return '<button type="button" data-age-option="' + escapeHtml(age.key) + '" aria-label="' + escapeHtml(fullAgeLabel) + '" aria-pressed="' + String(selected) + '" class="inline-flex h-20 min-h-20 w-20 min-w-20 max-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-mint-50 ' + style + '" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:80px;min-height:80px;box-sizing:border-box">' + check + visibleAgeMarkup + "</button>";
 			}).join("") +
 		"</div>";
+	};
+
+	const centerSelectedAgeChip = (smooth = false): void => {
+		const row = root.querySelector<HTMLElement>("#cdc-age-options");
+		const selected = row && Array.from(row.querySelectorAll<HTMLButtonElement>("[data-age-option]"))
+			.find((button) => button.dataset.ageOption === storage.selectedAge);
+		if (!row || !selected) return;
+
+		const rowRect = row.getBoundingClientRect();
+		const selectedRect = selected.getBoundingClientRect();
+		const desiredLeft = row.scrollLeft + selectedRect.left - rowRect.left - (row.clientWidth - selectedRect.width) / 2;
+		const maxLeft = Math.max(0, row.scrollWidth - row.clientWidth);
+		row.scrollTo({ left: Math.max(0, Math.min(maxLeft, desiredLeft)), behavior: smooth ? "smooth" : "auto" });
 	};
 
 	const renderProgressSummary = (age: string): string => {
@@ -277,8 +297,8 @@ function initChecklist(root: HTMLElement): () => void {
 		const percent = items.length > 0 ? Math.round(answered / items.length * 100) : 0;
 		return '<section class="mt-4 border-b border-gray-200 pb-4" aria-labelledby="cdc-checklist-heading">' +
 			'<h2 id="cdc-checklist-heading" class="text-xl font-bold text-navy-900">' + escapeHtml(ageLabel(age, language) + " " + answered + " / " + items.length + (language === "ja" ? "項目" : " items")) + "</h2>" +
-			'<div class="mt-2 h-3 overflow-hidden rounded-full bg-gray-100" role="progressbar" aria-label="' + escapeHtml(language === "ja" ? ageLabel(age, language) + "の確認済み項目" : "Milestones reviewed for " + ageLabel(age, language)) + '" aria-valuemin="0" aria-valuemax="' + items.length + '" aria-valuenow="' + answered + '">' +
-					'<span class="block h-full rounded-full bg-mint-500 transition-[width]" style="width:' + percent + '%"></span>' +
+			'<div class="mt-2 h-3 overflow-hidden rounded-full bg-gray-100" style="height:12px;border-radius:9999px;overflow:hidden" role="progressbar" aria-label="' + escapeHtml(language === "ja" ? ageLabel(age, language) + "の確認済み項目" : "Milestones reviewed for " + ageLabel(age, language)) + '" aria-valuemin="0" aria-valuemax="' + items.length + '" aria-valuenow="' + answered + '">' +
+					'<span class="block h-full rounded-full bg-mint-500 transition-[width]" style="height:100%;width:' + percent + '%;border-radius:9999px"></span>' +
 			"</div></section>";
 	};
 
@@ -291,15 +311,14 @@ function initChecklist(root: HTMLElement): () => void {
 			const rows = group.items.map((item, localIndex) => {
 				const index = group.start + localIndex;
 				const text = language === "ja" ? item.ja : item.en;
-			return '<li class="grid gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">' +
-					'<div class="flex min-w-0 items-start gap-3"><span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-mint-50 text-base font-bold tabular-nums text-mint-600">' + (index + 1) + "</span>" +
-					'<p class="pt-1 text-base leading-7 text-navy-900">' + escapeHtml(text) + "</p></div>" +
+				return '<li class="grid gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm" style="display:grid;grid-template-columns:minmax(0,1fr);gap:16px">' +
+					'<p class="text-base leading-7 text-navy-900">' + escapeHtml(text) + "</p>" +
 					answerButtons(age, String(index), answers[String(index)]) +
 				"</li>";
 			}).join("");
 			return '<section id="cdc-category-' + group.index + '" data-cdc-category class="scroll-mt-24 pt-5">' +
 				'<h3 class="mb-2 flex items-baseline justify-between gap-3 text-xl font-bold text-navy-900"><span>' + escapeHtml(categories()[group.index]) + '</span><span class="text-sm font-semibold text-gray-500">' + group.items.length + (language === "ja" ? "項目" : " items") + "</span></h3>" +
-				'<ul class="m-0 list-none space-y-2 p-0">' + rows + "</ul></section>";
+				'<ul class="m-0 list-none space-y-3 p-0">' + rows + "</ul></section>";
 		}).join("");
 		const empty = items.length === 0 ? '<p class="py-6 text-sm text-gray-500">' + escapeHtml(labels.emptyChecklist) + "</p>" : "";
 		const reviewSections = previousReviewSections(age);
@@ -327,7 +346,6 @@ function initChecklist(root: HTMLElement): () => void {
 			const text = language === "ja" ? tip.ja : tip.en;
 			const stateLabel = selected ? (language === "ja" ? "チェック済み" : "Checked") : (language === "ja" ? "チェックする" : "Check");
 			return '<li class="flex items-start gap-3 border-b border-gray-100 py-3">' +
-				'<span class="w-6 shrink-0 pt-0.5 text-right text-xs tabular-nums text-gray-400">' + (index + 1) + "</span>" +
 				'<p class="min-w-0 flex-1 text-sm leading-6 text-navy-900">' + escapeHtml(text) + "</p>" +
 				'<button type="button" data-tip-index="' + index + '" aria-pressed="' + String(selected) + '" aria-label="' + escapeHtml(stateLabel) + '" class="min-h-9 shrink-0 rounded-lg border px-2.5 text-xs font-semibold ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-300 text-gray-600 hover:bg-gray-50") + '">' + escapeHtml(stateLabel) + "</button>" +
 			"</li>";
@@ -378,8 +396,8 @@ function initChecklist(root: HTMLElement): () => void {
 		const sectionMarkup = sections.map((section) => {
 			const rows = section.items.map(({ id, item, answer }) => {
 				const text = language === "ja" ? item.ja : item.en;
-				return '<li class="grid gap-2 border-b border-gray-100 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">' +
-					'<p class="text-sm leading-6 text-navy-900">' + escapeHtml(text) + "</p>" +
+				return '<li class="grid gap-3 rounded-xl border border-gray-100 bg-white p-3" style="display:grid;grid-template-columns:minmax(0,1fr);gap:12px">' +
+					'<p class="text-base leading-7 text-navy-900">' + escapeHtml(text) + "</p>" +
 					answerButtons(previousAge, id, answer) +
 				"</li>";
 			}).join("");
@@ -453,10 +471,12 @@ function initChecklist(root: HTMLElement): () => void {
 			badge?.classList.toggle("text-mint-600", selected);
 			badge?.classList.toggle("bg-gray-100", !selected);
 			badge?.classList.toggle("text-gray-600", !selected);
+			const underline = button.querySelector<HTMLElement>("[data-category-underline]");
+			if (underline) underline.style.display = selected ? "block" : "none";
 		});
 	};
 
-	const saveAndRender = (nextStorage: AppStorage, focusSelector?: string): void => {
+	const saveAndRender = (nextStorage: AppStorage, focusSelector?: string, centerAgeChip = false): void => {
 		storage = nextStorage;
 		try {
 			window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
@@ -465,6 +485,7 @@ function initChecklist(root: HTMLElement): () => void {
 			saveAvailable = false;
 		}
 		render();
+		if (centerAgeChip) centerSelectedAgeChip(true);
 		if (focusSelector) root.querySelector<HTMLElement>(focusSelector)?.focus({ preventScroll: true });
 	};
 
@@ -495,7 +516,7 @@ function initChecklist(root: HTMLElement): () => void {
 			showPreviousReview = false;
 			activeCategory = 0;
 			copyStatus = "";
-			saveAndRender({ ...storage, selectedAge }, 'button[data-age-option="' + selectedAge + '"]');
+			saveAndRender({ ...storage, selectedAge }, 'button[data-age-option="' + selectedAge + '"]', true);
 			return;
 		}
 		if (button.dataset.category !== undefined) {
@@ -610,12 +631,13 @@ function initChecklist(root: HTMLElement): () => void {
 	window.addEventListener("resize", onScroll);
 	window.addEventListener("hashchange", onHashChange);
 	window.addEventListener("popstate", onHashChange);
-		try {
-			window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-		} catch {
-			saveAvailable = false;
-		}
+	try {
+		window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+	} catch {
+		saveAvailable = false;
+	}
 	render();
+	centerSelectedAgeChip();
 
 	return () => {
 		root.removeEventListener("click", onClick);
