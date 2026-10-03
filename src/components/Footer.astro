@@ -50,18 +50,18 @@ const today =
 		</a>
 
 		<a
-			href="/recommend/"
-			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${isRecommendPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
-		>
-			<span class={`material-symbols-outlined text-2xl ${isRecommendPath ? "material-symbols-filled" : ""}`} aria-hidden="true">thumb_up</span>
-			<span>{UI.footerNav.rikutsu}</span>
-		</a>
-		<a
 			href="/cdc/"
 			class:list={["flex-1", "flex", "flex-col", "items-center", "gap-1", "text-[0.65rem]", "font-medium", "transition-colors", isCdcPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"]}
 		>
 			<span class:list={["material-symbols-outlined", "text-2xl", isCdcPath && "material-symbols-filled"]} aria-hidden="true">checklist</span>
 			<span>{UI.footerNav.cdc}</span>
+		</a>
+		<a
+			href="/recommend/"
+			class={`flex-1 flex flex-col items-center gap-1 text-[0.65rem] font-medium transition-colors ${isRecommendPath ? "text-mint-500 font-bold" : "text-gray-500 hover:text-gray-900"}`}
+		>
+			<span class={`material-symbols-outlined text-2xl ${isRecommendPath ? "material-symbols-filled" : ""}`} aria-hidden="true">thumb_up</span>
+			<span>{UI.footerNav.rikutsu}</span>
 		</a>
 	</div>
 </footer>

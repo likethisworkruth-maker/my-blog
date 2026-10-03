@@ -5,22 +5,17 @@ import { detailedTipsData } from "../data/cdc/tipsData";
 import { consultationText, type ConsultationCategory } from "../data/cdc/consultationText";
 import { translations } from "../data/cdc/i18n";
 import type { Answer, AppStorage, Language } from "../data/cdc/types";
+import { getSupabaseClient } from "./supabase-client";
+import {
+	createSupabaseCdcCloudAdapter,
+	deactivateCdcStorageUser,
+	restoreCdcStorageForUser,
+	saveCdcStorageForUser,
+	saveCdcStorageLocally,
+	type CdcSyncResult,
+} from "./cdc-user-storage";
 
 const STORAGE_KEY = "kids-growth-memo-app-storage-v1";
-const cdcPageSlugs: Record<string, string> = {
-	"2 mo": "2-months",
-	"4 mo": "4-months",
-	"6 mo": "6-months",
-	"9 mo": "9-months",
-	"1 year": "1-year",
-	"15 mo": "15-months",
-	"18 mo": "18-months",
-	"2 years": "2-years",
-	"30 mo": "30-months",
-	"3 years": "3-years",
-	"4 years": "4-years",
-	"5 years": "5-years",
-};
 const categoryNames: Record<Language, string[]> = {
 	ja: ["社会性・情緒", "ことば・コミュニケーション", "認知・学習", "運動・身体"],
 	en: ["Social & emotional", "Language & communication", "Cognitive", "Movement"],
@@ -148,11 +143,6 @@ function groupsForAge(age: string): MilestoneGroup[] {
 	});
 }
 
-function ageSourceUrl(age: string): string {
-	const slug = cdcPageSlugs[age];
-	return slug ? "https://www.cdc.gov/act-early/milestones/" + slug + ".html" : "https://www.cdc.gov/act-early/milestones/";
-}
-
 function initChecklist(root: HTMLElement): () => void {
 	let storage = loadStorage();
 	let view = pageFromHash();
@@ -163,7 +153,16 @@ function initChecklist(root: HTMLElement): () => void {
 	let tipsFilter: TipsFilter = "unchecked";
 	let copyStatus: "copied" | "failed" | "" = "";
 	let saveAvailable = true;
+	let cloudSaveStatus: "idle" | "saving" | "saved" | "failed" | "switching" = "idle";
+	let activeAccountUserId: string | null = null;
+	let authReady = false;
+	let accountSwitching = false;
+	let authGeneration = 0;
+	let uiRevision = 0;
+	let disposed = false;
 	let language: Language = storage.language;
+	const supabase = getSupabaseClient();
+	const cdcCloud = supabase ? createSupabaseCdcCloudAdapter(supabase) : undefined;
 
 	const currentAnswers = (age: string) => storage.milestoneAnswers[age] ?? {};
 	const currentLanguage = () => storage.language;
@@ -239,7 +238,7 @@ function initChecklist(root: HTMLElement): () => void {
 	const renderCategoryNavigation = (age: string): string => {
 		const names = categories();
 		const shortNames = language === "ja" ? ["社会性", "ことば", "認知", "運動"] : ["Social", "Lang.", "Cog.", "Move"];
-		return '<nav class="sticky top-0 z-20 -mx-4 grid grid-cols-4 gap-2 border-y border-gray-200 bg-white/95 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0 lg:top-[72px]" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
+		return '<nav class="sticky top-0 z-20 -mx-4 grid grid-cols-4 gap-2 bg-white/95 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0 lg:top-[72px]" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px" aria-label="' + escapeHtml(language === "ja" ? "発達カテゴリ" : "Milestone categories") + '">' +
 			groupsForAge(age).map((group) => {
 				const selected = group.index === activeCategory;
 				const style = selected
@@ -249,13 +248,13 @@ function initChecklist(root: HTMLElement): () => void {
 					? names[group.index] + " " + group.items.length + "項目"
 					: names[group.index] + ": " + group.items.length + (group.items.length === 1 ? " item" : " items");
 				const badgeStyle = selected ? "bg-mint-50 text-mint-600" : "bg-gray-100 text-gray-600";
-				return '<button type="button" data-category="' + group.index + '" aria-label="' + escapeHtml(accessibleName) + '" aria-current="' + (selected ? "true" : "false") + '" class="relative flex min-h-20 min-w-0 items-center justify-center gap-1 rounded-2xl border px-1 py-2 text-[13px] font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-mint-50 ' + style + '" style="display:flex;min-height:80px;align-items:center;justify-content:center;position:relative;gap:4px"><span class="whitespace-nowrap">' + escapeHtml(shortNames[group.index]) + '</span><span data-category-count aria-hidden="true" class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-bold ' + badgeStyle + '">' + group.items.length + '</span><span data-category-underline aria-hidden="true" class="pointer-events-none absolute bottom-1 left-3 right-3 h-1 rounded-full bg-mint-500" style="display:' + (selected ? "block" : "none") + '"></span></button>';
+				return '<button type="button" data-category="' + group.index + '" aria-label="' + escapeHtml(accessibleName) + '" aria-current="' + (selected ? "true" : "false") + '" class="relative flex min-h-16 min-w-0 items-center justify-center rounded-2xl border py-1 font-bold shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + style + '" style="display:flex;min-height:72px;align-items:center;justify-content:center;position:relative;gap:clamp(2px,1vw,4px);padding-left:0;padding-right:0"><span style="white-space:nowrap;font-size:clamp(12px,4vw,16px);line-height:1.25">' + escapeHtml(shortNames[group.index]) + '</span><span data-category-count aria-hidden="true" class="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-sm font-bold ' + badgeStyle + '" style="height:clamp(20px,6.5vw,28px);min-width:clamp(20px,6.5vw,28px);box-sizing:border-box;padding:0 2px;font-size:clamp(11px,3.6vw,14px);line-height:1">' + group.items.length + '</span></button>';
 			}).join("") +
 		"</nav>";
 	};
 
 	const renderAgeChips = (selectedAge: string): string => {
-		return '<div id="cdc-age-options" class="cdc-age-chip-row -mx-4 mt-2 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px" role="group" aria-label="' + escapeHtml(language === "ja" ? "チェックする年齢" : copy().ageLabel) + '">' +
+		return '<div id="cdc-age-options" class="cdc-age-chip-viewport -mx-4 mt-2 overflow-hidden px-4 pb-1 sm:mx-0 sm:px-0" style="overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab" role="group" aria-label="' + escapeHtml(language === "ja" ? "チェックする年齢" : copy().ageLabel) + '"><div data-age-track class="flex w-max flex-nowrap gap-2" style="display:flex;flex-wrap:nowrap;gap:8px;width:max-content;position:relative;transform:translate3d(0,0,0);transition:transform 220ms ease-out">' +
 			agesData.map((age) => {
 				const selected = selectedAge === age.key;
 				const style = selected
@@ -269,22 +268,119 @@ function initChecklist(root: HTMLElement): () => void {
 				else if (language === "ja" && age.key === "30 mo") visibleAgeParts = ["2歳", "6か月"];
 				else if (language === "en" && age.key.endsWith("mo")) visibleAgeParts = [fullAgeLabel.split(" ")[0], "months"];
 				const visibleAgeMarkup = visibleAgeParts.map((part) => '<span class="block leading-4">' + escapeHtml(part) + "</span>").join("");
-				return '<button type="button" data-age-option="' + escapeHtml(age.key) + '" aria-label="' + escapeHtml(fullAgeLabel) + '" aria-pressed="' + String(selected) + '" class="inline-flex h-20 min-h-20 w-20 min-w-20 max-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-mint-50 ' + style + '" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:80px;min-height:80px;box-sizing:border-box">' + check + visibleAgeMarkup + "</button>";
+				return '<button type="button" data-age-option="' + escapeHtml(age.key) + '" aria-label="' + escapeHtml(fullAgeLabel) + '" aria-pressed="' + String(selected) + '" class="inline-flex h-20 min-h-20 w-20 min-w-20 max-w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-sm font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + style + '" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:80px;min-width:80px;max-width:80px;height:80px;min-height:80px;box-sizing:border-box;user-select:none;-webkit-user-select:none">' + check + visibleAgeMarkup + "</button>";
 			}).join("") +
-		"</div>";
+		"</div></div>";
 	};
 
-	const centerSelectedAgeChip = (smooth = false): void => {
-		const row = root.querySelector<HTMLElement>("#cdc-age-options");
-		const selected = row && Array.from(row.querySelectorAll<HTMLButtonElement>("[data-age-option]"))
-			.find((button) => button.dataset.ageOption === storage.selectedAge);
-		if (!row || !selected) return;
+	let ageTrackOffset = 0;
+	let ageDragState: { pointerId: number; startX: number; startOffset: number; moved: boolean; viewport: HTMLElement; track: HTMLElement } | null = null;
+	let suppressNextAgeClick = false;
+	let suppressAgeClickTimer = 0;
+	let keyboardNavigation = false;
 
-		const rowRect = row.getBoundingClientRect();
-		const selectedRect = selected.getBoundingClientRect();
-		const desiredLeft = row.scrollLeft + selectedRect.left - rowRect.left - (row.clientWidth - selectedRect.width) / 2;
-		const maxLeft = Math.max(0, row.scrollWidth - row.clientWidth);
-		row.scrollTo({ left: Math.max(0, Math.min(maxLeft, desiredLeft)), behavior: smooth ? "smooth" : "auto" });
+	const setAgeTrackOffset = (offset: number, smooth = false): void => {
+		const viewport = root.querySelector<HTMLElement>("#cdc-age-options");
+		const track = viewport?.querySelector<HTMLElement>("[data-age-track]");
+		if (!viewport || !track) return;
+		const styles = window.getComputedStyle(viewport);
+		const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0;
+		const paddingRight = Number.parseFloat(styles.paddingRight) || 0;
+		const minOffset = Math.min(0, viewport.clientWidth - paddingLeft - paddingRight - track.scrollWidth);
+		ageTrackOffset = Math.max(minOffset, Math.min(0, offset));
+		track.style.transition = smooth ? "transform 220ms ease-out" : "none";
+		track.style.transform = "translate3d(" + ageTrackOffset + "px,0,0)";
+	};
+
+	const centerAgeChip = (ageKey: string, smooth = false): void => {
+		const viewport = root.querySelector<HTMLElement>("#cdc-age-options");
+		const track = viewport?.querySelector<HTMLElement>("[data-age-track]");
+		const chip = track && Array.from(track.querySelectorAll<HTMLButtonElement>("[data-age-option]"))
+			.find((button) => button.dataset.ageOption === ageKey);
+		if (!viewport || !track || !chip) return;
+		const paddingLeft = Number.parseFloat(window.getComputedStyle(viewport).paddingLeft) || 0;
+		setAgeTrackOffset(viewport.clientWidth / 2 - paddingLeft - (chip.offsetLeft + chip.offsetWidth / 2), smooth);
+	};
+
+	const centerSelectedAgeChip = (smooth = false): void => centerAgeChip(storage.selectedAge, smooth);
+
+	const onAgePointerDown = (event: PointerEvent): void => {
+		if (event.pointerType === "mouse" && event.button !== 0) return;
+		const target = event.target;
+		if (!(target instanceof Element) || !target.closest("[data-age-option]")) return;
+		const viewport = root.querySelector<HTMLElement>("#cdc-age-options");
+		const track = viewport?.querySelector<HTMLElement>("[data-age-track]");
+		if (!viewport || !track) return;
+		keyboardNavigation = false;
+		ageDragState = { pointerId: event.pointerId, startX: event.clientX, startOffset: ageTrackOffset, moved: false, viewport, track };
+	};
+
+	const onAgePointerMove = (event: PointerEvent): void => {
+		const drag = ageDragState;
+		if (!drag || drag.pointerId !== event.pointerId) return;
+		const distance = event.clientX - drag.startX;
+		if (!drag.moved && Math.abs(distance) > 6) {
+			drag.moved = true;
+			drag.viewport.style.cursor = "grabbing";
+			drag.track.style.transition = "none";
+		}
+		if (!drag.moved) return;
+		event.preventDefault();
+		setAgeTrackOffset(drag.startOffset + distance);
+	};
+
+	const onAgePointerUp = (event: PointerEvent): void => {
+		const drag = ageDragState;
+		if (!drag || drag.pointerId !== event.pointerId) return;
+		if (drag.moved) {
+			drag.viewport.style.cursor = "grab";
+			drag.track.style.transition = "transform 220ms ease-out";
+			suppressNextAgeClick = true;
+			window.clearTimeout(suppressAgeClickTimer);
+			suppressAgeClickTimer = window.setTimeout(() => { suppressNextAgeClick = false; }, 0);
+		}
+		ageDragState = null;
+	};
+
+	const onAgePointerCancel = (event: PointerEvent): void => {
+		if (!ageDragState || ageDragState.pointerId !== event.pointerId) return;
+		ageDragState.viewport.style.cursor = "grab";
+		ageDragState.track.style.transition = "transform 220ms ease-out";
+		ageDragState = null;
+	};
+
+	const onAgeKeyDown = (event: KeyboardEvent): void => {
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const current = target.closest<HTMLButtonElement>("button[data-age-option]");
+		if (!current) return;
+		const chips = Array.from(root.querySelectorAll<HTMLButtonElement>("button[data-age-option]"));
+		const index = chips.indexOf(current);
+		let nextIndex = index;
+		if (event.key === "ArrowRight") nextIndex = Math.min(chips.length - 1, index + 1);
+		else if (event.key === "ArrowLeft") nextIndex = Math.max(0, index - 1);
+		else if (event.key === "Home") nextIndex = 0;
+		else if (event.key === "End") nextIndex = chips.length - 1;
+		else return;
+		event.preventDefault();
+		keyboardNavigation = true;
+		chips[nextIndex]?.focus();
+	};
+
+	const onAgeFocusIn = (event: FocusEvent): void => {
+		if (!keyboardNavigation) return;
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const chip = target.closest<HTMLButtonElement>("button[data-age-option]");
+		if (chip?.dataset.ageOption) centerAgeChip(chip.dataset.ageOption, true);
+	};
+
+	const onKeyboardActivity = (event: KeyboardEvent): void => {
+		if (event.key === "Tab" || event.key.startsWith("Arrow") || event.key === "Home" || event.key === "End") keyboardNavigation = true;
+	};
+
+	const onPointerActivity = (): void => {
+		keyboardNavigation = false;
 	};
 
 	const renderProgressSummary = (age: string): string => {
@@ -295,7 +391,7 @@ function initChecklist(root: HTMLElement): () => void {
 			return sum + (value === "yes" || value === "notYet" ? 1 : 0);
 		}, 0);
 		const percent = items.length > 0 ? Math.round(answered / items.length * 100) : 0;
-		return '<section class="mt-4 border-b border-gray-200 pb-4" aria-labelledby="cdc-checklist-heading">' +
+		return '<section class="mt-4 pb-2" aria-labelledby="cdc-checklist-heading">' +
 			'<h2 id="cdc-checklist-heading" class="text-xl font-bold text-navy-900">' + escapeHtml(ageLabel(age, language) + " " + answered + " / " + items.length + (language === "ja" ? "項目" : " items")) + "</h2>" +
 			'<div class="mt-2 h-3 overflow-hidden rounded-full bg-gray-100" style="height:12px;border-radius:9999px;overflow:hidden" role="progressbar" aria-label="' + escapeHtml(language === "ja" ? ageLabel(age, language) + "の確認済み項目" : "Milestones reviewed for " + ageLabel(age, language)) + '" aria-valuemin="0" aria-valuemax="' + items.length + '" aria-valuenow="' + answered + '">' +
 					'<span class="block h-full rounded-full bg-mint-500 transition-[width]" style="height:100%;width:' + percent + '%;border-radius:9999px"></span>' +
@@ -339,15 +435,15 @@ function initChecklist(root: HTMLElement): () => void {
 		const filterButtons = (["unchecked", "all"] as const).map((value) => {
 			const selected = tipsFilter === value;
 			const text = value === "unchecked" ? (language === "ja" ? "チェックなし" : "Unchecked") : (language === "ja" ? "全部" : "All");
-			return '<button type="button" data-tips-filter="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-9 border px-3 text-xs font-semibold ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-300 text-gray-600 hover:bg-gray-50") + '">' + escapeHtml(text) + "</button>";
+			return '<button type="button" data-tips-filter="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-11 border px-4 text-sm font-bold transition-colors focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-300 text-gray-600 hover:bg-gray-50") + '" style="min-height:44px;font-size:14px">' + escapeHtml(text) + "</button>";
 		}).join("");
 		const rows = visible.map(({ tip, index }) => {
 			const selected = checked.includes(index);
 			const text = language === "ja" ? tip.ja : tip.en;
 			const stateLabel = selected ? (language === "ja" ? "チェック済み" : "Checked") : (language === "ja" ? "チェックする" : "Check");
-			return '<li class="flex items-start gap-3 border-b border-gray-100 py-3">' +
-				'<p class="min-w-0 flex-1 text-sm leading-6 text-navy-900">' + escapeHtml(text) + "</p>" +
-				'<button type="button" data-tip-index="' + index + '" aria-pressed="' + String(selected) + '" aria-label="' + escapeHtml(stateLabel) + '" class="min-h-9 shrink-0 rounded-lg border px-2.5 text-xs font-semibold ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-300 text-gray-600 hover:bg-gray-50") + '">' + escapeHtml(stateLabel) + "</button>" +
+			return '<li class="grid gap-3 border-b border-gray-100 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center" style="display:grid;gap:12px;padding-top:16px;padding-bottom:16px">' +
+				'<p class="min-w-0 text-base leading-7 text-navy-900">' + escapeHtml(text) + "</p>" +
+				'<button type="button" data-tip-index="' + index + '" aria-pressed="' + String(selected) + '" aria-label="' + escapeHtml(stateLabel) + '" class="min-h-12 w-full rounded-xl border px-4 py-3 text-base font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 sm:w-auto sm:min-w-40 ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50") + '" style="min-height:48px;font-size:16px">' + escapeHtml(stateLabel) + "</button>" +
 			"</li>";
 		}).join("");
 		const empty = tips.length === 0
@@ -364,9 +460,10 @@ function initChecklist(root: HTMLElement): () => void {
 		const labels = language === "ja"
 			? { doctor: "先生への相談文", ai: "AIへの質問文" }
 			: { doctor: "Message for a clinician", ai: "Question for AI" };
+		const message = consultationText(age, ageLabel(age, language), resultCategories(age), language, audience);
 		const tabs = (["doctor", "ai"] as const).map((value) => {
 			const selected = audience === value;
-			return '<button type="button" data-audience="' + value + '" role="tab" aria-selected="' + String(selected) + '" class="border-b-2 px-3 py-2 text-xs font-semibold ' + (selected ? "border-mint-500 text-mint-600" : "border-transparent text-gray-500 hover:text-navy-900") + '">' + labels[value] + "</button>";
+			return '<button type="button" data-audience="' + value + '" role="tab" aria-selected="' + String(selected) + '" class="min-h-14 w-full rounded-xl px-2 py-3 text-center text-lg font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:text-navy-900") + '" style="min-height:56px;font-size:clamp(15px,4.6vw,18px)">' + labels[value] + "</button>";
 		}).join("");
 		const copied = copyStatus === "copied"
 			? (language === "ja" ? "文章をコピーしました。" : "Text copied.")
@@ -378,11 +475,11 @@ function initChecklist(root: HTMLElement): () => void {
 			: "";
 		return '<section class="mt-5 border-t border-gray-200 pt-4" aria-label="' + escapeHtml(language === "ja" ? "相談に使う文章" : "Text for your consultation") + '">' +
 			reviewButton +
-			'<div class="mt-4 flex border-b border-gray-200" role="tablist" aria-label="' + escapeHtml(language === "ja" ? "文章の用途" : "Choose a message") + '">' + tabs + "</div>" +
+			'<div class="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-gray-50 p-1" role="tablist" aria-label="' + escapeHtml(language === "ja" ? "文章の用途" : "Choose a message") + '">' + tabs + "</div>" +
 			'<div role="tabpanel" class="pt-3">' +
-				'<button type="button" data-copy-message class="min-h-10 rounded-lg bg-navy-900 px-4 py-2 text-xs font-bold text-white hover:opacity-90">' + escapeHtml(language === "ja" ? "文章をコピー" : "Copy message") + "</button>" +
+				'<button type="button" data-copy-message class="min-h-12 w-full rounded-xl bg-navy-900 px-5 py-3 text-base font-bold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 sm:w-auto" style="min-height:48px;font-size:16px">' + escapeHtml(language === "ja" ? "文章をコピー" : "Copy message") + "</button>" +
 				'<p data-copy-status role="status" aria-live="polite" class="min-h-5 pt-2 text-xs text-gray-500">' + escapeHtml(copied) + "</p>" +
-				'<textarea data-consultation-text readonly rows="12" aria-label="' + escapeHtml(labels[audience]) + '" class="mt-1 w-full resize-y rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs leading-5 text-gray-700"></textarea>' +
+				'<div data-consultation-text role="textbox" aria-readonly="true" tabindex="0" aria-label="' + escapeHtml(labels[audience]) + '" class="mt-1 w-full select-text whitespace-pre-wrap break-words rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text">' + escapeHtml(message) + "</div>" +
 			"</div></section>";
 	};
 
@@ -414,6 +511,11 @@ function initChecklist(root: HTMLElement): () => void {
 	};
 
 	const render = (): void => {
+		if (!authReady) {
+			const message = document.documentElement.lang.startsWith("en") ? "Checking sign-in status…" : "ログイン状態を確認しています…";
+			root.innerHTML = '<p role="status" aria-live="polite" class="py-8 text-center text-sm text-gray-500">' + escapeHtml(message) + "</p>";
+			return;
+		}
 		language = currentLanguage();
 		const labels = copy();
 		document.documentElement.lang = language;
@@ -421,38 +523,34 @@ function initChecklist(root: HTMLElement): () => void {
 		const viewTabs = (["checklist", "tips"] as const).map((value) => {
 			const selected = view === value;
 			const text = value === "checklist" ? labels.navChecklist : labels.navTips;
-			return '<button type="button" data-view="' + value + '" aria-current="' + String(selected) + '" class="min-h-14 rounded-xl px-2 text-center text-base font-bold transition-colors ' + (selected ? "bg-mint-50 text-mint-600" : "text-gray-500 hover:text-navy-900") + '">' + escapeHtml(text) + "</button>";
+			return '<button type="button" data-view="' + value + '" aria-current="' + String(selected) + '" class="min-h-14 w-full rounded-xl px-2 py-3 text-center text-lg font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:bg-gray-50 hover:text-navy-900") + '" style="min-height:56px;font-size:clamp(15px,4.6vw,18px)">' + escapeHtml(text) + "</button>";
 		}).join("");
-		const saveNotice = '<p data-save-notice role="status" class="mt-2 min-h-4 text-xs text-red-600">' + escapeHtml(saveAvailable ? "" : (language === "ja" ? "このブラウザーでは保存できません。ページを閉じると回答が消える場合があります。" : "This browser could not save your selections. They may be lost when you leave this page.")) + "</p>";
-		const intro = language === "ja"
-			? "米国疾病予防管理センター（CDC）が公開する発達マイルストーンを参考にした、非公式の日本語チェックリストです。CDCによる監修・承認は受けていません。発達の診断や評価の代わりにはなりません。"
-			: "This unofficial checklist is based on developmental milestones published by the U.S. Centers for Disease Control and Prevention (CDC). It is not reviewed or endorsed by CDC and is not a diagnostic or developmental evaluation tool.";
-		const support = language === "ja"
-			? "項目は成長の目安としてお使いください。気になることがあれば、お住まいの地域の保健センターや小児科などにご相談ください。"
-			: "Use these items as general milestones. If you have concerns, contact your local public health center or a healthcare professional.";
-		const sourceLink = '<a class="font-semibold text-mint-600 underline underline-offset-2" href="' + ageSourceUrl(age) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(language === "ja" ? "この年齢のCDC公式ページ（英語）" : "CDC source for this age (English)") + "</a>";
+		const localSaveError = language === "ja"
+			? "このブラウザーでは保存できません。ページを閉じると回答が消える場合があります。"
+			: "This browser could not save your selections. They may be lost when you leave this page.";
+		const cloudSaveMessage = cloudSaveStatus === "failed"
+			? (language === "ja" ? "アカウントへの保存に失敗しました。端末には保存済みです。通信が戻ったら再試行してください。" : "Could not save to your account. Your device copy is safe; try again when connected.")
+			: cloudSaveStatus === "saving"
+				? (language === "ja" ? "アカウントに保存中…" : "Saving to your account…")
+				: cloudSaveStatus === "saved"
+					? (language === "ja" ? "アカウントに保存しました。" : "Saved to your account.")
+					: cloudSaveStatus === "switching"
+						? (language === "ja" ? "アカウントのデータを読み込み中…" : "Loading account data…")
+						: "";
+		const noticeMessage = saveAvailable ? cloudSaveMessage : localSaveError;
+		const noticeClass = !saveAvailable || cloudSaveStatus === "failed" ? "text-red-600" : "text-gray-500";
+		const saveNotice = '<p data-save-notice role="status" aria-live="polite" class="mt-2 min-h-4 text-xs ' + noticeClass + '">' + escapeHtml(noticeMessage) + "</p>";
 		const viewContent = view === "checklist" ? renderChecklist(age) : renderTips(age);
 		root.innerHTML =
-			'<header class="border-b border-gray-200 pb-4">' +
+			'<header>' +
 				'<h1 class="sr-only">' + escapeHtml(language === "ja" ? "CDC発達チェック" : "CDC Developmental Checklist") + "</h1>" +
 				renderAgeChips(age) +
 					renderProgressSummary(age) +
 			"</header>" +
-			'<nav class="mb-4 grid grid-cols-2 rounded-2xl border border-gray-200 bg-white p-1" aria-label="' + escapeHtml(language === "ja" ? "表示内容" : "Content") + '">' + viewTabs + "</nav>" +
-			viewContent + saveNotice +
-			'<aside class="mt-8 border-t border-gray-200 pt-3 text-xs leading-5 text-gray-500" aria-label="' + escapeHtml(language === "ja" ? "出典と利用上の注意" : "Source and disclaimer") + '">' +
-				'<h2 class="mb-1 text-sm font-bold text-navy-900">' + escapeHtml(language === "ja" ? "CDCについて" : "About CDC") + "</h2>" +
-				'<p>' + escapeHtml(intro) + " " + escapeHtml(support) + "</p>" +
-				'<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">' + sourceLink + '<span>' + escapeHtml(language === "ja" ? "回答・ヒントのチェック・表示言語はこのブラウザーに保存され、運営者には送信されません。" : "Answers, tip selections, and language are saved in this browser and are not sent to the site operator.") + "</span></div>" +
-			"</aside>";
-
-		const textField = root.querySelector<HTMLTextAreaElement>("[data-consultation-text]");
-		if (textField) {
-			textField.value = consultationText(age, ageLabel(age, language), resultCategories(age), language, audience);
-			textField.style.height = "auto";
-			textField.style.height = textField.scrollHeight + "px";
-		}
+			'<nav class="mt-3 mb-4 grid grid-cols-2 gap-2" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px" aria-label="' + escapeHtml(language === "ja" ? "表示内容" : "Content") + '">' + viewTabs + "</nav>" +
+			viewContent + saveNotice;
 		updateCategoryButtons();
+		centerSelectedAgeChip();
 	};
 
 	const updateCategoryButtons = (): void => {
@@ -471,21 +569,53 @@ function initChecklist(root: HTMLElement): () => void {
 			badge?.classList.toggle("text-mint-600", selected);
 			badge?.classList.toggle("bg-gray-100", !selected);
 			badge?.classList.toggle("text-gray-600", !selected);
-			const underline = button.querySelector<HTMLElement>("[data-category-underline]");
-			if (underline) underline.style.display = selected ? "block" : "none";
 		});
 	};
 
-	const saveAndRender = (nextStorage: AppStorage, focusSelector?: string, centerAgeChip = false): void => {
-		storage = nextStorage;
+	const applySyncResult = (result: CdcSyncResult, userId: string, revision: number): void => {
+		if (disposed || activeAccountUserId !== userId || uiRevision !== revision) return;
+		if (result.status === "synced") {
+			saveAvailable = true;
+			cloudSaveStatus = "saved";
+			if (JSON.stringify(storage) !== JSON.stringify(result.state)) {
+				storage = result.state;
+				render();
+			}
+		} else if (result.status === "pending" || result.status === "account-mismatch") {
+			cloudSaveStatus = "failed";
+		} else {
+			cloudSaveStatus = "idle";
+		}
+		render();
+	};
+
+	const persistCurrentStorage = (revision: number): void => {
+		if (authReady && activeAccountUserId) {
+			const userId = activeAccountUserId;
+			cloudSaveStatus = "saving";
+			void saveCdcStorageForUser(userId, storage, { storage: window.localStorage, cloud: cdcCloud })
+				.then((result) => applySyncResult(result, userId, revision))
+				.catch(() => {
+					if (disposed || activeAccountUserId !== userId || uiRevision !== revision) return;
+					saveAvailable = false;
+					cloudSaveStatus = "failed";
+					render();
+				});
+			return;
+		}
 		try {
-			window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+			saveCdcStorageLocally(storage, { storage: window.localStorage });
 			saveAvailable = true;
 		} catch {
 			saveAvailable = false;
 		}
+	};
+
+	const saveAndRender = (nextStorage: AppStorage, focusSelector?: string): void => {
+		storage = nextStorage;
+		uiRevision += 1;
+		persistCurrentStorage(uiRevision);
 		render();
-		if (centerAgeChip) centerSelectedAgeChip(true);
 		if (focusSelector) root.querySelector<HTMLElement>(focusSelector)?.focus({ preventScroll: true });
 	};
 
@@ -500,11 +630,31 @@ function initChecklist(root: HTMLElement): () => void {
 		root.querySelector<HTMLElement>('[data-view="' + nextView + '"]')?.focus({ preventScroll: true });
 	};
 
+	const selectConsultationText = (): void => {
+		const field = root.querySelector<HTMLElement>("[data-consultation-text]");
+		if (!field) return;
+		field.focus({ preventScroll: true });
+		const range = document.createRange();
+		range.selectNodeContents(field);
+		const selection = window.getSelection();
+		selection?.removeAllRanges();
+		selection?.addRange(range);
+	};
+
 	const onClick = (event: Event): void => {
 		const target = event.target;
 		if (!(target instanceof Element)) return;
 		const button = target.closest<HTMLButtonElement>("button");
 		if (!button || !root.contains(button)) return;
+		const editsCdcData = button.dataset.ageOption !== undefined || button.dataset.answerAge !== undefined || button.dataset.tipIndex !== undefined;
+		if ((!authReady || accountSwitching) && editsCdcData) return;
+		if (button.dataset.ageOption !== undefined && suppressNextAgeClick) {
+			event.preventDefault();
+			event.stopPropagation();
+			suppressNextAgeClick = false;
+			window.clearTimeout(suppressAgeClickTimer);
+			return;
+		}
 		if (button.dataset.view === "checklist" || button.dataset.view === "tips") {
 			selectView(button.dataset.view);
 			return;
@@ -516,7 +666,7 @@ function initChecklist(root: HTMLElement): () => void {
 			showPreviousReview = false;
 			activeCategory = 0;
 			copyStatus = "";
-			saveAndRender({ ...storage, selectedAge }, 'button[data-age-option="' + selectedAge + '"]', true);
+			saveAndRender({ ...storage, selectedAge }, 'button[data-age-option="' + selectedAge + '"]');
 			return;
 		}
 		if (button.dataset.category !== undefined) {
@@ -580,26 +730,23 @@ function initChecklist(root: HTMLElement): () => void {
 			return;
 		}
 		if (button.hasAttribute("data-copy-message")) {
-			const field = root.querySelector<HTMLTextAreaElement>("[data-consultation-text]");
+			const field = root.querySelector<HTMLElement>("[data-consultation-text]");
 			if (!field) return;
+			const message = field.textContent ?? "";
 			if (!navigator.clipboard) {
 				copyStatus = "failed";
 				render();
-				const textField = root.querySelector<HTMLTextAreaElement>("[data-consultation-text]");
-				textField?.focus();
-				textField?.select();
+				selectConsultationText();
 				return;
 			}
-			void navigator.clipboard.writeText(field.value).then(() => {
+			void navigator.clipboard.writeText(message).then(() => {
 				copyStatus = "copied";
 				render();
 				root.querySelector<HTMLElement>("[data-copy-message]")?.focus({ preventScroll: true });
 			}).catch(() => {
 				copyStatus = "failed";
 				render();
-				const textField = root.querySelector<HTMLTextAreaElement>("[data-consultation-text]");
-				textField?.focus();
-				textField?.select();
+				selectConsultationText();
 			});
 		}
 	};
@@ -618,6 +765,11 @@ function initChecklist(root: HTMLElement): () => void {
 		}
 	};
 
+	const onResize = (): void => {
+		onScroll();
+		centerSelectedAgeChip();
+	};
+
 	const onHashChange = (): void => {
 		const nextView = pageFromHash();
 		if (nextView === view) return;
@@ -626,25 +778,112 @@ function initChecklist(root: HTMLElement): () => void {
 		showPreviousReview = false;
 		render();
 	};
+	const handleAuthSession = async (userId: string | null): Promise<void> => {
+		if (disposed) return;
+		if (authReady && activeAccountUserId === userId) return;
+		const generation = ++authGeneration;
+		const revisionAtStart = uiRevision;
+		const previousUserId = activeAccountUserId;
+		if (!userId) {
+			authReady = true;
+			activeAccountUserId = null;
+			accountSwitching = false;
+			cloudSaveStatus = "idle";
+			try {
+				const guestState = deactivateCdcStorageUser({ storage: window.localStorage, initialState: storage });
+				if (JSON.stringify(storage) !== JSON.stringify(guestState)) {
+					storage = guestState;
+					uiRevision += 1;
+				}
+				saveAvailable = true;
+			} catch {
+				saveAvailable = false;
+			}
+			render();
+			return;
+		}
+
+		authReady = true;
+		activeAccountUserId = userId;
+		accountSwitching = Boolean(previousUserId && previousUserId !== userId);
+		cloudSaveStatus = accountSwitching ? "switching" : "saving";
+		try {
+			const restore = restoreCdcStorageForUser(userId, { storage: window.localStorage, cloud: cdcCloud, initialState: storage });
+			storage = loadStorage();
+			render();
+			const result = await restore;
+			if (disposed || generation !== authGeneration || activeAccountUserId !== userId) return;
+			accountSwitching = false;
+			if (uiRevision === revisionAtStart && JSON.stringify(storage) !== JSON.stringify(result.state)) {
+				storage = result.state;
+				uiRevision += 1;
+			}
+			saveAvailable = true;
+			cloudSaveStatus = result.status === "pending" || result.status === "account-mismatch"
+				? "failed"
+				: result.status === "synced" ? "saved" : "idle";
+			render();
+		} catch {
+			if (disposed || generation !== authGeneration || activeAccountUserId !== userId) return;
+			storage = emptyStorage;
+			accountSwitching = false;
+			cloudSaveStatus = "failed";
+			saveAvailable = false;
+			render();
+		}
+	};
+	const onOnline = (): void => {
+		if (authReady && activeAccountUserId && !accountSwitching) persistCurrentStorage(uiRevision);
+	};
+	const authListener = supabase?.auth.onAuthStateChange((_event, session) => {
+		const userId = session?.user.id ?? null;
+		// Auth callbacks run under Supabase's auth lock; queue data requests after the callback returns.
+		window.setTimeout(() => { void handleAuthSession(userId); }, 0);
+	});
+	if (!supabase) {
+		authReady = true;
+		try {
+			storage = deactivateCdcStorageUser({ storage: window.localStorage, initialState: storage });
+		} catch {
+			saveAvailable = false;
+		}
+	}
+	window.addEventListener("online", onOnline);
 	root.addEventListener("click", onClick);
+	root.addEventListener("pointerdown", onAgePointerDown);
+	root.addEventListener("keydown", onAgeKeyDown);
+	root.addEventListener("focusin", onAgeFocusIn);
+	window.addEventListener("pointerdown", onPointerActivity, true);
+	window.addEventListener("pointermove", onAgePointerMove, { passive: false });
+	window.addEventListener("pointerup", onAgePointerUp);
+	window.addEventListener("pointercancel", onAgePointerCancel);
+	window.addEventListener("keydown", onKeyboardActivity, true);
 	window.addEventListener("scroll", onScroll, { passive: true });
-	window.addEventListener("resize", onScroll);
+	window.addEventListener("resize", onResize);
 	window.addEventListener("hashchange", onHashChange);
 	window.addEventListener("popstate", onHashChange);
-	try {
-		window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-	} catch {
-		saveAvailable = false;
-	}
 	render();
-	centerSelectedAgeChip();
 
 	return () => {
+		disposed = true;
+		authGeneration += 1;
+		authListener?.data.subscription.unsubscribe();
+		window.removeEventListener("online", onOnline);
 		root.removeEventListener("click", onClick);
+		root.removeEventListener("pointerdown", onAgePointerDown);
+		root.removeEventListener("keydown", onAgeKeyDown);
+		root.removeEventListener("focusin", onAgeFocusIn);
+		window.removeEventListener("pointerdown", onPointerActivity, true);
+		window.removeEventListener("pointermove", onAgePointerMove);
+		window.removeEventListener("pointerup", onAgePointerUp);
+		window.removeEventListener("pointercancel", onAgePointerCancel);
+		window.removeEventListener("keydown", onKeyboardActivity, true);
 		window.removeEventListener("scroll", onScroll);
-		window.removeEventListener("resize", onScroll);
+		window.removeEventListener("resize", onResize);
 		window.removeEventListener("hashchange", onHashChange);
 		window.removeEventListener("popstate", onHashChange);
+		window.clearTimeout(suppressAgeClickTimer);
+		ageDragState = null;
 	};
 }
 

@@ -55,16 +55,16 @@ const isRecommendPath = ["recommend", "apps", "items", "logs"].some((path) =>
 				{UI.headerNav.myList}
 			</a>
 			<a
-				href="/recommend/"
-				class={`font-bold transition-colors pb-1 border-b-2 ${isRecommendPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
-			>
-				{UI.headerNav.rikutsu}
-			</a>
-			<a
 				href="/cdc/"
 				class:list={["font-bold", "transition-colors", "pb-1", "border-b-2", isCdcPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"]}
 			>
 				{UI.headerNav.cdc}
+			</a>
+			<a
+				href="/recommend/"
+				class={`font-bold transition-colors pb-1 border-b-2 ${isRecommendPath ? "text-mint-500 border-mint-500" : "text-gray-600 border-transparent hover:text-navy-900"}`}
+			>
+				{UI.headerNav.rikutsu}
 			</a>
 		</nav>
 

@@ -17,7 +17,7 @@ test('PC・モバイルナビにCDCチェックを加え、検索と既存カテ
 	assert.ok(header.includes('UI.headerNav.knowhow'));
 	assert.ok(header.includes('UI.headerNav.myList'));
 	assert.ok(header.includes('UI.headerNav.cdc'));
-	assert.ok(header.indexOf('href="/recommend/"') < header.indexOf('href="/cdc/"'));
+	assert.ok(header.indexOf('href="/cdc/"') < header.indexOf('href="/recommend/"'));
 	assert.match(header, /const isChecklistPath = \(pathname === "\/" \|\| pathSegments\[0\] === "knowhow"\)/);
 	assert.match(header, /const isCdcPath = pathSegments\[0\] === "cdc"/);
 	assert.equal(header.includes('UI.headerNav.home'), false);
@@ -25,7 +25,7 @@ test('PC・モバイルナビにCDCチェックを加え、検索と既存カテ
 	assert.ok(footer.includes('UI.footerNav.knowhow'));
 	assert.ok(footer.includes('UI.footerNav.myList'));
 	assert.ok(footer.includes('UI.footerNav.cdc'));
-	assert.ok(footer.indexOf('href="/recommend/"') < footer.indexOf('href="/cdc/"'));
+	assert.ok(footer.indexOf('href="/cdc/"') < footer.indexOf('href="/recommend/"'));
 	assert.match(footer, /const isChecklistPath = \(pathname === "\/" \|\| pathSegments\[0\] === "knowhow"\)/);
 	assert.match(footer, /const isCdcPath = pathSegments\[0\] === "cdc"/);
 	assert.equal(footer.includes('UI.footerNav.home'), false);
