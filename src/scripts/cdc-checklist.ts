@@ -150,7 +150,7 @@ function initChecklist(root: HTMLElement): () => void {
 	let showResults = false;
 	let showPreviousReview = false;
 	let audience: Audience = "doctor";
-	let tipsFilter: TipsFilter = "unchecked";
+	let tipsFilter: TipsFilter = "all";
 	let copyStatus: "copied" | "failed" | "" = "";
 	let saveAvailable = true;
 	let cloudSaveStatus: "idle" | "saving" | "saved" | "failed" | "switching" = "idle";
@@ -433,7 +433,8 @@ function initChecklist(root: HTMLElement): () => void {
 		const filterButtons = (["unchecked", "all"] as const).map((value) => {
 			const selected = tipsFilter === value;
 			const text = value === "unchecked" ? (language === "ja" ? "チェックなし" : "Unchecked") : (language === "ja" ? "全部" : "All");
-			return '<button type="button" data-tips-filter="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-11 border px-4 text-sm font-bold transition-colors focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "border-mint-500 bg-mint-50 text-mint-600" : "border-gray-300 text-gray-600 hover:bg-gray-50") + '" style="min-height:44px;font-size:14px">' + escapeHtml(text) + "</button>";
+			const divider = value === "all" ? "border-l border-gray-300" : "";
+			return '<button type="button" data-tips-filter="' + value + '" aria-pressed="' + String(selected) + '" class="min-h-11 px-4 text-sm font-bold transition-colors focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + divider + " " + (selected ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:bg-gray-50") + '" style="min-height:44px;font-size:14px">' + escapeHtml(text) + "</button>";
 		}).join("");
 		const rows = visible.map(({ tip, index }) => {
 			const selected = checked.includes(index);
@@ -450,7 +451,7 @@ function initChecklist(root: HTMLElement): () => void {
 				? '<p role="status" class="py-6 text-center text-sm text-gray-500">' + escapeHtml(language === "ja" ? "この年齢のヒントはすべてチェック済みです。「全部」で確認・解除できます。" : "All tips for this age are checked. Choose All to review or uncheck them.") + "</p>"
 				: "";
 		return '<section aria-label="' + escapeHtml(language === "ja" ? ageLabel(age, language) + "の関わり方のヒント" : "Tips for " + ageLabel(age, language)) + '">' +
-			'<div class="mb-2 flex justify-end"><div class="inline-flex overflow-hidden rounded-lg">' + filterButtons + "</div></div>" +
+			'<div class="mb-2 flex justify-end"><div class="inline-flex overflow-hidden rounded-lg border border-gray-300">' + filterButtons + "</div></div>" +
 			'<ul class="m-0 list-none p-0">' + rows + "</ul>" + empty + "</section>";
 	};
 
@@ -461,7 +462,7 @@ function initChecklist(root: HTMLElement): () => void {
 		const message = consultationText(age, ageLabel(age, language), resultCategories(age), language, audience);
 		const tabs = (["doctor", "ai"] as const).map((value) => {
 			const selected = audience === value;
-			return '<button type="button" data-audience="' + value + '" role="tab" aria-selected="' + String(selected) + '" class="min-h-14 w-full rounded-xl px-2 py-3 text-center text-lg font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:text-navy-900") + '" style="min-height:56px;font-size:clamp(15px,4.6vw,18px)">' + labels[value] + "</button>";
+			return '<button type="button" data-audience="' + value + '" role="tab" aria-selected="' + String(selected) + '" class="min-h-14 w-full rounded-xl px-2 py-3 text-center text-lg font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 ' + (selected ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:bg-gray-50 hover:text-navy-900") + '" style="min-height:56px;font-size:clamp(15px,4.6vw,18px)">' + labels[value] + "</button>";
 		}).join("");
 		const copied = copyStatus === "copied"
 			? (language === "ja" ? "文章をコピーしました。" : "Text copied.")
@@ -473,11 +474,11 @@ function initChecklist(root: HTMLElement): () => void {
 			: "";
 		return '<section class="mt-5 border-t border-gray-200 pt-4" aria-label="' + escapeHtml(language === "ja" ? "相談に使う文章" : "Text for your consultation") + '">' +
 			reviewButton +
-			'<div class="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-gray-50 p-1" role="tablist" aria-label="' + escapeHtml(language === "ja" ? "文章の用途" : "Choose a message") + '">' + tabs + "</div>" +
+			'<div class="mt-4 grid grid-cols-2 gap-2" role="tablist" aria-label="' + escapeHtml(language === "ja" ? "文章の用途" : "Choose a message") + '">' + tabs + "</div>" +
 			'<div role="tabpanel" class="pt-3">' +
-				'<button type="button" data-copy-message class="min-h-12 w-full rounded-xl bg-navy-900 px-5 py-3 text-base font-bold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2 sm:w-auto" style="min-height:48px;font-size:16px">' + escapeHtml(language === "ja" ? "文章をコピー" : "Copy message") + "</button>" +
+				'<div data-consultation-text role="textbox" aria-readonly="true" tabindex="0" aria-label="' + escapeHtml(labels[audience]) + '" class="w-full select-text whitespace-pre-wrap break-words rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text">' + escapeHtml(message) + "</div>" +
+				'<button type="button" data-copy-message class="mt-3 min-h-14 w-full rounded-xl bg-navy-900 px-5 py-4 text-base font-bold text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500 focus-visible:ring-offset-2" style="width:100%;min-height:56px;font-size:16px">' + escapeHtml(language === "ja" ? "文章をコピー" : "Copy message") + "</button>" +
 				'<p data-copy-status role="status" aria-live="polite" class="min-h-5 pt-2 text-xs text-gray-500">' + escapeHtml(copied) + "</p>" +
-				'<div data-consultation-text role="textbox" aria-readonly="true" tabindex="0" aria-label="' + escapeHtml(labels[audience]) + '" class="mt-1 w-full select-text whitespace-pre-wrap break-words rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-500" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text">' + escapeHtml(message) + "</div>" +
 			"</div></section>";
 	};
 
