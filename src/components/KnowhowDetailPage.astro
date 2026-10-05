@@ -26,7 +26,7 @@ const {
 } = Astro.props as Props;
 const { Content } = await render(knowhow);
 const checklistEntry = await getEntry('checklists', knowhow.data.checklistId);
-if (!checklistEntry || checklistEntry.data.status !== 'published') {
+if (!checklistEntry || (import.meta.env.PROD && checklistEntry.data.status !== 'published')) {
 	throw new Error('公開中のチェックリスト原本がありません: ' + knowhow.data.checklistId);
 }
 const checklist = checklistEntry.data as ChecklistTemplate;

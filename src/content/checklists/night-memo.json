@@ -2,7 +2,7 @@
   "checklistId": "night-memo",
   "title": "夜泣き対応メモ",
   "version": 1,
-  "status": "published",
+  "status": "draft",
   "groups": [
     {
       "id": "setup",

@@ -1,9 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
 import KnowhowDetailPage from '../../../components/KnowhowDetailPage.astro';
+import { includeContentInCurrentBuild } from '../../../utils/content-publication';
 
 export async function getStaticPaths() {
-	const knowhow = await getCollection('knowhow');
+	const knowhow = await getCollection('knowhow', includeContentInCurrentBuild);
 	return knowhow.map((item, index) => ({
 		params: { id: item.id },
 		props: {

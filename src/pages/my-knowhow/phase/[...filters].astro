@@ -1,13 +1,11 @@
 ---
+import { getCollection } from 'astro:content';
 import KnowhowIndexPage from '../../../components/KnowhowIndexPage.astro';
+import { getKnowhowPhaseFilterPaths } from '../../../utils/knowhow-filter-paths';
 
-export function getStaticPaths() {
-	const phases = ['pregnancy', '0-3m', '4-6m', '7-11m', '1y-plus'];
-	const scenes = ['outing', 'medical', 'daily', 'travel', 'nursery', 'disaster'];
-	return phases.flatMap((phase) => [
-		{ params: { filters: phase } },
-		...scenes.map((scene) => ({ params: { filters: `${phase}/scene/${scene}` } })),
-	]);
+export async function getStaticPaths() {
+	const knowhow = await getCollection('knowhow');
+	return getKnowhowPhaseFilterPaths(knowhow);
 }
 ---
 

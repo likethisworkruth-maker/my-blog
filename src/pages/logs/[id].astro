@@ -5,9 +5,10 @@ import LikeButton from '../../components/LikeButton.astro';
 import ActionBar from '../../components/ActionBar.astro';
 import RecommendBackLink from '../../components/RecommendBackLink.astro';
 import { SITE_TITLE } from '../../consts';
+import { includeContentInCurrentBuild } from '../../utils/content-publication';
 
 export async function getStaticPaths() {
-	const logs = await getCollection('logs');
+	const logs = await getCollection('logs', includeContentInCurrentBuild);
 	return logs.map((log) => ({
 		params: { id: log.id },
 		props: { log },

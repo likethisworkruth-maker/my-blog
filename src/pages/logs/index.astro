@@ -7,8 +7,9 @@ import LogCard from '../../components/LogCard.astro';
 import RecommendBackLink from '../../components/RecommendBackLink.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { UI } from '../../i18n/ja';
+import { includeContentInCurrentBuild } from '../../utils/content-publication';
 
-const logs = await getCollection('logs');
+const logs = await getCollection('logs', includeContentInCurrentBuild);
 logs.sort((a, b) => b.data.logNumber.localeCompare(a.data.logNumber));
 
 const uniqueCategories = [...new Set(logs.flatMap(log => log.data.categories || []))];

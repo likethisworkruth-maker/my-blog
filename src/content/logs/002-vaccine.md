@@ -2,6 +2,7 @@
 logNumber: "002"
 title: "予防接種の予定が頭に入らない問題"
 pubDate: 2024-05-10
+published: false
 problem: "予防接種のスケジュールが複雑すぎる"
 createdTool: "予防接種チェック表"
 result: "予定の抜け漏れがなくなった"

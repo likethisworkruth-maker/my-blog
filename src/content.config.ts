@@ -8,6 +8,7 @@ const logs = defineCollection({
 		logNumber: z.string(), // e.g. "001"
 		title: z.string(),
 		pubDate: z.coerce.date(),
+		published: z.boolean().default(true),
 		problem: z.string().optional(),
 		createdTool: z.string().optional(),
 		result: z.string().optional(),
@@ -22,6 +23,7 @@ const knowhow = defineCollection({
 	schema: z.object({
 		title: z.string(),
 		description: z.string(),
+		published: z.boolean().default(true),
 		checklistId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 		icon: z.string(), // Material Symbol name, e.g. "description"
 		isFree: z.boolean().default(true),
@@ -49,7 +51,7 @@ const checklists = defineCollection({
 		checklistId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 		title: z.string().min(1),
 		version: z.number().int().positive(),
-		status: z.enum(['draft', 'published']),
+		status: z.enum(['draft', 'published']).default('published'),
 		groups: z.array(z.object({
 			id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 			label: z.string().min(1),
@@ -63,6 +65,7 @@ const apps = defineCollection({
 	schema: z.object({
 		title: z.string(),
 		description: z.string(),
+		published: z.boolean().default(true),
 		icon: z.string(), // Material Symbol name, e.g. "description"
 		isFree: z.boolean().default(true),
 		categories: z.array(z.string()).optional(),

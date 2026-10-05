@@ -3,15 +3,16 @@ import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import LogCard from '../../components/LogCard.astro';
 import { SITE_TITLE } from '../../consts';
+import { includeContentInCurrentBuild } from '../../utils/content-publication';
 
-const apps = (await getCollection('apps'))
+const apps = (await getCollection('apps', includeContentInCurrentBuild))
 	.sort((a, b) => a.data.order - b.data.order)
 	.slice(0, 3);
 const items = (await getCollection('items'))
 	.filter((item) => item.data.published)
 	.sort((a, b) => a.data.order - b.data.order)
 	.slice(0, 3);
-const logs = (await getCollection('logs'))
+const logs = (await getCollection('logs', includeContentInCurrentBuild))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
 	.slice(0, 3);
 ---

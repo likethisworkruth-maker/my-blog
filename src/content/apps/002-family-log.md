@@ -1,6 +1,7 @@
 ---
 title: "夫婦共有ログ"
 description: "夫婦で子育ての状況やタスクを共有。すれ違いを減らします。"
+published: false
 icon: "group"
 isFree: true
 categories: ["テンプレ", "0歳子育て"]

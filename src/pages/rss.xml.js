@@ -1,10 +1,11 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { includeContentInCurrentBuild } from '../utils/content-publication';
 
 export async function GET(context) {
-	const knowhow = await getCollection('knowhow');
-	const apps = await getCollection('apps');
+	const knowhow = await getCollection('knowhow', includeContentInCurrentBuild);
+	const apps = await getCollection('apps', includeContentInCurrentBuild);
 	const items = (await getCollection('items')).filter((item) => item.data.published);
 	
 	return rss({

@@ -4,9 +4,10 @@ import Layout from "../../layouts/Layout.astro";
 import ActionBar from "../../components/ActionBar.astro";
 import RecommendBackLink from "../../components/RecommendBackLink.astro";
 import { SITE_TITLE } from "../../consts";
+import { includeContentInCurrentBuild } from "../../utils/content-publication";
 
 export async function getStaticPaths() {
-	const apps = await getCollection("apps");
+	const apps = await getCollection("apps", includeContentInCurrentBuild);
 	return apps.map((app) => ({
 		params: { id: app.id },
 		props: { app },

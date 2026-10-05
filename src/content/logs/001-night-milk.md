@@ -2,6 +2,7 @@
 logNumber: "001"
 title: "夜中のミルク対応、朝になると記憶があいまい"
 pubDate: 2024-05-12
+published: false
 problem: "夜中のミルク対応を忘れてしまう"
 createdTool: "夜間対応メモ"
 result: "メモを見て思い出せる回数が増えた"

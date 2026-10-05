@@ -2,7 +2,7 @@
   "checklistId": "family-log",
   "title": "夫婦共有ログ",
   "version": 1,
-  "status": "published",
+  "status": "draft",
   "groups": [
     {
       "id": "setup",

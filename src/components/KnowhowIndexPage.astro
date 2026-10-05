@@ -7,8 +7,9 @@ import {
 	SITE_DESCRIPTION,
 } from "../consts";
 import { UI } from "../i18n/ja";
+import { includeContentInCurrentBuild } from "../utils/content-publication";
 
-const knowhow = await getCollection("knowhow");
+const knowhow = await getCollection("knowhow", includeContentInCurrentBuild);
 knowhow.sort((a, b) => a.data.timelineOrder - b.data.timelineOrder);
 
 const phaseIds = Array.from(new Set(knowhow.flatMap((post) => post.data.phases))).sort((a, b) => {

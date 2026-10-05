@@ -1,8 +1,9 @@
 import { getCollection } from 'astro:content';
+import { includeContentInCurrentBuild } from '../../utils/content-publication';
 
 export async function GET() {
-  const knowhow = await getCollection('knowhow');
-  const apps = await getCollection('apps');
+  const knowhow = await getCollection('knowhow', includeContentInCurrentBuild);
+  const apps = await getCollection('apps', includeContentInCurrentBuild);
   const items = (await getCollection('items')).filter((item) => item.data.published);
 
   const searchIndex = [

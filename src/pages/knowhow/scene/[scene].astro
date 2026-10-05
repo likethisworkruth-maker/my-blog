@@ -1,9 +1,11 @@
 ---
+import { getCollection } from 'astro:content';
 import KnowhowIndexPage from '../../../components/KnowhowIndexPage.astro';
+import { getKnowhowSceneFilterPaths } from '../../../utils/knowhow-filter-paths';
 
-export function getStaticPaths() {
-	const scenes = ['outing', 'medical', 'daily', 'travel', 'nursery', 'disaster'];
-	return scenes.map((scene) => ({ params: { scene } }));
+export async function getStaticPaths() {
+	const knowhow = await getCollection('knowhow');
+	return getKnowhowSceneFilterPaths(knowhow);
 }
 ---
 

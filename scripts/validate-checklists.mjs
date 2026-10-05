@@ -41,9 +41,10 @@ for (const file of checklistFiles) {
 	}
 	checklists.set(checklist.checklistId, checklist);
 
-	if (checklist.status !== 'published') {
-		errors.push(file + ': 公開記事に紐付く原本はpublishedにしてください');
+	if (checklist.status !== undefined && !['draft', 'published'].includes(checklist.status)) {
+		errors.push(file + ': statusはdraftまたはpublishedにしてください');
 	}
+	checklist.status ??= 'published';
 	if (!Number.isInteger(checklist.version) || checklist.version < 1) {
 		errors.push(file + ': versionは1以上の整数にしてください');
 	}
@@ -93,8 +94,14 @@ for (const file of listFiles(knowhowDirectory, ['.md', '.mdx'])) {
 		errors.push(file + ': checklistIdがありません');
 		continue;
 	}
-	if (!checklists.has(checklistId)) {
+	const checklist = checklists.get(checklistId);
+	if (!checklist) {
 		errors.push(file + ': 対応する原本「' + checklistId + '.json」がありません');
+		continue;
+	}
+	const isPublished = !/^published:\s*false\s*$/m.test(frontmatter[1]);
+	if (isPublished && checklist.status !== 'published') {
+		errors.push(file + ': 公開中のknowhowはpublishedの原本に紐付けてください');
 	}
 }
 
