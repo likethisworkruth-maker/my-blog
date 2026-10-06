@@ -8,9 +8,9 @@ import {
 } from "../consts";
 import { UI } from "../i18n/ja";
 import { includeContentInCurrentBuild } from "../utils/content-publication";
+import { sortKnowhowEntries } from "../scripts/knowhow-sort";
 
-const knowhow = await getCollection("knowhow", includeContentInCurrentBuild);
-knowhow.sort((a, b) => a.data.timelineOrder - b.data.timelineOrder);
+const knowhow = sortKnowhowEntries(await getCollection("knowhow", includeContentInCurrentBuild), 'recommend');
 
 const phaseIds = Array.from(new Set(knowhow.flatMap((post) => post.data.phases))).sort((a, b) => {
 	const phaseSortKey = (phase: string) => {
@@ -140,6 +140,8 @@ const initialDisplayMode = getInitialDisplayMode(
 							data-phases={post.data.phases.join(",")}
 							data-scenes={post.data.scenes.join(",")}
 							data-timeline-order={post.data.timelineOrder}
+							data-child-age-months={post.data.childAgeMonths ?? ""}
+							data-recommended={post.data.recommended}
 							data-id={post.id}
 							data-checklist-id={post.data.checklistId}
 						>
@@ -302,6 +304,10 @@ const initialDisplayMode = getInitialDisplayMode(
 						<span>おすすめ順</span>
 					</label>
 					<label class="flex items-center gap-3 cursor-pointer rounded-xl border border-gray-200 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50">
+						<input type="radio" name="sheet-sort" value="age" class="w-4 h-4 text-mint-600 border-gray-300 focus:ring-mint-500" />
+						<span>年齢順</span>
+					</label>
+					<label class="flex items-center gap-3 cursor-pointer rounded-xl border border-gray-200 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50">
 						<input type="radio" name="sheet-sort" value="newest" class="w-4 h-4 text-mint-600 border-gray-300 focus:ring-mint-500" />
 						<span>新着順</span>
 					</label>
@@ -334,6 +340,7 @@ const initialDisplayMode = getInitialDisplayMode(
 		bindPrivateListSwipeRows,
 	} from '../scripts/private-list-delete';
 	import { createListSheetController } from '../scripts/list-page';
+	import { sortKnowhowEntries } from '../scripts/knowhow-sort';
 	import {
 		readKnowhowListCache,
 		saveKnowhowListCache,
@@ -750,7 +757,11 @@ const initialDisplayMode = getInitialDisplayMode(
 			}
 
 			if (currentSort !== 'recommend') {
-				const sortLabel = currentSort === 'newest' ? '新着順' : '人気順';
+				const sortLabel = currentSort === 'newest'
+					? '新着順'
+					: currentSort === 'popular'
+						? '人気順'
+						: '年齢順';
 				chips.push({
 					label: sortLabel,
 					onRemove: () => { currentSort = 'recommend'; updateView(); },
@@ -882,9 +893,18 @@ const initialDisplayMode = getInitialDisplayMode(
 			});
 
 			const visibleCards = cards.filter((card) => card.style.display !== 'none');
-				
-			visibleCards
-				.sort((a, b) => {
+			const orderedCards = currentSort === 'age' || currentSort === 'recommend'
+				? sortKnowhowEntries(visibleCards.map((card) => {
+					const ageValue = card.dataset.childAgeMonths;
+					return {
+						card,
+						id: card.dataset.id ?? '',
+						childAgeMonths: ageValue === undefined || ageValue === '' ? undefined : Number(ageValue),
+						recommended: card.dataset.recommended === 'true',
+						timelineOrder: Number(card.dataset.timelineOrder ?? Number.MAX_SAFE_INTEGER),
+					};
+				}), currentSort).map(({ card }) => card)
+				: [...visibleCards].sort((a, b) => {
 					if (currentSort === 'newest') {
 						const dateA = Number(a.dataset.pubdate || 0);
 						const dateB = Number(b.dataset.pubdate || 0);
@@ -896,11 +916,11 @@ const initialDisplayMode = getInitialDisplayMode(
 						return likesB - likesA;
 					}
 					return Number(a.dataset.timelineOrder ?? 0) - Number(b.dataset.timelineOrder ?? 0);
-				})
-				.forEach((card, index) => {
-					card.style.setProperty('order', String(index));
 				});
-			visibleListIds = visibleCards
+			orderedCards.forEach((card, index) => {
+				card.style.setProperty('order', String(index));
+			});
+			visibleListIds = orderedCards
 				.map((card) => card.dataset.id ?? '')
 				.filter(Boolean);
 			persistListState(visibleListIds);

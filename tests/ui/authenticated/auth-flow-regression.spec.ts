@@ -90,8 +90,8 @@ test('A-111 authenticated public navigation keeps the same Supabase session', as
 	await expectSignedIn(page);
 	const before = await page.evaluate(() => localStorage.getItem('sb-127-auth-token'));
 	expect(before).toContain('e2e-authenticated@example.test');
-	await page.locator('[data-open-checklist="002-family-log"]:visible').click();
-	await expect(page).toHaveURL(/\/knowhow\/002-family-log\/?$/);
+	await page.locator('[data-open-checklist="004-cdc-4-months"]:visible').click();
+	await expect(page).toHaveURL(/\/knowhow\/004-cdc-4-months\/?$/);
 	const after = await page.evaluate(() => localStorage.getItem('sb-127-auth-token'));
 	expect(after).toBe(before);
 	await expectNoPageErrors(errors);
@@ -100,22 +100,22 @@ test('A-111 authenticated public navigation keeps the same Supabase session', as
 test('A-112 authenticated private list only shows seeded runs', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-4-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await expectSignedIn(page);
 	await expectListState(page, 1);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夫婦共有ログ');
+	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('生後4か月ごろの発達チェック');
 	await expectNoPageErrors(errors);
 });
 
 test('A-113 authenticated private list→detail→memoの操作列を維持する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months'), makeRegressionRun('cdc-4-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
-	await openPrivateDetailFromList(page, '001-night-memo');
+	await openPrivateDetailFromList(page, '003-cdc-2-months');
 	await page.locator('#tab-btn-memo:visible').click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/memo\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/memo\/?$/);
 	await expect(page.locator('#tab-btn-memo')).toHaveAttribute('aria-selected', 'true');
 	await expectSignedIn(page);
 	await expectNoPageErrors(errors);
@@ -124,16 +124,16 @@ test('A-113 authenticated private list→detail→memoの操作列を維持す�
 test('A-114 authenticated private list→detail→progress→memo→closeを完走する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
-	await openPrivateDetailFromList(page, '001-night-memo');
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await openPrivateDetailFromList(page, '003-cdc-2-months');
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	await expect(page.locator('#tab-btn-progress')).toHaveAttribute('aria-selected', 'true');
 	await page.locator('#tab-btn-memo').click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/memo\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/memo\/?$/);
 	await expect(page.locator('#tab-content-memo')).toBeVisible();
 	await page.locator('button[aria-label="詳細パネルを閉じる"]').click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/?$/);
 	await expectSignedIn(page);
 	await expectNoPageErrors(errors);
 });
@@ -141,7 +141,7 @@ test('A-114 authenticated private list→detail→progress→memo→closeを完�
 test('A-115 authenticated private direct progress/memo URL restores both tabs', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	for (const tab of ['progress', 'memo'] as const) {
-		await page.goto(`/my-knowhow/002-family-log/${tab}/`);
+		await page.goto(`/my-knowhow/004-cdc-4-months/${tab}/`);
 		await expectSignedIn(page);
 		await expect(page.locator(`#tab-btn-${tab}`)).toHaveAttribute('aria-selected', 'true');
 		await expect(page.locator(`#tab-content-${tab}`)).toBeVisible();
@@ -152,8 +152,8 @@ test('A-115 authenticated private direct progress/memo URL restores both tabs', 
 test('A-116 authenticated progress checkbox is local and session is unchanged', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
-	await page.goto('/my-knowhow/001-night-memo/progress/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
+	await page.goto('/my-knowhow/003-cdc-2-months/progress/');
 	await expectSignedIn(page);
 	const before = await page.evaluate(() => localStorage.getItem('sb-127-auth-token'));
 	const checkbox = page.locator('#tab-content-progress input[type="checkbox"]').first();
@@ -168,21 +168,21 @@ test('A-116 authenticated progress checkbox is local and session is unchanged', 
 test('A-117 authenticated public list does not expose private run labels', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
 	await page.goto('/?mode=headline_view');
-	await expectListState(page, 2);
-	await expect(page.locator('body')).not.toContainText('night-memo 回帰項目');
+	await expectListState(page, 12);
+	await expect(page.locator('body')).not.toContainText('cdc-2-months 回帰項目');
 	await expectNoPageErrors(errors);
 });
 
 test('A-118 authenticated detail wheel keeps canonical private route', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo'), makeRegressionRun('family-log')]);
-	await page.goto('/my-knowhow/001-night-memo/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months'), makeRegressionRun('cdc-4-months')]);
+	await page.goto('/my-knowhow/003-cdc-2-months/');
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
-	await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/004-cdc-4-months\/?$/);
 	await expectSignedIn(page);
 	await expectNoPageErrors(errors);
 });
@@ -193,8 +193,8 @@ test('A-119 authenticated public一覧の♡開始でも認証セッションを
 	await clearPrivateRuns(page);
 	await page.goto('/knowhow/');
 	const before = await page.evaluate(() => localStorage.getItem('sb-127-auth-token'));
-	await page.locator('.knowhow-card[data-id="001-night-memo"] .like-btn:visible').first().click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await page.locator('.knowhow-card[data-id="003-cdc-2-months"] .like-btn:visible').first().click();
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	await expect(page.locator('#tab-btn-progress')).toHaveAttribute('aria-selected', 'true');
 	expect(await page.evaluate(() => localStorage.getItem('sb-127-auth-token'))).toBe(before);
 	await expectSignedIn(page);
@@ -206,8 +206,8 @@ test('A-120 authenticated 公開詳細は既存マイリストをprivate操作�
 	await page.goto('/');
 	await expectSignedIn(page);
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
-	await page.goto('/knowhow/001-night-memo/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
+	await page.goto('/knowhow/003-cdc-2-months/');
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await expect(page.locator('[data-private-actions]:visible')).toHaveCount(1);
 	await expect(page.locator('[data-start-checklist]:visible')).toHaveCount(0);
@@ -221,17 +221,17 @@ test('A-121 authenticated マイリスト削除は保存runを完全削除する
 	await page.goto('/');
 	await expectSignedIn(page);
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-4-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await expectListState(page, 1);
-	await swipeMyListRow(page, 'family-log');
-	const row = page.locator('.knowhow-card[data-checklist-id="family-log"] [data-my-list-swipe-row]');
+	await swipeMyListRow(page, 'cdc-4-months');
+	const row = page.locator('.knowhow-card[data-checklist-id="cdc-4-months"] [data-my-list-swipe-row]');
 	await expect(row).toHaveAttribute('data-swipe-open', 'true');
 	page.once('dialog', (dialog) => void dialog.accept());
 	await row.locator('[data-my-list-delete]').click();
 	await expectListState(page, 0);
 	const runs = await readPrivateRuns(page) as Array<{ checklistId: string }>;
-	expect(runs.filter((run) => run.checklistId === 'family-log')).toHaveLength(0);
+	expect(runs.filter((run) => run.checklistId === 'cdc-4-months')).toHaveLength(0);
 	await page.locator('#open-filter-sheet-btn').click();
 	await expect(page.locator('#sheet-completed-only-row')).toBeVisible();
 	await expect(page.locator('#sheet-deleted-only')).toHaveCount(0);

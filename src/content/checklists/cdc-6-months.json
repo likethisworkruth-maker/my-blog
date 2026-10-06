@@ -1,0 +1,80 @@
+{
+  "checklistId": "cdc-6-months",
+  "title": "生後6か月ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "身近なよく知っている人がわかる"
+        },
+        {
+          "id": "social-02",
+          "label": "鏡の中の自分を見るのが好き"
+        },
+        {
+          "id": "social-03",
+          "label": "声を出して笑う"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "あなたと交互に声を出してやり取りする"
+        },
+        {
+          "id": "language-02",
+          "label": "舌を出して「ぶー」と音を鳴らす（ラズベリー音）"
+        },
+        {
+          "id": "language-03",
+          "label": "甲高い声を出す"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "物を確かめるように口に入れる"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "欲しいおもちゃをつかもうと手を伸ばす"
+        },
+        {
+          "id": "cognitive-03",
+          "label": "もういらないときに唇を閉じる"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "うつ伏せから仰向けに寝返りする"
+        },
+        {
+          "id": "physical-02",
+          "label": "うつ伏せのとき、腕をまっすぐ伸ばして上半身を持ち上げる"
+        },
+        {
+          "id": "physical-03",
+          "label": "お座りのとき、手をついて体を支える"
+        }
+      ]
+    }
+  ]
+}

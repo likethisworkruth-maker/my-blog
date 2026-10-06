@@ -18,8 +18,8 @@ import {
 test.use({ storageState: path.resolve('tests/fixtures/auth/anonymous.storageState.json') });
 
 const ids = [
-	{ id: '001-night-memo', title: '夜泣き対応メモ', checklistId: 'night-memo' },
-	{ id: '002-family-log', title: '夫婦共有ログ', checklistId: 'family-log' },
+	{ id: '003-cdc-2-months', title: '生後2か月ごろの発達チェック', checklistId: 'cdc-2-months' },
+	{ id: '004-cdc-4-months', title: '生後4か月ごろの発達チェック', checklistId: 'cdc-4-months' },
 ] as const;
 
 async function expectTab(page: import('@playwright/test').Page, tab: 'desc' | 'progress' | 'memo') {
@@ -78,7 +78,7 @@ async function mockAnonymousLikeApi(page: import('@playwright/test').Page, addLi
 			await route.fulfill({
 				status: 200,
 				headers: { ...jsonHeaders, 'content-type': 'application/json' },
-				body: JSON.stringify({ slug: 'knowhow/001-night-memo', like_count: 1, liked: true }),
+				body: JSON.stringify({ slug: 'knowhow/003-cdc-2-months', like_count: 1, liked: true }),
 			});
 			return;
 		}
@@ -86,7 +86,7 @@ async function mockAnonymousLikeApi(page: import('@playwright/test').Page, addLi
 			await route.fulfill({
 				status: 200,
 				headers: { ...jsonHeaders, 'content-type': 'application/json' },
-				body: JSON.stringify({ slug: 'knowhow/001-night-memo', like_count: 1, liked: true }),
+				body: JSON.stringify({ slug: 'knowhow/003-cdc-2-months', like_count: 1, liked: true }),
 			});
 			return;
 		}
@@ -99,8 +99,8 @@ async function mockAnonymousLikeApi(page: import('@playwright/test').Page, addLi
 }
 
 for (const scenario of [
-	{ id: 'H-010', label: 'タイトルの一部', keyword: '夜泣き', expected: ['夜泣き対応メモ'] },
-	{ id: 'H-011', label: 'Markdown説明だけに含まれる語', keyword: '子育て', expected: ['夫婦共有ログ'] },
+	{ id: 'H-010', label: 'タイトルの一部', keyword: '2か月', expected: ['生後2か月ごろの発達チェック'] },
+	{ id: 'H-011', label: '説明文に含まれる語', keyword: '4か月', expected: ['生後4か月ごろの発達チェック'] },
 ]) {
 	test(`${scenario.id} ${scenario.label}の検索結果が正しい`, async ({ page }) => {
 		const errors = collectPageErrors(page);
@@ -117,7 +117,7 @@ test('H-012 未知の検索語は空状態になり、H-013 clearで一覧へ戻
 	await page.locator('#search-keyword-input').fill('存在しない回帰テスト語');
 	await expectListState(page, 0);
 	await page.locator('#search-keyword-input').fill('');
-	await expectListState(page, 2);
+	await expectListState(page, 12);
 	await expectNoPageErrors(errors);
 });
 
@@ -131,12 +131,12 @@ test('H-008/H-009 表示形式をheadlineとgridの間で往復できる', async
 	await expect(page).toHaveURL(/\?mode=grid_view$/);
 	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'grid_view');
 	await expect(page.locator('[data-display-mode-option="grid_view"]')).toHaveAttribute('aria-pressed', 'true');
-	await expect(page.locator('.knowhow-gallery-view:visible')).toHaveCount(2);
+	await expect(page.locator('.knowhow-gallery-view:visible')).toHaveCount(12);
 
 	await page.locator('[data-display-mode-option="headline_view"]').click();
 	await expect(page).toHaveURL(/\?mode=headline_view$/);
 	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'headline_view');
-	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(2);
+	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(12);
 	await expectNoPageErrors(errors);
 });
 
@@ -149,14 +149,14 @@ test('H-016 URL指定のviewを初期表示から一致させる', async ({ page
 	await page.goto('/?mode=grid_view');
 	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'grid_view');
 	await expect(page.locator('html')).toHaveAttribute('data-knowhow-initial-display-mode', 'grid_view');
-	await expect(page.locator('.knowhow-gallery-view:visible')).toHaveCount(2);
+	await expect(page.locator('.knowhow-gallery-view:visible')).toHaveCount(12);
 	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(0);
 
 	await page.goto('/?mode=headline_view');
 	await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'headline_view');
 	await expect(page.locator('html')).toHaveAttribute('data-knowhow-initial-display-mode', 'headline_view');
 	await expect(page.locator('.knowhow-gallery-view:visible')).toHaveCount(0);
-	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(2);
+	await expect(page.locator('.knowhow-list-view:visible')).toHaveCount(12);
 });
 
 test('H-017 マイリストはIndexedDB確定前にカードを表示しない', async ({ page }) => {
@@ -185,11 +185,11 @@ test('H-014 phaseフィルター選択が表示・URL・chipに同期する', as
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=headline_view');
 	await openFilterSheet(page);
-	await page.locator('[data-sheet-phase="pregnancy"]').click();
+	await page.locator('[data-sheet-phase="0-3m"]').click();
 	await page.locator('#sheet-apply-btn').click();
-	await expect(page).toHaveURL(/phase=pregnancy/);
+	await expect(page).toHaveURL(/phase=0-3m/);
 	await expectListState(page, 1);
-	await expect(page.locator('#active-chips-container button')).toContainText('妊娠中');
+	await expect(page.locator('#active-chips-container button')).toContainText('0〜3か月');
 	await expectNoPageErrors(errors);
 });
 
@@ -198,14 +198,14 @@ test('H-014b 月齢は複数選択をORで表示し、すべてボタンを持�
 	await page.goto('/?mode=headline_view');
 	await openFilterSheet(page);
 	await expect(page.locator('[data-sheet-phase="all"]')).toHaveCount(0);
-	await page.locator('[data-sheet-phase="pregnancy"]').click();
 	await page.locator('[data-sheet-phase="0-3m"]').click();
+	await page.locator('[data-sheet-phase="4-6m"]').click();
 	await page.locator('#sheet-apply-btn').click();
-	await expect(page).toHaveURL(/phase=pregnancy&phase=0-3m/);
-	await expectListState(page, 2);
+	await expect(page).toHaveURL(/phase=0-3m&phase=4-6m/);
+	await expectListState(page, 3);
 	await expect(page.locator('#active-chips-container button')).toHaveCount(2);
-	await expect(page.locator('#active-chips-container')).toContainText('妊娠中');
 	await expect(page.locator('#active-chips-container')).toContainText('0〜3か月');
+	await expect(page.locator('#active-chips-container')).toContainText('4〜6か月');
 	await expectNoPageErrors(errors);
 });
 
@@ -213,11 +213,11 @@ test('H-019 sceneフィルター選択が表示・URL・chipに同期する', as
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=headline_view');
 	await openFilterSheet(page);
-	await page.locator('[data-sheet-scene="毎日の準備"]').click();
+	await page.locator('[data-sheet-scene="毎日のチェック"]').click();
 	await page.locator('#sheet-apply-btn').click();
 	expect(page.url()).toContain('scene=');
-	await expectListState(page, 2);
-	await expect(page.locator('#active-chips-container button')).toContainText('毎日の準備');
+	await expectListState(page, 12);
+	await expect(page.locator('#active-chips-container button')).toContainText('毎日のチェック');
 	await expectNoPageErrors(errors);
 });
 
@@ -225,22 +225,22 @@ test('H-020 phaseとsceneはAND条件で絞り込む', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=headline_view');
 	await openFilterSheet(page);
-	await page.locator('[data-sheet-phase="pregnancy"]').click();
-	await page.locator('[data-sheet-scene="毎日の準備"]').click();
+	await page.locator('[data-sheet-phase="0-3m"]').click();
+	await page.locator('[data-sheet-scene="毎日のチェック"]').click();
 	await page.locator('#sheet-apply-btn').click();
 	await expectListState(page, 1);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夫婦共有ログ');
+	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('生後2か月ごろの発達チェック');
 	await expect(page.locator('#active-chips-container button')).toHaveCount(2);
 	await expectNoPageErrors(errors);
 });
 
 test('H-021 filter resetで条件・URL・空状態を初期化する', async ({ page }) => {
 	const errors = collectPageErrors(page);
-	await page.goto('/?mode=headline_view&phase=pregnancy&scene=daily');
+	await page.goto('/?mode=headline_view&phase=0-3m&scene=' + encodeURIComponent('毎日のチェック'));
 	await expectListState(page, 1);
 	await openFilterSheet(page);
 	await page.locator('#sheet-reset-btn').click();
-	await expectListState(page, 2);
+	await expectListState(page, 12);
 	await expect(page).toHaveURL(/mode=headline_view$/);
 	await expect(page.locator('#active-chips-container')).toBeHidden();
 	await expectNoPageErrors(errors);
@@ -317,7 +317,7 @@ test('H-028 絞り込み・並び替えボタンは矩形で有効時は文字�
 	await expect(filterButton).toHaveClass(/rounded-xl/);
 	await expect(sortButton).toHaveClass(/rounded-xl/);
 	await openFilterSheet(page);
-	await page.locator('[data-sheet-phase="pregnancy"]').click();
+	await page.locator('[data-sheet-phase="0-3m"]').click();
 	await expect(filterButton).toHaveClass(/text-mint-600/);
 	await expect(filterButton).not.toHaveClass(/bg-mint-50/);
 	await expect(sortButton).not.toHaveClass(/bg-mint-50/);
@@ -359,8 +359,8 @@ test('O-016 Ctrl+Kで検索modalを開き、結果を絞り込んで閉じる', 
 	await page.keyboard.press('Control+KeyK');
 	await expect(page.locator('#search-modal')).toBeVisible();
 	await expect.poll(() => page.locator('#search-results li').count(), { timeout: 8000 }).toBeGreaterThan(0);
-	await page.locator('#search-input').fill('夜泣き');
-	await expect(page.locator('#search-results')).toContainText('夜泣き対応メモ');
+	await page.locator('#search-input').fill('2か月');
+	await expect(page.locator('#search-results')).toContainText('生後2か月ごろの発達チェック');
 	await page.locator('#search-close-btn').click();
 	await expect(page.locator('#search-modal')).toBeHidden();
 	await expectNoPageErrors(errors);
@@ -381,7 +381,7 @@ test('H-005 画像のsrcと意味のあるaltが全カードに存在する', as
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=grid_view');
 	const images = page.locator('.knowhow-card .knowhow-gallery-view img');
-	await expect(images).toHaveCount(2);
+	await expect(images).toHaveCount(12);
 	for (let index = 0; index < await images.count(); index += 1) {
 		await expect(images.nth(index)).toHaveAttribute('src', /^\//);
 		await expect(images.nth(index)).not.toHaveAttribute('alt', '');
@@ -412,10 +412,10 @@ test('H-015 公開grid_viewは長押し処理を持たず、直後も他の操�
 test('H-006/H-007 一覧カードから正しい公開詳細へ遷移する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=headline_view');
-	await page.locator('[data-open-checklist="001-night-memo"]:visible').click();
-	await expect(page).toHaveURL(/\/knowhow\/001-night-memo\/?$/);
+	await page.locator('[data-open-checklist="003-cdc-2-months"]:visible').click();
+	await expect(page).toHaveURL(/\/knowhow\/003-cdc-2-months\/?$/);
 	await expect(page.locator('#knowhow-modal-container')).toBeVisible();
-	await expect(page.locator('#knowhow-modal-container h1').first()).toContainText('夜泣き対応メモ');
+	await expect(page.locator('#knowhow-modal-container h1').first()).toContainText('生後2か月ごろの発達チェック');
 	await expectNoPageErrors(errors);
 });
 
@@ -423,18 +423,18 @@ test('H-028 マイリストはheadlineを進捗、gridを説明へ遷移させ�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
 
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await expectListState(page, 1);
-	await page.locator('[data-open-checklist="001-night-memo"]:visible').click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await page.locator('[data-open-checklist="003-cdc-2-months"]:visible').click();
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	await expect(page.locator('#tab-content-progress')).toBeVisible();
 
 	await page.goto('/my-knowhow/?mode=grid_view');
 	await expectListState(page, 1);
-	await page.locator('[data-open-checklist="001-night-memo"]:visible').click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/?$/);
+	await page.locator('[data-open-checklist="003-cdc-2-months"]:visible').click();
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/?$/);
 	await expect(page.locator('#tab-content-desc')).toHaveCount(0);
 	await expect(page.locator('#tab-content-progress')).toHaveCount(0);
 	await expect(page.locator('#tab-content-memo')).toHaveCount(0);
@@ -452,26 +452,26 @@ test('H-027 公開一覧の♡は開始と同時にいいねし、同じ開始�
 	await page.goto('/');
 	await clearPrivateRuns(page);
 	await page.goto('/knowhow/');
-	const heart = page.locator('.knowhow-card[data-id="001-night-memo"] .like-btn:visible').first();
+	const heart = page.locator('.knowhow-card[data-id="003-cdc-2-months"] .like-btn:visible').first();
 	await expect(heart).toBeVisible();
 	await heart.click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	await expectTab(page, 'progress');
 	expect(addLikeRequests).toHaveLength(1);
 	let runs = await readPrivateRuns(page) as Array<{ checklistId: string }>;
-	expect(runs.filter((run) => run.checklistId === 'night-memo')).toHaveLength(1);
+	expect(runs.filter((run) => run.checklistId === 'cdc-2-months')).toHaveLength(1);
 
-	await page.goto('/knowhow/001-night-memo/');
+	await page.goto('/knowhow/003-cdc-2-months/');
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await expect(page.locator('[data-private-actions]:visible')).toHaveCount(1);
 	await expect(page.locator('[data-start-checklist]:visible')).toHaveCount(0);
 	await page.evaluate(() => {
 		void (window as Window & { startChecklist?: () => Promise<void> }).startChecklist?.();
 	});
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	expect(addLikeRequests).toHaveLength(1);
 	runs = await readPrivateRuns(page) as Array<{ checklistId: string }>;
-	expect(runs.filter((run) => run.checklistId === 'night-memo')).toHaveLength(1);
+	expect(runs.filter((run) => run.checklistId === 'cdc-2-months')).toHaveLength(1);
 	await expectNoPageErrors(errors);
 });
 
@@ -479,10 +479,10 @@ test('H-031 headline_viewは開始済みチェックリストのハートを赤�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
 	await page.goto('/?mode=headline_view');
-	const startedCard = page.locator('.knowhow-card[data-checklist-id="night-memo"]');
-	const notStartedCard = page.locator('.knowhow-card[data-checklist-id="family-log"]');
+	const startedCard = page.locator('.knowhow-card[data-checklist-id="cdc-2-months"]');
+	const notStartedCard = page.locator('.knowhow-card[data-checklist-id="cdc-4-months"]');
 	await expect(startedCard).toHaveAttribute('data-started', 'true');
 	await expect(notStartedCard).toHaveAttribute('data-started', 'false');
 	const startedHeart = startedCard.locator('.knowhow-list-view .like-btn .icon-filled');
@@ -506,8 +506,8 @@ test('D-028 公開詳細は既存マイリストを検出して始める導線�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
-	await page.goto('/knowhow/001-night-memo/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
+	await page.goto('/knowhow/003-cdc-2-months/');
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await expect(page.locator('[data-private-actions]:visible')).toHaveCount(1);
 	await expect(page.locator('[data-start-checklist]:visible')).toHaveCount(0);
@@ -521,19 +521,19 @@ test('M-001 マイリストの左スワイプ削除はrunと関連セッショ�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await expectListState(page, 1);
-	await page.evaluate(() => sessionStorage.setItem('knowhow:stale-test', 'night-memo'));
-	await swipeMyListRow(page, 'night-memo');
-	const row = page.locator('.knowhow-card[data-checklist-id="night-memo"] [data-my-list-swipe-row]');
+	await page.evaluate(() => sessionStorage.setItem('knowhow:stale-test', 'cdc-2-months'));
+	await swipeMyListRow(page, 'cdc-2-months');
+	const row = page.locator('.knowhow-card[data-checklist-id="cdc-2-months"] [data-my-list-swipe-row]');
 	await expect(row).toHaveAttribute('data-swipe-open', 'true');
 	await expect(row.locator('[data-my-list-delete]')).toBeVisible();
 	page.once('dialog', (dialog) => void dialog.accept());
 	await row.locator('[data-my-list-delete]').click();
 	await expectListState(page, 0);
 	const remainingRuns = await readPrivateRuns(page) as Array<{ checklistId: string }>;
-	expect(remainingRuns.filter((run) => run.checklistId === 'night-memo')).toHaveLength(0);
+	expect(remainingRuns.filter((run) => run.checklistId === 'cdc-2-months')).toHaveLength(0);
 	expect(await page.evaluate(() => sessionStorage.getItem('knowhow:stale-test'))).toBeNull();
 	await openFilterSheet(page);
 	await expect(page.locator('#sheet-completed-only-row')).toBeVisible();
@@ -545,17 +545,17 @@ test('M-004 公開一覧のheadline_viewでも保存済みrunの左スワイプ�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
 	await page.goto('/?mode=headline_view');
-	await expectListState(page, 2);
-	await swipeMyListRow(page, 'night-memo');
-	const row = page.locator('.knowhow-card[data-checklist-id="night-memo"] [data-my-list-swipe-row]');
+	await expectListState(page, 12);
+	await swipeMyListRow(page, 'cdc-2-months');
+	const row = page.locator('.knowhow-card[data-checklist-id="cdc-2-months"] [data-my-list-swipe-row]');
 	await expect(row).toHaveAttribute('data-swipe-open', 'true');
 	await expect(row.locator('[data-my-list-delete]')).toBeVisible();
 	page.once('dialog', (dialog) => void dialog.accept());
 	await row.locator('[data-my-list-delete]').click();
 	const remainingRuns = await readPrivateRuns(page) as Array<{ checklistId: string }>;
-	expect(remainingRuns.filter((run) => run.checklistId === 'night-memo')).toHaveLength(0);
+	expect(remainingRuns.filter((run) => run.checklistId === 'cdc-2-months')).toHaveLength(0);
 	await expect(row.locator('[data-my-list-delete]')).toBeHidden();
 	await expectNoPageErrors(errors);
 });
@@ -564,11 +564,11 @@ test('M-003 grid_viewでは削除UIと揺れを表示しない', async ({ page }
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
 	await page.goto('/my-knowhow/?mode=grid_view');
 	await expectListState(page, 1);
 	const container = page.locator('#knowhow-container');
-	const card = page.locator('.knowhow-card[data-checklist-id="night-memo"]');
+	const card = page.locator('.knowhow-card[data-checklist-id="cdc-2-months"]');
 	await expect(container).toHaveAttribute('data-display-mode', 'grid_view');
 	await expect(card.locator('[data-my-list-delete]')).toBeHidden();
 	await expect(card.locator('[data-my-list-grid-delete]')).toHaveCount(0);
@@ -585,17 +585,17 @@ test('M-002 完了済み表示は全項目チェック済みのリストだけ�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeCompletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeCompletedRegressionRun('cdc-2-months'), makeRegressionRun('cdc-4-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await expectListState(page, 1);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夫婦共有ログ');
+	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('生後4か月ごろの発達チェック');
 	await openFilterSheet(page);
 	await expect(page.locator('#sheet-completed-only-row')).toBeVisible();
 	await page.locator('#sheet-completed-only').check();
 	await page.locator('#sheet-apply-btn').click();
 	await expect(page).toHaveURL(/completed=1/);
 	await expectListState(page, 1);
-	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夜泣き対応メモ');
+	await expect(page.locator('.knowhow-card:visible h2')).toHaveText('生後2か月ごろの発達チェック');
 	await expectNoPageErrors(errors);
 });
 
@@ -603,11 +603,11 @@ test('M-005 完了済みはheadlineとgridのハートを丸いチェックへ�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeCompletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeCompletedRegressionRun('cdc-2-months'), makeRegressionRun('cdc-4-months')]);
 	await page.goto('/?mode=headline_view');
-	await expectListState(page, 2);
-	const completedCard = page.locator('.knowhow-card[data-checklist-id="night-memo"]');
-	const incompleteCard = page.locator('.knowhow-card[data-checklist-id="family-log"]');
+	await expectListState(page, 12);
+	const completedCard = page.locator('.knowhow-card[data-checklist-id="cdc-2-months"]');
+	const incompleteCard = page.locator('.knowhow-card[data-checklist-id="cdc-4-months"]');
 	await expect(completedCard.locator('[data-panel-completed]')).toBeVisible();
 	await expect(completedCard.locator('[data-panel-completed]')).toContainText('check_circle');
 	await expect(completedCard.locator('[data-panel-like]')).toBeHidden();
@@ -621,9 +621,9 @@ test('M-005 完了済みはheadlineとgridのハートを丸いチェックへ�
 	await expect(incompleteCard.locator('[data-grid-completed]')).toBeHidden();
 	await expect(incompleteCard.locator('[data-grid-like]')).toBeVisible();
 	const gridColors = await page.evaluate(() => {
-		const completedIcon = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="night-memo"] [data-grid-completed]');
-		const emptyHeart = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="family-log"] [data-grid-like] .icon-empty');
-		const likeCount = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="family-log"] [data-grid-like] .like-count');
+		const completedIcon = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="cdc-2-months"] [data-grid-completed]');
+		const emptyHeart = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="cdc-4-months"] [data-grid-like] .icon-empty');
+		const likeCount = document.querySelector<HTMLElement>('.knowhow-card[data-checklist-id="cdc-4-months"] [data-grid-like] .like-count');
 		const mintProbe = document.createElement('span');
 		mintProbe.style.color = 'var(--color-mint-500)';
 		document.body.appendChild(mintProbe);
@@ -646,13 +646,13 @@ test('D-030 マイリストの完了済み絞り込み・並び替えを上下�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeCompletedRegressionRun('night-memo'), makeCompletedRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeCompletedRegressionRun('cdc-2-months'), makeCompletedRegressionRun('cdc-4-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await expectListState(page, 0);
 	await expect(page.locator('#knowhow-empty')).toContainText('未完了のチェックリストはありません。');
 	await page.evaluate(() => {
 		window.dispatchEvent(new CustomEvent('article-like-changed', {
-			detail: { slug: 'knowhow/002-family-log', liked: true, likeCount: 10 },
+			detail: { slug: 'knowhow/004-cdc-4-months', liked: true, likeCount: 10 },
 		}));
 	});
 
@@ -675,25 +675,25 @@ test('D-030 マイリストの完了済み絞り込み・並び替えを上下�
 			cache: JSON.parse(sessionStorage.getItem('knowhow-list-cache') ?? 'null'),
 		};
 	});
-	expect(listState.titles).toEqual(['夫婦共有ログ', '夜泣き対応メモ']);
+	expect(listState.titles).toEqual(['生後4か月ごろの発達チェック', '生後2か月ごろの発達チェック']);
 	expect(listState.cache).toMatchObject({
 		version: 2,
 		view: 'my',
 		completedOnly: true,
 		sort: 'popular',
-		orderedIds: ['002-family-log', '001-night-memo'],
+		orderedIds: ['004-cdc-4-months', '003-cdc-2-months'],
 	});
 
-	await openPrivateDetailFromList(page, '002-family-log');
+	await openPrivateDetailFromList(page, '004-cdc-4-months');
 	const container = page.locator('#knowhow-modal-container');
 	await expect(container).toHaveAttribute('data-private-state-loaded', 'true');
 	await expect(container).not.toHaveAttribute('data-prev');
-	await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/progress\/?$/);
-	await expect(container).toHaveAttribute('data-next', '/my-knowhow/001-night-memo/progress/');
+	await expect(page).toHaveURL(/\/my-knowhow\/004-cdc-4-months\/progress\/?$/);
+	await expect(container).toHaveAttribute('data-next', '/my-knowhow/003-cdc-2-months/progress/');
 	await container.dispatchEvent('wheel', { deltaY: 120 });
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
-	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-prev', '/my-knowhow/002-family-log/progress/');
+	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-prev', '/my-knowhow/004-cdc-4-months/progress/');
 	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-next');
 	await expectNoPageErrors(errors);
 });
@@ -826,13 +826,13 @@ test('D-017/D-018 private001のwheelでprivate002へ移動し、family template�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo'), makeRegressionRun('family-log')]);
-	await page.goto('/my-knowhow/001-night-memo/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months'), makeRegressionRun('cdc-4-months')]);
+	await page.goto('/my-knowhow/003-cdc-2-months/');
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
-	await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/?$/);
-	await expect(page.locator('#knowhow-modal-container h1').first()).toContainText('夫婦共有ログ');
-	expect(await page.locator('[data-checklist-template]').textContent()).toContain('family-log');
+	await expect(page).toHaveURL(/\/my-knowhow\/004-cdc-4-months\/?$/);
+	await expect(page.locator('#knowhow-modal-container h1').first()).toContainText('生後4か月ごろの発達チェック');
+	expect(await page.locator('[data-checklist-template]').textContent()).toContain('cdc-4-months');
 	await expectNoPageErrors(errors);
 });
 
@@ -840,11 +840,11 @@ test('D-019 private002の末尾wheelで不正な次URLへ進まない', async ({
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('family-log')]);
-	await page.goto('/my-knowhow/002-family-log/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-4-months')]);
+	await page.goto('/my-knowhow/004-cdc-4-months/');
 	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
 	await page.waitForTimeout(400);
-	await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/004-cdc-4-months\/?$/);
 	await expectNoPageErrors(errors);
 });
 
@@ -852,29 +852,29 @@ test('D-029 完了済み絞り込み中は未完了のprivate詳細へ上下移�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeCompletedRegressionRun('night-memo'), makeRegressionRun('family-log')]);
+	await seedPrivateRuns(page, [makeCompletedRegressionRun('cdc-2-months'), makeRegressionRun('cdc-4-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
 	await openFilterSheet(page);
 	await page.locator('#sheet-completed-only').check();
 	await page.locator('#sheet-apply-btn').click();
 	await expectListState(page, 1);
-	await openPrivateDetailFromList(page, '001-night-memo');
+	await openPrivateDetailFromList(page, '003-cdc-2-months');
 	await expect(page.locator('#knowhow-modal-container')).toHaveAttribute('data-private-state-loaded', 'true');
 	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-next');
 	await expect(page.locator('#knowhow-modal-container')).not.toHaveAttribute('data-prev');
 	await page.locator('#knowhow-modal-container').dispatchEvent('wheel', { deltaY: 120 });
 	await page.waitForTimeout(400);
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	await expectNoPageErrors(errors);
 });
 
 test('D-023 private list→detail→一覧へ戻るでreturn-urlを使う', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
 	await page.goto('/my-knowhow/?mode=headline_view');
-	await page.waitForSelector("[data-open-checklist='001-night-memo']:visible");
-	await openPrivateDetailFromList(page, '001-night-memo');
+	await page.waitForSelector("[data-open-checklist='003-cdc-2-months']:visible");
+	await openPrivateDetailFromList(page, '003-cdc-2-months');
 	const isMobileViewport = await page.evaluate(() => window.innerWidth < 1024);
 	if (isMobileViewport) {
 		const mobileBackButton = page.locator('button[aria-label="チェックリスト一覧へ戻る"]:visible');
@@ -889,7 +889,7 @@ test('D-023 private list→detail→一覧へ戻るでreturn-urlを使う', asyn
 });
 test('D-024 mode=myの公開詳細URLはprivate UIへ安全にfallbackする', async ({ page }) => {
 	const errors = collectPageErrors(page);
-	await page.goto('/knowhow/001-night-memo/?mode=my');
+	await page.goto('/knowhow/003-cdc-2-months/?mode=my');
 	await expect(page.locator('[data-private-actions]:visible')).toHaveCount(1);
 	await expect(page.locator('[data-public-only]:visible')).toHaveCount(0);
 	await expectNoPageErrors(errors);
@@ -897,16 +897,16 @@ test('D-024 mode=myの公開詳細URLはprivate UIへ安全にfallbackする', a
 
 test('D-027 unknown tabは例外を出さず説明へfallbackする', async ({ page }) => {
 	const errors = collectPageErrors(page);
-	await page.goto('/my-knowhow/001-night-memo/?tab=unknown');
+	await page.goto('/my-knowhow/003-cdc-2-months/?tab=unknown');
 	await expectTab(page, 'desc');
 	await expectNoPageErrors(errors);
 });
 
 test('K-001/K-004 private progressのtemplateと6項目が一致する', async ({ page }) => {
 	const errors = collectPageErrors(page);
-	await page.goto('/knowhow/001-night-memo/');
+	await page.goto('/knowhow/003-cdc-2-months/');
 	await page.locator("button[aria-label='このチェックリストを始める']:visible").click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	await expect.poll(() => page.locator('#tab-content-progress [data-checklist-item-id]').count(), { timeout: 8000 }).toBe(6);
 	await expect(page.locator('#tab-content-progress [data-checklist-item-id] input[type="checkbox"]')).toHaveCount(6);
 	const rows = page.locator('#tab-content-progress [data-checklist-item-id]');
@@ -944,9 +944,9 @@ test('K-001/K-004 private progressのtemplateと6項目が一致する', async (
 
 test('K-005 progressのcheckbox変更がreload後も維持される', async ({ page }) => {
 	const errors = collectPageErrors(page);
-	await page.goto('/knowhow/001-night-memo/');
+	await page.goto('/knowhow/003-cdc-2-months/');
 	await page.locator("button[aria-label='このチェックリストを始める']:visible").click();
-	await expect(page).toHaveURL(/\/my-knowhow\/001-night-memo\/progress\/?$/);
+	await expect(page).toHaveURL(/\/my-knowhow\/003-cdc-2-months\/progress\/?$/);
 	const checkbox = page.locator('#tab-content-progress input[type="checkbox"]').first();
 	await expect(checkbox).toBeVisible();
 	await checkbox.check();
@@ -956,7 +956,7 @@ test('K-005 progressのcheckbox変更がreload後も維持される', async ({ p
 			checklistId: string;
 			items: Array<{ checked?: boolean }>;
 		}>;
-		return runs.find((run) => run.checklistId === 'night-memo')?.items[0]?.checked ?? false;
+		return runs.find((run) => run.checklistId === 'cdc-2-months')?.items[0]?.checked ?? false;
 	}, { timeout: 8000 }).toBe(true);
 	await page.reload();
 	await expect(page.locator('#tab-content-progress input[type="checkbox"]').first()).toBeChecked();
@@ -966,8 +966,8 @@ test('K-005 progressのcheckbox変更がreload後も維持される', async ({ p
 test('K-006 memoは表示本文を直接編集し、文字数制限なく保存できる', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('family-log')]);
-	await page.goto('/my-knowhow/002-family-log/memo/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-4-months')]);
+	await page.goto('/my-knowhow/004-cdc-4-months/memo/');
 	const editor = page.locator('[data-note-editor]');
 	await expect(editor).toHaveCount(1);
 	await expect(editor).toHaveAttribute('contenteditable', 'true');
@@ -976,7 +976,7 @@ test('K-006 memoは表示本文を直接編集し、文字数制限なく保存�
 	await editor.fill(longNote);
 	await expect.poll(async () => {
 		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; note?: string }>;
-		return runs.find((run) => run.checklistId === 'family-log')?.note ?? '';
+		return runs.find((run) => run.checklistId === 'cdc-4-months')?.note ?? '';
 	}, { timeout: 8000 }).toBe(longNote);
 	await page.reload();
 	await expect(page.locator('[data-note-editor]')).toHaveText(longNote);
@@ -985,14 +985,14 @@ test('K-006 memoは表示本文を直接編集し、文字数制限なく保存�
 test('K-007/K-008 progress編集→保存→reloadで項目文言を維持する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
-	await page.goto('/my-knowhow/001-night-memo/progress/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
+	await page.goto('/my-knowhow/003-cdc-2-months/progress/');
 	const editor = page.locator('[data-item-editor]').first();
 	await expect(editor).toHaveAttribute('contenteditable', 'true');
 	await editor.fill('E2Eで変更した項目');
 	await expect.poll(async () => {
 		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; items: Array<{ label: string }> }>;
-		return runs.find((run) => run.checklistId === 'night-memo')?.items[0]?.label;
+		return runs.find((run) => run.checklistId === 'cdc-2-months')?.items[0]?.label;
 	}, { timeout: 8000 }).toBe('E2Eで変更した項目');
 	await page.reload();
 	await expect(page.locator('[data-item-editor]').first()).toContainText('E2Eで変更した項目');
@@ -1002,8 +1002,8 @@ test('K-007/K-008 progress編集→保存→reloadで項目文言を維持する
 test('K-011 progress編集→custom item追加→保存で追加項目を表示する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
-	await page.goto('/my-knowhow/001-night-memo/progress/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
+	await page.goto('/my-knowhow/003-cdc-2-months/progress/');
 	await page.locator('[data-add-item-area]').click();
 	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
 	await expect(page.locator('[data-item-editor]').last()).toBeFocused();
@@ -1015,7 +1015,7 @@ test('K-011 progress編集→custom item追加→保存で追加項目を表示�
 	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
 	await expect.poll(async () => {
 		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; items: Array<{ label: string }> }>;
-		return runs.find((run) => run.checklistId === 'night-memo')?.items.some((item) => item.label === 'E2E追加項目');
+		return runs.find((run) => run.checklistId === 'cdc-2-months')?.items.some((item) => item.label === 'E2E追加項目');
 	}, { timeout: 8000 }).toBe(true);
 	await page.reload();
 	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
@@ -1026,8 +1026,8 @@ test('K-011 progress編集→custom item追加→保存で追加項目を表示�
 test('K-012 progressの空行はblurまたはDeleteで削除される', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/');
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo')]);
-	await page.goto('/my-knowhow/001-night-memo/progress/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months')]);
+	await page.goto('/my-knowhow/003-cdc-2-months/progress/');
 	await page.locator('[data-add-item-area]').click();
 	await expect(page.locator('[data-item-editor]')).toHaveCount(7);
 	await page.locator('[data-item-editor]').first().focus();
@@ -1037,7 +1037,7 @@ test('K-012 progressの空行はblurまたはDeleteで削除される', async ({
 	await expect(page.locator('[data-item-editor]')).toHaveCount(5);
 	await expect.poll(async () => {
 		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; items: Array<unknown> }>;
-		return runs.find((run) => run.checklistId === 'night-memo')?.items.length;
+		return runs.find((run) => run.checklistId === 'cdc-2-months')?.items.length;
 	}, { timeout: 8000 }).toBe(5);
 	await page.reload();
 	await expect(page.locator('[data-item-editor]')).toHaveCount(5);
@@ -1048,8 +1048,8 @@ test('K-013 行追加で既存チェックを維持し、全件チェックと�
 	const errors = collectPageErrors(page);
 	await page.goto('/');
 	await clearPrivateRuns(page);
-	await seedPrivateRuns(page, [makeRegressionRun('night-memo', 3)]);
-	await page.goto('/my-knowhow/001-night-memo/progress/');
+	await seedPrivateRuns(page, [makeRegressionRun('cdc-2-months', 3)]);
+	await page.goto('/my-knowhow/003-cdc-2-months/progress/');
 	const checkboxes = page.locator('[data-checklist-items] input[type="checkbox"]');
 	await checkboxes.nth(0).check();
 	await checkboxes.nth(1).check();
@@ -1065,7 +1065,7 @@ test('K-013 行追加で既存チェックを維持し、全件チェックと�
 	}
 	await expect.poll(async () => {
 		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; isCompleted: boolean }>;
-		return runs.find((run) => run.checklistId === 'night-memo')?.isCompleted;
+		return runs.find((run) => run.checklistId === 'cdc-2-months')?.isCompleted;
 	}, { timeout: 8000 }).toBe(true);
 
 	await page.locator('[data-add-item-area]').click();
@@ -1073,14 +1073,14 @@ test('K-013 行追加で既存チェックを維持し、全件チェックと�
 	await page.locator('[data-item-editor]').first().focus();
 	await expect.poll(async () => {
 		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; isCompleted: boolean }>;
-		return runs.find((run) => run.checklistId === 'night-memo')?.isCompleted;
+		return runs.find((run) => run.checklistId === 'cdc-2-months')?.isCompleted;
 	}, { timeout: 8000 }).toBe(false);
 
 	await page.locator('[data-item-editor]').last().fill('');
 	await page.locator('[data-item-editor]').last().press('Delete');
 	await expect.poll(async () => {
 		const runs = await readPrivateRuns(page) as Array<{ checklistId: string; isCompleted: boolean }>;
-		return runs.find((run) => run.checklistId === 'night-memo')?.isCompleted;
+		return runs.find((run) => run.checklistId === 'cdc-2-months')?.isCompleted;
 	}, { timeout: 8000 }).toBe(true);
 	await expectNoPageErrors(errors);
 });

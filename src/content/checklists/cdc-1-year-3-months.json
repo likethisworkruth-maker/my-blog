@@ -1,0 +1,84 @@
+{
+  "checklistId": "cdc-1-year-3-months",
+  "title": "1歳3か月ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "遊んでいるときに、ほかの子のまねをする（例：ほかの子が容器からおもちゃを出すと、自分も出す）"
+        },
+        {
+          "id": "social-02",
+          "label": "自分が気に入った物をあなたに見せてくれる"
+        },
+        {
+          "id": "social-03",
+          "label": "嬉しいときや興奮したときに手を叩く（拍手する）"
+        },
+        {
+          "id": "social-04",
+          "label": "ぬいぐるみやほかのおもちゃを抱きしめる"
+        },
+        {
+          "id": "social-05",
+          "label": "抱きついたり、寄り添ったり、キスしたりして愛情を示す"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "「ママ」「パパ」以外の言葉を1〜2語、言おうとする（言葉の一部でもよい）"
+        },
+        {
+          "id": "language-02",
+          "label": "物の名前を言うと、そのよく知っている物を見る"
+        },
+        {
+          "id": "language-03",
+          "label": "手を差し出して「おもちゃをちょうだい」と言うと、おもちゃを渡すなど、身振りと言葉の両方で伝えられた指示に従う"
+        },
+        {
+          "id": "language-04",
+          "label": "何かを欲しいときや助けてほしいときに、指さして伝える"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "電話、コップ、絵本などを正しい使い方で使おうとする"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "積木など小さな物を少なくとも2つ積み上げる"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "一人で数歩歩く"
+        },
+        {
+          "id": "physical-02",
+          "label": "手づかみで自分で食べ物を口に運ぶ"
+        }
+      ]
+    }
+  ]
+}

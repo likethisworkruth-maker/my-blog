@@ -2,9 +2,10 @@
 import { getCollection } from 'astro:content';
 import KnowhowDetailPage from '../../components/KnowhowDetailPage.astro';
 import { includeContentInCurrentBuild } from '../../utils/content-publication';
+import { sortKnowhowEntries } from '../../scripts/knowhow-sort';
 
 export async function getStaticPaths() {
-	const knowhow = await getCollection('knowhow', includeContentInCurrentBuild);
+	const knowhow = sortKnowhowEntries(await getCollection('knowhow', includeContentInCurrentBuild), 'recommend');
 	return knowhow.map((item, index) => ({
 		params: { id: item.id },
 		props: {

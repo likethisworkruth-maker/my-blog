@@ -1,0 +1,84 @@
+{
+  "checklistId": "cdc-4-months",
+  "title": "生後4か月ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "あなたの注意を引くために自分から微笑む"
+        },
+        {
+          "id": "social-02",
+          "label": "笑わせようとすると、声を出して軽く笑う（まだ大笑いではない）"
+        },
+        {
+          "id": "social-03",
+          "label": "注意を引くために見つめたり、動いたり、声を出したりする"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "「あー」「うー」などのクーイング音を出す"
+        },
+        {
+          "id": "language-02",
+          "label": "話しかけると声を出して応える"
+        },
+        {
+          "id": "language-03",
+          "label": "あなたの声のする方に顔を向ける"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "お腹が空いているとき、乳房や哺乳瓶を見ると口を開ける"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "自分の手を興味深そうに見つめる"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "抱っこしているとき、支えがなくても頭をしっかり保つ（首すわり）"
+        },
+        {
+          "id": "physical-02",
+          "label": "手に持たせてあげるとおもちゃを握っている"
+        },
+        {
+          "id": "physical-03",
+          "label": "腕を振っておもちゃに触ろうとする"
+        },
+        {
+          "id": "physical-04",
+          "label": "手を口元に持っていく"
+        },
+        {
+          "id": "physical-05",
+          "label": "うつ伏せのとき、肘や前腕で体を押し上げる"
+        }
+      ]
+    }
+  ]
+}

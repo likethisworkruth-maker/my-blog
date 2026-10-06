@@ -136,8 +136,8 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	const actionBar = read('src/components/ActionBar.astro');
 	const schema = read('src/content.config.ts');
 	const content = [
-		read('src/content/knowhow/001-night-memo.md'),
-		read('src/content/knowhow/002-family-log.md'),
+		read('src/content/knowhow/003-cdc-2-months.md'),
+		read('src/content/knowhow/004-cdc-4-months.md'),
 	].join(String.fromCharCode(10));
 	assert.match(index, /const phaseIds = Array\.from\(new Set\(knowhow\.flatMap/);
 	assert.match(index, /const sceneLabels = Array\.from\(new Set\(knowhow\.flatMap/);
@@ -202,6 +202,13 @@ test('チェックリスト一覧は時期・場面・マイリストをURLとIn
 	assert.ok(index.includes('getPrivateSetting<PhaseFilter | PhaseFilter[]>'));
 	assert.ok(index.includes('setPrivateSetting(PHASE_SETTING_KEY'));
 	assert.ok(index.includes('data-timeline-order'));
+	assert.ok(index.includes('data-child-age-months'));
+	assert.ok(index.includes('data-recommended'));
+	assert.ok(index.includes('value="age"'));
+	assert.ok(index.includes('年齢順'));
+	assert.ok(schema.includes('recommended: z.boolean().default(false)'));
+	assert.ok(index.includes("currentSort: SortOption = 'recommend'"));
+	assert.ok(index.includes('sortKnowhowEntries'));
 	assert.ok(index.includes('data-sheet-phase'));
 	assert.ok(index.includes('data-sheet-scene'));
 	assert.match(index, /viewMatch = activeMatch[\s\S]*&& \(!isFavOnly \|\| favoriteMatch\)[\s\S]*&& \(isCompletedOnly \? completedMatch : !completedMatch\)/);

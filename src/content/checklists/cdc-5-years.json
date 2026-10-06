@@ -1,0 +1,92 @@
+{
+  "checklistId": "cdc-5-years",
+  "title": "5歳ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "ほかの子とゲームをするとき、ルールを守る、または順番を待つ"
+        },
+        {
+          "id": "social-02",
+          "label": "あなたの前で歌・踊り・お芝居のいずれかを見せる"
+        },
+        {
+          "id": "social-03",
+          "label": "靴下を組にそろえたり、食後に食器を片づけたりするなど、簡単な家事をする"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "木に登って降りられなくなった猫を消防士が助ける話など、聞いた話や自分で作った話を2つ以上の出来事を含めて話す"
+        },
+        {
+          "id": "language-02",
+          "label": "本やお話を読んだり聞かせたりした後、その内容についての簡単な質問に答える"
+        },
+        {
+          "id": "language-03",
+          "label": "3往復を超えて会話を続ける"
+        },
+        {
+          "id": "language-04",
+          "label": "語尾の音が似た言葉に気づいたり、それを使ったりする"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "1から10まで数える"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "1〜5の数字を指されると、そのうちのいくつかの名前を言う"
+        },
+        {
+          "id": "cognitive-03",
+          "label": "「きのう」「あした」「朝」「夜」など、時間に関する言葉を使う"
+        },
+        {
+          "id": "cognitive-04",
+          "label": "読み聞かせや工作など（画面を見る時間は含まない）の活動に5〜10分間集中する"
+        },
+        {
+          "id": "cognitive-05",
+          "label": "自分の名前に使われている文字をいくつか書く"
+        },
+        {
+          "id": "cognitive-06",
+          "label": "指さした文字のうち、いくつかの名前（読み方）を言う"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "服のボタンをいくつか留める"
+        },
+        {
+          "id": "physical-02",
+          "label": "片足でぴょんぴょん跳ぶ"
+        }
+      ]
+    }
+  ]
+}

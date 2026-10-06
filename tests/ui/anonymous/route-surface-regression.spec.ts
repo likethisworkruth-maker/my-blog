@@ -5,20 +5,14 @@ import { collectPageErrors, expectListState, expectNoPageErrors, visibleCardTitl
 test.use({ storageState: path.resolve('tests/fixtures/auth/anonymous.storageState.json') });
 
 const phases = [
-	{ slug: 'pregnancy', expected: 1 },
-	{ slug: '0-3m', expected: 2 },
+	{ slug: '0-3m', expected: 1 },
 	{ slug: '4-6m', expected: 2 },
-	{ slug: '7-11m', expected: 2 },
-	{ slug: '1y-plus', expected: 2 },
+	{ slug: '7-11m', expected: 1 },
+	{ slug: '1y-plus', expected: 8 },
 ] as const;
 
 const scenes = [
-	{ slug: 'outing', expected: 0 },
-	{ slug: 'medical', expected: 0 },
-	{ slug: 'daily', expected: 2 },
-	{ slug: 'travel', expected: 0 },
-	{ slug: 'nursery', expected: 0 },
-	{ slug: 'disaster', expected: 0 },
+	{ slug: '毎日のチェック', expected: 12 },
 ] as const;
 
 type SheetMotionSample = {
@@ -86,8 +80,8 @@ async function captureSheetOpenMotion(
 }
 
 const listRoutes = [
-	{ id: 'R-001', label: '公開ルート', url: '/?mode=headline_view', expected: 2 },
-	{ id: 'R-002', label: '公開knowhowルート', url: '/knowhow/?mode=headline_view', expected: 2 },
+	{ id: 'R-001', label: '公開ルート', url: '/?mode=headline_view', expected: 12 },
+	{ id: 'R-002', label: '公開knowhowルート', url: '/knowhow/?mode=headline_view', expected: 12 },
 	...phases.map((phase) => ({
 		id: `R-012-${phase.slug}`,
 		label: `phase=${phase.slug}`,
@@ -104,9 +98,7 @@ const listRoutes = [
 		id: `R-028-${phase.slug}-${scene.slug}`,
 		label: `${phase.slug} + ${scene.slug}`,
 		url: `/knowhow/phase/${phase.slug}/scene/${scene.slug}/?mode=headline_view`,
-		expected: phase.slug === 'pregnancy' && scene.slug === 'daily' ? 1
-			: phase.slug !== 'pregnancy' && scene.slug === 'daily' ? 2
-			: 0,
+		expected: phase.expected,
 	}))),
 ];
 
@@ -128,6 +120,21 @@ for (const route of listRoutes) {
 		await expectNoPageErrors(errors);
 	});
 }
+
+test('削除したサンプル由来のphase・sceneルートは生成しない', async ({ page }) => {
+	for (const url of [
+		'/knowhow/phase/pregnancy/',
+		'/knowhow/scene/outing/',
+		'/knowhow/scene/medical/',
+		'/knowhow/scene/daily/',
+		'/knowhow/scene/travel/',
+		'/knowhow/scene/nursery/',
+		'/knowhow/scene/disaster/',
+	]) {
+		const response = await page.goto(url);
+		expect(response?.status(), url).toBe(404);
+	}
+});
 
 const publicPages = [
 	{ id: 'R-030', label: 'おすすめ', url: '/recommend/' },
@@ -153,7 +160,7 @@ test('R-036 unknown queryでも公開一覧が安全に初期化される', asyn
 	const errors = collectPageErrors(page);
 	const response = await page.goto('/?mode=unknown&phase=unknown&scene=unknown');
 	expect(response?.status()).toBe(200);
-	await expectListState(page, 2);
+	await expectListState(page, 12);
 	await expectNoPageErrors(errors);
 });
 
@@ -255,10 +262,23 @@ test('R-043 絞り込み・並び替えシートは必ず画面下の外側か�
 test('R-037 Markdownのタイトルと説明が画面に存在する', async ({ page }) => {
 	const errors = collectPageErrors(page);
 	await page.goto('/?mode=headline_view');
-	await expectListState(page, 2);
-	await expect(page.locator('.knowhow-card h2')).toHaveText(['夜泣き対応メモ', '夫婦共有ログ']);
+	await expectListState(page, 12);
+	await expect(page.locator('.knowhow-card h2')).toHaveText([
+		'生後2か月ごろの発達チェック',
+		'生後4か月ごろの発達チェック',
+		'生後6か月ごろの発達チェック',
+		'生後9か月ごろの発達チェック',
+		'1歳ごろの発達チェック',
+		'1歳3か月ごろの発達チェック',
+		'1歳6か月ごろの発達チェック',
+		'2歳ごろの発達チェック',
+		'2歳6か月ごろの発達チェック',
+		'3歳ごろの発達チェック',
+		'4歳ごろの発達チェック',
+		'5歳ごろの発達チェック',
+	]);
 	const titles = await visibleCardTitles(page);
-	expect(titles).toEqual(['夜泣き対応メモ', '夫婦共有ログ']);
-	await expect(page.locator('.knowhow-summary')).toHaveCount(2);
+	expect(titles).toHaveLength(12);
+	await expect(page.locator('.knowhow-summary')).toHaveCount(12);
 	await expectNoPageErrors(errors);
 });

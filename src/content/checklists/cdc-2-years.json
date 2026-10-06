@@ -1,0 +1,84 @@
+{
+  "checklistId": "cdc-2-years",
+  "title": "2歳ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "誰かが泣いていると立ち止まったり悲しそうな顔をしたりするなど、他の人が傷ついたり動揺したりしていることに気づく"
+        },
+        {
+          "id": "social-02",
+          "label": "初めての場面で、どう反応するかを確かめるようにあなたの顔を見る"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "「くまさんはどこ？」と聞くと、絵本の中のものを指差す"
+        },
+        {
+          "id": "language-02",
+          "label": "「まんま ちょうだい」など、少なくとも2語を続けて話す"
+        },
+        {
+          "id": "language-03",
+          "label": "尋ねられると、体の部分を少なくとも2つ指さす"
+        },
+        {
+          "id": "language-04",
+          "label": "バイバイや指差しだけでなく、投げキッスや「うん」とうなずくなど、さまざまな身振りを使う"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "容器を片手で押さえてもう片方の手でふたを取るなど、片方の手で物を持ちながらもう片方の手を使う"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "おもちゃのスイッチやボタン、つまみを操作しようとする"
+        },
+        {
+          "id": "cognitive-03",
+          "label": "おもちゃの皿に食べ物を乗せるなど、2つ以上のおもちゃを組み合わせて遊ぶ"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "ボールを蹴る"
+        },
+        {
+          "id": "physical-02",
+          "label": "走る"
+        },
+        {
+          "id": "physical-03",
+          "label": "手助けの有無にかかわらず、数段の階段をよじ登らずに歩いて上がる"
+        },
+        {
+          "id": "physical-04",
+          "label": "スプーンを使って食べる"
+        }
+      ]
+    }
+  ]
+}

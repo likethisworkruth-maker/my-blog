@@ -1,0 +1,92 @@
+{
+  "checklistId": "cdc-1-year-6-months",
+  "title": "1歳6か月ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "あなたから離れても、近くにいるか振り返って確かめる"
+        },
+        {
+          "id": "social-02",
+          "label": "面白いものを見つけると、あなたに見せようと指差す"
+        },
+        {
+          "id": "social-03",
+          "label": "手を洗ってもらうために両手を差し出す"
+        },
+        {
+          "id": "social-04",
+          "label": "あなたと一緒に絵本のページを数ページ眺める"
+        },
+        {
+          "id": "social-05",
+          "label": "着替えのとき、袖に腕を通したり足を上げたりして協力する"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "「ママ」「パパ」以外に3語以上の言葉を話そうとする"
+        },
+        {
+          "id": "language-02",
+          "label": "「それをちょうだい」と言うとおもちゃを渡すなど、身振りなしの1段階の指示に従う"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "ほうきで掃くなど、大人の家事の真似をする"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "ミニカーを押すなど、おもちゃを使って簡単な遊びをする"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "何にもつかまらずに一人で歩く"
+        },
+        {
+          "id": "physical-02",
+          "label": "なぐり書きをする"
+        },
+        {
+          "id": "physical-03",
+          "label": "フタなしコップから飲む（たまにこぼすこともある）"
+        },
+        {
+          "id": "physical-04",
+          "label": "指を使って自分で食べる"
+        },
+        {
+          "id": "physical-05",
+          "label": "スプーンを使おうとする"
+        },
+        {
+          "id": "physical-06",
+          "label": "大人の手助けなしでソファや椅子を上り下りする"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "checklistId": "cdc-1-year",
+  "title": "1歳ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "あなたと一緒に、手遊びなどの簡単なやり取り遊びをする"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "「バイバイ」と手を振る"
+        },
+        {
+          "id": "language-02",
+          "label": "親を「ママ」「パパ」などの特別な呼び名で呼ぶ"
+        },
+        {
+          "id": "language-03",
+          "label": "「だめ」と言われると、一瞬動きを止めるか、していることをやめる"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "カップに積木を入れるなど、物を容器に入れる"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "毛布の下に隠したおもちゃなど、隠すのを見た物を探す"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "つかまり立ちをする"
+        },
+        {
+          "id": "physical-02",
+          "label": "家具につかまって伝い歩きをする"
+        },
+        {
+          "id": "physical-03",
+          "label": "大人が支えてあげるとフタなしコップから飲む"
+        },
+        {
+          "id": "physical-04",
+          "label": "小さな食べ物を親指と人差し指でつまんで取る（指先つまみ）"
+        }
+      ]
+    }
+  ]
+}

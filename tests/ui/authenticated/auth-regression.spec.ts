@@ -33,8 +33,8 @@ test.describe('ログイン済み回帰テスト', () => {
 	test('Astro画面遷移後もログイン状態を維持する', async ({ page }) => {
 		const errors = collectPageErrors(page);
 		await page.goto('/');
-		await page.locator('[data-open-checklist="002-family-log"]:visible').click();
-		await expect(page).toHaveURL(/\/knowhow\/002-family-log\/?$/);
+		await page.locator('[data-open-checklist="004-cdc-4-months"]:visible').click();
+		await expect(page).toHaveURL(/\/knowhow\/004-cdc-4-months\/?$/);
 		await expect(page.locator('#knowhow-modal-container')).toBeVisible();
 		const storedSession = await page.evaluate(() => localStorage.getItem('sb-127-auth-token'));
 		expect(storedSession).toContain('e2e-authenticated@example.test');

@@ -27,6 +27,7 @@ const knowhow = defineCollection({
 		checklistId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 		icon: z.string(), // Material Symbol name, e.g. "description"
 		isFree: z.boolean().default(true),
+		recommended: z.boolean().default(false),
 		categories: z.array(z.string()).optional(),
 		childAgeMonths: z.number().optional(),
 		phases: z.array(z.string().min(1)).min(1),

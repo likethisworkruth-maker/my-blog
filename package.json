@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "astro dev",
     "validate:checklists": "node scripts/validate-checklists.mjs",
-    "test": "node --experimental-strip-types --test tests/checklist-state.test.mjs tests/private-data.test.mjs tests/site-contract.test.mjs tests/fixtures-contract.test.mjs tests/cdc-data.test.mjs tests/cdc-user-storage.test.mjs",
+    "test": "node --experimental-strip-types --test tests/checklist-state.test.mjs tests/private-data.test.mjs tests/site-contract.test.mjs tests/fixtures-contract.test.mjs tests/cdc-data.test.mjs tests/cdc-user-storage.test.mjs tests/knowhow-sort.test.mjs",
     "test:checklists": "npm test",
     "test:ui": "playwright test",
     "build": "npm run validate:checklists && astro build",

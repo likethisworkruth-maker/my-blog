@@ -1,0 +1,76 @@
+{
+  "checklistId": "cdc-2-months",
+  "title": "生後2か月ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "話しかけられたり抱き上げられると落ち着く"
+        },
+        {
+          "id": "social-02",
+          "label": "あなたの顔を見つめる"
+        },
+        {
+          "id": "social-03",
+          "label": "あなたが近づくと嬉しそうにする"
+        },
+        {
+          "id": "social-04",
+          "label": "話しかけたり笑いかけたりすると笑う"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "泣き声以外の声を出す"
+        },
+        {
+          "id": "language-02",
+          "label": "大きな音に反応する"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "あなたが動くのを目で追う"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "おもちゃを数秒間じっと見つめる"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "うつ伏せにしたとき頭を持ち上げる"
+        },
+        {
+          "id": "physical-02",
+          "label": "両腕と両足を動かす"
+        },
+        {
+          "id": "physical-03",
+          "label": "手を一時的にパッと開く"
+        }
+      ]
+    }
+  ]
+}

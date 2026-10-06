@@ -1,0 +1,80 @@
+{
+  "checklistId": "cdc-3-years",
+  "title": "3歳ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "保育園などに預けるとき、あなたと離れてから10分以内に落ち着く"
+        },
+        {
+          "id": "social-02",
+          "label": "他の子どもに気づいて、自分から遊びの輪に加わる"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "2往復以上のやり取りがある会話をする"
+        },
+        {
+          "id": "language-02",
+          "label": "「ママ／パパはどこ？」など、「だれ？」「なに？」「どこ？」「なぜ？」と質問する"
+        },
+        {
+          "id": "language-03",
+          "label": "絵や絵本を見て、何をしている場面か尋ねられると、「走っている」などと答える"
+        },
+        {
+          "id": "language-04",
+          "label": "名前を聞かれると自分の下の名前を言える"
+        },
+        {
+          "id": "language-05",
+          "label": "ほとんどの場合、ほかの人が言葉を理解できるように話す"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "お手本を見せると、丸（円）を描く"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "「熱いよ」と注意すると、ストーブなどの熱いものに触らないように気をつける"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "大きなビーズやマカロニなどをひもに通してつなげる"
+        },
+        {
+          "id": "physical-02",
+          "label": "ズボンや上着など、簡単な服を自分で着る"
+        },
+        {
+          "id": "physical-03",
+          "label": "フォークを使って食べる"
+        }
+      ]
+    }
+  ]
+}

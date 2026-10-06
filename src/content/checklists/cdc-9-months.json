@@ -1,0 +1,84 @@
+{
+  "checklistId": "cdc-9-months",
+  "title": "生後9か月ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "見知らぬ人に対して人見知りをしたり怖がったりする"
+        },
+        {
+          "id": "social-02",
+          "label": "嬉しい、悲しい、怒った、驚いたなど多様な表情を見せる"
+        },
+        {
+          "id": "social-03",
+          "label": "名前を呼ぶと振り向いて見る"
+        },
+        {
+          "id": "social-04",
+          "label": "あなたが離れると反応する（目で追う、手を伸ばす、泣く）"
+        },
+        {
+          "id": "social-05",
+          "label": "いないいないばあをすると笑う"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "「ママママ」「ババババ」など、いろいろな声をたくさん出す"
+        },
+        {
+          "id": "language-02",
+          "label": "抱っこを求めて両腕を持ち上げる"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "スプーンやおもちゃなど、落として見えなくなった物を探す"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "2つの物をカチカチ打ち合わせる"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "自分で座る姿勢になる"
+        },
+        {
+          "id": "physical-02",
+          "label": "物を片方の手からもう片方の手へ持ち替える"
+        },
+        {
+          "id": "physical-03",
+          "label": "指を使って食べ物を自分の方にかき寄せる"
+        },
+        {
+          "id": "physical-04",
+          "label": "支えなしで一人で座れる"
+        }
+      ]
+    }
+  ]
+}

@@ -13,7 +13,13 @@ interface Props {
 	knowhow: any;
 	prev?: any;
 	next?: any;
-	navigationItems?: Array<{ id: string; checklistId: string; timelineOrder?: number }>;
+	navigationItems?: Array<{
+		id: string;
+		checklistId: string;
+		timelineOrder?: number;
+		childAgeMonths?: number;
+		recommended?: boolean;
+	}>;
 	detailTab?: DetailTab;
 }
 
@@ -142,6 +148,7 @@ const panelOpenClass = 'translate-y-0 lg:w-[400px] lg:opacity-100 lg:ml-0';
 		savePrivateChecklistRun,
 	} from '../scripts/private-db';
 	import { readKnowhowListCache } from '../scripts/knowhow-list-cache';
+	import { sortKnowhowEntries } from '../scripts/knowhow-sort';
 	import { onPageLoad } from '../scripts/page-lifecycle';
 
 	type DetailMode = 'public' | 'private';
@@ -232,7 +239,13 @@ const panelOpenClass = 'translate-y-0 lg:w-[400px] lg:opacity-100 lg:ml-0';
 			return cached;
 		};
 
-		type DetailNavigationItem = { id: string; checklistId: string; timelineOrder?: number };
+		type DetailNavigationItem = {
+			id: string;
+			checklistId: string;
+			timelineOrder?: number;
+			childAgeMonths?: number;
+			recommended?: boolean;
+		};
 		const privateNavigationItems = (() => {
 			try {
 				const parsed = JSON.parse(container.dataset.privateNavigation ?? '[]') as unknown;
@@ -244,11 +257,13 @@ const panelOpenClass = 'translate-y-0 lg:w-[400px] lg:opacity-100 lg:ml-0';
 						&& typeof (item as DetailNavigationItem).checklistId === 'string'
 						&& (typeof (item as DetailNavigationItem).timelineOrder === 'undefined'
 							|| typeof (item as DetailNavigationItem).timelineOrder === 'number')
+						&& (typeof (item as DetailNavigationItem).childAgeMonths === 'undefined'
+							|| typeof (item as DetailNavigationItem).childAgeMonths === 'number')
+						&& (typeof (item as DetailNavigationItem).recommended === 'undefined'
+							|| typeof (item as DetailNavigationItem).recommended === 'boolean')
 					))
 					: [];
-				return items.sort((left, right) => (
-					(left.timelineOrder ?? Number.MAX_SAFE_INTEGER) - (right.timelineOrder ?? Number.MAX_SAFE_INTEGER)
-				));
+				return sortKnowhowEntries(items, 'recommend');
 			} catch {
 				return [];
 			}

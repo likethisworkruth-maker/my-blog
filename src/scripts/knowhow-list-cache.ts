@@ -1,6 +1,6 @@
 export type KnowhowListView = 'discover' | 'my';
 export type KnowhowListDisplayMode = 'headline_view' | 'grid_view';
-export type KnowhowListSort = 'recommend' | 'newest' | 'popular';
+export type KnowhowListSort = 'recommend' | 'age' | 'newest' | 'popular';
 
 export interface KnowhowListCache {
 	version: 2;
@@ -27,7 +27,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => (
 
 const isListView = (value: unknown): value is KnowhowListView => value === 'discover' || value === 'my';
 const isDisplayMode = (value: unknown): value is KnowhowListDisplayMode => value === 'headline_view' || value === 'grid_view';
-const isSort = (value: unknown): value is KnowhowListSort => value === 'recommend' || value === 'newest' || value === 'popular';
+const isSort = (value: unknown): value is KnowhowListSort => value === 'recommend' || value === 'age' || value === 'newest' || value === 'popular';
 
 export const saveKnowhowListCache = (input: KnowhowListCacheInput) => {
 	try {

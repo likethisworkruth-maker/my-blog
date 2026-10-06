@@ -1,0 +1,92 @@
+{
+  "checklistId": "cdc-2-years-6-months",
+  "title": "2歳6か月ごろの発達チェック",
+  "version": 1,
+  "status": "published",
+  "groups": [
+    {
+      "id": "social-emotional",
+      "label": "社会性・情緒",
+      "items": [
+        {
+          "id": "social-01",
+          "label": "ほかの子どもの隣で遊び、ときには一緒に遊ぶ"
+        },
+        {
+          "id": "social-02",
+          "label": "「見て！」と言って自分ができることを見せる"
+        },
+        {
+          "id": "social-03",
+          "label": "「お片付けの時間だよ」と言われたときにおもちゃを片付けるなど、簡単な日課に従う"
+        }
+      ]
+    },
+    {
+      "id": "language-communication",
+      "label": "ことば・コミュニケーション",
+      "items": [
+        {
+          "id": "language-01",
+          "label": "約50語の言葉を話す"
+        },
+        {
+          "id": "language-02",
+          "label": "「ワンワン 走った」のように、動作を表す言葉を含む2語以上を続けて話す"
+        },
+        {
+          "id": "language-03",
+          "label": "絵本を指差して「これなぁに？」と尋ねると物の名前を言う"
+        },
+        {
+          "id": "language-04",
+          "label": "「ぼく」「わたし」「わたしたち」などの言葉を使う"
+        }
+      ]
+    },
+    {
+      "id": "cognitive-learning",
+      "label": "認知・学習",
+      "items": [
+        {
+          "id": "cognitive-01",
+          "label": "積木を食べ物に見立てて人形に食べさせるなど、見立て遊び・ごっこ遊びをする"
+        },
+        {
+          "id": "cognitive-02",
+          "label": "物を取るために小さな踏み台の上に立つなど、簡単な問題解決をする"
+        },
+        {
+          "id": "cognitive-03",
+          "label": "「おもちゃを置いてドアを閉めて」のような2段階の指示に従う"
+        },
+        {
+          "id": "cognitive-04",
+          "label": "「赤はどれ？」と聞かれて赤いクレヨンを指すなど、少なくとも1つの色を知っている"
+        }
+      ]
+    },
+    {
+      "id": "movement-physical",
+      "label": "運動・身体",
+      "items": [
+        {
+          "id": "physical-01",
+          "label": "ドアノブを回したり、ねじ式のふたを回して開けたりする"
+        },
+        {
+          "id": "physical-02",
+          "label": "ゆったりしたズボンや前の開いた上着など、衣服を自分で脱ぐ"
+        },
+        {
+          "id": "physical-03",
+          "label": "両足をそろえて地面からピョンとジャンプする"
+        },
+        {
+          "id": "physical-04",
+          "label": "本を読んでもらうとき、1ページずつめくる"
+        }
+      ]
+    }
+  ]
+}

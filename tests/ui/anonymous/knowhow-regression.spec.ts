@@ -10,20 +10,33 @@ test.describe('未ログイン回帰テスト', () => {
 		const errors = collectPageErrors(page);
 		await page.goto('/?mode=headline_view');
 		const cards = page.locator('.knowhow-card');
-		await expect(cards).toHaveCount(2);
+		await expect(cards).toHaveCount(12);
 		await expect(page.locator('#knowhow-empty')).toBeHidden();
 		await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'headline_view');
 		const titles = (await page.locator('.knowhow-card h2').allTextContents()).map((title) => title.trim());
-		expect(titles).toEqual(['夜泣き対応メモ', '夫婦共有ログ']);
+		expect(titles).toEqual([
+			'生後2か月ごろの発達チェック',
+			'生後4か月ごろの発達チェック',
+			'生後6か月ごろの発達チェック',
+			'生後9か月ごろの発達チェック',
+			'1歳ごろの発達チェック',
+			'1歳3か月ごろの発達チェック',
+			'1歳6か月ごろの発達チェック',
+			'2歳ごろの発達チェック',
+			'2歳6か月ごろの発達チェック',
+			'3歳ごろの発達チェック',
+			'4歳ごろの発達チェック',
+			'5歳ごろの発達チェック',
+		]);
 		await expectNoPageErrors(errors);
 	});
 
 	test('Markdownの説明文が検索対象になる', async ({ page }) => {
 		const errors = collectPageErrors(page);
 		await page.goto('/?mode=headline_view');
-		await page.locator('#search-keyword-input').fill('子育て');
+		await page.locator('#search-keyword-input').fill('4か月');
 		await expect(page.locator('.knowhow-card:visible')).toHaveCount(1);
-		await expect(page.locator('.knowhow-card:visible h2')).toHaveText('夫婦共有ログ');
+		await expect(page.locator('.knowhow-card:visible h2')).toHaveText('生後4か月ごろの発達チェック');
 		await expectNoPageErrors(errors);
 	});
 
@@ -33,13 +46,13 @@ test.describe('未ログイン回帰テスト', () => {
 		await page.locator('[data-display-mode-option="grid_view"]').click();
 		await expect(page).toHaveURL(/\/\?mode=grid_view$/);
 		await expect(page.locator('#knowhow-container')).toHaveAttribute('data-display-mode', 'grid_view');
-		await expect(page.locator('.knowhow-card')).toHaveCount(2);
+		await expect(page.locator('.knowhow-card')).toHaveCount(12);
 		await expectNoPageErrors(errors);
 	});
 
 	test('公開詳細の初期化でReferenceErrorを出さず開始関数を登録する', async ({ page }) => {
 		const errors = collectPageErrors(page);
-		await page.goto('/knowhow/002-family-log/');
+		await page.goto('/knowhow/004-cdc-4-months/');
 		await expect(page.locator('#knowhow-modal-container')).toBeVisible();
 		await expect(page.locator('[data-checklist-template]')).toHaveCount(1);
 		await expect.poll(() => page.evaluate(() => typeof (window as Window & { startChecklist?: unknown }).startChecklist)).toBe('function');
@@ -48,18 +61,18 @@ test.describe('未ログイン回帰テスト', () => {
 
 	test('始めるアイコンがcanonical private progressへ遷移する', async ({ page }) => {
 		const errors = collectPageErrors(page);
-		await page.goto('/knowhow/002-family-log/');
+		await page.goto('/knowhow/004-cdc-4-months/');
 		const startButtons = page.locator('button[aria-label="このチェックリストを始める"]:visible');
 		await expect(startButtons).toHaveCount(1);
 		await startButtons.click();
-		await expect(page).toHaveURL(/\/my-knowhow\/002-family-log\/progress\/?$/);
+		await expect(page).toHaveURL(/\/my-knowhow\/004-cdc-4-months\/progress\/?$/);
 		await expect(page.locator('#tab-content-progress')).toBeVisible();
 		await expectNoPageErrors(errors);
 	});
 
 	test('private memoの直接URLを復元する', async ({ page }) => {
 		const errors = collectPageErrors(page);
-		await page.goto('/my-knowhow/002-family-log/memo/');
+		await page.goto('/my-knowhow/004-cdc-4-months/memo/');
 		await expect(page.locator('#tab-btn-memo')).toHaveAttribute('aria-selected', 'true');
 		await expect(page.locator('#tab-content-memo')).toBeVisible();
 		await expectNoPageErrors(errors);
