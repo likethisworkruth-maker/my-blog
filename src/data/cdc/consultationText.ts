@@ -53,8 +53,8 @@ function doctorCategory(age: string, category: ConsultationCategory, ja: boolean
     if (notYet.length) lines.push(`現時点でまだできない：${notYet.join("、")}`);
     if (unknown.length) lines.push(`未回答：${unknown.length}項目`);
     if (previous) {
-      if (previous.notYet.length) lines.push(`${previous.age}の同分野でもまだできない：${previous.notYet.join("、")}`);
-      if (previous.unknown.length) lines.push(`${previous.age}の同分野で未回答：${previous.unknown.length}項目`);
+      if (previous.notYet.length) lines.push(`${previous.age}時点の同分野の確認項目で、現在まだできない：${previous.notYet.join("、")}`);
+      if (previous.unknown.length) lines.push(`${previous.age}時点の同分野の確認項目で未回答：${previous.unknown.length}項目`);
     }
   } else {
     if (notYet.length) lines.push(`Not yet able to do at ${age}: ${notYet.join("; ")}`);
@@ -77,7 +77,7 @@ function aiCategory(category: ConsultationCategory, ja: boolean): string {
   if (notYet.length) lines.push(ja ? "まだできないと確認したこと：" : "Items marked not yet:", bullets(notYet));
   if (unknown.length) lines.push(ja ? "未確認のこと：" : "Items not checked:", bullets(unknown));
   if (previous) {
-    lines.push(ja ? `同分野の${previous.age}の確認項目：` : `Same area at ${previous.age}:`);
+    lines.push(ja ? `同分野の${previous.age}時点の確認項目（現在の様子を確認）：` : `Same area in the ${previous.age} checklist (reviewed using current observations):`);
     if (previous.checked.length) lines.push(ja ? "できる：" : "Able:", bullets(previous.checked));
     if (previous.notYet.length) lines.push(ja ? "まだできない：" : "Not yet:", bullets(previous.notYet));
     if (previous.unknown.length) lines.push(ja ? "未確認：" : "Not checked:", bullets(previous.unknown));
@@ -91,14 +91,18 @@ export function consultationText(ageKey: string, age: string, categories: Consul
   const hasNotYet = categories.some(category => category.notYet.length > 0);
   const hasUnknown = categories.some(category => category.unknown.length > 0);
   const previousAge = categories.find(category => category.previous)?.previous?.age;
-  const reviewedAges = previousAge ? (ja ? `${age}と${previousAge}` : `${age} and ${previousAge}`) : age;
+  const previousReviewContext = previousAge
+    ? (ja
+      ? `また、同じ分野の前の年齢（${previousAge}時点）の確認項目も、現在の様子について追加で確認しました。`
+      : `I also reviewed the same areas in the earlier ${previousAge} checklist using my child's current observations.`)
+    : "";
   const sources = cdcSources(ageKey, age, categories, ja);
   if (audience === "doctor") {
     const subject = ja ? `件名：子どもの発達についてのご相談（${age}）` : `Subject: Question about my child's development (${age})`;
     const salutation = ja ? "ご担当の先生へ" : "Dear clinician,";
     const intro = ja
-      ? `子どもの発達についてご相談したく、ご連絡しました。CDC（米国疾病予防管理センター）が公開する発達マイルストーンについて、このサイトの非公式な日本語訳を参考に、${reviewedAges}の項目を家庭で確認しました。`
-      : `I would like to discuss my child's development. I used an unofficial Japanese translation of the developmental milestones published by the CDC (U.S. Centers for Disease Control and Prevention) as a reference to review the ${reviewedAges} checklists at home.`;
+      ? `子どもの発達についてご相談したく、ご連絡しました。子どもは現在${age}です。CDC（米国疾病予防管理センター）が公開する発達マイルストーンについて、このサイトの非公式な日本語訳を参考に、${age}の確認項目を家庭で確認しました。${previousReviewContext}`
+      : `I would like to discuss my child's development. My child is currently ${age} old. I used an unofficial Japanese translation of the developmental milestones published by the CDC (U.S. Centers for Disease Control and Prevention) as a reference to review the ${age} checklist at home.${previousReviewContext ? " " + previousReviewContext : ""}`;
     const requests = ja
       ? [
           hasNotYet ? `${hasPrevious ? "前の年齢の同分野の確認結果も踏まえ、" : ""}「まだできない」と確認した項目について、家庭で見るとよい具体的な場面や様子、追加の評価や支援が必要か教えてください。` : "",
@@ -114,8 +118,8 @@ export function consultationText(ageKey: string, age: string, categories: Consul
   }
 
   const intro = ja
-    ? `子どもの発達について教えてください。以下は、CDC（米国疾病予防管理センター）が公開する${reviewedAges}の発達マイルストーンについて、このサイトの非公式な日本語訳を参考に、家庭で確認した結果です。日本語訳とCDC英語原文に違いがあれば、原文を優先してください。`
-    : `Please help me understand my child's development. The observations below use an unofficial checklist based on developmental milestones published by the CDC (U.S. Centers for Disease Control and Prevention) for ${reviewedAges}.`;
+    ? `子どもの発達について教えてください。子どもは現在${age}です。以下は、CDC（米国疾病予防管理センター）が公開する${age}の発達マイルストーンについて、このサイトの非公式な日本語訳を参考に、家庭で確認した結果です。${previousReviewContext}日本語訳とCDC英語原文に違いがあれば、原文を優先してください。`
+    : `Please help me understand my child's development. My child is currently ${age} old. The observations below use an unofficial checklist based on developmental milestones published by the CDC (U.S. Centers for Disease Control and Prevention) for ${age}.${previousReviewContext ? " " + previousReviewContext : ""}`;
   const context = ja
     ? "「まだできない」は今回そう確認した項目で、未確認は試す機会がなかったり、判断できなかったりした項目です。未確認を「できない」と扱わないでください。"
     : "'Not yet' means I marked that the skill has not been observed. Unchecked items may not have been tried or may be uncertain; do not treat them as skills my child cannot do.";
@@ -138,5 +142,5 @@ export function consultationText(ageKey: string, age: string, categories: Consul
   const request = ja
     ? `CDC公式ページの英語原文にある該当年齢・カテゴリを確認したうえで、次の点を整理してください。\n${numberedQuestions}\n\nCDCのページを閲覧できない場合は、その旨を明記して原文を推測しないでください。チェック数だけで発達の遅れ、病名、正常・異常を判定したり、カテゴリ間の優劣をつけたりしないでください。書かれていない子どもの様子を補わず、不明な点は質問してください。一般的な情報を示す場合は根拠となる公的な情報源を添え、確認できない情報源は作らないでください。`
     : `Review the relevant ages and categories in the English original on the CDC pages, then organize:\n${numberedQuestions}\n\nIf you cannot access the CDC pages, say so and do not guess their wording. Do not diagnose, label development as normal or abnormal, infer delays from counts, or rank categories. Do not invent observations. Ask about missing information. Cite verifiable public sources for general guidance and do not invent references.`;
-  return [intro, (ja ? "確認したチェックリストの年齢：" : "Selected checklist age: ") + age, sources, context, ...categories.map(category => aiCategory(category, ja)), request].join("\n\n");
+  return [intro, (ja ? "子どもの現在の年齢：" : "Child's current age: ") + age, sources, context, ...categories.map(category => aiCategory(category, ja)), request].join("\n\n");
 }

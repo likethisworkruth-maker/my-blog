@@ -753,7 +753,7 @@ function initChecklist(root: HTMLElement): () => void {
 			const forAge = { ...(storage.milestoneAnswers[age] ?? {}) };
 			if (forAge[id] === answer) delete forAge[id];
 			else forAge[id] = answer;
-			showPreviousReview = false;
+			if (age === storage.selectedAge) showPreviousReview = false;
 			showUnknownAiQuestion = false;
 			const milestoneAnswers = { ...storage.milestoneAnswers, [age]: forAge };
 			saveAndRender({ ...storage, milestoneAnswers }, 'button[data-answer-age="' + age + '"][data-answer-id="' + id + '"][data-answer-value="' + answer + '"]');
